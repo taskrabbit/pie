@@ -998,6 +998,37 @@ pie.services.router.prototype.changedUrl = function(changes) {
 },
 
 
+// normalize a path to be evaluated by the router
+pie.services.router.prototype.normalizePath = function(path) {
+
+  // ensure there's a leading slash
+  if(path.charAt(0) !== '/') {
+    path = '/' + path;
+  }
+
+  if(path.indexOf('?') > 0) {
+    var split = path.split('?');
+    path = this.normalizePath(split.shift());
+    split.unshift(path);
+    path = split.join('?');
+  }
+
+  // remove trailing hashtags
+  if(path.charAt(path.length - 1) === '#') {
+    path = path.substr(0, path.length - 1);
+  }
+
+  // remove trailing slashes
+  if(path.charAt(path.length - 1) === '/') {
+    path = path.substr(0, path.length - 1);
+  }
+
+  // remove
+
+  return path;
+},
+
+
 // invoke to add routes to the routers routeset.
 // routes objects which contain a "name" key will be added as a name lookup.
 // you can pass a set of defaults which will be extended into each route object.
@@ -1010,6 +1041,8 @@ pie.services.router.prototype.route = function(routes, defaults){
   pie.object.forEach(routes, function(k,r) {
 
     if('object' === typeof r) {
+
+      k = this.normalizePath(k);
 
       this.routes[k] = pie.h.extend({}, defaults, r);
 
@@ -1033,6 +1066,7 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
   unusedData;
 
   data = data || {};
+  s = this.normalizePath(s);
 
   s = s.replace(/\:([a-zA-Z0-9_]+)/g, function(match, key){
     usedKeys.push(key);
@@ -1041,16 +1075,6 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
     }
     return data[key];
   });
-
-  // ensure we have a leading slash
-  if(s.indexOf('/') !== 0){
-    s = "/" + s;
-  }
-
-  // remove trailing hashtags
-  if(s.indexOf('#') === s.length - 1) {
-    s = s.substr(0, s.length - 1);
-  }
 
   unusedData = pie.object.except(data, usedKeys);
   params = pie.h.serialize(pie.object.compact(unusedData, true));
@@ -1092,7 +1116,10 @@ pie.services.router.prototype.parseUrl = function(path) {
     interpolations, fullPath, pieces;
 
   pieces = path.split('?');
+
   path = pieces.shift();
+  path = this.normalizePath(path);
+
   query = pieces.join('&') || '';
 
   // a trailing slash will bork stuff
@@ -1305,6 +1332,9 @@ pie.app.prototype.handleSinglePageLinkClick = function(e){
 
   // if we're going nowhere or to an anchor on the page, let the browser take over
   if(!href || href === '#') return;
+
+  // ensure that relative links are evaluate as relative
+  if(href.charAt(0) === '?') href = window.location.pathname + href;
 
   // great, we can handle it. let the app decide whether to use pushstate or not
   e.preventDefault();

@@ -7,7 +7,8 @@ describe("pie.services.router", function(){
     this.router.route({
       '/t/a'                : {view: 'a', name: 'aRoute'},
       '/t/:id/a'            : {view: 'a', name: 'aSpecificRoute'},
-      '/t/unique/b'         : {view: 'b', name: 'bSpecificRoute'},
+      '/t/:id/b'            : {view: 'b', name: 'bSpecificRoute'},
+      '/t/unique/b'         : {view: 'b', name: 'bUniqueRoute'},
       '/t/:parent_id/b/:id' : {view: 'b', name: 'bParentRoute'},
 
       'apiRoute'          : '/api/a.json',
@@ -60,7 +61,8 @@ describe("pie.services.router", function(){
     expect(keys[0]).toEqual('/t/unique/b');
     expect(keys[1]).toEqual('/t/a');
     expect(keys[2]).toEqual('/t/:id/a');
-    expect(keys[3]).toEqual('/t/:parent_id/b/:id');
+    expect(keys[3]).toEqual('/t/:id/b');
+    expect(keys[4]).toEqual('/t/:parent_id/b/:id');
 
     expect(r._routeKeys._testId).toEqual(keys._testId);
     expect(r.routeKeys()._testId).toEqual(keys._testId);
@@ -68,6 +70,59 @@ describe("pie.services.router", function(){
 
     expect(r._routeKeys).toEqual(undefined);
     expect(r.routeKeys()).not.toEqual(undefined);
+  });
+
+  it('should normalize a path properly', function() {
+    var r = this.router, p;
+
+    p = r.normalizePath('test/path/#');
+    expect(p).toEqual('/test/path');
+
+    p = r.normalizePath('/test/path#');
+    expect(p).toEqual('/test/path');
+
+    p = r.normalizePath('/test/path/');
+    expect(p).toEqual('/test/path');
+
+    p = r.normalizePath('test/things/?q=1&z=2');
+    expect(p).toEqual('/test/things?q=1&z=2');
+
+  });
+
+  it('should be able to properly determine routes', function(){
+    var r = this.router, o;
+
+    o = r.parseUrl('/t/a');
+    expect(o.view).toEqual('a');
+
+    o = r.parseUrl('t/a');
+    expect(o.view).toEqual('a');
+
+    o = r.parseUrl('/t/a?q=1');
+    expect(o.view).toEqual('a');
+    expect(o.query.q).toEqual('1');
+    expect(o.path).toEqual('/t/a');
+    expect(o.fullPath).toEqual('/t/a?q=1');
+
+    o = r.parseUrl('/t/30/a');
+    expect(o.view).toEqual('a');
+    expect(o.interpolations.id).toEqual('30');
+    expect(o[':id']).toEqual('30');
+
+    o = r.parseUrl('/t/unique/b');
+    expect(o.view).toEqual('b');
+    expect(o.name).toEqual('bUniqueRoute');
+
+    o = r.parseUrl('/t/things/b');
+    expect(o.view).toEqual('b');
+    expect(o.name).toEqual('bSpecificRoute');
+    expect(o[':id']).toEqual('things');
+    expect(o.interpolations.id).toEqual('things');
+
+    o = r.parseUrl('/unrecognized/path');
+    expect(o.view).toEqual(undefined);
+    expect(o.path).toEqual('/unrecognized/path');
+    expect(o.fullPath).toEqual('/unrecognized/path');
   });
 
 });

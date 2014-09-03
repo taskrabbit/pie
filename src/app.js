@@ -164,6 +164,9 @@ pie.app.prototype.handleSinglePageLinkClick = function(e){
   // if we're going nowhere or to an anchor on the page, let the browser take over
   if(!href || href === '#') return;
 
+  // ensure that relative links are evaluated as relative
+  if(href.charAt(0) === '?') href = window.location.pathname + href;
+
   // great, we can handle it. let the app decide whether to use pushstate or not
   e.preventDefault();
   this.go(href);
