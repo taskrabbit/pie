@@ -7,7 +7,8 @@ pie.app = function app(options) {
   // general app options
   this.options = pie.h.extend({
     uiTarget: 'body',
-    viewNamespace: 'lib.views'
+    viewNamespace: 'lib.views',
+    notificationUiTarget: '.notification-container'
   }, options);
 
   var classOption = function(key, _default){
@@ -17,18 +18,23 @@ pie.app = function app(options) {
 
   // app.i18n is the translation functionality
   this.i18n = classOption('i18n', pie.services.i18n);
+  this.addChild(this.i18n, 'i18n');
 
   // app.ajax is ajax interface + app specific functionality.
   this.ajax = classOption('ajax', pie.services.ajax);
+  this.addChild(this.ajax, 'ajax');
 
   // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
   this.notifier = classOption('notifier', pie.services.notifier);
+  this.addChild(this.notifier, 'notifier');
 
   // app.errorHandler is the object responsible for
   this.errorHandler = classOption('errorHandler', pie.services.errorHandler);
+  this.addChild(this.errorHandler, 'errorHandler');
 
   // app.router is used to determine which view should be rendered based on the url
   this.router = classOption('router', pie.services.router);
+  this.addChild(this.router, 'router');
 
 
 
@@ -57,6 +63,7 @@ pie.app = function app(options) {
 
   this.on('beforeStart', this.showStoredNotifications.bind(this));
   this.on('beforeStart', this.setupSinglePageLinks.bind(this));
+  this.on('beforeStart', this.setupNotifier.bind(this));
 
   // once the dom is loaded
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
@@ -84,7 +91,6 @@ pie.app.prototype.debug = function(msg) {
   if(this.env === 'production') return;
   if(console && console.log) console.log('[PIE] ' + msg);
 };
-
 
 // use this to navigate. This allows us to apply app-specific navigation logic
 // without altering the underling navigator.
@@ -266,7 +272,16 @@ pie.app.prototype.retrieve = function(key, clear) {
   return decoded;
 };
 
+
 pie.app.prototype.role = 'app';
+
+
+// add the notifier's el to the page if possible
+pie.app.prototype.setupNotifier = function() {
+  var parent = document.querySelector(this.options.notificationUiTarget);
+  if(parent) parent.appendChild(this.getChild('notifier').el);
+};
+
 
 // when a link is clicked, go there without a refresh if we recognize the route.
 pie.app.prototype.setupSinglePageLinks = function() {

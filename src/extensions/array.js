@@ -10,6 +10,14 @@ pie.array.dup = function(a) {
   return a.slice(0);
 };
 
+pie.array.remove = function(a, o) {
+  var idx;
+  while((idx = a.indexOf(o)) >= 0) {
+    a.splice(idx, 1);
+  }
+  return a;
+};
+
 pie.array.sum = function(a) {
   var s = 0;
   a.forEach(function(i){ s += parseFloat(i); });
@@ -49,7 +57,7 @@ pie.array.grep = function(arr, regex) {
 pie.array.flatten = function(a, into) {
   into = into || [];
 
-  if(pie.array.isArray(a)) {
+  if(Array.isArray(a)) {
     a.forEach(function(e){
       pie.array.flatten(e, into);
     });

@@ -9,12 +9,6 @@ pie.baseView.prototype = Object.create(sudo.View.prototype);
 pie.baseView.constructor = pie.baseView;
 
 
-pie.baseView.prototype.app = function() {
-  var p = this.parent;
-  while(p && p.role !== 'app') p = p.parent;
-  return p;
-};
-
 // all events observed using baseView.on() will use the unique namespace for this instance.
 pie.baseView.prototype.eventNamespace = function() {
   return this.role + this.uid;
@@ -77,12 +71,12 @@ pie.baseView.prototype.parseFields = function() {
 };
 
 // placeholder for default functionality
-pie.baseView.prototype.addedToParent = function(parent){
+pie.baseView.prototype.addedToParent = function(){
   return this;
 };
 
 // clean up.
-pie.baseView.prototype.removedFromParent = function(parent) {
+pie.baseView.prototype.removedFromParent = function() {
   this._unobserveEvents_();
   this._unobserveChangeCallbacks_();
 

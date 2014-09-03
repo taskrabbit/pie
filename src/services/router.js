@@ -56,6 +56,9 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
 
   s = s.replace(/\:([a-zA-Z0-9_]+)/g, function(match, key){
     usedKeys.push(key);
+    if(data[key] === undefined || data[key] === null || data[key].toString().length === 0) {
+      throw new Error("[PIE] missing route interpolation: " + match);
+    }
     return data[key];
   });
 

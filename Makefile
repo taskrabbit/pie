@@ -1,3 +1,5 @@
+.PHONY: clean all test watch document
+
 PATH  := node_modules/.bin:$(PATH)
 SHELL := /bin/bash
 
@@ -6,7 +8,7 @@ deploy           := build/pie.js.min
 debug            := build/pie.js
 
 
-all: clean $(debug) $(deploy)
+all: clean $(debug) $(deploy) document
 
 $(deploy): $(debug)
 	uglifyjs -cmo $(deploy) $(debug)
@@ -20,3 +22,9 @@ test: $(deploy)
 
 clean:
 	rm -rf build
+
+document: $(debug)
+	docco -o docs/ $(debug)
+
+watch: $(source_files)
+	fswatch -o $^ | xargs -n1 -I{} make

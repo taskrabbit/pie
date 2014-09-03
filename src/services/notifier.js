@@ -1,6 +1,8 @@
 // notifier is a class which provides an interface for rendering page-level notifications.
-pie.services.notifier = function notifier(el) {
-  this.construct(el, {});
+pie.services.notifier = function notifier(app) {
+  this.app = app;
+  this.notifications = {};
+  this.construct();
 };
 
 pie.services.notifier.prototype = pie.baseView.extend({
@@ -14,12 +16,14 @@ pie.services.notifier.prototype = pie.baseView.extend({
   // remove all alerts, potentially filtering by the type of alert.
   clear: function(type) {
     if(type) {
-      var list = this.qsa('.alert-' + type);
-      while(list.length) {
-        $(list[0]).remove();
+      var nodes = this.notifications[type] || [];
+      while(nodes.length) {
+        this.remove(nodes[nodes.length-1]);
       }
     } else {
-      this.el.innerHTML = '';
+      while(this.el.childNodes.length) {
+        this.remove(this.el.childNodes[0]);
+      }
     }
   },
 
@@ -30,27 +34,44 @@ pie.services.notifier.prototype = pie.baseView.extend({
   // You can provide a number in milliseconds as the autoClose value as well.
   notify: function(messages, type, autoClose) {
     type = type || 'message';
-    if(autoClose === undefined) autoClose = true;
+    autoClose = this.getAutoCloseTimeout(autoClose);
 
     messages = pie.array.from(messages);
 
-    var content = this.app().template('alert', {"type" : type, "messages": messages});
-    content = pie.h.createElement(content);
+    var content = this.app.template('alert', {"type" : type, "messages": messages});
+    content = pie.h.createElement(content).q[0];
 
+    this.notifications[type] = this.notifications[type] || [];
+    this.notifications[type].push(content);
+
+    content._pieNotificationType = type;
     this.el.insertBefore(content, this.el.firstElementChild);
 
     if(autoClose) {
-      if(typeof autoClose !== 'number') autoClose = 5000;
       setTimeout(function(){
-        $(content).remove();
+        this.remove(content);
       }.bind(this), autoClose);
     }
 
   },
 
+  getAutoCloseTimeout: function(autoClose) {
+    if(autoClose === undefined) autoClose = true;
+    if(autoClose && typeof autoClose !== 'number') autoClose = 7000;
+    return autoClose;
+  },
+
+  remove: function(el) {
+    var type = el._pieNotificationType, idx;
+    if(type) {
+      pie.array.remove(this.notifications[type] || [], el);
+    }
+    $(el).remove();
+  },
+
   // remove the alert that was clicked.
   handleAlertClick: function(e) {
-    $(e.delegateTarget).remove();
+    this.remove(e.delegateTarget);
     e.preventDefault();
   },
 

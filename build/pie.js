@@ -43,6 +43,14 @@ pie.array.dup = function(a) {
   return a.slice(0);
 };
 
+pie.array.remove = function(a, o) {
+  var idx;
+  while((idx = a.indexOf(o)) >= 0) {
+    a.splice(idx, 1);
+  }
+  return a;
+};
+
 pie.array.sum = function(a) {
   var s = 0;
   a.forEach(function(i){ s += parseFloat(i); });
@@ -82,7 +90,7 @@ pie.array.grep = function(arr, regex) {
 pie.array.flatten = function(a, into) {
   into = into || [];
 
-  if(pie.array.isArray(a)) {
+  if(Array.isArray(a)) {
     a.forEach(function(e){
       pie.array.flatten(e, into);
     });
@@ -233,10 +241,10 @@ pie.object.except = function(){
 
 // deletes all undefined and null values.
 // returns a new object less any empty key/values.
-pie.object.compact = function(a, removeFalsy){
-  var b = $.extend({}, a);
+pie.object.compact = function(a, removeEmpty){
+  var b = pie.h.extend({}, a);
   Object.keys(b).forEach(function(k) {
-    if(b[k] === undefined || b[k] === null || (removeFalsy && !b[k])) delete b[k];
+    if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
   });
   return b;
 };
@@ -252,7 +260,8 @@ pie.object.values = function(a) {
 
 // yield each key value pair to a function
 // pie.object.forEach({'foo' : 'bar'}, function(k,v){ console.log(k, v); });
-// #> foo, bar
+//
+// => foo, bar
 pie.object.forEach = function(o, f) {
   Object.keys(o).forEach(function(k) {
     f(k, o[k]);
@@ -362,12 +371,6 @@ pie.baseView.prototype = Object.create(sudo.View.prototype);
 pie.baseView.constructor = pie.baseView;
 
 
-pie.baseView.prototype.app = function() {
-  var p = this.parent;
-  while(p && p.role !== 'app') p = p.parent;
-  return p;
-};
-
 // all events observed using baseView.on() will use the unique namespace for this instance.
 pie.baseView.prototype.eventNamespace = function() {
   return this.role + this.uid;
@@ -430,12 +433,12 @@ pie.baseView.prototype.parseFields = function() {
 };
 
 // placeholder for default functionality
-pie.baseView.prototype.addedToParent = function(parent){
+pie.baseView.prototype.addedToParent = function(){
   return this;
 };
 
 // clean up.
-pie.baseView.prototype.removedFromParent = function(parent) {
+pie.baseView.prototype.removedFromParent = function() {
   this._unobserveEvents_();
   this._unobserveChangeCallbacks_();
 
@@ -898,8 +901,10 @@ pie.services.i18n.prototype.strftime = function(date, f) {
 
 pie.services.i18n.prototype.l = pie.services.i18n.prototype.strftime;
 // notifier is a class which provides an interface for rendering page-level notifications.
-pie.services.notifier = function notifier(el) {
-  this.construct(el, {});
+pie.services.notifier = function notifier(app) {
+  this.app = app;
+  this.notifications = {};
+  this.construct();
 };
 
 pie.services.notifier.prototype = pie.baseView.extend({
@@ -913,12 +918,14 @@ pie.services.notifier.prototype = pie.baseView.extend({
   // remove all alerts, potentially filtering by the type of alert.
   clear: function(type) {
     if(type) {
-      var list = this.qsa('.alert-' + type);
-      while(list.length) {
-        $(list[0]).remove();
+      var nodes = this.notifications[type] || [];
+      while(nodes.length) {
+        this.remove(nodes[nodes.length-1]);
       }
     } else {
-      this.el.innerHTML = '';
+      while(this.el.childNodes.length) {
+        this.remove(this.el.childNodes[0]);
+      }
     }
   },
 
@@ -929,27 +936,44 @@ pie.services.notifier.prototype = pie.baseView.extend({
   // You can provide a number in milliseconds as the autoClose value as well.
   notify: function(messages, type, autoClose) {
     type = type || 'message';
-    if(autoClose === undefined) autoClose = true;
+    autoClose = this.getAutoCloseTimeout(autoClose);
 
     messages = pie.array.from(messages);
 
-    var content = this.app().template('alert', {"type" : type, "messages": messages});
-    content = pie.h.createElement(content);
+    var content = this.app.template('alert', {"type" : type, "messages": messages});
+    content = pie.h.createElement(content).q[0];
 
+    this.notifications[type] = this.notifications[type] || [];
+    this.notifications[type].push(content);
+
+    content._pieNotificationType = type;
     this.el.insertBefore(content, this.el.firstElementChild);
 
     if(autoClose) {
-      if(typeof autoClose !== 'number') autoClose = 5000;
       setTimeout(function(){
-        $(content).remove();
+        this.remove(content);
       }.bind(this), autoClose);
     }
 
   },
 
+  getAutoCloseTimeout: function(autoClose) {
+    if(autoClose === undefined) autoClose = true;
+    if(autoClose && typeof autoClose !== 'number') autoClose = 7000;
+    return autoClose;
+  },
+
+  remove: function(el) {
+    var type = el._pieNotificationType, idx;
+    if(type) {
+      pie.array.remove(this.notifications[type] || [], el);
+    }
+    $(el).remove();
+  },
+
   // remove the alert that was clicked.
   handleAlertClick: function(e) {
-    $(e.delegateTarget).remove();
+    this.remove(e.delegateTarget);
     e.preventDefault();
   },
 
@@ -1012,6 +1036,9 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
 
   s = s.replace(/\:([a-zA-Z0-9_]+)/g, function(match, key){
     usedKeys.push(key);
+    if(data[key] === undefined || data[key] === null || data[key].toString().length === 0) {
+      throw new Error("[PIE] missing route interpolation: " + match);
+    }
     return data[key];
   });
 
@@ -1122,7 +1149,8 @@ pie.app = function app(options) {
   // general app options
   this.options = pie.h.extend({
     uiTarget: 'body',
-    viewNamespace: 'lib.views'
+    viewNamespace: 'lib.views',
+    notificationUiTarget: '.notification-container'
   }, options);
 
   var classOption = function(key, _default){
@@ -1132,18 +1160,23 @@ pie.app = function app(options) {
 
   // app.i18n is the translation functionality
   this.i18n = classOption('i18n', pie.services.i18n);
+  this.addChild(this.i18n, 'i18n');
 
   // app.ajax is ajax interface + app specific functionality.
   this.ajax = classOption('ajax', pie.services.ajax);
+  this.addChild(this.ajax, 'ajax');
 
   // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
   this.notifier = classOption('notifier', pie.services.notifier);
+  this.addChild(this.notifier, 'notifier');
 
   // app.errorHandler is the object responsible for
   this.errorHandler = classOption('errorHandler', pie.services.errorHandler);
+  this.addChild(this.errorHandler, 'errorHandler');
 
   // app.router is used to determine which view should be rendered based on the url
   this.router = classOption('router', pie.services.router);
+  this.addChild(this.router, 'router');
 
 
 
@@ -1172,6 +1205,7 @@ pie.app = function app(options) {
 
   this.on('beforeStart', this.showStoredNotifications.bind(this));
   this.on('beforeStart', this.setupSinglePageLinks.bind(this));
+  this.on('beforeStart', this.setupNotifier.bind(this));
 
   // once the dom is loaded
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
@@ -1199,7 +1233,6 @@ pie.app.prototype.debug = function(msg) {
   if(this.env === 'production') return;
   if(console && console.log) console.log('[PIE] ' + msg);
 };
-
 
 // use this to navigate. This allows us to apply app-specific navigation logic
 // without altering the underling navigator.
@@ -1381,7 +1414,16 @@ pie.app.prototype.retrieve = function(key, clear) {
   return decoded;
 };
 
+
 pie.app.prototype.role = 'app';
+
+
+// add the notifier's el to the page if possible
+pie.app.prototype.setupNotifier = function() {
+  var parent = document.querySelector(this.options.notificationUiTarget);
+  if(parent) parent.appendChild(this.getChild('notifier').el);
+};
+
 
 // when a link is clicked, go there without a refresh if we recognize the route.
 pie.app.prototype.setupSinglePageLinks = function() {

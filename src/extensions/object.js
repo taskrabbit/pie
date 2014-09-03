@@ -24,10 +24,10 @@ pie.object.except = function(){
 
 // deletes all undefined and null values.
 // returns a new object less any empty key/values.
-pie.object.compact = function(a, removeFalsy){
-  var b = $.extend({}, a);
+pie.object.compact = function(a, removeEmpty){
+  var b = pie.h.extend({}, a);
   Object.keys(b).forEach(function(k) {
-    if(b[k] === undefined || b[k] === null || (removeFalsy && !b[k])) delete b[k];
+    if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
   });
   return b;
 };
@@ -43,7 +43,8 @@ pie.object.values = function(a) {
 
 // yield each key value pair to a function
 // pie.object.forEach({'foo' : 'bar'}, function(k,v){ console.log(k, v); });
-// #> foo, bar
+//
+// => foo, bar
 pie.object.forEach = function(o, f) {
   Object.keys(o).forEach(function(k) {
     f(k, o[k]);

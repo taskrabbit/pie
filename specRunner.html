@@ -1,37 +1,80 @@
 <!DOCTYPE HTML>
 <html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>Jasmine Spec Runner v2.0.2</title>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Jasmine Spec Runner v2.0.2</title>
 
-  <link rel="shortcut icon" type="image/png" href="vendor/jasmine-2.0.2/jasmine_favicon.png">
-  <link rel="stylesheet" type="text/css" href="vendor/jasmine-2.0.2/jasmine.css">
+    <link rel="shortcut icon" type="image/png" href="vendor/jasmine-2.0.2/jasmine_favicon.png">
+    <link rel="stylesheet" type="text/css" href="vendor/jasmine-2.0.2/jasmine.css">
 
-  <script type="text/javascript" src="vendor/jasmine-2.0.2/jasmine.js"></script>
-  <script type="text/javascript" src="vendor/jasmine-2.0.2/jasmine-html.js"></script>
-  <script type="text/javascript" src="vendor/jasmine-2.0.2/boot.js"></script>
+    <script type="text/javascript" src="vendor/jasmine-2.0.2/jasmine.js"></script>
+    <script type="text/javascript" src="vendor/jasmine-2.0.2/jasmine-html.js"></script>
+    <script type="text/javascript" src="vendor/jasmine-2.0.2/boot.js"></script>
 
-  <!-- include source files here... -->
-  <script type="text/javascript" src="vendor/sudo.js"></script>
-  <script type="text/javascript" src="vendor/cash.js"></script>
-  <script type="text/javascript" src="build/pie.js"></script>
+    <!-- include source files here... -->
+    <script type="text/javascript" src="vendor/sudo.js"></script>
+    <script type="text/javascript" src="vendor/cash.js"></script>
+    <script type="text/javascript" src="build/pie.js"></script>
 
-  <!-- include spec files here... -->
-  <script type="text/javascript" src="spec/SpecHelper.js"></script>
+    <script type="text/pie-template" id="alert">
+      <div class="pie-alert pie-alert-[%= data.type %]">
+        <ul>
+          [% data.messages.forEach(function(m){ %]
+            <li>[%- m %]</li>
+          [% }); %]
+        </ul>
+      </div>
+    </script>
 
-  <script type="text/pie-template" id="list">
-    <ul>
-      [% data.items.forEach(function(item){ %]
-        <li>[%- item.name %]</li>
-      [% }); %]
-    </ul>
-  </script>
+    <script type="text/pie-template" id="list">
+      <ul>
+        [% data.items.forEach(function(item){ %]
+          <li>[%- item.name %]</li>
+        [% }); %]
+      </ul>
+    </script>
 
-  <script type="text/javascript">
-    window.app = new pie.app();
-  </script>
-</head>
+    <script type="text/javascript">
+      window.app = new pie.app({
+        'uiTarget' : '#main',
+        'notificationUiTarget' : '#notifications'
+      });
 
-<body>
-</body>
+      app.router.route({
+        '/pie/a' : {view: 'listView', name: 'list'},
+        '/pie/b' : {},
+
+        'listApi' : '/api/pie/list.json'
+      });
+
+      lib = { views: {} };
+
+      lib.views.listView = function listView(app) {
+        this.app = app;
+        this.construct;
+        this.items = new sudo.Model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
+      };
+
+      lib.views.listView = pie.baseView.extend({
+        addedToParent: function() {
+          this.el.innerHTML = this.app.template('list', this.items.data);
+        }
+      });
+
+    </script>
+
+
+
+    <!-- include spec files here... -->
+    <script type="text/javascript" src="spec/SpecHelper.js"></script>
+    <script type="text/javascript" src="spec/services/notifierSpec.js"></script>
+    <script type="text/javascript" src="spec/services/routerSpec.js"></script>
+
+
+  </head>
+
+  <body>
+    <div id="notifications"></div>
+    <div id="main"></div>
+  </body>
 </html>
