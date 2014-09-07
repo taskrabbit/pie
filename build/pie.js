@@ -630,12 +630,15 @@ pie.services.errorHandler.prototype.data = function(xhr) {
 // the xhr data diretly, or allow overriding by response code.
 pie.services.errorHandler.prototype.errorMessagesFromRequest = function(xhr) {
   var d = this.data(xhr),
-  errors  = Array.map(d.errors || [], 'message'),
+  errors  = pie.array.map(d.errors || [], 'message'),
+  clean;
+
+  errors = pie.array.compact(errors, true);
   clean   = this.app.i18n.t('app.errors.' + xhr.status, {default: errors});
 
   this.app.debug(errors);
 
-  return clean;
+  return pie.array.from(clean);
 };
 
 // find a handler for the xhr via response code or the app default.
@@ -1333,7 +1336,7 @@ pie.app.prototype.handleSinglePageLinkClick = function(e){
   // if we're going nowhere or to an anchor on the page, let the browser take over
   if(!href || href === '#') return;
 
-  // ensure that relative links are evaluate as relative
+  // ensure that relative links are evaluated as relative
   if(href.charAt(0) === '?') href = window.location.pathname + href;
 
   // great, we can handle it. let the app decide whether to use pushstate or not

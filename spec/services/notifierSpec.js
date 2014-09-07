@@ -17,15 +17,18 @@ describe("pie.services.notifier", function(){
     expect(node.classList.contains('pie-alert-error')).toEqual(false);
   });
 
-  it("clears the notifications automatically when a delay is provided", function(done) {
+  it("clears the notifications automatically when a delay is provided", function() {
+    jasmine.clock().install();
+
     app.notifier.notify('test message', 'message', 10);
 
     expect(document.querySelectorAll('#notifications .pie-alert').length).toEqual(1);
 
-    setTimeout(function(){
-      expect(document.querySelectorAll('#notifications .pie-alert').length).toEqual(0);
-      done();
-    }, 10);
+    jasmine.clock().tick(10);
+
+    expect(document.querySelectorAll('#notifications .pie-alert').length).toEqual(0);
+
+    jasmine.clock().uninstall();
   });
 
   it("should provide the correct autoclose timeout", function() {

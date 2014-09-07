@@ -1269,12 +1269,15 @@ the xhr data diretly, or allow overriding by response code.</p>
             
             <div class="content"><div class='highlight'><pre>pie.services.errorHandler.prototype.errorMessagesFromRequest = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
   <span class="hljs-keyword">var</span> d = <span class="hljs-keyword">this</span>.data(xhr),
-  errors  = <span class="hljs-built_in">Array</span>.map(d.errors || [], <span class="hljs-string">'message'</span>),
+  errors  = pie.array.map(d.errors || [], <span class="hljs-string">'message'</span>),
+  clean;
+
+  errors = pie.array.compact(errors, <span class="hljs-literal">true</span>);
   clean   = <span class="hljs-keyword">this</span>.app.i18n.t(<span class="hljs-string">'app.errors.'</span> + xhr.status, {<span class="hljs-keyword">default</span>: errors});
 
   <span class="hljs-keyword">this</span>.app.debug(errors);
 
-  <span class="hljs-keyword">return</span> clean;
+  <span class="hljs-keyword">return</span> pie.array.from(clean);
 };</pre></div></div>
             
         </li>
@@ -2631,7 +2634,7 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-108">&#182;</a>
               </div>
-              <p>ensure that relative links are evaluate as relative</p>
+              <p>ensure that relative links are evaluated as relative</p>
 
             </div>
             

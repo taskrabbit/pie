@@ -40,6 +40,14 @@
         'notificationUiTarget' : '#notifications'
       });
 
+      app.i18n.load({
+        "app" : {
+          "errors" : {
+            "401" : "Sorry, you aren't authorized to view this page."
+          }
+        }
+      })
+
       app.router.route({
         '/pie/a' : {view: 'listView', name: 'list'},
         '/pie/b' : {},
@@ -67,6 +75,7 @@
 
     <!-- include spec files here... -->
     <script type="text/javascript" src="spec/SpecHelper.js"></script>
+    <script type="text/javascript" src="spec/services/errorHandlerSpec.js"></script>
     <script type="text/javascript" src="spec/services/notifierSpec.js"></script>
     <script type="text/javascript" src="spec/services/routerSpec.js"></script>
 

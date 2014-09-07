@@ -79,5 +79,5 @@
     "passfail"      : false,    // true: Stop on first error
     "white"        : false,    // true: Check against strict whitespace and indentation rules
 
-    "globals": ["sudo", "$", "pie", "beforeEach", "afterEach", "describe", "it", "app", "expect"]
+    "globals": ["sudo", "$", "pie", "beforeEach", "afterEach", "describe", "it", "app", "expect", "spyOn", "jasmine"]
 }

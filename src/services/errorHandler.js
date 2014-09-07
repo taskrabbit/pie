@@ -14,12 +14,15 @@ pie.services.errorHandler.prototype.data = function(xhr) {
 // the xhr data diretly, or allow overriding by response code.
 pie.services.errorHandler.prototype.errorMessagesFromRequest = function(xhr) {
   var d = this.data(xhr),
-  errors  = Array.map(d.errors || [], 'message'),
+  errors  = pie.array.map(d.errors || [], 'message'),
+  clean;
+
+  errors = pie.array.compact(errors, true);
   clean   = this.app.i18n.t('app.errors.' + xhr.status, {default: errors});
 
   this.app.debug(errors);
 
-  return clean;
+  return pie.array.from(clean);
 };
 
 // find a handler for the xhr via response code or the app default.
