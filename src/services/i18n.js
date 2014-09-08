@@ -12,7 +12,8 @@ pie.services.i18n.prototype._ampm = function(num) {
 
 pie.services.i18n.prototype._countAlias = {
   '0' : 'zero',
-  '1' : 'one'
+  '1' : 'one',
+  '-1' : 'negone'
 };
 
 
@@ -91,21 +92,18 @@ pie.services.i18n.prototype._utc = function(t) {
 };
 
 
-pie.services.i18n.prototype.load = function() {
-  var d, i = 0;
-  for(;i<arguments.length;i++) {
-    d = arguments[i];
-    pie.h.extend(this.translations, d);
-  }
+pie.services.i18n.prototype.load = function(data, shallow) {
+  var f = shallow ? pie.h.extend : pie.h.deepExtend;
+  f.call(null, this.translations, data);
 };
 
 
-pie.services.i18n.prototype.t = function(path, data) {
+pie.services.i18n.prototype.translate = function(path, data) {
   var translation = pie.h.getPath(path, this.translations), count;
 
   if (data && data.hasOwnProperty('count') && typeof translation === 'object') {
     count = (data.count || 0).toString();
-    count = this._countAlias[count] || 'other';
+    count = this._countAlias[count] || (count > 0 ? 'other' : 'negother');
     translation = translation[count] === undefined ? translation.other : translation[count];
   }
 
@@ -202,4 +200,5 @@ pie.services.i18n.prototype.strftime = function(date, f) {
   return f;
 };
 
+pie.services.i18n.prototype.t = pie.services.i18n.prototype.translate;
 pie.services.i18n.prototype.l = pie.services.i18n.prototype.strftime;

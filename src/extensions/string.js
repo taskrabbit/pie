@@ -1,4 +1,4 @@
-// designed to be used with the ":expression" placeholders
+// designed to be used with the "%{expression}" placeholders
 pie.string.expand = function(str, data) {
   data = data || {};
   return str.replace(/\%\{(.+?)\}/g,

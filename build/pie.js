@@ -267,7 +267,7 @@ pie.object.forEach = function(o, f) {
     f(k, o[k]);
   });
 };
-// designed to be used with the ":expression" placeholders
+// designed to be used with the "%{expression}" placeholders
 pie.string.expand = function(str, data) {
   data = data || {};
   return str.replace(/\%\{(.+?)\}/g,
@@ -344,10 +344,31 @@ pie.string.modularize = function(str) {
 // create an element based on the content provided.
 pie.h.createElement = $.createElement;
 
+// deep merge
+pie.h.deepExtend = function() {
+  var args = pie.array.args(arguments),
+      targ = args.shift(),
+      obj;
+
+  function fn(k) {
+    if(k in targ && typeof targ[k] === 'object') {
+      targ[k] = pie.h.deepExtend(targ[k], obj[k]);
+    } else {
+      targ[k] = obj[k];
+    }
+  }
+
+  // iterate over each passed in obj remaining
+  for (; args.length && (obj = args.shift());) {
+    Object.keys(obj).forEach(fn);
+  }
+  return targ;
+};
+
 // deserialize query string into object
 pie.h.deserialize = $.deserialize;
 
-// deep merge
+// shallow merge
 pie.h.extend   = $.extend;
 
 // extract from subobjects
@@ -712,7 +733,8 @@ pie.services.i18n.prototype._ampm = function(num) {
 
 pie.services.i18n.prototype._countAlias = {
   '0' : 'zero',
-  '1' : 'one'
+  '1' : 'one',
+  '-1' : 'negone'
 };
 
 
@@ -791,21 +813,18 @@ pie.services.i18n.prototype._utc = function(t) {
 };
 
 
-pie.services.i18n.prototype.load = function() {
-  var d, i = 0;
-  for(;i<arguments.length;i++) {
-    d = arguments[i];
-    pie.h.extend(this.translations, d);
-  }
+pie.services.i18n.prototype.load = function(data, shallow) {
+  var f = shallow ? pie.h.extend : pie.h.deepExtend;
+  f.call(null, this.translations, data);
 };
 
 
-pie.services.i18n.prototype.t = function(path, data) {
+pie.services.i18n.prototype.translate = function(path, data) {
   var translation = pie.h.getPath(path, this.translations), count;
 
   if (data && data.hasOwnProperty('count') && typeof translation === 'object') {
     count = (data.count || 0).toString();
-    count = this._countAlias[count] || 'other';
+    count = this._countAlias[count] || (count > 0 ? 'other' : 'negother');
     translation = translation[count] === undefined ? translation.other : translation[count];
   }
 
@@ -902,6 +921,7 @@ pie.services.i18n.prototype.strftime = function(date, f) {
   return f;
 };
 
+pie.services.i18n.prototype.t = pie.services.i18n.prototype.translate;
 pie.services.i18n.prototype.l = pie.services.i18n.prototype.strftime;
 // notifier is a class which provides an interface for rendering page-level notifications.
 pie.services.notifier = function notifier(app) {
