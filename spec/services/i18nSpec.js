@@ -138,4 +138,261 @@ describe("pie.services.i18n", function() {
 
   });
 
+  describe("#_normalizedDate", function() {
+
+    it("should turn second-based epoch timestamps into date objects", function() {
+      var stamps = ["1410210005", 1410210005], d;
+
+      stamps.forEach(function(stamp) {
+        d = this.i18n._normalizedDate(stamp);
+
+        expect(d.getUTCFullYear()).toEqual(2014);
+        expect(d.getUTCMonth() + 1).toEqual(9);
+        expect(d.getUTCDate()).toEqual(8);
+        expect(d.getUTCDay()).toEqual(1);
+
+        expect(d.getUTCHours()).toEqual(21);
+        expect(d.getUTCMinutes()).toEqual(0);
+        expect(d.getUTCSeconds()).toEqual(5);
+      }.bind(this));
+
+    });
+
+    it("should turn millisecode-based epoch timestamps into date objects", function() {
+      var stamps = ["1410210005000", 1410210005000], d;
+
+      stamps.forEach(function(stamp) {
+        d = this.i18n._normalizedDate(stamp);
+
+        expect(d.getUTCFullYear()).toEqual(2014);
+        expect(d.getUTCMonth() + 1).toEqual(9);
+        expect(d.getUTCDate()).toEqual(8);
+        expect(d.getUTCDay()).toEqual(1);
+
+        expect(d.getUTCHours()).toEqual(21);
+        expect(d.getUTCMinutes()).toEqual(0);
+        expect(d.getUTCSeconds()).toEqual(5);
+      }.bind(this));
+
+    });
+
+    it("should leave dates alone", function() {
+      var d1 = new Date(), d2;
+
+      d2 = this.i18n._normalizedDate(d1);
+      expect(d1).toEqual(d2);
+    });
+
+    it("should parse iso times", function() {
+      var iso = "2014-09-08T21:00:05.854Z", d;
+
+      d = this.i18n._normalizedDate(iso);
+
+      expect(d.getUTCFullYear()).toEqual(2014);
+      expect(d.getUTCMonth() + 1).toEqual(9);
+      expect(d.getUTCDate()).toEqual(8);
+      expect(d.getUTCDay()).toEqual(1);
+
+      expect(d.getUTCHours()).toEqual(21);
+      expect(d.getUTCMinutes()).toEqual(0);
+      expect(d.getUTCSeconds()).toEqual(5);
+    });
+
+    it("should parse everything else", function() {
+      var stamp = "testing", d;
+
+      d = this.i18n._normalizedDate(stamp);
+      expect(typeof d).toEqual('object');
+      expect(d.getUTCFullYear()).toEqual(NaN);
+    });
+
+  });
+
+  describe("#timeago", function() {
+
+    beforeEach(function() {
+      app.i18n.load({
+        "timeagotest" : {
+          "timeago" : {
+            "now" : {
+              "zero" : "Just now",
+              "other" : "%{count} seconds ago"
+            },
+            "minutes" : "%{count} minutes ago",
+            "hours" : "%{count} hours ago",
+            "days" : "%{count} days ago",
+            "weeks" : "%{count} weeks ago",
+            "months" : "%{count} months ago",
+            "years" : "%{count} years ago"
+          }
+        }
+      });
+
+      this.now = new Date();
+      this.then = new Date(this.now);
+    });
+
+    afterEach(function() {
+      delete app.i18n.timeagotest;
+    });
+
+    it("should return now results", function() {
+      this.then.setSeconds(this.then.getSeconds() - 30);
+
+      var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+      expect(response).toEqual('30 seconds ago');
+    });
+
+    it("should return minute results", function() {
+      this.then.setMinutes(this.then.getMinutes() - 30);
+
+      var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+      expect(response).toEqual('30 minutes ago');
+    });
+
+    it("should return hours results", function() {
+      this.then.setHours(this.then.getHours() - 12);
+
+      var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+      expect(response).toEqual('12 hours ago');
+    });
+
+    it("should return days results", function() {
+      this.then.setDate(this.then.getDate() - 2);
+
+      var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+      expect(response).toEqual('2 days ago');
+    });
+
+    it("should return week results", function() {
+      this.then.setDate(this.then.getDate() - 22);
+
+      var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+      expect(response).toEqual('3 weeks ago');
+    });
+
+    it("should return month results", function() {
+      this.then.setMonth(this.then.getMonth() - 8);
+
+      var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+      expect(response).toEqual('7 months ago');
+    });
+
+    it("should return year results", function() {
+      this.then.setFullYear(this.then.getFullYear() - 4);
+
+      var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+      expect(response).toEqual('4 years ago');
+    });
+
+  });
+
+  describe("#strftime", function() {
+
+    beforeEach(function() {
+      this.i18n.load({
+        'app' : {
+          'time' : {
+            'day_names' : [
+              'Sunday',
+              'Monday',
+              'Tuesday',
+              'Wednesday',
+              'Thursday',
+              'Friday',
+              'Saturday'
+            ],
+            'month_names' : [
+              'January',
+              'February',
+              'March',
+              'April',
+              'May',
+              'June',
+              'July',
+              'August',
+              'September',
+              'October',
+              'November',
+              'December'
+            ],
+            'short_day_names' : [
+              'Sun',
+              'Mon',
+              'Tues',
+              'Wed',
+              'Thurs',
+              'Fri',
+              'Sat'
+            ],
+            'short_month_names' : [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec'
+            ],
+            'formats' : {
+              'strftimetest' : '%Y-%-m-%-d'
+            }
+          }
+        }
+      });
+
+      this.d = this.i18n._normalizedDate("2014-09-08T17:00:05.854-0400");
+    });
+
+    afterEach(function() {
+      delete this.i18n.translations.app.time.formats.strftimetest;
+    });
+
+    it("should lookup named formats if the string doesnt start with %", function() {
+      var response = this.i18n.l(this.d, 'strftimetest');
+      expect(response).toEqual('2014-9-8');
+    });
+
+    var expectations = {
+      '%a' : 'Mon',
+      '%A' : 'Monday',
+      '%b' : 'Sep',
+      '%d' : '08',
+      '%e' : ' 8',
+      '%-d' : '8',
+      '%H' : '17',
+      '%k' : '17',
+      '%I' : '05',
+      '%l' : '5',
+      '%m' : '09',
+      '%-m' : '9',
+      '%M' : '00',
+      '%p' : 'PM',
+      '%P' : 'pm',
+      '%S' : '05',
+      '%-S' : '5',
+      '%w' : '1',
+      '%y' : '14',
+      '%Y' : '2014',
+      '%z' : '-0400',
+      '%Z' : 'EDT'
+    };
+
+    Object.keys(expectations).forEach(function(k) {
+      var expectation = expectations[k];
+
+      it("should replace " + k + " properly", function() {
+        var response = this.i18n.l(this.d, k);
+        expect(response).toEqual(expectation);
+      });
+
+    });
+
+  });
+
 });
