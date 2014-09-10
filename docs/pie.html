@@ -1228,7 +1228,7 @@ app.ajax.post({
     <span class="hljs-keyword">if</span>(options.tracker) options.tracker(<span class="hljs-keyword">this</span>);
 
     <span class="hljs-keyword">try</span>{
-      <span class="hljs-keyword">this</span>.data = <span class="hljs-keyword">this</span>.response.trim().length ? <span class="hljs-built_in">JSON</span>.parse(<span class="hljs-keyword">this</span>.response) : {};
+      <span class="hljs-keyword">this</span>.data = <span class="hljs-keyword">this</span>.responseText.trim().length ? <span class="hljs-built_in">JSON</span>.parse(<span class="hljs-keyword">this</span>.responseText) : {};
     } <span class="hljs-keyword">catch</span>(err) {
       app.debug(<span class="hljs-string">"could not parse JSON response: "</span> + err);
       <span class="hljs-keyword">this</span>.data = {};
@@ -1253,6 +1253,7 @@ app.ajax.post({
 };
 
 pie.services.ajax.prototype.get = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+  options = pie.h.extend({type: <span class="hljs-string">'GET'</span>}, options);
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.ajax(options);
 };
 

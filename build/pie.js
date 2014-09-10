@@ -587,7 +587,7 @@ pie.services.ajax.prototype.ajax = function(options) {
     if(options.tracker) options.tracker(this);
 
     try{
-      this.data = this.response.trim().length ? JSON.parse(this.response) : {};
+      this.data = this.responseText.trim().length ? JSON.parse(this.responseText) : {};
     } catch(err) {
       app.debug("could not parse JSON response: " + err);
       this.data = {};
@@ -612,6 +612,7 @@ pie.services.ajax.prototype.ajax = function(options) {
 };
 
 pie.services.ajax.prototype.get = function(options) {
+  options = pie.h.extend({type: 'GET'}, options);
   return this.ajax(options);
 };
 
