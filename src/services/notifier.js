@@ -1,78 +1,76 @@
 // notifier is a class which provides an interface for rendering page-level notifications.
 pie.services.notifier = function notifier(app) {
+  pie.view.prototype.constructor.call(this);
   this.app = app;
   this.notifications = {};
-  this.construct();
 };
 
-pie.services.notifier.prototype = pie.baseView.extend({
+pie.services.notifier.prototype = Object.create(pie.view.prototype);
 
 
-  addedToParent: function() {
-    this.on('click', '.page-alert', this.handleAlertClick.bind(this));
-  },
+pie.services.notifier.prototype.addedToParent = function() {
+  this.on('click', '.page-alert', this.handleAlertClick.bind(this));
+};
 
 
-  // remove all alerts, potentially filtering by the type of alert.
-  clear: function(type) {
-    if(type) {
-      var nodes = this.notifications[type] || [];
-      while(nodes.length) {
-        this.remove(nodes[nodes.length-1]);
-      }
-    } else {
-      while(this.el.childNodes.length) {
-        this.remove(this.el.childNodes[0]);
-      }
+// remove all alerts, potentially filtering by the type of alert.
+pie.services.notifier.prototype.clear = function(type) {
+  if(type) {
+    var nodes = this.notifications[type] || [];
+    while(nodes.length) {
+      this.remove(nodes[nodes.length-1]);
     }
-  },
-
-  // Show a notification or notifications.
-  // Messages can be a string or an array of messages.
-  // Multiple messages will be shown in the same notification, but on separate lines.
-  // You can choose to close a notification automatically by providing `true` as the third arg.
-  // You can provide a number in milliseconds as the autoClose value as well.
-  notify: function(messages, type, autoClose) {
-    type = type || 'message';
-    autoClose = this.getAutoCloseTimeout(autoClose);
-
-    messages = pie.array.from(messages);
-
-    var content = this.app.template('alert', {"type" : type, "messages": messages});
-    content = pie.h.createElement(content).q[0];
-
-    this.notifications[type] = this.notifications[type] || [];
-    this.notifications[type].push(content);
-
-    content._pieNotificationType = type;
-    this.el.insertBefore(content, this.el.firstElementChild);
-
-    if(autoClose) {
-      setTimeout(function(){
-        this.remove(content);
-      }.bind(this), autoClose);
+  } else {
+    while(this.el.childNodes.length) {
+      this.remove(this.el.childNodes[0]);
     }
+  }
+};
 
-  },
+// Show a notification or notifications.
+// Messages can be a string or an array of messages.
+// Multiple messages will be shown in the same notification, but on separate lines.
+// You can choose to close a notification automatically by providing `true` as the third arg.
+// You can provide a number in milliseconds as the autoClose value as well.
+pie.services.notifier.prototype.notify = function(messages, type, autoClose) {
+  type = type || 'message';
+  autoClose = this.getAutoCloseTimeout(autoClose);
 
-  getAutoCloseTimeout: function(autoClose) {
-    if(autoClose === undefined) autoClose = true;
-    if(autoClose && typeof autoClose !== 'number') autoClose = 7000;
-    return autoClose;
-  },
+  messages = pie.array.from(messages);
 
-  remove: function(el) {
-    var type = el._pieNotificationType, idx;
-    if(type) {
-      pie.array.remove(this.notifications[type] || [], el);
-    }
-    $(el).remove();
-  },
+  var content = this.app.template('alert', {"type" : type, "messages": messages});
+  content = pie.util.createElement(content);
 
-  // remove the alert that was clicked.
-  handleAlertClick: function(e) {
-    this.remove(e.delegateTarget);
-    e.preventDefault();
-  },
+  this.notifications[type] = this.notifications[type] || [];
+  this.notifications[type].push(content);
 
-});
+  content._pieNotificationType = type;
+  this.el.insertBefore(content, this.el.firstElementChild);
+
+  if(autoClose) {
+    setTimeout(function(){
+      this.remove(content);
+    }.bind(this), autoClose);
+  }
+
+};
+
+pie.services.notifier.prototype.getAutoCloseTimeout = function(autoClose) {
+  if(autoClose === undefined) autoClose = true;
+  if(autoClose && typeof autoClose !== 'number') autoClose = 7000;
+  return autoClose;
+};
+
+pie.services.notifier.prototype.remove = function(el) {
+  var type = el._pieNotificationType, idx;
+  if(type) {
+    pie.array.remove(this.notifications[type] || [], el);
+  }
+  $(el).remove();
+};
+
+// remove the alert that was clicked.
+pie.services.notifier.prototype.handleAlertClick = function(e) {
+  this.remove(e.delegateTarget);
+  e.preventDefault();
+};

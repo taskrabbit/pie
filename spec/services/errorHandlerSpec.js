@@ -73,7 +73,7 @@ describe('pie.services.errorHandler', function() {
         expect(arg1).toEqual(xhr);
         expect(this).toEqual(xhr);
 
-        handles += 1;
+        handles++;
       });
 
       this.handler.registerHandler(422, function(){ });

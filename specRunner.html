@@ -52,6 +52,7 @@
       app.router.route({
         '/pie/a' : {view: 'listView', name: 'list'},
         '/pie/b' : {},
+        '/pie/:id/show' : { view: 'listView', name: 'show' },
 
         'listApi' : '/api/pie/list.json'
       });
@@ -60,15 +61,15 @@
 
       lib.views.listView = function listView(app) {
         this.app = app;
-        this.construct;
-        this.items = new sudo.Model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
+        this.items = new pie.model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
+        pie.view.call(this);
       };
 
-      lib.views.listView = pie.baseView.extend({
-        addedToParent: function() {
-          this.el.innerHTML = this.app.template('list', this.items.data);
-        }
-      });
+      lib.views.listView.prototype = Object.create(pie.view.prototype);
+
+      lib.views.listView.prototype.addedToParent = function() {
+        this.el.innerHTML = this.app.template('list', this.items.data);
+      };
 
     </script>
 
@@ -76,6 +77,7 @@
 
     <!-- include spec files here... -->
     <script type="text/javascript" src="spec/SpecHelper.js"></script>
+    <script type="text/javascript" src="spec/modelSpec.js"></script>
     <script type="text/javascript" src="spec/services/ajaxSpec.js"></script>
     <script type="text/javascript" src="spec/services/errorHandlerSpec.js"></script>
     <script type="text/javascript" src="spec/services/i18nSpec.js"></script>

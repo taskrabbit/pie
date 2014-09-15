@@ -25,7 +25,7 @@ pie.object.except = function(){
 // deletes all undefined and null values.
 // returns a new object less any empty key/values.
 pie.object.compact = function(a, removeEmpty){
-  var b = pie.h.extend({}, a);
+  var b = pie.util.extend({}, a);
   Object.keys(b).forEach(function(k) {
     if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
   });

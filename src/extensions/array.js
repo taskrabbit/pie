@@ -12,7 +12,7 @@ pie.array.dup = function(a) {
 
 pie.array.remove = function(a, o) {
   var idx;
-  while((idx = a.indexOf(o)) >= 0) {
+  while(~(idx = a.indexOf(o))) {
     a.splice(idx, 1);
   }
   return a;
@@ -135,6 +135,18 @@ pie.array.args = function(argumentsObject) {
 // return unique values
 pie.array.uniq = function(arr) {
   return arr.filter(function(e, i){ return arr.indexOf(e) === i; });
+};
+
+pie.array.union = function() {
+  var arrays = pie.array.compact(pie.array.args(arguments), true),
+  a = arrays.shift();
+  if(!a) return [];
+
+  a = pie.array.dup(a);
+  arrays.forEach(function(b){
+    b.forEach(function(i){ if(~a.indexOf(i)) a.push(i); });
+  });
+  return a;
 };
 
 pie.array.toSentence = function(arr) {

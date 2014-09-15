@@ -24,7 +24,7 @@ pie.services.ajax.prototype._defaultAjaxOptions = function() {
 pie.services.ajax.prototype.ajax = function(options) {
 
   options = pie.object.compact(options);
-  options = pie.h.extend({}, this._defaultAjaxOptions(), options);
+  options = pie.util.extend({}, this._defaultAjaxOptions(), options);
 
   if(options.extraError) {
     var oldError = options.error;
@@ -81,12 +81,12 @@ pie.services.ajax.prototype.ajax = function(options) {
 };
 
 pie.services.ajax.prototype.get = function(options) {
-  options = pie.h.extend({type: 'GET'}, options);
+  options = pie.util.extend({type: 'GET'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.post = function(options) {
-  options = pie.h.extend({type: 'POST'}, options);
+  options = pie.util.extend({type: 'POST'}, options);
   return this.ajax(options);
 };
 

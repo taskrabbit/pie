@@ -2,13 +2,14 @@
 // operator of the site. contains a router, navigator, etc with the intention of holding page context.
 pie.app = function app(options) {
 
-  sudo.Container.call(this);
-
   // general app options
-  this.options = pie.h.extend({
+  this.options = pie.util.deepExtend({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
-    notificationUiTarget: '.notification-container'
+    notificationUiTarget: '.notification-container',
+    navigatorOptions: {
+      root: '/'
+    }
   }, options);
 
   var classOption = function(key, _default){
@@ -18,28 +19,28 @@ pie.app = function app(options) {
 
   // app.i18n is the translation functionality
   this.i18n = classOption('i18n', pie.services.i18n);
-  this.addChild(this.i18n, 'i18n');
+  this.addChild('i18n', this.i18n);
 
   // app.ajax is ajax interface + app specific functionality.
   this.ajax = classOption('ajax', pie.services.ajax);
-  this.addChild(this.ajax, 'ajax');
+  this.addChild('ajax', this.ajax);
 
   // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
   this.notifier = classOption('notifier', pie.services.notifier);
-  this.addChild(this.notifier, 'notifier');
+  this.addChild('notifier', this.notifier);
 
   // app.errorHandler is the object responsible for
   this.errorHandler = classOption('errorHandler', pie.services.errorHandler);
-  this.addChild(this.errorHandler, 'errorHandler');
+  this.addChild('errorHandler', this.errorHandler);
 
   // app.router is used to determine which view should be rendered based on the url
   this.router = classOption('router', pie.services.router);
-  this.addChild(this.router, 'router');
-
+  this.addChild('router', this.router);
 
 
   // the only navigator which should exist in this app.
-  this.navigator = new sudo.Navigator({root: '/', useHashChange: false});
+  this.navigator = classOption('navigator', pie.services.navigator);
+  this.addChild('navigator', this.navigator);
 
   // app.models is globally available. app.models is solely for page context.
   // this is not a singleton container or anything like that. it's just for passing
@@ -58,8 +59,7 @@ pie.app = function app(options) {
   this.triggeredEvents = [];
 
   // we observe the navigator and handle changing the context of the page
-  pie.h.extend(this.navigator, pie.m.observable);
-  this.navigator.observe(this.navigationChanged.bind(this));
+  this.navigator.observe(this.navigationChanged.bind(this), 'url');
 
   this.on('beforeStart', this.showStoredNotifications.bind(this));
   this.on('beforeStart', this.setupSinglePageLinks.bind(this));
@@ -70,8 +70,7 @@ pie.app = function app(options) {
 };
 
 
-pie.app.prototype = Object.create(sudo.Container.prototype);
-pie.app.constructor = pie.app;
+pie.util.extend(pie.app.prototype, pie.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.
@@ -182,7 +181,7 @@ pie.app.prototype.navigationChanged = function() {
 
   // let the router determine our new url
   this.previousUrl = this.parsedUrl;
-  this.parsedUrl = this.router.parseUrl(this.navigator.getUrl());
+  this.parsedUrl = this.router.parseUrl(this.navigator.get('url'));
 
   if(this.previousUrl !== this.parsedUrl) {
     this.trigger('urlChanged');
@@ -211,13 +210,13 @@ pie.app.prototype.navigationChanged = function() {
   this.notifier.clear();
 
   // use the view key of the parsedUrl to find the viewClass
-  var viewClass = pie.h.getPath(this.viewNamespace + '.' + this.parsedUrl.view, window), child;
+  var viewClass = pie.util.getPath(this.viewNamespace + '.' + this.parsedUrl.view, window), child;
   // the instance to be added.
 
   // add the instance as our 'currentView'
   child = new viewClass(this);
   child._pieName = this.parsedUrl.view;
-  this.addChild(child, 'currentView');
+  this.addChild('currentView', child);
   target.appendChild(child.el);
 
 
@@ -235,7 +234,7 @@ pie.app.prototype.navigationChanged = function() {
 // if futureOnly is truthy the fn will only be triggered for future events.
 // todo: allow once-only events.
 pie.app.prototype.on = function(event, fn, futureOnly) {
-  if(!futureOnly && this.triggeredEvents.indexOf(event) >= 0) {
+  if(!futureOnly && ~this.triggeredEvents.indexOf(event)) {
     fn();
   } else {
     this.eventCallbacks[event] = this.eventCallbacks[event] || [];
@@ -276,9 +275,6 @@ pie.app.prototype.retrieve = function(key, clear) {
 };
 
 
-pie.app.prototype.role = 'app';
-
-
 // add the notifier's el to the page if possible
 pie.app.prototype.setupNotifier = function() {
   var parent = document.querySelector(this.options.notificationUiTarget);
@@ -312,9 +308,9 @@ pie.app.prototype.start = function() {
   this.trigger('beforeStart');
 
   // invoke a nav change event on page load.
-  var fragment = this.navigator.get('fragment');
-  this.navigator.data.fragment = null;
-  this.navigator.set('fragment', fragment);
+  var url = this.navigator.get('url');
+  this.navigator.data.url = null;
+  this.navigator.set('url', url);
 
   this.started = true;
   this.trigger('afterStart');

@@ -102,13 +102,13 @@ pie.services.i18n.prototype._utc = function(t) {
 
 
 pie.services.i18n.prototype.load = function(data, shallow) {
-  var f = shallow ? pie.h.extend : pie.h.deepExtend;
+  var f = shallow ? pie.util.extend : pie.util.deepExtend;
   f.call(null, this.translations, data);
 };
 
 
 pie.services.i18n.prototype.translate = function(path, data) {
-  var translation = pie.h.getPath(path, this.translations), count;
+  var translation = pie.util.getPath(path, this.translations), count;
 
   if (data && data.hasOwnProperty('count') && typeof translation === 'object') {
     count = (data.count || 0).toString();

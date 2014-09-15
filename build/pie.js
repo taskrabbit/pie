@@ -18,18 +18,19 @@ window.pie = {
   object: {},
   string: {},
 
-
-  // application helpers
-  h: {},
-
-  // template helpers
-  t: {},
-
-  // modules for extending objects with functionality
-  m: {},
+  // inheritance helper
+  inheritance: {},
 
   // service objects
-  services: {}
+  services: {},
+
+  uid: 0,
+
+  unique: function() { return this.uid++; },
+
+  // application utilities
+  util: {},
+
 };
 // remove all null or undefined values
 // does not remove all falsy values unless the second param is true
@@ -45,7 +46,7 @@ pie.array.dup = function(a) {
 
 pie.array.remove = function(a, o) {
   var idx;
-  while((idx = a.indexOf(o)) >= 0) {
+  while(~(idx = a.indexOf(o))) {
     a.splice(idx, 1);
   }
   return a;
@@ -170,6 +171,18 @@ pie.array.uniq = function(arr) {
   return arr.filter(function(e, i){ return arr.indexOf(e) === i; });
 };
 
+pie.array.union = function() {
+  var arrays = pie.array.compact(pie.array.args(arguments), true),
+  a = arrays.shift();
+  if(!a) return [];
+
+  a = pie.array.dup(a);
+  arrays.forEach(function(b){
+    b.forEach(function(i){ if(~a.indexOf(i)) a.push(i); });
+  });
+  return a;
+};
+
 pie.array.toSentence = function(arr) {
   if(!arr.length) return;
   if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(', '), arr.slice(arr.length-1)];
@@ -242,7 +255,7 @@ pie.object.except = function(){
 // deletes all undefined and null values.
 // returns a new object less any empty key/values.
 pie.object.compact = function(a, removeEmpty){
-  var b = pie.h.extend({}, a);
+  var b = pie.util.extend({}, a);
   Object.keys(b).forEach(function(k) {
     if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
   });
@@ -342,17 +355,19 @@ pie.string.modularize = function(str) {
 };
 
 // create an element based on the content provided.
-pie.h.createElement = $.createElement;
+pie.util.createElement = function() {
+  return $.createElement.apply(null, arguments).q[0];
+};
 
 // deep merge
-pie.h.deepExtend = function() {
+pie.util.deepExtend = function() {
   var args = pie.array.args(arguments),
       targ = args.shift(),
       obj;
 
   function fn(k) {
     if(k in targ && typeof targ[k] === 'object') {
-      targ[k] = pie.h.deepExtend(targ[k], obj[k]);
+      targ[k] = pie.util.deepExtend(targ[k], obj[k]);
     } else {
       targ[k] = obj[k];
     }
@@ -366,40 +381,259 @@ pie.h.deepExtend = function() {
 };
 
 // deserialize query string into object
-pie.h.deserialize = $.deserialize;
+pie.util.deserialize = $.deserialize;
 
 // shallow merge
-pie.h.extend   = $.extend;
+pie.util.extend   = $.extend;
 
 // extract from subobjects
-pie.h.getPath  = sudo.getPath;
+pie.util.getPath  = sudo.getPath;
 
 // serialize object into query string
-pie.h.serialize = $.serialize;
+pie.util.serialize = $.serialize;
+
+// set subobjects
+pie.util.setPath = sudo.setPath;
 
 // string templating
-pie.h.template = sudo.template;
+pie.util.template = sudo.template;
+pie.inheritance = {
 
-pie.m.observable = sudo.extensions.observable;
+  _super: function() {
+    var args = pie.array.args(arguments),
+    name = args.shift(),
+    obj = this,
+    curr;
+
+    while(true) {
+      curr = Object.getPrototypeOf(obj);
+      if(curr === obj) return;
+      if(curr[name] && curr[name] !== this[name]) {
+        return curr[name].apply(this, args);
+      } else {
+        obj = curr;
+      }
+    }
+  }
+};
+pie.container = {
+
+  addChild: function(name, child) {
+    var children = this.children(),
+    names = this.childNames(),
+    idx;
+
+    children.push(child);
+    idx = children.length - 1;
+
+    names[name] = idx;
+    child._indexWithinParent = idx;
+    child._nameWithinParent = name;
+
+    if('addedToParent' in child) child.addedToParent.call(child, this);
+
+    return this;
+  },
+
+  addChildren: function(obj) {
+    pie.object.forEach(obj, function(name, child) {
+      this.addChild(name, child);
+    }.bind(this));
+  },
+
+  childNames: function() {
+    return this._childNames = this._childNames || [];
+  },
+
+  children: function() {
+    return this._children = this._children || [];
+  },
+
+  getChild: function(obj) {
+    var name = obj._nameWithinParent || obj,
+    idx = this.childNames()[name] || obj;
+
+    return ~idx && this.children()[idx] || undefined;
+  },
+
+  removeChild: function(obj) {
+    var child = this.getChild(obj),
+    names = this.childNames(),
+    children = this.children(),
+    i;
+
+    if(child) {
+      i = child._indexWithinParent;
+      delete names[child._nameWithinParent];
+      children.splice(i, 1);
+      for(;i < children.length;i++) {
+        children[i]._indexWithinParent = i;
+      }
+
+      if('removedFromParent' in child) child.removedFromParent.call(child, this);
+    }
+
+    return this;
+  },
+
+  removeChildren: function() {
+    var children = this.children(),
+    child;
+
+    while(child = children[children.length-1]) {
+      this.removeChild(child);
+    }
+
+    return this;
+  }
+};
+pie.model = function(d) {
+  this.data = {};
+  this.uid = pie.unique();
+  this.observations = {};
+  this.changeRecords = [];
+  this.sets(d || {});
+};
+
+pie.util.extend(pie.model.prototype, pie.inheritance);
+
+
+pie.model.prototype.deliverChangeRecords = function() {
+  var observers, change, o;
+
+  while(change = this.changeRecords.shift()) {
+    observers = pie.array.union(this.observations[change.name], this.observations.__all__);
+    while(o = observers.shift()) {
+      o.call(null, change);
+    }
+  }
+
+  return this;
+};
+
+
+pie.model.prototype.get = function(key) {
+  return this.data[key];
+};
+
+
+pie.model.prototype.gets = function() {
+  var args = pie.array.args(arguments);
+  args = pie.array.flatten(args);
+  args = pie.array.compact(args);
+
+  args.unshift(this.data);
+
+  return pie.object.slice.apply(null, args);
+};
+
+
+// fn[, key1, key2, key3]
+pie.model.prototype.observe = function() {
+  var keys = pie.array.args(arguments),
+  fn = keys.shift();
+
+  if(!keys.length) keys.push('__all__');
+
+  keys.forEach(function(k) {
+    this.observations[k] = this.observations[k] || [];
+    if(this.observations[k].indexOf(fn) < 0) this.observations[k].push(fn);
+  }.bind(this));
+
+  return this;
+};
+
+
+pie.model.prototype.set = function(key, value, skipObservers) {
+  var change = { name: key, object: this.data };
+
+  if(key in this.data) {
+    change.type = 'update';
+    change.oldValue = this.data[key];
+  } else {
+    change.type = 'add';
+  }
+
+  this.data[key] = value;
+  this.changeRecords.push(change);
+
+
+  if(skipObservers) return this;
+  return this.deliverChangeRecords();
+};
+
+
+pie.model.prototype.sets = function(obj, skipObservers) {
+  pie.object.forEach(obj, function(k,v) {
+    this.set(k, v, true);
+  }.bind(this));
+
+  if(skipObservers) return this;
+  return this.deliverChangeRecords();
+};
+
+
+
+// fn[, key1, key2, key3]
+pie.model.prototype.unobserve = function() {
+  var keys = pie.array.args(arguments),
+  fn = keys.shift(),
+  i;
+
+  if(!keys.length) keys = Object.keys(this.observations);
+
+  keys.forEach(function(k){
+    i = this.observations[k].indexOf(fn);
+    if(~i) this.observations[k].splice(i,1);
+  }.bind(this));
+
+  return this;
+};
+
+
+
+
 // The, ahem, base view.
-// baseView manages events delegation, provides some convenience methods, and some <form> standards.
-pie.baseView = function(el, options) {
-  sudo.View.call(this, el, options || {});
+// pie.view manages events delegation, provides some convenience methods, and some <form> standards.
+pie.view = function(el, options) {
+  this.el = el || pie.util.createElement('<div />');
+  this.uid = pie.unique();
+  this.options = options;
   this.changeCallbacks = [];
 };
 
-pie.baseView.prototype = Object.create(sudo.View.prototype);
-pie.baseView.constructor = pie.baseView;
+pie.util.extend(pie.view.prototype, pie.container);
 
 
-// all events observed using baseView.on() will use the unique namespace for this instance.
-pie.baseView.prototype.eventNamespace = function() {
-  return this.role + this.uid;
+// placeholder for default functionality
+pie.view.prototype.addedToParent = function(){
+  return this;
 };
+
+
+// all events observed using view.on() will use the unique namespace for this instance.
+pie.view.prototype.eventNamespace = function() {
+  return 'view'+ this.uid;
+};
+
+
+// add or remove the default loading style.
+pie.view.prototype.loadingStyle = function(bool) {
+  if(bool === undefined) bool = true;
+  this._loadingStyle(bool);
+};
+
+
+pie.view.prototype.navigationUpdated = function() {
+  this.children.forEach(function(c){
+    if('navigationUpdated' in c) c.navigationUpdated();
+  });
+};
+
 
 // Events should be observed via this .on() method. Using .on() ensures the events will be
 // unobserved when the view is removed.
-pie.baseView.prototype.on = function(e, sel, f) {
+pie.view.prototype.on = function(e, sel, f) {
   var ns = this.eventNamespace(),
       f2 = function(e){
         if(e.namespace === ns) {
@@ -416,16 +650,15 @@ pie.baseView.prototype.on = function(e, sel, f) {
 };
 
 
-
 // Observe changes to an observable, unobserving them when the view is removed.
 // If the object is not observable, the observable extensions will automatically
 // be extended in.
-pie.baseView.prototype.onChange = function() {
+pie.view.prototype.onChange = function() {
   var observable = arguments[0], fn = arguments[1], attributes = pie.array.args(arguments).slice(2), f2;
-  if(!('observe' in observable)) pie.h.extend(observable, pie.m.observable);
+  if(!('observe' in observable)) throw new Error("Observable does not respond to observe");
 
   f2 = function(change){
-    if(!attributes.length || attributes.indexOf(change.name) >= 0) {
+    if(!attributes.length || ~attributes.indexOf(change.name)) {
       if(change.oldValue !== change.object[change.name]) fn(change);
     }
   };
@@ -434,9 +667,10 @@ pie.baseView.prototype.onChange = function() {
   observable.observe(f2);
 };
 
+
 // If the first option passed is a node, it will use that as the query scope.
 // Return an object representing the values of fields within this.el.
-pie.baseView.prototype.parseFields = function() {
+pie.view.prototype.parseFields = function() {
   var o = {}, e = arguments[0], i = 0, n, el;
 
   if('string' === typeof e) {
@@ -448,35 +682,49 @@ pie.baseView.prototype.parseFields = function() {
   for(;i<arguments.length;i++) {
     n = arguments[i];
     el = e.querySelector('[name="' + n + '"]:not([disabled])');
-    if(el) sudo.setPath(n, el.value, o);
+    if(el) pie.util.setPath(n, el.value, o);
   }
   return o;
 };
 
-// placeholder for default functionality
-pie.baseView.prototype.addedToParent = function(){
-  return this;
+// shortcut for this.el.querySelector
+pie.view.prototype.qs = function(selector) {
+  return this.el.querySelector(selector);
 };
 
-// clean up.
-pie.baseView.prototype.removedFromParent = function() {
-  this._unobserveEvents_();
-  this._unobserveChangeCallbacks_();
+// shortcut for this.el.querySelectorAll
+pie.view.prototype.qsa = function(selector) {
+  return this.el.querySelectorAll(selector);
+};
 
-  // baseViews remove their children upon removal.
+
+// clean up.
+pie.view.prototype.removedFromParent = function() {
+  this._unobserveEvents();
+  this._unobserveChangeCallbacks();
+
+  // views remove their children upon removal.
   this.removeChildren();
 
   return this;
 };
 
+
+// convenience method which is useful for ajax callbacks.
+pie.view.prototype.removeLoadingStyle = function(){
+  this._loadingStyle(false);
+};
+
+
 // release all observed events.
-pie.baseView.prototype._unobserveEvents_ = function() {
+pie.view.prototype._unobserveEvents = function() {
   $(this.el).off('*.' + this.eventNamespace());
   $(document.body).off('*.' + this.eventNamespace());
 };
 
+
 // release all change callbacks.
-pie.baseView.prototype._unobserveChangeCallbacks_ = function() {
+pie.view.prototype._unobserveChangeCallbacks = function() {
   var a;
   while(this.changeCallbacks.length) {
     a = this.changeCallbacks.pop();
@@ -484,50 +732,13 @@ pie.baseView.prototype._unobserveChangeCallbacks_ = function() {
   }
 };
 
-pie.baseView.prototype.navigationUpdated = function() {
-  this.children.forEach(function(c){
-    if('navigationUpdated' in c) c.navigationUpdated();
-  });
-};
-
-// add or remove the default loading style.
-pie.baseView.prototype.loadingStyle = function(bool) {
-  if(bool === undefined) bool = true;
-  this._loadingStyle(bool);
-};
-
-// convenience method which is useful for ajax callbacks.
-pie.baseView.prototype.removeLoadingStyle = function(){
-  this._loadingStyle(false);
-};
 
 // this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
-pie.baseView.prototype._loadingStyle = function(bool) {
+pie.view.prototype._loadingStyle = function(bool) {
   this.el.classList[bool ? 'add' : 'remove']('loading');
   $(this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable')).
     all(bool ? 'classList.add' : 'classList.remove', 'btn-loading').
     all(bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
-};
-
-
-
-pie.baseView.extend = function() {
-  var parts = pie.array.args(arguments),
-  subclass = pie.h.extend.apply(null, parts),
-  baseMethods = ['addedToParent', 'removedFromParent', 'navigationUpdated'];
-
-  baseMethods.forEach(function(meth){
-    if(meth in subclass) {
-      var old = subclass[meth];
-      subclass[meth] = function(parent) {
-        var val = old.call(this, parent);
-        this.base(meth, parent);
-        return val;
-      };
-    }
-  });
-
-  return pie.h.extend(Object.create(pie.baseView.prototype), subclass);
 };
 pie.services.ajax = function ajax(app) {
   this.app = app;
@@ -555,7 +766,7 @@ pie.services.ajax.prototype._defaultAjaxOptions = function() {
 pie.services.ajax.prototype.ajax = function(options) {
 
   options = pie.object.compact(options);
-  options = pie.h.extend({}, this._defaultAjaxOptions(), options);
+  options = pie.util.extend({}, this._defaultAjaxOptions(), options);
 
   if(options.extraError) {
     var oldError = options.error;
@@ -612,12 +823,12 @@ pie.services.ajax.prototype.ajax = function(options) {
 };
 
 pie.services.ajax.prototype.get = function(options) {
-  options = pie.h.extend({type: 'GET'}, options);
+  options = pie.util.extend({type: 'GET'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.post = function(options) {
-  options = pie.h.extend({type: 'POST'}, options);
+  options = pie.util.extend({type: 'POST'}, options);
   return this.ajax(options);
 };
 
@@ -824,13 +1035,13 @@ pie.services.i18n.prototype._utc = function(t) {
 
 
 pie.services.i18n.prototype.load = function(data, shallow) {
-  var f = shallow ? pie.h.extend : pie.h.deepExtend;
+  var f = shallow ? pie.util.extend : pie.util.deepExtend;
   f.call(null, this.translations, data);
 };
 
 
 pie.services.i18n.prototype.translate = function(path, data) {
-  var translation = pie.h.getPath(path, this.translations), count;
+  var translation = pie.util.getPath(path, this.translations), count;
 
   if (data && data.hasOwnProperty('count') && typeof translation === 'object') {
     count = (data.count || 0).toString();
@@ -937,84 +1148,126 @@ pie.services.i18n.prototype.strftime = function(date, f) {
 
 pie.services.i18n.prototype.t = pie.services.i18n.prototype.translate;
 pie.services.i18n.prototype.l = pie.services.i18n.prototype.strftime;
-// notifier is a class which provides an interface for rendering page-level notifications.
-pie.services.notifier = function notifier(app) {
+pie.services.navigator = function(app) {
   this.app = app;
-  this.notifications = {};
-  this.construct();
+  pie.model.prototype.constructor.call(this, {});
 };
 
-pie.services.notifier.prototype = pie.baseView.extend({
+pie.services.navigator.prototype = Object.create(pie.model.prototype);
 
 
-  addedToParent: function() {
-    this.on('click', '.page-alert', this.handleAlertClick.bind(this));
-  },
+pie.services.navigator.prototype.go = function(path, params, replace) {
+  var url = path;
+
+  params = params || {};
+
+  if(this.get('path') === path && this.get('query') === params) {
+    return this;
+  }
+
+  if(Object.keys(params).length) {
+    url += '?';
+    url += $.serialize(params);
+  }
+
+  window.history[replace ? 'replaceState' : 'pushState']({}, document.title, url);
+
+  return this.setDataFromLocation();
+};
 
 
-  // remove all alerts, potentially filtering by the type of alert.
-  clear: function(type) {
-    if(type) {
-      var nodes = this.notifications[type] || [];
-      while(nodes.length) {
-        this.remove(nodes[nodes.length-1]);
-      }
-    } else {
-      while(this.el.childNodes.length) {
-        this.remove(this.el.childNodes[0]);
-      }
+pie.services.navigator.prototype.start = function() {
+  return this.setDataFromLocation();
+};
+
+pie.services.navigator.prototype.setDataFromLocation = function() {
+  var query = window.location.search.slice(1);
+  query = pie.util.deserialize(query);
+
+  this.sets({
+    url: window.location.href,
+    path: window.location.pathname,
+    query: query
+  });
+
+  return this;
+};
+// notifier is a class which provides an interface for rendering page-level notifications.
+pie.services.notifier = function notifier(app) {
+  pie.view.prototype.constructor.call(this);
+  this.app = app;
+  this.notifications = {};
+};
+
+pie.services.notifier.prototype = Object.create(pie.view.prototype);
+
+
+pie.services.notifier.prototype.addedToParent = function() {
+  this.on('click', '.page-alert', this.handleAlertClick.bind(this));
+};
+
+
+// remove all alerts, potentially filtering by the type of alert.
+pie.services.notifier.prototype.clear = function(type) {
+  if(type) {
+    var nodes = this.notifications[type] || [];
+    while(nodes.length) {
+      this.remove(nodes[nodes.length-1]);
     }
-  },
-
-  // Show a notification or notifications.
-  // Messages can be a string or an array of messages.
-  // Multiple messages will be shown in the same notification, but on separate lines.
-  // You can choose to close a notification automatically by providing `true` as the third arg.
-  // You can provide a number in milliseconds as the autoClose value as well.
-  notify: function(messages, type, autoClose) {
-    type = type || 'message';
-    autoClose = this.getAutoCloseTimeout(autoClose);
-
-    messages = pie.array.from(messages);
-
-    var content = this.app.template('alert', {"type" : type, "messages": messages});
-    content = pie.h.createElement(content).q[0];
-
-    this.notifications[type] = this.notifications[type] || [];
-    this.notifications[type].push(content);
-
-    content._pieNotificationType = type;
-    this.el.insertBefore(content, this.el.firstElementChild);
-
-    if(autoClose) {
-      setTimeout(function(){
-        this.remove(content);
-      }.bind(this), autoClose);
+  } else {
+    while(this.el.childNodes.length) {
+      this.remove(this.el.childNodes[0]);
     }
+  }
+};
 
-  },
+// Show a notification or notifications.
+// Messages can be a string or an array of messages.
+// Multiple messages will be shown in the same notification, but on separate lines.
+// You can choose to close a notification automatically by providing `true` as the third arg.
+// You can provide a number in milliseconds as the autoClose value as well.
+pie.services.notifier.prototype.notify = function(messages, type, autoClose) {
+  type = type || 'message';
+  autoClose = this.getAutoCloseTimeout(autoClose);
 
-  getAutoCloseTimeout: function(autoClose) {
-    if(autoClose === undefined) autoClose = true;
-    if(autoClose && typeof autoClose !== 'number') autoClose = 7000;
-    return autoClose;
-  },
+  messages = pie.array.from(messages);
 
-  remove: function(el) {
-    var type = el._pieNotificationType, idx;
-    if(type) {
-      pie.array.remove(this.notifications[type] || [], el);
-    }
-    $(el).remove();
-  },
+  var content = this.app.template('alert', {"type" : type, "messages": messages});
+  content = pie.util.createElement(content);
 
-  // remove the alert that was clicked.
-  handleAlertClick: function(e) {
-    this.remove(e.delegateTarget);
-    e.preventDefault();
-  },
+  this.notifications[type] = this.notifications[type] || [];
+  this.notifications[type].push(content);
 
-});
+  content._pieNotificationType = type;
+  this.el.insertBefore(content, this.el.firstElementChild);
+
+  if(autoClose) {
+    setTimeout(function(){
+      this.remove(content);
+    }.bind(this), autoClose);
+  }
+
+};
+
+pie.services.notifier.prototype.getAutoCloseTimeout = function(autoClose) {
+  if(autoClose === undefined) autoClose = true;
+  if(autoClose && typeof autoClose !== 'number') autoClose = 7000;
+  return autoClose;
+};
+
+pie.services.notifier.prototype.remove = function(el) {
+  var type = el._pieNotificationType, idx;
+  if(type) {
+    pie.array.remove(this.notifications[type] || [], el);
+  }
+  $(el).remove();
+};
+
+// remove the alert that was clicked.
+pie.services.notifier.prototype.handleAlertClick = function(e) {
+  this.remove(e.delegateTarget);
+  e.preventDefault();
+};
 pie.services.router = function(app) {
   this.app = app;
   this.routes = {};
@@ -1031,7 +1284,7 @@ pie.services.router = function(app) {
 // # => /things/page/3.json?q=newQuery
 pie.services.router.prototype.changedUrl = function(changes) {
   var current = this.app.parsedUrl;
-  return this.router.path(current.name || current.path, pie.h.extend({}, current.interpolations, current.query, changes));
+  return this.router.path(current.name || current.path, pie.util.extend({}, current.interpolations, current.query, changes));
 },
 
 
@@ -1081,7 +1334,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 
       k = this.normalizePath(k);
 
-      this.routes[k] = pie.h.extend({}, defaults, r);
+      this.routes[k] = pie.util.extend({}, defaults, r);
 
       if(r.hasOwnProperty('name')) {
         this.namedRoutes[r.name] = k;
@@ -1114,7 +1367,7 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
   });
 
   unusedData = pie.object.except(data, usedKeys);
-  params = pie.h.serialize(pie.object.compact(unusedData, true));
+  params = pie.util.serialize(pie.object.compact(unusedData, true));
 
   if(!interpolateOnly && params.length) {
     s = pie.string.urlConcat(s, params);
@@ -1168,7 +1421,7 @@ pie.services.router.prototype.parseUrl = function(path) {
   splitUrl = path.split('/');
 
   if(match) {
-    match = pie.h.extend({routeKey: path}, match);
+    match = pie.util.extend({routeKey: path}, match);
   } else {
     while (i < keys.length && !match) {
       key = keys[i];
@@ -1181,7 +1434,7 @@ pie.services.router.prototype.parseUrl = function(path) {
       this.routes[key].regex = this.routes[key].regex || new RegExp('^' + key.replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
 
       if (this.routes[key].regex.test(path)) {
-        match = pie.h.extend({routeKey: key}, this.routes[key]);
+        match = pie.util.extend({routeKey: key}, this.routes[key]);
         splitKey = key.split('/');
         for(j = 0; j < splitKey.length; j++){
           if(/^:/.test(splitKey[j])) {
@@ -1194,10 +1447,10 @@ pie.services.router.prototype.parseUrl = function(path) {
     }
   }
 
-  query = pie.h.deserialize(query);
-  fullPath = pie.array.compact([path, pie.h.serialize(query)], true).join('?');
+  query = pie.util.deserialize(query);
+  fullPath = pie.array.compact([path, pie.util.serialize(query)], true).join('?');
 
-  return pie.h.extend({
+  return pie.util.extend({
     interpolations: interpolations,
     path: path,
     query: query,
@@ -1208,13 +1461,14 @@ pie.services.router.prototype.parseUrl = function(path) {
 // operator of the site. contains a router, navigator, etc with the intention of holding page context.
 pie.app = function app(options) {
 
-  sudo.Container.call(this);
-
   // general app options
-  this.options = pie.h.extend({
+  this.options = pie.util.deepExtend({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
-    notificationUiTarget: '.notification-container'
+    notificationUiTarget: '.notification-container',
+    navigatorOptions: {
+      root: '/'
+    }
   }, options);
 
   var classOption = function(key, _default){
@@ -1224,28 +1478,28 @@ pie.app = function app(options) {
 
   // app.i18n is the translation functionality
   this.i18n = classOption('i18n', pie.services.i18n);
-  this.addChild(this.i18n, 'i18n');
+  this.addChild('i18n', this.i18n);
 
   // app.ajax is ajax interface + app specific functionality.
   this.ajax = classOption('ajax', pie.services.ajax);
-  this.addChild(this.ajax, 'ajax');
+  this.addChild('ajax', this.ajax);
 
   // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
   this.notifier = classOption('notifier', pie.services.notifier);
-  this.addChild(this.notifier, 'notifier');
+  this.addChild('notifier', this.notifier);
 
   // app.errorHandler is the object responsible for
   this.errorHandler = classOption('errorHandler', pie.services.errorHandler);
-  this.addChild(this.errorHandler, 'errorHandler');
+  this.addChild('errorHandler', this.errorHandler);
 
   // app.router is used to determine which view should be rendered based on the url
   this.router = classOption('router', pie.services.router);
-  this.addChild(this.router, 'router');
-
+  this.addChild('router', this.router);
 
 
   // the only navigator which should exist in this app.
-  this.navigator = new sudo.Navigator({root: '/', useHashChange: false});
+  this.navigator = classOption('navigator', pie.services.navigator);
+  this.addChild('navigator', this.navigator);
 
   // app.models is globally available. app.models is solely for page context.
   // this is not a singleton container or anything like that. it's just for passing
@@ -1264,8 +1518,7 @@ pie.app = function app(options) {
   this.triggeredEvents = [];
 
   // we observe the navigator and handle changing the context of the page
-  pie.h.extend(this.navigator, pie.m.observable);
-  this.navigator.observe(this.navigationChanged.bind(this));
+  this.navigator.observe(this.navigationChanged.bind(this), 'url');
 
   this.on('beforeStart', this.showStoredNotifications.bind(this));
   this.on('beforeStart', this.setupSinglePageLinks.bind(this));
@@ -1276,8 +1529,7 @@ pie.app = function app(options) {
 };
 
 
-pie.app.prototype = Object.create(sudo.Container.prototype);
-pie.app.constructor = pie.app;
+pie.util.extend(pie.app.prototype, pie.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.
@@ -1388,7 +1640,7 @@ pie.app.prototype.navigationChanged = function() {
 
   // let the router determine our new url
   this.previousUrl = this.parsedUrl;
-  this.parsedUrl = this.router.parseUrl(this.navigator.getUrl());
+  this.parsedUrl = this.router.parseUrl(this.navigator.get('url'));
 
   if(this.previousUrl !== this.parsedUrl) {
     this.trigger('urlChanged');
@@ -1417,13 +1669,13 @@ pie.app.prototype.navigationChanged = function() {
   this.notifier.clear();
 
   // use the view key of the parsedUrl to find the viewClass
-  var viewClass = pie.h.getPath(this.viewNamespace + '.' + this.parsedUrl.view, window), child;
+  var viewClass = pie.util.getPath(this.viewNamespace + '.' + this.parsedUrl.view, window), child;
   // the instance to be added.
 
   // add the instance as our 'currentView'
   child = new viewClass(this);
   child._pieName = this.parsedUrl.view;
-  this.addChild(child, 'currentView');
+  this.addChild('currentView', child);
   target.appendChild(child.el);
 
 
@@ -1441,7 +1693,7 @@ pie.app.prototype.navigationChanged = function() {
 // if futureOnly is truthy the fn will only be triggered for future events.
 // todo: allow once-only events.
 pie.app.prototype.on = function(event, fn, futureOnly) {
-  if(!futureOnly && this.triggeredEvents.indexOf(event) >= 0) {
+  if(!futureOnly && ~this.triggeredEvents.indexOf(event)) {
     fn();
   } else {
     this.eventCallbacks[event] = this.eventCallbacks[event] || [];
@@ -1482,9 +1734,6 @@ pie.app.prototype.retrieve = function(key, clear) {
 };
 
 
-pie.app.prototype.role = 'app';
-
-
 // add the notifier's el to the page if possible
 pie.app.prototype.setupNotifier = function() {
   var parent = document.querySelector(this.options.notificationUiTarget);
@@ -1518,9 +1767,9 @@ pie.app.prototype.start = function() {
   this.trigger('beforeStart');
 
   // invoke a nav change event on page load.
-  var fragment = this.navigator.get('fragment');
-  this.navigator.data.fragment = null;
-  this.navigator.set('fragment', fragment);
+  var url = this.navigator.get('url');
+  this.navigator.data.url = null;
+  this.navigator.set('url', url);
 
   this.started = true;
   this.trigger('afterStart');

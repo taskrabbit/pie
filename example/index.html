@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pie Example</title>
+
+  </head>
+  <body>
+
+    <div id="main" />
+
+    <script type="text/javascript" src="../vendor/cash.js"></script>
+    <script type="text/javascript" src="../vendor/sudo.js"></script>
+    <script type="text/javascript" src="../build/pie.js"></script>
+
+    <script type="text/pie-template" id="layoutContainer">
+      <div class="layout-container">
+        <div class="form-container" />
+        <div class="list-container" />
+      </div>
+    </script>
+
+    <script type="text/pie-template" id="formContainer">
+      <form>
+        <input type="text" name="theinput" />
+      </form>
+    </script>
+
+    <script type="text/pie-template" id="listItem">
+      <li>[%= data.text %]</li>
+    </script>
+
+
+    <script type="text/javascript" src="js/exampleApp.js">
+
+      app.router.route({
+        '/index.html' : { view: 'layout' }
+      });
+
+    </script>
+
+
+  </body>
+</html>

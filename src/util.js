@@ -1,16 +1,18 @@
 
 // create an element based on the content provided.
-pie.h.createElement = $.createElement;
+pie.util.createElement = function() {
+  return $.createElement.apply(null, arguments).q[0];
+};
 
 // deep merge
-pie.h.deepExtend = function() {
+pie.util.deepExtend = function() {
   var args = pie.array.args(arguments),
       targ = args.shift(),
       obj;
 
   function fn(k) {
     if(k in targ && typeof targ[k] === 'object') {
-      targ[k] = pie.h.deepExtend(targ[k], obj[k]);
+      targ[k] = pie.util.deepExtend(targ[k], obj[k]);
     } else {
       targ[k] = obj[k];
     }
@@ -24,16 +26,19 @@ pie.h.deepExtend = function() {
 };
 
 // deserialize query string into object
-pie.h.deserialize = $.deserialize;
+pie.util.deserialize = $.deserialize;
 
 // shallow merge
-pie.h.extend   = $.extend;
+pie.util.extend   = $.extend;
 
 // extract from subobjects
-pie.h.getPath  = sudo.getPath;
+pie.util.getPath  = sudo.getPath;
 
 // serialize object into query string
-pie.h.serialize = $.serialize;
+pie.util.serialize = $.serialize;
+
+// set subobjects
+pie.util.setPath = sudo.setPath;
 
 // string templating
-pie.h.template = sudo.template;
+pie.util.template = sudo.template;

@@ -18,16 +18,17 @@ window.pie = {
   object: {},
   string: {},
 
-
-  // application helpers
-  h: {},
-
-  // template helpers
-  t: {},
-
-  // modules for extending objects with functionality
-  m: {},
+  // inheritance helper
+  inheritance: {},
 
   // service objects
-  services: {}
+  services: {},
+
+  uid: 0,
+
+  unique: function() { return this.uid++; },
+
+  // application utilities
+  util: {},
+
 };
