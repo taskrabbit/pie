@@ -160,8 +160,8 @@ pie.app.prototype.handleSinglePageLinkClick = function(e){
 
   var href = e.delegateTarget.getAttribute('href');
 
-  // if we're going nowhere or to an anchor on the page, let the browser take over
-  if(!href || href === '#') return;
+  // if we're going nowhere, somewhere else, or to an anchor on the page, let the browser take over
+  if(!href || /^(#|[a-z]+:\/\/)/.test(href)) return;
 
   // ensure that relative links are evaluated as relative
   if(href.charAt(0) === '?') href = window.location.pathname + href;
