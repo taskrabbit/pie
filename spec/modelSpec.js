@@ -94,4 +94,31 @@ describe("pie.model", function() {
 
   });
 
+  describe("inheritance", function() {
+
+    beforeEach(function() {
+      var foo = function(){pie.model.call(this);};
+      foo.prototype = Object.create(pie.model.prototype);
+      foo.prototype.newMethod = function(){ return this._super('newMethod'); };
+      foo.prototype.get = function(k) {
+        return 'override ' + this._super('get', arguments);
+      };
+
+      this.foo = new foo();
+    });
+
+    it("should provide a _super method", function() {
+      this.foo.set('foo', 'bar');
+      expect(this.foo.get('foo')).toEqual('override bar');
+      expect(this.foo._super('get', 'foo')).toEqual('bar');
+    });
+
+    it("should throw an error if a _super method is not defined", function() {
+      expect(function() {
+        this.foo.newMethod();
+      }.bind(this)).toThrowError("No super method defined: newMethod");
+    });
+
+  });
+
 });

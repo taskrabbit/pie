@@ -1,9 +1,10 @@
 // The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
-pie.view = function(el, options) {
-  this.el = el || pie.util.createElement('<div />');
+pie.view = function(app, options) {
+  this.app = app;
+  this.options = options || {};
+  this.el = this.options.el || pie.util.createElement('<div />');
   this.uid = pie.unique();
-  this.options = options;
   this.changeCallbacks = [];
 };
 

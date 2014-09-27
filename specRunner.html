@@ -60,17 +60,14 @@
       lib = { views: {} };
 
       lib.views.listView = function listView(app) {
-        this.app = app;
-        this.items = new pie.model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
-        pie.view.call(this);
+        this.model = this.items = new pie.model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
+
+        pie.simpleView.call(this, app, {
+          template: 'list'
+        });
       };
 
-      lib.views.listView.prototype = Object.create(pie.view.prototype);
-
-      lib.views.listView.prototype.addedToParent = function() {
-        this.el.innerHTML = this.app.template('list', this.items.data);
-      };
-
+      lib.views.listView.prototype = Object.create(pie.simpleView.prototype);
     </script>
 
 
@@ -83,7 +80,7 @@
     <script type="text/javascript" src="spec/services/i18nSpec.js"></script>
     <script type="text/javascript" src="spec/services/notifierSpec.js"></script>
     <script type="text/javascript" src="spec/services/routerSpec.js"></script>
-
+    <script type="text/javascript" src="spec/viewSpec.js"></script>
 
   </head>
 

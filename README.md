@@ -6,3 +6,8 @@
 > make test
 > make watch
 ```
+
+```base
+> npm install -g http-server
+> http-server example/index.html
+```

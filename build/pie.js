@@ -405,8 +405,11 @@ pie.inheritance = {
     obj = this,
     curr;
 
+    if(args.length === 1 && args[0].toString() === "[object Arguments]") args = pie.array.args(args[0]);
+
     while(true) {
       curr = Object.getPrototypeOf(obj);
+      if(!curr) throw new Error("No super method defined: " + name);
       if(curr === obj) return;
       if(curr[name] && curr[name] !== this[name]) {
         return curr[name].apply(this, args);
@@ -595,10 +598,11 @@ pie.model.prototype.unobserve = function() {
 
 // The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
-pie.view = function(el, options) {
-  this.el = el || pie.util.createElement('<div />');
+pie.view = function(app, options) {
+  this.app = app;
+  this.options = options || {};
+  this.el = this.options.el || pie.util.createElement('<div />');
   this.uid = pie.unique();
-  this.options = options;
   this.changeCallbacks = [];
 };
 
@@ -739,6 +743,45 @@ pie.view.prototype._loadingStyle = function(bool) {
   $(this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable')).
     all(bool ? 'classList.add' : 'classList.remove', 'btn-loading').
     all(bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
+};
+pie.simpleView = function simpleView(app, options) {
+  pie.view.call(this, app, options);
+};
+
+pie.simpleView.prototype = Object.create(pie.view.prototype);
+pie.simpleView.prototype = pie.simpleView;
+
+pie.simpleView.prototype.addedToParent = function(parent) {
+  pie.view.prototype.addedToParent.call(this, parent);
+
+  if(this.options.autoRender && this.model) {
+    var field = typeof this.options.autoRender === 'string' ? this.options.autoRender : 'updated_at';
+    this.onChange(this.model, this.render.bind(this), field);
+  }
+
+  if(this.options.renderOnAddedToParent) {
+    this.render();
+  }
+
+  return this;
+};
+
+pie.simpleView.prototype.renderData = function() {
+  if(this.model) {
+    return this.model.data;
+  }
+
+  return {};
+};
+
+pie.simpleView.prototype.render = function() {
+
+  if(this.options.template) {
+    var content = this.app.template(this.options.template, this.renderData());
+    this.el.innerHTML = content;
+  }
+
+  return this;
 };
 pie.services.ajax = function ajax(app) {
   this.app = app;
@@ -983,6 +1026,13 @@ pie.services.i18n.prototype._monthName = function(m) {
 };
 
 
+pie.services.i18n.prototype._nestedTranslate = function(t, data) {
+  return t.replace(/\$\{([^\}]+)\}/, function(match, path) {
+    return this.translate(path, data);
+  }.bind(this));
+},
+
+
 // assumes that dates either come in as dates, iso strings, or epoch timestamps
 pie.services.i18n.prototype._normalizedDate = function(d) {
   if(String(d).match(/^\d+$/)) {
@@ -1052,15 +1102,17 @@ pie.services.i18n.prototype.translate = function(path, data) {
   if(!translation) {
 
     if(data && data.hasOwnProperty('default')) {
-      return data.default;
+      translation = data.default;
+    } else {
+      this.app.debug("Translation not found: " + path);
+      return "";
     }
-
-    this.app.debug("Translation not found: " + path);
-    return "";
   }
 
 
   if(typeof translation === 'string') {
+
+    translation = translation.indexOf('${') === -1 ? translation : this._nestedTranslate(translation, data);
     return translation.indexOf('%{') === -1 ? translation : pie.string.expand(translation, data);
   }
 
@@ -1465,10 +1517,7 @@ pie.app = function app(options) {
   this.options = pie.util.deepExtend({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
-    notificationUiTarget: '.notification-container',
-    navigatorOptions: {
-      root: '/'
-    }
+    notificationUiTarget: '.notification-container'
   }, options);
 
   var classOption = function(key, _default){
@@ -1619,8 +1668,8 @@ pie.app.prototype.handleSinglePageLinkClick = function(e){
 
   var href = e.delegateTarget.getAttribute('href');
 
-  // if we're going nowhere or to an anchor on the page, let the browser take over
-  if(!href || href === '#') return;
+  // if we're going nowhere, somewhere else, or to an anchor on the page, let the browser take over
+  if(!href || /^(#|[a-z]+:\/\/)/.test(href)) return;
 
   // ensure that relative links are evaluated as relative
   if(href.charAt(0) === '?') href = window.location.pathname + href;
@@ -1798,7 +1847,7 @@ pie.app.prototype.template = function(name, data) {
       this.debug('Compiling and storing template: ' + name);
       this._templates[name] = sudo.template(node.textContent);
     } else {
-      throw "[PIE] Unknown template error: " + name;
+      throw new Error("[PIE] Unknown template error: " + name);
     }
   }
 

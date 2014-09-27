@@ -50,6 +50,13 @@ pie.services.i18n.prototype._monthName = function(m) {
 };
 
 
+pie.services.i18n.prototype._nestedTranslate = function(t, data) {
+  return t.replace(/\$\{([^\}]+)\}/, function(match, path) {
+    return this.translate(path, data);
+  }.bind(this));
+},
+
+
 // assumes that dates either come in as dates, iso strings, or epoch timestamps
 pie.services.i18n.prototype._normalizedDate = function(d) {
   if(String(d).match(/^\d+$/)) {
@@ -119,15 +126,17 @@ pie.services.i18n.prototype.translate = function(path, data) {
   if(!translation) {
 
     if(data && data.hasOwnProperty('default')) {
-      return data.default;
+      translation = data.default;
+    } else {
+      this.app.debug("Translation not found: " + path);
+      return "";
     }
-
-    this.app.debug("Translation not found: " + path);
-    return "";
   }
 
 
   if(typeof translation === 'string') {
+
+    translation = translation.indexOf('${') === -1 ? translation : this._nestedTranslate(translation, data);
     return translation.indexOf('%{') === -1 ? translation : pie.string.expand(translation, data);
   }
 

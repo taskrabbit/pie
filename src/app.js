@@ -6,10 +6,7 @@ pie.app = function app(options) {
   this.options = pie.util.deepExtend({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
-    notificationUiTarget: '.notification-container',
-    navigatorOptions: {
-      root: '/'
-    }
+    notificationUiTarget: '.notification-container'
   }, options);
 
   var classOption = function(key, _default){
@@ -339,7 +336,7 @@ pie.app.prototype.template = function(name, data) {
       this.debug('Compiling and storing template: ' + name);
       this._templates[name] = sudo.template(node.textContent);
     } else {
-      throw "[PIE] Unknown template error: " + name;
+      throw new Error("[PIE] Unknown template error: " + name);
     }
   }
 
