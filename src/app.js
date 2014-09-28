@@ -178,7 +178,7 @@ pie.app.prototype.navigationChanged = function() {
 
   // let the router determine our new url
   this.previousUrl = this.parsedUrl;
-  this.parsedUrl = this.router.parseUrl(this.navigator.get('url'));
+  this.parsedUrl = this.router.parseUrl(this.navigator.get('path'));
 
   if(this.previousUrl !== this.parsedUrl) {
     this.trigger('urlChanged');
@@ -207,7 +207,7 @@ pie.app.prototype.navigationChanged = function() {
   this.notifier.clear();
 
   // use the view key of the parsedUrl to find the viewClass
-  var viewClass = pie.util.getPath(this.viewNamespace + '.' + this.parsedUrl.view, window), child;
+  var viewClass = pie.util.getPath(this.options.viewNamespace + '.' + this.parsedUrl.view, window), child;
   // the instance to be added.
 
   // add the instance as our 'currentView'
@@ -300,6 +300,7 @@ pie.app.prototype.showStoredNotifications = function() {
 
 // start the app, apply fake navigation to the current url to get our navigation observation underway.
 pie.app.prototype.start = function() {
+
   this.navigator.start();
 
   this.trigger('beforeStart');

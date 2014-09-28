@@ -64,7 +64,8 @@ describe("pie.model", function() {
       expect(observer).toHaveBeenCalledWith({
         'type' : 'add',
         'name' : 'foo',
-        'object' : this.model.data
+        'object' : this.model.data,
+        'value' : 'bar'
       });
     });
 

@@ -85,70 +85,70 @@
         return obj;
     };
 
-
-
     // ###\_all\_
-    // Abstracted logic for the all and getAll methods
+    // Abstracted logic for the call, assign, and collect methods
     //
     // `private`
-    cash._all = function(originalArgs, returnValues) {
-        var meths = originalArgs[0].split('.'),
-            args = slice.call(originalArgs, 1),
-            meth = meths[meths.length - 1],
-            assign = /=$/.test(meth),
-            r, f, i, v;
-        if (assign) meth = meth.substr(0, meth.length - 1);
-        if (returnValues) r = [];
+    cash._all_ = function(oArgs, assign, returns) {
+      var meths = oArgs[0].split('.'), args = slice.call(oArgs, 1),
+      meth = meths.pop(), r = returns ? [] : undefined, f, v;
 
-        this.q.forEach(function(e) {
-            for (i = 0; i < meths.length - 1; i++) {
-                f = e[meths[i]];
-                if (isFunction(f)) e = f();
-                else e = f;
-            }
-            if (assign) v = e[meth] = args[0];
-            else {
-                f = e[meth];
-                if (isFunction(f)) v = f.apply(e, args);
-                else v = f;
-            }
-
-            if (returnValues) r.push(v);
+      this.q.forEach(function(el) {
+        meths.forEach(function(prop) {
+          f = el[prop];
+          // TODO are we sure of a return here?
+          el = isFunction(f) ? f() : f;
         });
-
-        return returnValues ? r : this;
+        if(assign) v = el[meth] = args[0];
+        else {
+          f = el[meth];
+          v = isFunction(f) ? f.apply(el, args) : f;
+        }
+        returns && r.push(v);
+      });
+      return returns ? r : this;
     };
 
-    // ###all
+    // ###call
     // Invokes the provided method or method chain with the provided arguments to all elements in q.
     // Example usage:
-    // * $(nodeList).all('setAttribute', 'foo', 'bar');
-    // * $(nodeList).all('classList.add', 'active');
-    // * $(nodeList).all('selected=', true);
+    // * $(nodeList).call('setAttribute', 'foo', 'bar');
+    // * $(nodeList).call('classList.add', 'active');
     //
-    // `param` {string} `methodName`. Can be a string representing a method name, an attribute, or a property. Can be chained with periods. Can end in a `=` to invoke an assignment.
+    // `param` {string} `methodName`. Can be a string representing a method name, an attribute, or a property. Can be chained with periods.
     //
     // `returns` cash
     //
-    //
-    cash.all = function() {
-        return this._all(arguments, false);
+    cash.call = function() {
+      return this._all_(arguments, false, false);
     };
 
-    // ###getAll
-    // Similar to all(), getAll invokes the provided method or method chain but instead of returning cash, returns the return values from each function invocation.
+    // ###assign
+    // Sets the value on all elements in the q. Setters can be chained with periods.
     // Example usage:
-    // * $(nodeList).all('getAttribute', 'foo') #=> ['bar', 'biz', 'baz'];
-    // * $(nodeList).all('classList.contains', 'active') #=> [true, false, true];
-    // * $(nodeList).all('selected') #=> [true, false, false];
+    // * $(nodeList).assign('checked', true)
+    // * $(nodeList).assign('foo.bar', 'biz')
     //
-    // `param` {string} `methodName`. Can be a string representing a method name, an attribute, or a property. Can be chained with periods. Can end in a `=` to invoke an assignment.
+    // `param` {string} `propertyName`. Can be a string representing an attribute or property. Can be chained with periods.
+    // `param` {any} `value`. The value to be assigned.
+    //
+    cash.assign = function() {
+      return this._all_(arguments, true, false);
+    };
+
+    // ###collect
+    // Similar to call(), collect() invokes the provided method or method chain but instead of returning cash, returns the return values from each function invocation.
+    // Example usage:
+    // * $(nodeList).collect('getAttribute', 'foo') #=> ['bar', 'biz', 'baz'];
+    // * $(nodeList).collect('classList.contains', 'active') #=> [true, false, true];
+    // * $(nodeList).collect('checked') #=> [true, false, false];
+    //
+    // `param` {string} `methodName`. Can be a string representing a method name, an attribute, or a property. Can be chained with periods.
     //
     // `returns` {array}
     //
-    //
-    cash.getAll = function() {
-        return this._all(arguments, true);
+    cash.collect = function() {
+      return this._all_(arguments, false, true);
     };
 
 

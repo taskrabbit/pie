@@ -3,7 +3,7 @@ pie.simpleView = function simpleView(app, options) {
 };
 
 pie.simpleView.prototype = Object.create(pie.view.prototype);
-pie.simpleView.prototype = pie.simpleView;
+pie.simpleView.prototype.constructor = pie.simpleView;
 
 pie.simpleView.prototype.addedToParent = function(parent) {
   pie.view.prototype.addedToParent.call(this, parent);

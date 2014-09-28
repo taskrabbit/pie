@@ -8,7 +8,9 @@ pie.view = function(app, options) {
   this.changeCallbacks = [];
 };
 
+pie.util.extend(pie.view.prototype, pie.mixins.inheritance);
 pie.util.extend(pie.view.prototype, pie.container);
+pie.util.extend(pie.view.prototype, pie.mixins.bindings);
 
 
 // placeholder for default functionality
@@ -31,7 +33,7 @@ pie.view.prototype.loadingStyle = function(bool) {
 
 
 pie.view.prototype.navigationUpdated = function() {
-  this.children.forEach(function(c){
+  this.children().forEach(function(c){
     if('navigationUpdated' in c) c.navigationUpdated();
   });
 };
@@ -60,17 +62,11 @@ pie.view.prototype.on = function(e, sel, f) {
 // If the object is not observable, the observable extensions will automatically
 // be extended in.
 pie.view.prototype.onChange = function() {
-  var observable = arguments[0], fn = arguments[1], attributes = pie.array.args(arguments).slice(2), f2;
+  var observable = arguments[0], args = pie.array.args(arguments).slice(1);
   if(!('observe' in observable)) throw new Error("Observable does not respond to observe");
 
-  f2 = function(change){
-    if(!attributes.length || ~attributes.indexOf(change.name)) {
-      if(change.oldValue !== change.object[change.name]) fn(change);
-    }
-  };
-
-  this.changeCallbacks.push([observable, f2]);
-  observable.observe(f2);
+  this.changeCallbacks.push([observable, args]);
+  observable.observe.apply(observable, args);
 };
 
 
@@ -112,6 +108,9 @@ pie.view.prototype.removedFromParent = function() {
   // views remove their children upon removal.
   this.removeChildren();
 
+  // remove our el if we still have a parent.
+  if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+
   return this;
 };
 
@@ -134,7 +133,7 @@ pie.view.prototype._unobserveChangeCallbacks = function() {
   var a;
   while(this.changeCallbacks.length) {
     a = this.changeCallbacks.pop();
-    a[0].unobserve(a[1]);
+    a[0].unobserve.apply(a[0], a[1]);
   }
 };
 

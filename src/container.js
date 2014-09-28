@@ -24,7 +24,7 @@ pie.container = {
   },
 
   childNames: function() {
-    return this._childNames = this._childNames || [];
+    return this._childNames = this._childNames || {};
   },
 
   children: function() {
@@ -33,7 +33,10 @@ pie.container = {
 
   getChild: function(obj) {
     var name = obj._nameWithinParent || obj,
-    idx = this.childNames()[name] || obj;
+    idx = this.childNames()[name];
+
+    /* jslint eqeq:true */
+    if(idx == null) idx = obj;
 
     return ~idx && this.children()[idx] || undefined;
   },

@@ -1,12 +1,13 @@
-pie.model = function(d) {
+pie.model = function(d, options) {
   this.data = {};
+  this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
   this.changeRecords = [];
   this.sets(d || {});
 };
 
-pie.util.extend(pie.model.prototype, pie.inheritance);
+pie.util.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
 pie.model.prototype.deliverChangeRecords = function() {
@@ -65,9 +66,10 @@ pie.model.prototype.set = function(key, value, skipObservers) {
     change.type = 'add';
   }
 
-  this.data[key] = value;
+  this.data[key] = change.value = value;
   this.changeRecords.push(change);
 
+  this.trackTimestamps(key);
 
   if(skipObservers) return this;
   return this.deliverChangeRecords();
@@ -83,6 +85,12 @@ pie.model.prototype.sets = function(obj, skipObservers) {
   return this.deliverChangeRecords();
 };
 
+
+pie.model.prototype.trackTimestamps = function(key) {
+  if(!this.options.timestamps) return;
+  if(key === 'updated_at') return;
+  this.set('updated_at', new Date().getTime());
+};
 
 
 // fn[, key1, key2, key3]

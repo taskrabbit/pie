@@ -28,6 +28,7 @@
     </script>
 
     <script type="text/pie-template" id="list">
+      <input name="foo" />
       <ul>
         [% data.items.forEach(function(item){ %]
           <li>[%- item.name %]</li>
@@ -68,6 +69,13 @@
       };
 
       lib.views.listView.prototype = Object.create(pie.simpleView.prototype);
+      pie.util.extend(lib.views.listView.prototype, pie.mixins.bindings);
+
+      lib.views.listView.prototype.addedToParent = function() {
+        this._super('addedToParent');
+        this.bind({attr: 'foo'});
+      }
+
     </script>
 
 
@@ -75,6 +83,7 @@
     <!-- include spec files here... -->
     <script type="text/javascript" src="spec/SpecHelper.js"></script>
     <script type="text/javascript" src="spec/modelSpec.js"></script>
+    <script type="text/javascript" src="spec/bindingsSpec.js"></script>
     <script type="text/javascript" src="spec/services/ajaxSpec.js"></script>
     <script type="text/javascript" src="spec/services/errorHandlerSpec.js"></script>
     <script type="text/javascript" src="spec/services/i18nSpec.js"></script>

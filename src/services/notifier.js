@@ -62,7 +62,7 @@ pie.services.notifier.prototype.getAutoCloseTimeout = function(autoClose) {
 };
 
 pie.services.notifier.prototype.remove = function(el) {
-  var type = el._pieNotificationType, idx;
+  var type = el._pieNotificationType;
   if(type) {
     pie.array.remove(this.notifications[type] || [], el);
   }

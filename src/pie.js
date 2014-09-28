@@ -21,6 +21,9 @@ window.pie = {
   // inheritance helper
   inheritance: {},
 
+  // extensions to be used within pie apps.
+  mixins: {},
+
   // service objects
   services: {},
 

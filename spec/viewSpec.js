@@ -30,10 +30,10 @@ describe("pie.view", function() {
 
   it("should remove all observers when removed from it's parent", function() {
     var model = new pie.model(), f;
-    this.view.onChange(model, this.view.addedToParent.bind(this.view), f);
 
-    f = this.view.changeCallbacks[0][1];
+    this.view.onChange(model, this.view.addedToParent.bind(this.view));
 
+    f = this.view.changeCallbacks[0][1][0];
     expect(model.observations.__all__[0]).toEqual(f);
 
     this.view.removedFromParent();

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pie Example</title>
+
+  </head>
+  <body>
+
+    <div id="main">
+    </div>
+
+    <script type="text/javascript" src="vendor/cash.js"></script>
+    <script type="text/javascript" src="vendor/sudo.js"></script>
+    <script type="text/javascript" src="build/pie.js"></script>
+
+    <script type="text/pie-template" id="layoutContainer">
+      <div class="layout-container">
+        <table>
+          <tbody>
+            <tr>
+              <td>
+                <div class="form-container"></div>
+                <div class="list-container"></div>
+              </td>
+              <td>
+                <div class="summary-container"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </script>
+
+    <script type="text/pie-template" id="formContainer">
+      <input type="text" name="name"></input>
+      <form>
+        <input type="text" name="nextItem"></input>
+      </form>
+    </script>
+
+    <script type="text/pie-template" id="listContainer">
+      <ul>
+        [% data.items.forEach(function(item, i){ %]
+        <li data-index="[%= i %]">
+          <span>[%- item %]</span>
+          <a href="#" class="js-delete">x</a>
+        </li>
+        [% }); %]
+      </ul>
+      <p>[%= app.i18n.t('list.summary', {count: data.items.length}) %]</p>
+    </script>
+
+    <script type="text/pie-template" id="summaryContainer">
+      <h2>[%= data.name %]</h2>
+      [% if(data.items.length) { %]
+      <ul>
+        [% data.items.forEach(function(item){ %]
+        <li>[%- item %]</li>
+        [% }); %]
+      </ul>
+      [% } else { %]
+      <p class="no-results">No items have been added</p>
+      [% } %]
+    </script>
+
+
+    <script type="text/javascript" src="example/js/exampleApp.js"></script>
+
+  </body>
+</html>

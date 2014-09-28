@@ -21,6 +21,9 @@ window.pie = {
   // inheritance helper
   inheritance: {},
 
+  // extensions to be used within pie apps.
+  mixins: {},
+
   // service objects
   services: {},
 
@@ -354,6 +357,91 @@ pie.string.modularize = function(str) {
   return str.replace(/([^_])_([^_])/g, function(match, a, b){ return a + b.toUpperCase(); });
 };
 
+// A mixin to provide two way data binding between a model and form inputs.
+// This mixin should be used with a pie view.
+pie.mixins.bindings = {
+
+  // Ex: this.bind({attr: 'name', model: this.user});
+  // If this.model is defined, you don't have to pass the model.
+  // Ex: this.model = user; this.bind({attr: 'name'});
+  // Here are all the options:
+  // this.bind({
+  //   model: this.user,
+  //   attr: 'name',
+  //   sel: 'input[name="user_name"]',
+  //   trigger: 'keyup',
+  //   debounce: true
+  // });
+  //
+  // Bind currently only supports form fields. Todo: support applying to attributes, innerHTML, etc.
+  bind: function(options) {
+    options = options || {};
+
+    var model = options.model || this.model,
+    attr = options.attr || options.attribute || undefined,
+    sel = options.sel || 'input[name="' + attr + '"]',
+    triggers = (options.trigger || 'keyup change').split(' '),
+    debounce = options.debounce,
+    ignore = false,
+    toModel = function(e) {
+      var value = e.delegateTarget.value;
+      ignore = true;
+      model.set(attr, value);
+      ignore = false;
+    },
+    toElement = function(change) {
+      if(ignore) return;
+      $(this.qsa(sel)).assign('value', change.value);
+    }.bind(this);
+
+    if(debounce) {
+      if(debounce === true) debounce = 150;
+      toModel = Function.debounce(toModel, debounce);
+    }
+
+    triggers.forEach(function(trigger){
+      this.on(trigger, sel, toModel);
+    }.bind(this));
+
+    this.onChange(model, toElement, attr);
+
+    this._bindings = pie.array.from(this._bindings);
+    this._bindings.push({model: model, sel: sel, attr: attr});
+  },
+
+  // A way to initialize form fields with the values of a model.
+  initBoundFields: function() {
+    pie.array.from(this._bindings).forEach(function(binding){
+      var el = this.qs(binding.sel);
+      $(this.qsa(binding.sel)).assign('value', binding.model.get(binding.attr));
+    }.bind(this));
+  }
+
+};
+pie.mixins.inheritance = {
+
+  _super: function() {
+    var args = pie.array.args(arguments),
+    name = args.shift(),
+    obj = this,
+    curr;
+
+    if(args.length === 1 && String(args[0]) === "[object Arguments]") args = pie.array.args(args[0]);
+
+    while(true) {
+      curr = Object.getPrototypeOf(obj);
+      if(!curr) throw new Error("No super method defined: " + name);
+      if(curr === obj) return;
+      if(curr[name] && curr[name] !== this[name]) {
+        return curr[name].apply(this, args);
+      } else {
+        obj = curr;
+      }
+    }
+  }
+
+};
+
 // create an element based on the content provided.
 pie.util.createElement = function() {
   return $.createElement.apply(null, arguments).q[0];
@@ -397,28 +485,6 @@ pie.util.setPath = sudo.setPath;
 
 // string templating
 pie.util.template = sudo.template;
-pie.inheritance = {
-
-  _super: function() {
-    var args = pie.array.args(arguments),
-    name = args.shift(),
-    obj = this,
-    curr;
-
-    if(args.length === 1 && args[0].toString() === "[object Arguments]") args = pie.array.args(args[0]);
-
-    while(true) {
-      curr = Object.getPrototypeOf(obj);
-      if(!curr) throw new Error("No super method defined: " + name);
-      if(curr === obj) return;
-      if(curr[name] && curr[name] !== this[name]) {
-        return curr[name].apply(this, args);
-      } else {
-        obj = curr;
-      }
-    }
-  }
-};
 pie.container = {
 
   addChild: function(name, child) {
@@ -445,7 +511,7 @@ pie.container = {
   },
 
   childNames: function() {
-    return this._childNames = this._childNames || [];
+    return this._childNames = this._childNames || {};
   },
 
   children: function() {
@@ -454,7 +520,10 @@ pie.container = {
 
   getChild: function(obj) {
     var name = obj._nameWithinParent || obj,
-    idx = this.childNames()[name] || obj;
+    idx = this.childNames()[name];
+
+    /* jslint eqeq:true */
+    if(idx == null) idx = obj;
 
     return ~idx && this.children()[idx] || undefined;
   },
@@ -490,15 +559,16 @@ pie.container = {
     return this;
   }
 };
-pie.model = function(d) {
+pie.model = function(d, options) {
   this.data = {};
+  this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
   this.changeRecords = [];
   this.sets(d || {});
 };
 
-pie.util.extend(pie.model.prototype, pie.inheritance);
+pie.util.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
 pie.model.prototype.deliverChangeRecords = function() {
@@ -557,9 +627,10 @@ pie.model.prototype.set = function(key, value, skipObservers) {
     change.type = 'add';
   }
 
-  this.data[key] = value;
+  this.data[key] = change.value = value;
   this.changeRecords.push(change);
 
+  this.trackTimestamps(key);
 
   if(skipObservers) return this;
   return this.deliverChangeRecords();
@@ -575,6 +646,12 @@ pie.model.prototype.sets = function(obj, skipObservers) {
   return this.deliverChangeRecords();
 };
 
+
+pie.model.prototype.trackTimestamps = function(key) {
+  if(!this.options.timestamps) return;
+  if(key === 'updated_at') return;
+  this.set('updated_at', new Date().getTime());
+};
 
 
 // fn[, key1, key2, key3]
@@ -606,7 +683,9 @@ pie.view = function(app, options) {
   this.changeCallbacks = [];
 };
 
+pie.util.extend(pie.view.prototype, pie.mixins.inheritance);
 pie.util.extend(pie.view.prototype, pie.container);
+pie.util.extend(pie.view.prototype, pie.mixins.bindings);
 
 
 // placeholder for default functionality
@@ -629,7 +708,7 @@ pie.view.prototype.loadingStyle = function(bool) {
 
 
 pie.view.prototype.navigationUpdated = function() {
-  this.children.forEach(function(c){
+  this.children().forEach(function(c){
     if('navigationUpdated' in c) c.navigationUpdated();
   });
 };
@@ -658,17 +737,11 @@ pie.view.prototype.on = function(e, sel, f) {
 // If the object is not observable, the observable extensions will automatically
 // be extended in.
 pie.view.prototype.onChange = function() {
-  var observable = arguments[0], fn = arguments[1], attributes = pie.array.args(arguments).slice(2), f2;
+  var observable = arguments[0], args = pie.array.args(arguments).slice(1);
   if(!('observe' in observable)) throw new Error("Observable does not respond to observe");
 
-  f2 = function(change){
-    if(!attributes.length || ~attributes.indexOf(change.name)) {
-      if(change.oldValue !== change.object[change.name]) fn(change);
-    }
-  };
-
-  this.changeCallbacks.push([observable, f2]);
-  observable.observe(f2);
+  this.changeCallbacks.push([observable, args]);
+  observable.observe.apply(observable, args);
 };
 
 
@@ -710,6 +783,9 @@ pie.view.prototype.removedFromParent = function() {
   // views remove their children upon removal.
   this.removeChildren();
 
+  // remove our el if we still have a parent.
+  if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+
   return this;
 };
 
@@ -732,7 +808,7 @@ pie.view.prototype._unobserveChangeCallbacks = function() {
   var a;
   while(this.changeCallbacks.length) {
     a = this.changeCallbacks.pop();
-    a[0].unobserve(a[1]);
+    a[0].unobserve.apply(a[0], a[1]);
   }
 };
 
@@ -749,7 +825,7 @@ pie.simpleView = function simpleView(app, options) {
 };
 
 pie.simpleView.prototype = Object.create(pie.view.prototype);
-pie.simpleView.prototype = pie.simpleView;
+pie.simpleView.prototype.constructor = pie.simpleView;
 
 pie.simpleView.prototype.addedToParent = function(parent) {
   pie.view.prototype.addedToParent.call(this, parent);
@@ -1308,7 +1384,7 @@ pie.services.notifier.prototype.getAutoCloseTimeout = function(autoClose) {
 };
 
 pie.services.notifier.prototype.remove = function(el) {
-  var type = el._pieNotificationType, idx;
+  var type = el._pieNotificationType;
   if(type) {
     pie.array.remove(this.notifications[type] || [], el);
   }
@@ -1689,7 +1765,7 @@ pie.app.prototype.navigationChanged = function() {
 
   // let the router determine our new url
   this.previousUrl = this.parsedUrl;
-  this.parsedUrl = this.router.parseUrl(this.navigator.get('url'));
+  this.parsedUrl = this.router.parseUrl(this.navigator.get('path'));
 
   if(this.previousUrl !== this.parsedUrl) {
     this.trigger('urlChanged');
@@ -1718,7 +1794,7 @@ pie.app.prototype.navigationChanged = function() {
   this.notifier.clear();
 
   // use the view key of the parsedUrl to find the viewClass
-  var viewClass = pie.util.getPath(this.viewNamespace + '.' + this.parsedUrl.view, window), child;
+  var viewClass = pie.util.getPath(this.options.viewNamespace + '.' + this.parsedUrl.view, window), child;
   // the instance to be added.
 
   // add the instance as our 'currentView'
@@ -1811,6 +1887,7 @@ pie.app.prototype.showStoredNotifications = function() {
 
 // start the app, apply fake navigation to the current url to get our navigation observation underway.
 pie.app.prototype.start = function() {
+
   this.navigator.start();
 
   this.trigger('beforeStart');
