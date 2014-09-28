@@ -18,7 +18,7 @@ app.i18n.load({
   },
   list: {
     summary: {
-      zero: "No ${keywords.item.plural} added",
+      zero: "No ${keywords.item.plural} have been added",
       one: "1 ${keywords.item.singular}",
       other: "%{count} ${keywords.item.plural}"
     }
@@ -53,10 +53,7 @@ example.views.layout = function layout(app) {
   });
 
   // this is our page "context". It represents a list which has items and a name.
-  this.list = new pie.model({
-    name: null,
-    items: []
-  }, {
+  this.list = new pie.list([], {
     timestamps: true
   });
 };
@@ -81,9 +78,6 @@ example.views.layout.prototype = pie.util.extend(Object.create(pie.simpleView.pr
     // add our list view.
     this.addChild('list', new example.views.list(this.app, this.list));
     this.qs('.list-container').appendChild(this.getChild('list').el);
-
-    this.addChild('summary', new example.views.summary(this.app, this.list));
-    this.qs('.summary-container').appendChild(this.getChild('summary').el);
   }
 });
 
@@ -97,7 +91,7 @@ example.views.form = function form(app, listModel) {
   });
 
   // this.model is special in that the default renderData() implementation checks for this.
-  this.model = listModel;
+  this.list = this.model = listModel;
 };
 
 example.views.form.prototype = pie.util.extend(Object.create(pie.simpleView.prototype), {
@@ -109,12 +103,11 @@ example.views.form.prototype = pie.util.extend(Object.create(pie.simpleView.prot
     // this simple form of the bind is equivalent to:
     // this.bind({
     //   model: this.model,
-    //   attr: 'name',
-    //   sel: 'input[name="name"]',
+    //   attr: 'nextItem',
+    //   sel: 'input[name="nextItem"]',
     //   trigger: 'keyup change',
     //   debounce: false
     // })
-    this.bind({attr: 'name'});
     this.bind({attr: 'nextItem'});
 
     // we observe the form submission and invoke handleSubmission when it occurs.
@@ -129,14 +122,11 @@ example.views.form.prototype = pie.util.extend(Object.create(pie.simpleView.prot
     // don't really submit it...
     e.preventDefault();
 
-    // first, grab the existing items from the model.
-    var items = this.model.get('items');
-
     // insert the item at the beginning.
-    items.unshift(this.model.get('nextItem'));
+    this.list.unshift(this.model.get('nextItem'));
 
-    // set the updates on the model so observers can see it.
-    this.model.sets({items: items, nextItem: null, updated_at: new Date().getTime()});
+    // remove the nextItem attribute, updating the UI.
+    this.list.set('nextItem', '');
   }
 });
 
@@ -149,7 +139,7 @@ example.views.list = function list(app, listModel) {
   pie.simpleView.call(this, app, {
     template: 'listContainer',
     renderOnAddedToParent: true,
-    autoRender: 'items'
+    autoRender: true
   });
 
   // this.model is needed for autoRender
@@ -178,34 +168,12 @@ example.views.list.prototype = pie.util.extend(Object.create(pie.simpleView.prot
     e.preventDefault();
 
     // grab the index from the data- attribute.
-    var index = e.delegateTarget.getAttribute('data-idx'),
-      items = this.model.get('items');
+    var index = e.delegateTarget.getAttribute('data-idx');
 
-    // remove the item from the items array.
-    items.splice(index, 1);
-
-    // update the model, telling the observers.
-    this.model.sets({items: items, 'updated_at' : new Date().getTime()});
+    // remove the item from the list.
+    this.list.remove(index);
   }
 });
-
-
-// this view handles rendering the summary of the list
-example.views.summary = function summary(app, listModel) {
-
-  pie.simpleView.call(this, app, {
-    template: 'summaryContainer',
-    renderOnAddedToParent: true,
-    autoRender: true
-  });
-
-  // this.model is needed for autoRender
-  // if you didn't use autoRender you would have to add
-  // this.onChange(this.list, this.render.bind(this), 'items') in addedToParent.
-  this.model = listModel;
-};
-
-example.views.summary.prototype = Object.create(pie.simpleView.prototype);
 
 
 

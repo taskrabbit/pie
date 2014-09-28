@@ -1,10 +1,9 @@
 pie.model = function(d, options) {
-  this.data = {};
+  this.data = $.extend({}, d);
   this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
   this.changeRecords = [];
-  this.sets(d || {});
 };
 
 pie.util.extend(pie.model.prototype, pie.mixins.inheritance);
@@ -25,18 +24,20 @@ pie.model.prototype.deliverChangeRecords = function() {
 
 
 pie.model.prototype.get = function(key) {
-  return this.data[key];
+  return pie.util.getPath(key, this.data);
 };
 
 
 pie.model.prototype.gets = function() {
-  var args = pie.array.args(arguments);
+  var args = pie.array.args(arguments), o = {};
   args = pie.array.flatten(args);
   args = pie.array.compact(args);
 
-  args.unshift(this.data);
+  args.forEach(function(arg){
+    o[arg] = pie.util.getPath(arg, this.data);
+  }.bind(this));
 
-  return pie.object.slice.apply(null, args);
+  return pie.object.compact(o);
 };
 
 
@@ -59,22 +60,22 @@ pie.model.prototype.observe = function() {
 pie.model.prototype.set = function(key, value, skipObservers) {
   var change = { name: key, object: this.data };
 
-  if(key in this.data) {
+  if(pie.util.hasPath(key, this.data)) {
     change.type = 'update';
-    change.oldValue = this.data[key];
+    change.oldValue = pie.util.getPath(key, this.data);
   } else {
     change.type = 'add';
   }
 
-  this.data[key] = change.value = value;
-  this.changeRecords.push(change);
+  change.value = value;
+  pie.util.setPath(key, value, this.data);
 
-  this.trackTimestamps(key);
+  this.changeRecords.push(change);
+  this.trackTimestamps(key, skipObservers);
 
   if(skipObservers) return this;
   return this.deliverChangeRecords();
 };
-
 
 pie.model.prototype.sets = function(obj, skipObservers) {
   pie.object.forEach(obj, function(k,v) {
@@ -86,10 +87,10 @@ pie.model.prototype.sets = function(obj, skipObservers) {
 };
 
 
-pie.model.prototype.trackTimestamps = function(key) {
+pie.model.prototype.trackTimestamps = function(key, skipObservers) {
   if(!this.options.timestamps) return;
   if(key === 'updated_at') return;
-  this.set('updated_at', new Date().getTime());
+  this.set('updated_at', new Date().getTime(), skipObservers);
 };
 
 

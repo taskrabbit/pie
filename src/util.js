@@ -34,6 +34,22 @@ pie.util.extend   = $.extend;
 // extract from subobjects
 pie.util.getPath  = sudo.getPath;
 
+// does the object have the described path
+pie.util.hasPath = function(path, obj) {
+  var parts = path.split('.'), part;
+  while(part = parts.shift()) {
+
+    /* jslint eqeq:true */
+    if(obj != null && obj.hasOwnProperty(part)) {
+      obj = obj[part];
+    } else {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 // serialize object into query string
 pie.util.serialize = $.serialize;
 

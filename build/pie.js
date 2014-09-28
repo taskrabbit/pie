@@ -477,6 +477,22 @@ pie.util.extend   = $.extend;
 // extract from subobjects
 pie.util.getPath  = sudo.getPath;
 
+// does the object have the described path
+pie.util.hasPath = function(path, obj) {
+  var parts = path.split('.'), part;
+  while(part = parts.shift()) {
+
+    /* jslint eqeq:true */
+    if(obj != null && obj.hasOwnProperty(part)) {
+      obj = obj[part];
+    } else {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 // serialize object into query string
 pie.util.serialize = $.serialize;
 
@@ -560,12 +576,11 @@ pie.container = {
   }
 };
 pie.model = function(d, options) {
-  this.data = {};
+  this.data = $.extend({}, d);
   this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
   this.changeRecords = [];
-  this.sets(d || {});
 };
 
 pie.util.extend(pie.model.prototype, pie.mixins.inheritance);
@@ -586,18 +601,20 @@ pie.model.prototype.deliverChangeRecords = function() {
 
 
 pie.model.prototype.get = function(key) {
-  return this.data[key];
+  return pie.util.getPath(key, this.data);
 };
 
 
 pie.model.prototype.gets = function() {
-  var args = pie.array.args(arguments);
+  var args = pie.array.args(arguments), o = {};
   args = pie.array.flatten(args);
   args = pie.array.compact(args);
 
-  args.unshift(this.data);
+  args.forEach(function(arg){
+    o[arg] = pie.util.getPath(arg, this.data);
+  }.bind(this));
 
-  return pie.object.slice.apply(null, args);
+  return pie.object.compact(o);
 };
 
 
@@ -620,22 +637,22 @@ pie.model.prototype.observe = function() {
 pie.model.prototype.set = function(key, value, skipObservers) {
   var change = { name: key, object: this.data };
 
-  if(key in this.data) {
+  if(pie.util.hasPath(key, this.data)) {
     change.type = 'update';
-    change.oldValue = this.data[key];
+    change.oldValue = pie.util.getPath(key, this.data);
   } else {
     change.type = 'add';
   }
 
-  this.data[key] = change.value = value;
-  this.changeRecords.push(change);
+  change.value = value;
+  pie.util.setPath(key, value, this.data);
 
-  this.trackTimestamps(key);
+  this.changeRecords.push(change);
+  this.trackTimestamps(key, skipObservers);
 
   if(skipObservers) return this;
   return this.deliverChangeRecords();
 };
-
 
 pie.model.prototype.sets = function(obj, skipObservers) {
   pie.object.forEach(obj, function(k,v) {
@@ -647,10 +664,10 @@ pie.model.prototype.sets = function(obj, skipObservers) {
 };
 
 
-pie.model.prototype.trackTimestamps = function(key) {
+pie.model.prototype.trackTimestamps = function(key, skipObservers) {
   if(!this.options.timestamps) return;
   if(key === 'updated_at') return;
-  this.set('updated_at', new Date().getTime());
+  this.set('updated_at', new Date().getTime(), skipObservers);
 };
 
 
@@ -673,6 +690,168 @@ pie.model.prototype.unobserve = function() {
 
 
 
+pie.list = function(array, options) {
+  array = array || [];
+  pie.model.call(this, {items: array}, options);
+};
+
+
+pie.list.prototype = Object.create(pie.model.prototype);
+
+
+pie.list.prototype._normalizedIndex = function(wanted) {
+  wanted = parseInt(wanted, 10);
+  if(!isNaN(wanted) && wanted < 0) wanted += this.data.items.length;
+  return wanted;
+};
+
+
+pie.list.prototype._trackMutations = function(skipObservers, fn) {
+  var oldLength = this.data.items.length,
+  changes = [fn.call()],
+  newLength = this.data.items.length;
+
+  if(oldLength !== newLength) {
+    changes.push({
+      name: 'length',
+      type: 'update',
+      object: this.data.items,
+      oldValue: oldLength,
+      value: newLength
+    });
+  }
+
+  this.changeRecords = this.changeRecords.concat(changes);
+  this.trackTimestamps('items', skipObservers);
+
+  if(skipObservers) return this;
+  return this.deliverChangeRecords();
+};
+
+
+pie.list.prototype.get = function(key) {
+  var idx = this._normalizedIndex(key), path;
+
+  if(isNaN(idx)) path = key;
+  else path = 'items.' + idx;
+
+  return this._super('get', path);
+};
+
+
+pie.list.prototype.insert = function(key, value, skipObservers) {
+  var idx = this._normalizedIndex(key);
+
+  return this._trackMutations(skipObservers, function(){
+    var change = {
+      name: String(idx),
+      object: this.data.items,
+      type: 'add',
+      oldValue: this.data.items[idx],
+      value: value
+    };
+
+    this.data.items.splice(idx, 0, value);
+
+    return change;
+  }.bind(this));
+};
+
+
+pie.list.prototype.length = function() {
+  return this.get('items.length');
+};
+
+
+pie.list.prototype.push = function(value, skipObservers) {
+  return this._trackMutations(skipObservers, function(){
+    var change = {
+      name: String(this.data.items.length),
+      object: this.data.items,
+      type: 'add',
+      value: value,
+      oldValue: undefined
+    };
+
+    this.data.items.push(value);
+
+    return change;
+  }.bind(this));
+};
+
+
+pie.list.prototype.remove = function(key, skipObservers) {
+  var idx = this._normalizedIndex(key);
+
+  return this._trackMutations(skipObservers, function(){
+    var change = {
+      name: String(idx),
+      object: this.data.items,
+      type: 'delete',
+      oldValue: this.data.items[idx],
+      value: undefined
+    };
+
+    this.data.items.splice(idx, 1);
+
+    return change;
+  }.bind(this));
+};
+
+
+pie.list.prototype.set = function(key, value, skipObservers) {
+  var idx = this._normalizedIndex(key);
+
+  if(isNaN(idx)) {
+    return this._super('set', key, value, skipObservers);
+  }
+
+  return this._trackMutations(skipObservers, function(){
+    var change = {
+      name: String(idx),
+      object: this.data.items,
+      type: 'update',
+      oldValue: this.data.items[idx]
+    };
+
+    this.data.items[idx] = change.value = value;
+
+    return change;
+  }.bind(this));
+};
+
+
+pie.list.prototype.shift = function(skipObservers) {
+  return this._trackMutations(skipObservers, function(){
+    var change = {
+      name: '0',
+      object: this.data.items,
+      type: 'delete'
+    };
+
+    change.oldValue = this.data.items.shift();
+    change.value = this.data.items[0];
+
+    return change;
+  }.bind(this));
+};
+
+
+pie.list.prototype.unshift = function(value, skipObservers) {
+  return this._trackMutations(skipObservers, function(){
+    var change = {
+      name: '0',
+      object: this.data.items,
+      type: 'add',
+      value: value
+    };
+
+    change.oldValue = this.data.items[0];
+    this.data.items.unshift(value);
+
+    return change;
+  }.bind(this));
+};
 // The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
 pie.view = function(app, options) {
