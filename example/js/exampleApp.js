@@ -1,7 +1,5 @@
 /*global example */
 
-var root = ~window.location.pathname.indexOf('/example/') ? window.location.pathname.split('/example/')[0] + '/example/' : '/';
-
 window.app = new pie.app({
   uiTarget: '#main',
   viewNamespace: 'example.views'
