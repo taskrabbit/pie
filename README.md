@@ -9,5 +9,5 @@
 
 ```base
 > npm install -g http-server
-> http-server example/index.html
+> http-server ./
 ```
