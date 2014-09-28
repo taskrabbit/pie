@@ -38,7 +38,7 @@ window.example = {
 };
 
 // the page level view.
-// this view handles managing it's children, initializes page context via the pie.model.
+// this view handles managing it's children, initializes page context via the pie.list.
 example.views.layout = function layout(app) {
 
   pie.simpleView.call(this, app, {
@@ -50,7 +50,7 @@ example.views.layout = function layout(app) {
     renderOnAddedToParent: true
   });
 
-  // this is our page "context". It represents a list which has items and a name.
+  // this is our page "context". It represents a list of items.
   this.list = new pie.list([], {
     timestamps: true
   });
