@@ -11,6 +11,7 @@ pie.container = {
     names[name] = idx;
     child._indexWithinParent = idx;
     child._nameWithinParent = name;
+    child.parent = this;
 
     if('addedToParent' in child) child.addedToParent.call(child, this);
 
@@ -41,6 +42,18 @@ pie.container = {
     return ~idx && this.children()[idx] || undefined;
   },
 
+  send: function() {
+    var args = pie.array.args(arguments),
+    fname = args.shift(),
+    obj = this.parent;
+
+    while(obj && !(fname in obj)) {
+      obj = obj.parent;
+    }
+
+    if(obj) obj[fname].apply(obj, args);
+  },
+
   removeChild: function(obj) {
     var child = this.getChild(obj),
     names = this.childNames(),
@@ -49,11 +62,18 @@ pie.container = {
 
     if(child) {
       i = child._indexWithinParent;
-      delete names[child._nameWithinParent];
       children.splice(i, 1);
+
       for(;i < children.length;i++) {
         children[i]._indexWithinParent = i;
+        names[children[i]._nameWithinParent] = i;
       }
+
+      // clean up
+      delete names[child._nameWithinParent];
+      delete child._indexWithinParent;
+      delete child._nameWithinParent;
+      delete child.parent;
 
       if('removedFromParent' in child) child.removedFromParent.call(child, this);
     }

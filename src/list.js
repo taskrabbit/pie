@@ -37,6 +37,11 @@ pie.list.prototype._trackMutations = function(skipObservers, fn) {
 };
 
 
+pie.list.prototype.forEach = function(f) {
+  return this.get('items').forEach(f);
+};
+
+
 pie.list.prototype.get = function(key) {
   var idx = this._normalizedIndex(key), path;
 
@@ -45,6 +50,11 @@ pie.list.prototype.get = function(key) {
 
   return this._super('get', path);
 };
+
+
+pie.list.prototype.indexOf = function(value) {
+  return this.get('items').indexOf(value);
+},
 
 
 pie.list.prototype.insert = function(key, value, skipObservers) {
@@ -146,17 +156,5 @@ pie.list.prototype.shift = function(skipObservers) {
 
 
 pie.list.prototype.unshift = function(value, skipObservers) {
-  return this._trackMutations(skipObservers, function(){
-    var change = {
-      name: '0',
-      object: this.data.items,
-      type: 'add',
-      value: value
-    };
-
-    change.oldValue = this.data.items[0];
-    this.data.items.unshift(value);
-
-    return change;
-  }.bind(this));
+  return this.insert(0, value, skipObservers);
 };

@@ -15,11 +15,12 @@ app.i18n.load({
     }
   },
   list: {
-    summary: {
+    total: {
       zero: "No ${keywords.item.plural} have been added",
       one: "1 ${keywords.item.singular}",
       other: "%{count} ${keywords.item.plural}"
-    }
+    },
+    completed: "%{count} completed."
   }
 });
 
@@ -121,7 +122,8 @@ example.views.form.prototype = pie.util.extend(Object.create(pie.simpleView.prot
     e.preventDefault();
 
     // insert the item at the beginning.
-    this.list.unshift(this.model.get('nextItem'));
+    var newItem = new pie.model({title: this.model.get('nextItem'), completed: false});
+    this.list.push(newItem);
 
     // remove the nextItem attribute, updating the UI.
     this.list.set('nextItem', '');
@@ -136,8 +138,7 @@ example.views.list = function list(app, listModel) {
   // any time the "items" attribute of the model changes.
   pie.simpleView.call(this, app, {
     template: 'listContainer',
-    renderOnAddedToParent: true,
-    autoRender: true
+    renderOnAddedToParent: true
   });
 
   // this.model is needed for autoRender
@@ -153,47 +154,116 @@ example.views.list.prototype = pie.util.extend(Object.create(pie.simpleView.prot
   // set up our events, then invoke super.
   addedToParent: function() {
 
-    // any time a js-delete link is clicked, invoke deleteItem.
-    this.on('click', '.js-delete', this.deleteItem.bind(this));
+    this.on('click', '.js-complete-all', this.completeAll.bind(this));
+
+    this.onChange(this.list, this.listChanged.bind(this));
 
     // do this last, since we are rendering in it.
     this._super('addedToParent');
   },
 
+  completeAll: function(e) {
+    e.preventDefault();
+
+    this.list.forEach(function(item){
+      item.set('completed', true);
+    });
+  },
+
+  itemAdded: function(change) {
+    var sibling = change.oldValue && this.getChild('view-' + change.oldValue.uid),
+    child = new example.views.item(this.app, this.list, change.value);
+
+    this.addChild('view-' + change.value.uid, child);
+
+    if(sibling) {
+      sibling.el.parentNode.insertBefore(child.el, sibling.el);
+    } else {
+      this.qs('ul').appendChild(child.el);
+    }
+  },
+
+  itemCompleted: function() {
+    this.updateSummary();
+  },
+
+  itemRemoved: function(change) {
+    var child = this.getChild('view-' + change.oldValue.uid);
+    this.removeChild(child);
+  },
+
+  listChanged: function(change) {
+    if(change.name === 'length') {
+      this.updateSummary();
+    } else if(!isNaN(parseInt(change.name, 10))) {
+      if(change.type === 'add') {
+        this.itemAdded(change);
+      } else if (change.type === 'delete') {
+        this.itemRemoved(change);
+      }
+    }
+  },
+
+  render: function() {
+    this._super('render');
+    this.updateSummary();
+  },
+
+  updateSummary: function() {
+    var l = this.list.length(),
+    total = this.app.i18n.t('list.total', {count: l}),
+    completed = l && this.app.i18n.t('list.completed', {count: this.qsa('input[name="completed"]:checked').length});
+
+    this.qs('#summary').innerHTML = pie.array.compact([total, completed], true).join(', ');
+  }
+});
+
+// this view handles rendering an individual item
+example.views.item = function item(app, listModel, itemModel) {
+
+  // this time we use autoRender to automatically render this view
+  // any time the "items" attribute of the model changes.
+  pie.simpleView.call(this, app, {
+    template: 'itemContainer',
+    renderOnAddedToParent: true
+  });
+
+  this.list = listModel;
+  this.item = this.model = itemModel;
+};
+
+
+
+example.views.item.prototype = pie.util.extend(Object.create(pie.simpleView.prototype), {
+
+  // set up our events, then invoke super.
+  addedToParent: function() {
+
+    this.bind({attr: 'completed'});
+
+    this.onChange(this.item, this.completedChanged.bind(this), 'completed');
+
+    // any time a js-delete link is clicked, invoke deleteItem.
+    this.on('click', '.js-delete', this.deleteItem.bind(this));
+
+    // do this last, since we are rendering in it.
+    this._super('addedToParent');
+
+    this.initBoundFields();
+  },
+
+  completedChanged: function() {
+    this.send('itemCompleted', this.item);
+  },
 
   deleteItem: function(e) {
     // don't follow the link.
     e.preventDefault();
 
     // grab the index from the data- attribute.
-    var index = e.delegateTarget.getAttribute('data-idx');
+    var index = this.list.indexOf(this.item);
 
     // remove the item from the list.
     this.list.remove(index);
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

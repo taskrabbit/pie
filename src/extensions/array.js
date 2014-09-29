@@ -1,3 +1,30 @@
+pie.array.areAll = function(a, f) {
+  var i = 0;
+  for(;i < a.length; i++) {
+    if(!f.call(null, a[i])) return false;
+  }
+  return true;
+};
+
+pie.array.areAny = function(a, f) {
+  var i = 0;
+  for(;i < a.length; i++) {
+    if(f.call(null, a[i])) return true;
+  }
+  return false;
+};
+
+pie.array.groupBy = function(a, groupingF, sum) {
+  var h = {}, g;
+  a.forEach(function(i){
+    g = groupingF.call(null, i);
+    h[g] = h[g] || [];
+    h[g].push(i);
+  });
+
+  return h;
+}
+
 // remove all null or undefined values
 // does not remove all falsy values unless the second param is true
 pie.array.compact = function(a, removeAllFalsy){

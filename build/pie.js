@@ -35,6 +35,33 @@ window.pie = {
   util: {},
 
 };
+pie.array.areAll = function(a, f) {
+  var i = 0;
+  for(;i < a.length; i++) {
+    if(!f.call(null, a[i])) return false;
+  }
+  return true;
+};
+
+pie.array.areAny = function(a, f) {
+  var i = 0;
+  for(;i < a.length; i++) {
+    if(f.call(null, a[i])) return true;
+  }
+  return false;
+};
+
+pie.array.groupBy = function(a, groupingF, sum) {
+  var h = {}, g;
+  a.forEach(function(i){
+    g = groupingF.call(null, i);
+    h[g] = h[g] || [];
+    h[g].push(i);
+  });
+
+  return h;
+}
+
 // remove all null or undefined values
 // does not remove all falsy values unless the second param is true
 pie.array.compact = function(a, removeAllFalsy){
@@ -359,65 +386,138 @@ pie.string.modularize = function(str) {
 
 // A mixin to provide two way data binding between a model and form inputs.
 // This mixin should be used with a pie view.
-pie.mixins.bindings = {
+pie.mixins.bindings = (function(){
 
-  // Ex: this.bind({attr: 'name', model: this.user});
-  // If this.model is defined, you don't have to pass the model.
-  // Ex: this.model = user; this.bind({attr: 'name'});
-  // Here are all the options:
-  // this.bind({
-  //   model: this.user,
-  //   attr: 'name',
-  //   sel: 'input[name="user_name"]',
-  //   trigger: 'keyup',
-  //   debounce: true
-  // });
-  //
-  // Bind currently only supports form fields. Todo: support applying to attributes, innerHTML, etc.
-  bind: function(options) {
-    options = options || {};
+  function setFieldValue(input, value) {
+    var t = input.getAttribute('type');
 
-    var model = options.model || this.model,
-    attr = options.attr || options.attribute || undefined,
-    sel = options.sel || 'input[name="' + attr + '"]',
-    triggers = (options.trigger || 'keyup change').split(' '),
-    debounce = options.debounce,
-    ignore = false,
-    toModel = function(e) {
-      var value = e.delegateTarget.value;
-      ignore = true;
-      model.set(attr, value);
-      ignore = false;
-    },
-    toElement = function(change) {
-      if(ignore) return;
-      $(this.qsa(sel)).assign('value', change.value);
-    }.bind(this);
+    /* jslint eqeq:true */
+    if(t === 'checkbox' || t === 'radio') {
 
-    if(debounce) {
-      if(debounce === true) debounce = 150;
-      toModel = Function.debounce(toModel, debounce);
+      // in the checkbox case, we could have an array of values
+      if(Array.isArray(value)) {
+        // this input is checked if that array contains it's value
+        return input.checked = !!(~value.indexOf(input.value));
+
+      // if the field has no value, then we just determine it's checked state based on the truthyness of the model value
+      } else if(!input.hasAttribute('value')) {
+        return input.checked = !!value;
+      // otherwise, we check the input against the value and base that as our checked state.
+      } else {
+        return input.checked = (input.value == value);
+      }
     }
 
-    triggers.forEach(function(trigger){
-      this.on(trigger, sel, toModel);
-    }.bind(this));
-
-    this.onChange(model, toElement, attr);
-
-    this._bindings = pie.array.from(this._bindings);
-    this._bindings.push({model: model, sel: sel, attr: attr});
-  },
-
-  // A way to initialize form fields with the values of a model.
-  initBoundFields: function() {
-    pie.array.from(this._bindings).forEach(function(binding){
-      var el = this.qs(binding.sel);
-      $(this.qsa(binding.sel)).assign('value', binding.model.get(binding.attr));
-    }.bind(this));
+    // normal inputs just receive the value.
+    return input.value = value;
   }
 
-};
+  function setValue(view, sel, value) {
+    var i = 0, list = view.qsa(sel);
+    for(;i < list.length; i++){
+      setFieldValue(list[i], value);
+    }
+  }
+
+  function getUpdatedValue(input, currentVal) {
+    var v = input.value, t = input.getAttribute('type'), i;
+
+    // if it's a checkbox
+    if(t === 'checkbox' || t === 'radio') {
+
+      // and we're dealing with an array.
+      if(Array.isArray(currentVal)) {
+        // the current index of the value
+        i = currentVal.indexOf(v);
+
+        // if we want the value to be included but it's not, push it on
+        if(input.checked && !~i) {
+          currentVal.push(input.value);
+          return currentVal;
+
+        // if the value should not be included but is, splice it out.
+        } else if(!input.checked && ~i) {
+          currentVal.splice(i,1);
+          return currentVal;
+        } else {
+          return currentVal;
+        }
+
+      // not an array
+      } else {
+
+        // if the input has a value attribute use that, otherwise return a bool.
+        if(input.hasAttribute('value')) {
+          return input.checked ? input.value : null;
+        } else {
+          return input.checked;
+        }
+      }
+    }
+
+    return input.value;
+  }
+
+
+  return {
+
+    // Ex: this.bind({attr: 'name', model: this.user});
+    // If this.model is defined, you don't have to pass the model.
+    // Ex: this.model = user; this.bind({attr: 'name'});
+    // Here are all the options:
+    // this.bind({
+    //   model: this.user,
+    //   attr: 'name',
+    //   sel: 'input[name="user_name"]',
+    //   trigger: 'keyup',
+    //   debounce: true
+    // });
+    //
+    // Bind currently only supports form fields. Todo: support applying to attributes, innerHTML, etc.
+    bind: function(options) {
+      options = options || {};
+
+      var model = options.model || this.model,
+      attr = options.attr || options.attribute || undefined,
+      sel = options.sel || 'input[name="' + attr + '"]',
+      triggers = (options.trigger || 'keyup change').split(' '),
+      debounce = options.debounce,
+      ignore = false,
+      toModel = function(e) {
+        var value = getUpdatedValue(e.delegateTarget, model.get(attr));
+        ignore = true;
+        model.set(attr, value);
+        ignore = false;
+      },
+      toElement = function(change) {
+        if(ignore) return;
+        setValue(this, sel, change.value);
+      }.bind(this);
+
+      if(debounce) {
+        if(debounce === true) debounce = 150;
+        toModel = Function.debounce(toModel, debounce);
+      }
+
+      triggers.forEach(function(trigger){
+        this.on(trigger, sel, toModel);
+      }.bind(this));
+
+      this.onChange(model, toElement, attr);
+
+      this._bindings = pie.array.from(this._bindings);
+      this._bindings.push({model: model, sel: sel, attr: attr});
+    },
+
+    // A way to initialize form fields with the values of a model.
+    initBoundFields: function() {
+      pie.array.from(this._bindings).forEach(function(binding){
+        setValue(this, binding.sel, binding.model.get(binding.attr));
+      }.bind(this));
+    }
+
+  };
+})();
 pie.mixins.inheritance = {
 
   _super: function() {
@@ -514,6 +614,7 @@ pie.container = {
     names[name] = idx;
     child._indexWithinParent = idx;
     child._nameWithinParent = name;
+    child.parent = this;
 
     if('addedToParent' in child) child.addedToParent.call(child, this);
 
@@ -544,6 +645,18 @@ pie.container = {
     return ~idx && this.children()[idx] || undefined;
   },
 
+  send: function() {
+    var args = pie.array.args(arguments),
+    fname = args.shift(),
+    obj = this.parent;
+
+    while(obj && !(fname in obj)) {
+      obj = obj.parent;
+    }
+
+    if(obj) obj[fname].apply(obj, args);
+  },
+
   removeChild: function(obj) {
     var child = this.getChild(obj),
     names = this.childNames(),
@@ -552,11 +665,18 @@ pie.container = {
 
     if(child) {
       i = child._indexWithinParent;
-      delete names[child._nameWithinParent];
       children.splice(i, 1);
+
       for(;i < children.length;i++) {
         children[i]._indexWithinParent = i;
+        names[children[i]._nameWithinParent] = i;
       }
+
+      // clean up
+      delete names[child._nameWithinParent];
+      delete child._indexWithinParent;
+      delete child._nameWithinParent;
+      delete child.parent;
 
       if('removedFromParent' in child) child.removedFromParent.call(child, this);
     }
@@ -729,6 +849,11 @@ pie.list.prototype._trackMutations = function(skipObservers, fn) {
 };
 
 
+pie.list.prototype.forEach = function(f) {
+  return this.get('items').forEach(f);
+};
+
+
 pie.list.prototype.get = function(key) {
   var idx = this._normalizedIndex(key), path;
 
@@ -737,6 +862,11 @@ pie.list.prototype.get = function(key) {
 
   return this._super('get', path);
 };
+
+
+pie.list.prototype.indexOf = function(value) {
+  return this.get('items').indexOf(value);
+},
 
 
 pie.list.prototype.insert = function(key, value, skipObservers) {
@@ -838,19 +968,7 @@ pie.list.prototype.shift = function(skipObservers) {
 
 
 pie.list.prototype.unshift = function(value, skipObservers) {
-  return this._trackMutations(skipObservers, function(){
-    var change = {
-      name: '0',
-      object: this.data.items,
-      type: 'add',
-      value: value
-    };
-
-    change.oldValue = this.data.items[0];
-    this.data.items.unshift(value);
-
-    return change;
-  }.bind(this));
+  return this.insert(0, value, skipObservers);
 };
 // The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
