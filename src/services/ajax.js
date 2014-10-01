@@ -6,7 +6,7 @@ pie.services.ajax = function ajax(app) {
 
 // default ajax options. override this method to
 pie.services.ajax.prototype._defaultAjaxOptions = function() {
-  return $.extend({}, this.defaultAjaxOptions, {
+  return pie.util.extend({}, this.defaultAjaxOptions, {
     dataType: 'json',
     type: 'GET',
     error: this.app.errorHandler.handleXhrError
@@ -91,11 +91,13 @@ pie.services.ajax.prototype.post = function(options) {
 };
 
 pie.services.ajax.prototype.put = function(options) {
-  return this.post($.extend({type: 'PUT'}, options));
+  options = pie.util.extend({type: 'PUT'}, options);
+  return this.ajax(options);
 };
 
 pie.services.ajax.prototype.del = function(options) {
-  return this.post($.extend({type: 'DELETE'}, options));
+  options = pie.util.extend({type: 'DELETE'}, options);
+  return this.ajax(options);
 };
 
 pie.services.ajax.prototype._applyCsrfToken = function(xhr) {

@@ -200,7 +200,7 @@ describe("pie.services.i18n", function() {
         var d1 = new Date(), d2;
 
         d2 = this.i18n._normalizedDate(d1);
-        expect(d1).toEqual(d2);
+        expect(Math.floor(d1.getTime() / 1000)).toEqual(Math.floor(d2.getTime() / 1000));
       });
 
       it("should parse iso times", function() {

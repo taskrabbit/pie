@@ -150,14 +150,6 @@
     cash.collect = function() {
       return this._all_(arguments, false, true);
     };
-
-
-    cash.createElement = function(str) {
-      var wrap = document.createElement('div');
-      wrap.innerHTML = str;
-      return $(wrap.removeChild(wrap.firstElementChild));
-    };
-
     // ###off
     // Remove event bindings from the q which match the given type and/or function.
     // By supplying "*.yourNamespace" as the event type, you can remove all events
@@ -293,81 +285,6 @@
         return this;
     };
 
-    // ###hide
-    // Makes elements in the q invisible in the DOM by modifying
-    // the `display` attribute, if necessary.
-    //
-    // `returns` cash
-    cash.hide = function() {
-        return this._sh_('hide');
-    };
-    // ###show
-    // Makes elements in the q visible in the DOM by modifying
-    // the `display` attribute, if necessary.
-    //
-    // `returns` cash
-    cash.show = function() {
-        return this._sh_('show');
-    };
-    // ###_sh_
-    // Abstracted logic for the show and hide methods
-    // `private`
-    cash._sh_ = function(key) {
-        var isShow = key === 'show';
-
-        function state(z) {
-            return isShow ? z !== 'none' : z === 'none';
-        }
-
-        function none(arg) {
-            return isShow ? arg !== 'none' : arg === 'none';
-        }
-
-        function notNone(arg) {
-            return isShow ? arg === 'none' : arg !== 'none';
-        }
-
-        this.q.forEach(function(el) {
-            var display = $._setCache_('display', el),
-                cid = el.getAttribute('cid'),
-                old = display[cid],
-                comp = getComputedStyle(el).display,
-                styl = el.style.display,
-                z = (comp || styl);
-            if (state(z)) {
-                if (none(old)) delete display[cid];
-                // does an old display value exist?
-            } else if (old && none(old)) {
-                el.style.display = old;
-                delete display[cid];
-                // the element is not visible and does not have an old display value
-            } else {
-                // is the element hidden with inline styling?
-                if (styl && notNone(styl)) {
-                    display[cid] = styl;
-                    el.style.display = isShow ? '' : 'none';
-                    // the element is hidden through css
-                } else el.style.display = isShow ? 'block' : 'none';
-            }
-        });
-        return this;
-    };
-
-    // ###closest
-    // Given a string selector, return the first parent node that matches it
-    // for each element in the q.
-    //
-    // `param` {string} `sel`
-    // `returns` cash
-    cash.closest = function(sel) {
-        var ary = [];
-        this.q.forEach(function(el) {
-            while (el && !$.matches(el, sel)) el = !isDocument(el) && el.parentNode;
-            if (!~ary.indexOf(el)) ary.push(el);
-        });
-        return $(ary);
-    };
-
     // ###deserialize
     // Given a 'paramaterized' string, convert it to a hash and return it
     //
@@ -397,26 +314,11 @@
             targ[k] = obj[k];
         }
         // iterate over each passed in obj remaining
-        for (; args.length && (obj = args.shift());) {
+        for (; args.length;) {
+            obj = args.shift();
             keys(obj).forEach(fn);
         }
         return targ;
-    };
-    // ###matches
-    // Unfortunately the matchesSelector methods are all hidden behind prefixes ATM.
-    // set the useable one, if not, then return the bool.
-    //
-    // `param` {element} `el`. A DOM 1 nodetype
-    // `param` {string}  `sel`. A CSS selector
-    // `returns` {bool}
-    cash.matches = function(el, sel) {
-        if (el.nodeType !== 1) return false;
-        // normalize the native selector match fn until all the prefixes are dropped
-        if (!this._matchesSelector_) {
-            this._matchesSelector_ = el.webkitMatchesSelector || el.mozMatchesSelector ||
-                el.msMatchesSelector || el.oMatchesSelector || el.matchesSelector;
-        }
-        return this._matchesSelector_.call(el, sel);
     };
     // ###serialize
     // Given a hash of data, convert it to a 'paramaterized' string and return it.

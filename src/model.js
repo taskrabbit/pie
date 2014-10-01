@@ -1,5 +1,5 @@
 pie.model = function(d, options) {
-  this.data = $.extend({}, d);
+  this.data = pie.util.extend({}, d);
   this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};

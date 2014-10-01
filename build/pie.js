@@ -543,8 +543,10 @@ pie.mixins.inheritance = {
 };
 
 // create an element based on the content provided.
-pie.util.createElement = function() {
-  return $.createElement.apply(null, arguments).q[0];
+pie.util.createElement = function(str) {
+  var wrap = document.createElement('div');
+  wrap.innerHTML = str;
+  return wrap.removeChild(wrap.firstElementChild);
 };
 
 // deep merge
@@ -562,17 +564,60 @@ pie.util.deepExtend = function() {
   }
 
   // iterate over each passed in obj remaining
-  for (; args.length && (obj = args.shift());) {
-    Object.keys(obj).forEach(fn);
+  for (; args.length;) {
+    obj = args.shift();
+    if(obj) Object.keys(obj).forEach(fn);
   }
   return targ;
 };
 
 // deserialize query string into object
-pie.util.deserialize = $.deserialize;
+pie.util.deserialize = function(str) {
+  var params = {}, arrRegex = /^(.+)\[\]$/, idx, pieces, segments, arr, key, value, arr;
+
+  if(!str) return params;
+
+  idx = str.indexOf('?');
+  if(~idx) str = str.slice(idx+1);
+
+  pieces = str.split('&');
+  pieces.forEach(function(piece){
+    segments = piece.split('=');
+    key = decodeURIComponent(segments[0] || '');
+    value = decodeURIComponent(segments[1] || '');
+
+    arr = key.match(arrRegex);
+    // array
+    if(!!arr) {
+      key = arr[1];
+      params[key] = params[key] || [];
+      params[key].push(value);
+    } else {
+      params[key] = value;
+    }
+  });
+
+  return params;
+};
 
 // shallow merge
-pie.util.extend   = $.extend;
+pie.util.extend = function() {
+  var args = pie.array.args(arguments),
+      targ = args.shift(),
+      obj;
+
+  function fn(k) {
+    targ[k] = obj[k];
+  }
+
+  // iterate over each passed in obj remaining
+  for (; args.length; ) {
+    obj = args.shift();
+    if(obj) Object.keys(obj).forEach(fn);
+  }
+
+  return targ;
+};
 
 // extract from subobjects
 pie.util.getPath  = sudo.getPath;
@@ -594,7 +639,29 @@ pie.util.hasPath = function(path, obj) {
 };
 
 // serialize object into query string
-pie.util.serialize = $.serialize;
+pie.util.serialize = function(obj, removeEmpty) {
+  if(!obj) return '';
+  if(removeEmpty) obj = pie.object.compact(obj, true);
+
+  var arr = [], keys = Object.keys(obj), v;
+
+  keys = keys.sort();
+
+  keys.forEach(function(k){
+    v = obj[k];
+
+    if(Array.isArray(v)) {
+      k = k + '[]';
+      v.forEach(function(av){
+        arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(av));
+      });
+    } else {
+      arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    }
+  });
+
+  return arr.join('&');
+};
 
 // set subobjects
 pie.util.setPath = sudo.setPath;
@@ -696,7 +763,7 @@ pie.container = {
   }
 };
 pie.model = function(d, options) {
-  this.data = $.extend({}, d);
+  this.data = pie.util.extend({}, d);
   this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
@@ -1191,7 +1258,7 @@ pie.services.ajax = function ajax(app) {
 
 // default ajax options. override this method to
 pie.services.ajax.prototype._defaultAjaxOptions = function() {
-  return $.extend({}, this.defaultAjaxOptions, {
+  return pie.util.extend({}, this.defaultAjaxOptions, {
     dataType: 'json',
     type: 'GET',
     error: this.app.errorHandler.handleXhrError
@@ -1276,11 +1343,13 @@ pie.services.ajax.prototype.post = function(options) {
 };
 
 pie.services.ajax.prototype.put = function(options) {
-  return this.post($.extend({type: 'PUT'}, options));
+  options = pie.util.extend({type: 'PUT'}, options);
+  return this.ajax(options);
 };
 
 pie.services.ajax.prototype.del = function(options) {
-  return this.post($.extend({type: 'DELETE'}, options));
+  options = pie.util.extend({type: 'DELETE'}, options);
+  return this.ajax(options);
 };
 
 pie.services.ajax.prototype._applyCsrfToken = function(xhr) {
