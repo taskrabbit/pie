@@ -20,6 +20,13 @@ pie.simpleView.prototype.addedToParent = function(parent) {
   return this;
 };
 
+pie.simpleView.prototype.removedFromParent = function(parent) {
+  pie.view.prototype.removedFromParent.call(this, parent);
+
+  // remove our el if we still have a parent node.
+  if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+}
+
 pie.simpleView.prototype.renderData = function() {
   if(this.model) {
     return this.model.data;

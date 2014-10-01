@@ -108,9 +108,6 @@ pie.view.prototype.removedFromParent = function() {
   // views remove their children upon removal.
   this.removeChildren();
 
-  // remove our el if we still have a parent.
-  if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
-
   return this;
 };
 

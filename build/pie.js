@@ -489,9 +489,9 @@ pie.mixins.bindings = (function(){
         model.set(attr, value);
         ignore = false;
       },
-      toElement = function(change) {
+      toElement = function(changes) {
         if(ignore) return;
-        setValue(this, sel, change.value);
+        setValue(this, sel, changes[changes.length-1].value);
       }.bind(this);
 
       if(debounce) {
@@ -707,14 +707,20 @@ pie.util.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
 pie.model.prototype.deliverChangeRecords = function() {
-  var observers, change, o;
+  var observers = {}, os, o, change, all;
 
   while(change = this.changeRecords.shift()) {
-    observers = pie.array.union(this.observations[change.name], this.observations.__all__);
-    while(o = observers.shift()) {
-      o.call(null, change);
+    os = pie.array.union(this.observations[change.name], this.observations.__all__);
+
+    while(o = os.shift()) {
+      observers[o.uid] = observers[o.uid] || {fn: o, changes: []};
+      observers[o.uid].changes.push(change);
     }
   }
+
+  pie.object.forEach(observers, function(uid, obj) {
+    obj.fn.call(null, obj.changes);
+  });
 
   return this;
 };
@@ -742,6 +748,10 @@ pie.model.prototype.gets = function() {
 pie.model.prototype.observe = function() {
   var keys = pie.array.args(arguments),
   fn = keys.shift();
+
+  fn.uid = fn.uid || String(pie.unique());
+
+  keys = pie.array.flatten(keys);
 
   if(!keys.length) keys.push('__all__');
 
@@ -805,6 +815,19 @@ pie.model.prototype.unobserve = function() {
   }.bind(this));
 
   return this;
+};
+
+pie.model.prototype.compute = function(/* name, *properties, fn */) {
+  var props = pie.array.args(arguments),
+  name = props.shift(),
+  fn = props.pop();
+
+  this.observe(function(changes){
+    this.set(name, fn.call(this));
+  }.bind(this), props);
+
+  // initialize it
+  this.set(name, fn.call(this));
 };
 
 
@@ -1080,9 +1103,6 @@ pie.view.prototype.removedFromParent = function() {
   // views remove their children upon removal.
   this.removeChildren();
 
-  // remove our el if we still have a parent.
-  if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
-
   return this;
 };
 
@@ -1138,6 +1158,13 @@ pie.simpleView.prototype.addedToParent = function(parent) {
 
   return this;
 };
+
+pie.simpleView.prototype.removedFromParent = function(parent) {
+  pie.view.prototype.removedFromParent.call(this, parent);
+
+  // remove our el if we still have a parent node.
+  if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+}
 
 pie.simpleView.prototype.renderData = function() {
   if(this.model) {

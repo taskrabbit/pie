@@ -121,8 +121,10 @@ example.views.form.prototype = pie.util.extend(Object.create(pie.simpleView.prot
     // don't really submit it...
     e.preventDefault();
 
+    if(!this.list.get('nextItem')) return;
+
     // insert the item at the beginning.
-    var newItem = new pie.model({title: this.model.get('nextItem'), completed: false});
+    var newItem = new pie.model({title: this.list.get('nextItem'), completed: false});
     this.list.push(newItem);
 
     // remove the nextItem attribute, updating the UI.
@@ -192,16 +194,20 @@ example.views.list.prototype = pie.util.extend(Object.create(pie.simpleView.prot
     this.removeChild(child);
   },
 
-  listChanged: function(change) {
-    if(change.name === 'length') {
-      this.updateSummary();
-    } else if(!isNaN(parseInt(change.name, 10))) {
-      if(change.type === 'add') {
-        this.itemAdded(change);
-      } else if (change.type === 'delete') {
-        this.itemRemoved(change);
+  listChanged: function(changes) {
+    changes.forEach(function(change){
+
+      if(change.name === 'length') {
+        this.updateSummary();
+      } else if(!isNaN(parseInt(change.name, 10))) {
+        if(change.type === 'add') {
+          this.itemAdded(change);
+        } else if (change.type === 'delete') {
+          this.itemRemoved(change);
+        }
       }
-    }
+
+    }.bind(this));
   },
 
   render: function() {

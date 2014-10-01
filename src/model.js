@@ -10,14 +10,20 @@ pie.util.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
 pie.model.prototype.deliverChangeRecords = function() {
-  var observers, change, o;
+  var observers = {}, os, o, change, all;
 
   while(change = this.changeRecords.shift()) {
-    observers = pie.array.union(this.observations[change.name], this.observations.__all__);
-    while(o = observers.shift()) {
-      o.call(null, change);
+    os = pie.array.union(this.observations[change.name], this.observations.__all__);
+
+    while(o = os.shift()) {
+      observers[o.uid] = observers[o.uid] || {fn: o, changes: []};
+      observers[o.uid].changes.push(change);
     }
   }
+
+  pie.object.forEach(observers, function(uid, obj) {
+    obj.fn.call(null, obj.changes);
+  });
 
   return this;
 };
@@ -45,6 +51,10 @@ pie.model.prototype.gets = function() {
 pie.model.prototype.observe = function() {
   var keys = pie.array.args(arguments),
   fn = keys.shift();
+
+  fn.uid = fn.uid || String(pie.unique());
+
+  keys = pie.array.flatten(keys);
 
   if(!keys.length) keys.push('__all__');
 
@@ -108,6 +118,19 @@ pie.model.prototype.unobserve = function() {
   }.bind(this));
 
   return this;
+};
+
+pie.model.prototype.compute = function(/* name, *properties, fn */) {
+  var props = pie.array.args(arguments),
+  name = props.shift(),
+  fn = props.pop();
+
+  this.observe(function(changes){
+    this.set(name, fn.call(this));
+  }.bind(this), props);
+
+  // initialize it
+  this.set(name, fn.call(this));
 };
 
 

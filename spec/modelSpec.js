@@ -61,12 +61,12 @@ describe("pie.model", function() {
       this.model.set('foo', 'bar');
 
       expect(observer.calls.count()).toEqual(1);
-      expect(observer).toHaveBeenCalledWith({
+      expect(observer).toHaveBeenCalledWith([{
         'type' : 'add',
         'name' : 'foo',
         'object' : this.model.data,
         'value' : 'bar'
-      });
+      }]);
     });
 
     it("should allow observation of all keys", function() {
@@ -92,6 +92,29 @@ describe("pie.model", function() {
       expect(observer.calls.count()).toEqual(1);
     });
 
+
+    it("should send an array of changes, not triggering multiple times", function() {
+      var observer = jasmine.createSpy('observer');
+      this.model.observe(observer, 'foo');
+
+      this.model.set('foo', 'bar', true);
+      this.model.set('foo', 'baz');
+
+      expect(observer.calls.count()).toEqual(1);
+      expect(observer).toHaveBeenCalledWith([{
+        type: 'add',
+        name: 'foo',
+        value: 'bar',
+        object: this.model.data
+      }, {
+        type: 'update',
+        name: 'foo',
+        oldValue: 'bar',
+        value: 'baz',
+        object: this.model.data
+      }]);
+
+    });
 
   });
 
@@ -120,6 +143,78 @@ describe("pie.model", function() {
       }.bind(this)).toThrowError("No super method defined: newMethod");
     });
 
+  });
+
+  describe("computed properties", function() {
+    beforeEach(function(){
+
+      var foo = function(){
+        pie.model.apply(this, arguments);
+        this.compute('full_name', 'first_name', 'last_name', this.fullName.bind(this));
+      };
+
+      foo.prototype = Object.create(pie.model.prototype);
+
+      foo.prototype.fullName = function() {
+        return pie.array.compact([this.get('first_name'), this.get('last_name')]).join(' ');
+      };
+
+      this.foo = new foo();
+      this.fooClass = foo;
+    });
+
+    it("should compute initial values", function() {
+      var foo2 = new this.fooClass({first_name: 'Doug', last_name: 'Wilson'});
+      expect(foo2.get('full_name')).toEqual('Doug Wilson');
+    });
+
+    it("should change the value of a computed property when one of it's dependencies change", function() {
+      this.foo.set('first_name', 'Bob');
+      expect(this.foo.get('full_name')).toEqual('Bob');
+
+      this.foo.set('last_name', 'Dole');
+      expect(this.foo.get('full_name')).toEqual('Bob Dole');
+    });
+
+    it("should send changes to the observers", function() {
+      var observer = jasmine.createSpy('observer');
+
+      this.foo.observe(observer, 'full_name');
+
+      // changes to both dependent properties.
+      this.foo.sets({
+        'first_name': 'Doug',
+        'last_name' : 'Wilson'
+      });
+
+      // one invocation with one change record.
+      expect(observer).toHaveBeenCalledWith([{
+        type: 'update',
+        name: 'full_name',
+        oldValue: '',
+        value: 'Doug Wilson',
+        object: this.foo.data
+      }]);
+
+      this.foo.set('first_name', 'William');
+      this.foo.set('last_name', 'Tell');
+
+      expect(observer).toHaveBeenCalledWith([{
+        type: 'update',
+        name: 'full_name',
+        oldValue: 'Doug Wilson',
+        value: 'William Wilson',
+        object: this.foo.data
+      }]);
+
+      expect(observer).toHaveBeenCalledWith([{
+        type: 'update',
+        name: 'full_name',
+        oldValue: 'William Wilson',
+        value: 'William Tell',
+        object: this.foo.data
+      }]);
+    });
   });
 
 });

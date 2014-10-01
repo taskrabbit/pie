@@ -32,8 +32,8 @@ describe("pie.list", function() {
 
     beforeEach(function(){
       this.changes = [];
-      this.items.observe(function(change){
-        this.changes.push(change);
+      this.items.observe(function(changes){
+        this.changes = changes;
       }.bind(this));
     });
 

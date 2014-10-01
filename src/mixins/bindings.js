@@ -104,9 +104,9 @@ pie.mixins.bindings = (function(){
         model.set(attr, value);
         ignore = false;
       },
-      toElement = function(change) {
+      toElement = function(changes) {
         if(ignore) return;
-        setValue(this, sel, change.value);
+        setValue(this, sel, changes[changes.length-1].value);
       }.bind(this);
 
       if(debounce) {
