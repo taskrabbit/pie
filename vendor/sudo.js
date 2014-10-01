@@ -145,5 +145,4 @@
 
     sudo.version = "0.9.9.partial";
     window.sudo = sudo;
-    if (typeof window._ === "undefined") window._ = sudo;
 }).call(this, this);

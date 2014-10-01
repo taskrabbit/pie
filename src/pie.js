@@ -13,6 +13,7 @@ window.pie = {
   // native extensions
   array: {},
   date: {},
+  dom: {},
   func: {},
   math: {},
   object: {},

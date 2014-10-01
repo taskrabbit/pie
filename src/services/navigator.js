@@ -32,7 +32,7 @@ pie.services.navigator.prototype.start = function() {
 
 pie.services.navigator.prototype.setDataFromLocation = function() {
   var query = window.location.search.slice(1);
-  query = pie.util.deserialize(query);
+  query = pie.string.deserialize(query);
 
   this.sets({
     url: window.location.href,

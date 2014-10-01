@@ -39,7 +39,7 @@ pie.services.notifier.prototype.notify = function(messages, type, autoClose) {
   messages = pie.array.from(messages);
 
   var content = this.app.template('alert', {"type" : type, "messages": messages});
-  content = pie.util.createElement(content);
+  content = pie.dom.createElement(content);
 
   this.notifications[type] = this.notifications[type] || [];
   this.notifications[type].push(content);

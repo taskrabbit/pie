@@ -14,85 +14,107 @@ pie.array.areAny = function(a, f) {
   return false;
 };
 
-pie.array.groupBy = function(a, groupingF, sum) {
-  var h = {}, g;
-  a.forEach(function(i){
-    g = groupingF.call(null, i);
-    h[g] = h[g] || [];
-    h[g].push(i);
-  });
 
-  return h;
-}
+// turn arguments into an array
+pie.array.args = function(argumentsObject) {
+  return Array.prototype.slice.call(argumentsObject);
+};
+
+
+pie.array.avg = function(a) {
+  var s = pie.array.sum(a), l = a.length;
+  return l ? (s / l) : 0;
+};
+
 
 // remove all null or undefined values
 // does not remove all falsy values unless the second param is true
 pie.array.compact = function(a, removeAllFalsy){
   return a.filter(function(i){
-    return removeAllFalsy ? !!i : (i !== undefined && i !== null);
+    /* jslint eqeq:true */
+    return removeAllFalsy ? !!i : (i != null);
   });
 };
+
+
+// return the first item where the provided function evaluates to a truthy value.
+// if a function is not provided, the second argument will be assumed to be an attribute check.
+// pie.array.detect([1,3,4,5], function(e){ return e % 2 === 0; }) => 4
+// pie.array.detect([{foo: 'bar'}, {baz: 'foo'}], 'baz') => {baz: 'foo'}
+pie.array.detect = function(a, f) {
+  var i = 0, l = a.length;
+  for(;i<l;i++) {
+    if(pie.object.getValue(a[i], f)) {
+      return a[i];
+    }
+  }
+};
+
 
 pie.array.dup = function(a) {
   return a.slice(0);
 };
 
-pie.array.remove = function(a, o) {
-  var idx;
-  while(~(idx = a.indexOf(o))) {
-    a.splice(idx, 1);
+
+// flattens an array of arrays or elements into a single depth array
+// pie.array.flatten(['a', ['b', 'c']]) => ['a', 'b', 'c']
+// you may also restrict the depth of the flattening:
+// pie.array.flatten([['a'], ['b', ['c']]], 1) => ['a', 'b', ['c']]
+pie.array.flatten = function(a, depth, into) {
+  into = into || [];
+
+  if(Array.isArray(a) && depth !== -1) {
+
+    if(depth != null) depth--;
+
+    a.forEach(function(e){
+      pie.array.flatten(e, depth, into);
+    });
+
+  } else {
+    into.push(a);
   }
-  return a;
+
+  return into;
 };
 
-pie.array.sum = function(a) {
-  var s = 0;
-  a.forEach(function(i){ s += parseFloat(i); });
-  return s;
-};
-
-pie.array.avg = function(a) {
-  var s = pie.array.sum(a), l = a.length;
-  return (s / l);
-};
-
-// return an array that consists of any A elements that B does not contain
-pie.array.subtract = function(a, b) {
-  return a.filter(function(i) {return b.indexOf(i) < 0; });
-};
-
-pie.array.intersect = function(a, b) {
-  return a.filter(function(i) { return b.indexOf(i) !== -1; });
-};
-
-// get the last item
-pie.array.last = function(arr) {
-  if(arr && arr.length) return arr[arr.length - 1];
-};
 
 // return an array from a value. if the value is an array it will be returned.
 pie.array.from = function(value) {
   return Array.isArray(value) ? value : pie.array.compact([value], false);
 };
 
+
 pie.array.grep = function(arr, regex) {
-  return arr.filter(function(a){ return regex.test(a.toString()); });
+  return arr.filter(function(a){ return regex.test(String(a)); });
 };
 
-// flattens an array of arrays or elements into a single depth array
-// pie.array.flatten(['a', ['b', 'c']]) => ['a', 'b', 'c']
-pie.array.flatten = function(a, into) {
-  into = into || [];
 
-  if(Array.isArray(a)) {
-    a.forEach(function(e){
-      pie.array.flatten(e, into);
-    });
-  } else {
-    into.push(a);
-  }
+pie.array.groupBy = function(arr, groupingF) {
+  var h = {}, g;
+  arr.forEach(function(a){
 
-  return into;
+    g = pie.object.getValue(a, groupingF);
+
+    /* jslint eqeq:true */
+    if(g != null) {
+      h[g] = h[g] || [];
+      h[g].push(a);
+    }
+  });
+
+  return h;
+};
+
+
+pie.array.intersect = function(a, b) {
+  return a.filter(function(i) { return ~b.indexOf(i); });
+};
+
+
+// get the last item
+pie.array.last = function(arr) {
+  if(arr && arr.length) return arr[arr.length - 1];
 };
 
 
@@ -126,11 +148,34 @@ pie.array.map = function(a, f, callInternalFunction){
   return b;
 };
 
-pie.array.sortBy = function(arr, attribute){
+
+pie.array.remove = function(a, o) {
+  var idx;
+  while(~(idx = a.indexOf(o))) {
+    a.splice(idx, 1);
+  }
+  return a;
+};
+
+
+// return an array that consists of any A elements that B does not contain
+pie.array.subtract = function(a, b) {
+  return a.filter(function(i) { return !~b.indexOf(i); });
+};
+
+
+pie.array.sum = function(a) {
+  var s = 0;
+  a.forEach(function(i){ s += parseFloat(i); });
+  return s;
+};
+
+
+pie.array.sortBy = function(arr, sortF){
   var aVal, bVal;
   return arr.sort(function(a, b) {
-    aVal = pie.func.valueFrom(a[attribute]);
-    bVal = pie.func.valueFrom(b[attribute]);
+    aVal = pie.object.getValue(a, sortF);
+    bVal = pie.object.getValue(b, sortF);
     if(aVal === bVal) return 0;
     if(aVal < bVal) return -1;
     return 1;
@@ -138,47 +183,28 @@ pie.array.sortBy = function(arr, attribute){
 };
 
 
-// return the first item where the provided function evaluates to a truthy value.
-// if a function is not provided, the second argument will be assumed to be an attribute check.
-// pie.array.detect([1,3,4,5], function(e){ return e % 2 === 0; }) => 4
-// pie.array.detect([{foo: 'bar'}, {baz: 'foo'}], 'baz') => {baz: 'foo'}
-pie.array.detect = function(a, f) {
-  var i = 0, l = a.length;
-  for(;i<l;i++) {
-    if('function' === typeof f) {
-      if(f(a[i])) return a[i];
-    } else if(a[i] && pie.func.valueFrom(a[i][f])) {
-      return a[i];
-    }
+pie.array.toSentence = function(arr, i18n) {
+  if(!arr.length) return '';
 
-  }
+  var delim = i18n && i18n.t('sentence.delimeter', {default: ''}) || ', ',
+  and = i18n && i18n.t('sentence.and', {default: ''}) || ' and ';
+
+  if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(delim), arr.slice(arr.length-1)];
+  return arr.join(and);
 };
 
-// turn arguments into an array
-pie.array.args = function(argumentsObject) {
-  return Array.prototype.slice.call(argumentsObject);
+
+pie.array.union = function() {
+  var arrs = pie.array.args(arguments);
+  arrs = pie.array.compact(arrs, true);
+  arrs = pie.array.flatten(arrs);
+  arrs = pie.array.unique(arrs);
+  return arrs;
 };
+
 
 // return unique values
-pie.array.uniq = function(arr) {
+pie.array.unique = function(arr) {
   return arr.filter(function(e, i){ return arr.indexOf(e) === i; });
 };
 
-pie.array.union = function() {
-  var arrays = pie.array.compact(pie.array.args(arguments), true),
-  a = arrays.shift();
-  if(!a) return [];
-
-  a = pie.array.dup(a);
-  arrays.forEach(function(b){
-    b.forEach(function(i){ if(~a.indexOf(i)) a.push(i); });
-  });
-  return a;
-};
-
-pie.array.toSentence = function(arr) {
-  if(!arr.length) return;
-  if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(', '), arr.slice(arr.length-1)];
-  // todo: i18n
-  return arr.join(' and ');
-};

@@ -14,7 +14,7 @@ pie.services.router = function(app) {
 // # => /things/page/3.json?q=newQuery
 pie.services.router.prototype.changedUrl = function(changes) {
   var current = this.app.parsedUrl;
-  return this.router.path(current.name || current.path, pie.util.extend({}, current.interpolations, current.query, changes));
+  return this.router.path(current.name || current.path, pie.object.extend({}, current.interpolations, current.query, changes));
 },
 
 
@@ -64,7 +64,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 
       k = this.normalizePath(k);
 
-      this.routes[k] = pie.util.extend({}, defaults, r);
+      this.routes[k] = pie.object.extend({}, defaults, r);
 
       if(r.hasOwnProperty('name')) {
         this.namedRoutes[r.name] = k;
@@ -97,7 +97,7 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
   });
 
   unusedData = pie.object.except(data, usedKeys);
-  params = pie.util.serialize(pie.object.compact(unusedData, true));
+  params = pie.object.serialize(pie.object.compact(unusedData, true));
 
   if(!interpolateOnly && params.length) {
     s = pie.string.urlConcat(s, params);
@@ -151,7 +151,7 @@ pie.services.router.prototype.parseUrl = function(path) {
   splitUrl = path.split('/');
 
   if(match) {
-    match = pie.util.extend({routeKey: path}, match);
+    match = pie.object.extend({routeKey: path}, match);
   } else {
     while (i < keys.length && !match) {
       key = keys[i];
@@ -164,7 +164,7 @@ pie.services.router.prototype.parseUrl = function(path) {
       this.routes[key].regex = this.routes[key].regex || new RegExp('^' + key.replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
 
       if (this.routes[key].regex.test(path)) {
-        match = pie.util.extend({routeKey: key}, this.routes[key]);
+        match = pie.object.extend({routeKey: key}, this.routes[key]);
         splitKey = key.split('/');
         for(j = 0; j < splitKey.length; j++){
           if(/^:/.test(splitKey[j])) {
@@ -177,10 +177,10 @@ pie.services.router.prototype.parseUrl = function(path) {
     }
   }
 
-  query = pie.util.deserialize(query);
-  fullPath = pie.array.compact([path, pie.util.serialize(query)], true).join('?');
+  query = pie.string.deserialize(query);
+  fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
 
-  return pie.util.extend({
+  return pie.object.extend({
     interpolations: interpolations,
     path: path,
     query: query,

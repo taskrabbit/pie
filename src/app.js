@@ -3,7 +3,7 @@
 pie.app = function app(options) {
 
   // general app options
-  this.options = pie.util.deepExtend({
+  this.options = pie.object.deepExtend({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
     notificationUiTarget: '.notification-container'
@@ -67,7 +67,7 @@ pie.app = function app(options) {
 };
 
 
-pie.util.extend(pie.app.prototype, pie.container);
+pie.object.extend(pie.app.prototype, pie.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.
@@ -207,7 +207,7 @@ pie.app.prototype.navigationChanged = function() {
   this.notifier.clear();
 
   // use the view key of the parsedUrl to find the viewClass
-  var viewClass = pie.util.getPath(this.options.viewNamespace + '.' + this.parsedUrl.view, window), child;
+  var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
   // the instance to be added.
 
   // add the instance as our 'currentView'
@@ -335,7 +335,7 @@ pie.app.prototype.template = function(name, data) {
 
     if(node) {
       this.debug('Compiling and storing template: ' + name);
-      this._templates[name] = sudo.template(node.textContent);
+      this._templates[name] = pie.string.template(node.textContent);
     } else {
       throw new Error("[PIE] Unknown template error: " + name);
     }

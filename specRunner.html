@@ -69,7 +69,7 @@
       };
 
       lib.views.listView.prototype = Object.create(pie.simpleView.prototype);
-      pie.util.extend(lib.views.listView.prototype, pie.mixins.bindings);
+      pie.object.extend(lib.views.listView.prototype, pie.mixins.bindings);
 
       lib.views.listView.prototype.addedToParent = function() {
         this._super('addedToParent');
@@ -84,7 +84,9 @@
     <script type="text/javascript" src="spec/SpecHelper.js"></script>
     <script type="text/javascript" src="spec/modelSpec.js"></script>
     <script type="text/javascript" src="spec/listSpec.js"></script>
-    <script type="text/javascript" src="spec/utilSpec.js"></script>
+    <script type="text/javascript" src="spec/extensions/arraySpec.js"></script>
+    <script type="text/javascript" src="spec/extensions/objectSpec.js"></script>
+    <script type="text/javascript" src="spec/extensions/stringSpec.js"></script>
     <script type="text/javascript" src="spec/services/ajaxSpec.js"></script>
     <script type="text/javascript" src="spec/services/errorHandlerSpec.js"></script>
     <script type="text/javascript" src="spec/services/i18nSpec.js"></script>

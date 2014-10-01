@@ -3,14 +3,14 @@
 pie.view = function(app, options) {
   this.app = app;
   this.options = options || {};
-  this.el = this.options.el || pie.util.createElement('<div />');
+  this.el = this.options.el || pie.dom.createElement('<div />');
   this.uid = pie.unique();
   this.changeCallbacks = [];
 };
 
-pie.util.extend(pie.view.prototype, pie.mixins.inheritance);
-pie.util.extend(pie.view.prototype, pie.container);
-pie.util.extend(pie.view.prototype, pie.mixins.bindings);
+pie.object.extend(pie.view.prototype, pie.mixins.inheritance);
+pie.object.extend(pie.view.prototype, pie.container);
+pie.object.extend(pie.view.prototype, pie.mixins.bindings);
 
 
 // placeholder for default functionality
@@ -84,7 +84,7 @@ pie.view.prototype.parseFields = function() {
   for(;i<arguments.length;i++) {
     n = arguments[i];
     el = e.querySelector('[name="' + n + '"]:not([disabled])');
-    if(el) pie.util.setPath(n, el.value, o);
+    if(el) pie.object.setPath(o, n, el.value);
   }
   return o;
 };

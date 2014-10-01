@@ -6,7 +6,7 @@ pie.services.ajax = function ajax(app) {
 
 // default ajax options. override this method to
 pie.services.ajax.prototype._defaultAjaxOptions = function() {
-  return pie.util.extend({}, this.defaultAjaxOptions, {
+  return pie.object.extend({}, this.defaultAjaxOptions, {
     dataType: 'json',
     type: 'GET',
     error: this.app.errorHandler.handleXhrError
@@ -24,7 +24,7 @@ pie.services.ajax.prototype._defaultAjaxOptions = function() {
 pie.services.ajax.prototype.ajax = function(options) {
 
   options = pie.object.compact(options);
-  options = pie.util.extend({}, this._defaultAjaxOptions(), options);
+  options = pie.object.extend({}, this._defaultAjaxOptions(), options);
 
   if(options.extraError) {
     var oldError = options.error;
@@ -81,22 +81,22 @@ pie.services.ajax.prototype.ajax = function(options) {
 };
 
 pie.services.ajax.prototype.get = function(options) {
-  options = pie.util.extend({type: 'GET'}, options);
+  options = pie.object.extend({type: 'GET'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.post = function(options) {
-  options = pie.util.extend({type: 'POST'}, options);
+  options = pie.object.extend({type: 'POST'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.put = function(options) {
-  options = pie.util.extend({type: 'PUT'}, options);
+  options = pie.object.extend({type: 'PUT'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.del = function(options) {
-  options = pie.util.extend({type: 'DELETE'}, options);
+  options = pie.object.extend({type: 'DELETE'}, options);
   return this.ajax(options);
 };
 

@@ -13,6 +13,7 @@ window.pie = {
   // native extensions
   array: {},
   date: {},
+  dom: {},
   func: {},
   math: {},
   object: {},
@@ -51,85 +52,107 @@ pie.array.areAny = function(a, f) {
   return false;
 };
 
-pie.array.groupBy = function(a, groupingF, sum) {
-  var h = {}, g;
-  a.forEach(function(i){
-    g = groupingF.call(null, i);
-    h[g] = h[g] || [];
-    h[g].push(i);
-  });
 
-  return h;
-}
+// turn arguments into an array
+pie.array.args = function(argumentsObject) {
+  return Array.prototype.slice.call(argumentsObject);
+};
+
+
+pie.array.avg = function(a) {
+  var s = pie.array.sum(a), l = a.length;
+  return l ? (s / l) : 0;
+};
+
 
 // remove all null or undefined values
 // does not remove all falsy values unless the second param is true
 pie.array.compact = function(a, removeAllFalsy){
   return a.filter(function(i){
-    return removeAllFalsy ? !!i : (i !== undefined && i !== null);
+    /* jslint eqeq:true */
+    return removeAllFalsy ? !!i : (i != null);
   });
 };
+
+
+// return the first item where the provided function evaluates to a truthy value.
+// if a function is not provided, the second argument will be assumed to be an attribute check.
+// pie.array.detect([1,3,4,5], function(e){ return e % 2 === 0; }) => 4
+// pie.array.detect([{foo: 'bar'}, {baz: 'foo'}], 'baz') => {baz: 'foo'}
+pie.array.detect = function(a, f) {
+  var i = 0, l = a.length;
+  for(;i<l;i++) {
+    if(pie.object.getValue(a[i], f)) {
+      return a[i];
+    }
+  }
+};
+
 
 pie.array.dup = function(a) {
   return a.slice(0);
 };
 
-pie.array.remove = function(a, o) {
-  var idx;
-  while(~(idx = a.indexOf(o))) {
-    a.splice(idx, 1);
+
+// flattens an array of arrays or elements into a single depth array
+// pie.array.flatten(['a', ['b', 'c']]) => ['a', 'b', 'c']
+// you may also restrict the depth of the flattening:
+// pie.array.flatten([['a'], ['b', ['c']]], 1) => ['a', 'b', ['c']]
+pie.array.flatten = function(a, depth, into) {
+  into = into || [];
+
+  if(Array.isArray(a) && depth !== -1) {
+
+    if(depth != null) depth--;
+
+    a.forEach(function(e){
+      pie.array.flatten(e, depth, into);
+    });
+
+  } else {
+    into.push(a);
   }
-  return a;
+
+  return into;
 };
 
-pie.array.sum = function(a) {
-  var s = 0;
-  a.forEach(function(i){ s += parseFloat(i); });
-  return s;
-};
-
-pie.array.avg = function(a) {
-  var s = pie.array.sum(a), l = a.length;
-  return (s / l);
-};
-
-// return an array that consists of any A elements that B does not contain
-pie.array.subtract = function(a, b) {
-  return a.filter(function(i) {return b.indexOf(i) < 0; });
-};
-
-pie.array.intersect = function(a, b) {
-  return a.filter(function(i) { return b.indexOf(i) !== -1; });
-};
-
-// get the last item
-pie.array.last = function(arr) {
-  if(arr && arr.length) return arr[arr.length - 1];
-};
 
 // return an array from a value. if the value is an array it will be returned.
 pie.array.from = function(value) {
   return Array.isArray(value) ? value : pie.array.compact([value], false);
 };
 
+
 pie.array.grep = function(arr, regex) {
-  return arr.filter(function(a){ return regex.test(a.toString()); });
+  return arr.filter(function(a){ return regex.test(String(a)); });
 };
 
-// flattens an array of arrays or elements into a single depth array
-// pie.array.flatten(['a', ['b', 'c']]) => ['a', 'b', 'c']
-pie.array.flatten = function(a, into) {
-  into = into || [];
 
-  if(Array.isArray(a)) {
-    a.forEach(function(e){
-      pie.array.flatten(e, into);
-    });
-  } else {
-    into.push(a);
-  }
+pie.array.groupBy = function(arr, groupingF) {
+  var h = {}, g;
+  arr.forEach(function(a){
 
-  return into;
+    g = pie.object.getValue(a, groupingF);
+
+    /* jslint eqeq:true */
+    if(g != null) {
+      h[g] = h[g] || [];
+      h[g].push(a);
+    }
+  });
+
+  return h;
+};
+
+
+pie.array.intersect = function(a, b) {
+  return a.filter(function(i) { return ~b.indexOf(i); });
+};
+
+
+// get the last item
+pie.array.last = function(arr) {
+  if(arr && arr.length) return arr[arr.length - 1];
 };
 
 
@@ -163,11 +186,34 @@ pie.array.map = function(a, f, callInternalFunction){
   return b;
 };
 
-pie.array.sortBy = function(arr, attribute){
+
+pie.array.remove = function(a, o) {
+  var idx;
+  while(~(idx = a.indexOf(o))) {
+    a.splice(idx, 1);
+  }
+  return a;
+};
+
+
+// return an array that consists of any A elements that B does not contain
+pie.array.subtract = function(a, b) {
+  return a.filter(function(i) { return !~b.indexOf(i); });
+};
+
+
+pie.array.sum = function(a) {
+  var s = 0;
+  a.forEach(function(i){ s += parseFloat(i); });
+  return s;
+};
+
+
+pie.array.sortBy = function(arr, sortF){
   var aVal, bVal;
   return arr.sort(function(a, b) {
-    aVal = pie.func.valueFrom(a[attribute]);
-    bVal = pie.func.valueFrom(b[attribute]);
+    aVal = pie.object.getValue(a, sortF);
+    bVal = pie.object.getValue(b, sortF);
     if(aVal === bVal) return 0;
     if(aVal < bVal) return -1;
     return 1;
@@ -175,50 +221,31 @@ pie.array.sortBy = function(arr, attribute){
 };
 
 
-// return the first item where the provided function evaluates to a truthy value.
-// if a function is not provided, the second argument will be assumed to be an attribute check.
-// pie.array.detect([1,3,4,5], function(e){ return e % 2 === 0; }) => 4
-// pie.array.detect([{foo: 'bar'}, {baz: 'foo'}], 'baz') => {baz: 'foo'}
-pie.array.detect = function(a, f) {
-  var i = 0, l = a.length;
-  for(;i<l;i++) {
-    if('function' === typeof f) {
-      if(f(a[i])) return a[i];
-    } else if(a[i] && pie.func.valueFrom(a[i][f])) {
-      return a[i];
-    }
+pie.array.toSentence = function(arr, i18n) {
+  if(!arr.length) return '';
 
-  }
+  var delim = i18n && i18n.t('sentence.delimeter', {default: ''}) || ', ',
+  and = i18n && i18n.t('sentence.and', {default: ''}) || ' and ';
+
+  if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(delim), arr.slice(arr.length-1)];
+  return arr.join(and);
 };
 
-// turn arguments into an array
-pie.array.args = function(argumentsObject) {
-  return Array.prototype.slice.call(argumentsObject);
+
+pie.array.union = function() {
+  var arrs = pie.array.args(arguments);
+  arrs = pie.array.compact(arrs, true);
+  arrs = pie.array.flatten(arrs);
+  arrs = pie.array.unique(arrs);
+  return arrs;
 };
+
 
 // return unique values
-pie.array.uniq = function(arr) {
+pie.array.unique = function(arr) {
   return arr.filter(function(e, i){ return arr.indexOf(e) === i; });
 };
 
-pie.array.union = function() {
-  var arrays = pie.array.compact(pie.array.args(arguments), true),
-  a = arrays.shift();
-  if(!a) return [];
-
-  a = pie.array.dup(a);
-  arrays.forEach(function(b){
-    b.forEach(function(i){ if(~a.indexOf(i)) a.push(i); });
-  });
-  return a;
-};
-
-pie.array.toSentence = function(arr) {
-  if(!arr.length) return;
-  if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(', '), arr.slice(arr.length-1)];
-  // todo: i18n
-  return arr.join(' and ');
-};
 // takes a iso date string and converts to a local time representing 12:00am, on that date.
 pie.date.dateFromISO = function(isoDateString) {
   if(!isoDateString) return null;
@@ -231,6 +258,12 @@ pie.date.timeFromISO = function(isoTimeString) {
   if(!isoTimeString) return null;
   if(isoTimeString.indexOf('T') < 0) return pie.date.dateFromISO(isoTimeString);
   return new Date(isoTimeString);
+};
+// create an element based on the content provided.
+pie.dom.createElement = function(str) {
+  var wrap = document.createElement('div');
+  wrap.innerHTML = str;
+  return wrap.removeChild(wrap.firstElementChild);
 };
 // Returns a function, that, as long as it continues to be invoked, will not
 // be triggered. The function will be called after it stops being called for
@@ -251,13 +284,152 @@ pie.func.debounce = function(func, wait, immediate) {
   };
 };
 
-pie.func.valueFrom = function(f) {
-  if(typeof f === 'function') return f();
+pie.func.valueFrom = function(f, binding) {
+  if(typeof f === 'function') return f.call(binding);
   return f;
 };
 pie.math.precision = function(number, places) {
   return Math.round(number * Math.pow(10, places)) / Math.pow(10, places);
 };
+// deletes all undefined and null values.
+// returns a new object less any empty key/values.
+pie.object.compact = function(a, removeEmpty){
+  var b = pie.object.extend({}, a);
+  Object.keys(b).forEach(function(k) {
+    if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
+  });
+  return b;
+};
+
+
+// deep merge
+pie.object.deepExtend = function() {
+  var args = pie.array.args(arguments),
+      targ = args.shift(),
+      obj;
+
+  function fn(k) {
+    if(k in targ && typeof targ[k] === 'object') {
+      targ[k] = pie.object.deepExtend(targ[k], obj[k]);
+    } else {
+      targ[k] = obj[k];
+    }
+  }
+
+  // iterate over each passed in obj remaining
+  for (; args.length;) {
+    obj = args.shift();
+    if(obj) Object.keys(obj).forEach(fn);
+  }
+  return targ;
+};
+
+
+// grab the sub-object from the provided object less the provided keys.
+// pie.object.except({foo: 'bar', biz: 'baz'}, 'biz') => {'foo': 'bar'}
+pie.object.except = function(){
+  var b = {}, args = pie.array.args(arguments), a = args[0];
+  args = pie.array.flatten(args.splice(1));
+  Object.keys(a).forEach(function(k){
+    if(args.indexOf(k) < 0) b[k] = a[k];
+  });
+  return b;
+};
+
+
+// shallow merge
+pie.object.extend = function() {
+  var args = pie.array.args(arguments),
+      targ = args.shift(),
+      obj;
+
+  function fn(k) {
+    targ[k] = obj[k];
+  }
+
+  // iterate over each passed in obj remaining
+  for (; args.length; ) {
+    obj = args.shift();
+    if(obj) Object.keys(obj).forEach(fn);
+  }
+
+  return targ;
+};
+
+
+// yield each key value pair to a function
+// pie.object.forEach({'foo' : 'bar'}, function(k,v){ console.log(k, v); });
+//
+// => foo, bar
+pie.object.forEach = function(o, f) {
+  Object.keys(o).forEach(function(k) {
+    f(k, o[k]);
+  });
+};
+
+
+pie.object.getPath = function(o, path) {
+  return sudo.getPath(path, o);
+};
+
+
+pie.object.getValue = function(o, attribute) {
+  if(typeof attribute === 'function')                     return attribute.call(null, o);
+  else if (o == null)                                     return undefined;
+  else if(typeof o[attribute] === 'function')             return o[attribute].call(o);
+  else if(o.hasOwnProperty(attribute) || attribute in o)  return o[attribute];
+  else                                                    return undefined;
+};
+
+
+// does the object have the described path
+pie.object.hasPath = function(obj, path) {
+  var parts = path.split('.'), part;
+  while(part = parts.shift()) {
+
+    /* jslint eqeq:true */
+    if(obj != null && obj.hasOwnProperty(part)) {
+      obj = obj[part];
+    } else {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+
+// serialize object into query string
+pie.object.serialize = function(obj, removeEmpty) {
+  if(!obj) return '';
+  if(removeEmpty) obj = pie.object.compact(obj, true);
+
+  var arr = [], keys = Object.keys(obj), v;
+
+  keys = keys.sort();
+
+  keys.forEach(function(k){
+    v = obj[k];
+
+    if(Array.isArray(v)) {
+      k = k + '[]';
+      v.forEach(function(av){
+        arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(av));
+      });
+    } else {
+      arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    }
+  });
+
+  return arr.join('&');
+};
+
+
+pie.object.setPath = function(o, path, value) {
+  return sudo.setPath(path, value, o);
+};
+
+
 // grab a sub-object from the provided object.
 // pie.object.slice({foo: 'bar', biz: 'baz'}, 'biz') => {'biz': 'baz'}
 pie.object.slice = function(){
@@ -271,27 +443,6 @@ pie.object.slice = function(){
   return b;
 };
 
-// grab the sub-object from the provided object less the provided keys.
-// pie.object.except({foo: 'bar', biz: 'baz'}, 'biz') => {'foo': 'bar'}
-pie.object.except = function(){
-  var b = {}, args = pie.array.args(arguments), a = args[0];
-  args = pie.array.flatten(args.splice(1));
-  Object.keys(a).forEach(function(k){
-    if(args.indexOf(k) < 0) b[k] = a[k];
-  });
-  return b;
-};
-
-// deletes all undefined and null values.
-// returns a new object less any empty key/values.
-pie.object.compact = function(a, removeEmpty){
-  var b = pie.util.extend({}, a);
-  Object.keys(b).forEach(function(k) {
-    if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
-  });
-  return b;
-};
-
 // return all the values of the object
 pie.object.values = function(a) {
   var values = [];
@@ -300,25 +451,13 @@ pie.object.values = function(a) {
   });
   return values;
 };
+pie.string.capitalize = function(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
 
-// yield each key value pair to a function
-// pie.object.forEach({'foo' : 'bar'}, function(k,v){ console.log(k, v); });
-//
-// => foo, bar
-pie.object.forEach = function(o, f) {
-  Object.keys(o).forEach(function(k) {
-    f(k, o[k]);
-  });
-};
-// designed to be used with the "%{expression}" placeholders
-pie.string.expand = function(str, data) {
-  data = data || {};
-  return str.replace(/\%\{(.+?)\}/g,
-    function(match, key) {return data[key];});
-};
 
 pie.string.change = function() {
-  var args = Array.args(arguments),
+  var args = pie.array.args(arguments),
   str = args[0];
   args = args.slice(1);
   args.forEach(function(m) {
@@ -327,6 +466,103 @@ pie.string.change = function() {
 
   return str;
 };
+
+
+// deserialize query string into object
+pie.string.deserialize = (function(){
+
+  function parseQueryValue(value) {
+    if(value === 'undefined') return undefined;
+    if(value === 'null') return null;
+    if(value === 'true') return true;
+    if(value === 'false') return false;
+    var f = parseFloat(value);
+    if(isNaN(f)) return value;
+    if(/\./.test(value)) return f;
+    return parseInt(f, 10);
+  }
+
+  return function(str, parse) {
+    var params = {}, arrRegex = /^(.+)\[\]$/, idx, pieces, segments, arr, key, value;
+
+    if(!str) return params;
+
+    idx = str.indexOf('?');
+    if(~idx) str = str.slice(idx+1);
+
+    pieces = str.split('&');
+    pieces.forEach(function(piece){
+      segments = piece.split('=');
+      key = decodeURIComponent(segments[0] || '');
+      value = decodeURIComponent(segments[1] || '');
+
+      if(parse) value = parseQueryValue(value);
+      arr = key.match(arrRegex);
+      // array
+      if(!!arr) {
+        key = arr[1];
+        params[key] = params[key] || [];
+        params[key].push(value);
+      } else {
+        params[key] = value;
+      }
+    });
+
+    return params;
+  };
+})();
+
+
+// Escapes a string for HTML interpolation
+pie.string.escape = function(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g,'&#x2F;');
+};
+
+
+// designed to be used with the "%{expression}" placeholders
+pie.string.expand = function(str, data) {
+  data = data || {};
+  return str.replace(/\%\{(.+?)\}/g,
+    function(match, key) {return data[key];});
+};
+
+
+pie.string.humanize = function(str) {
+  return str.replace(/_id$/, '').replace(/([a-z][A-Z]|[a-z]_[a-z])/g, function(match, a){ return a[0] + ' ' + a[a.length-1]; });
+};
+
+
+pie.string.lowerize = function(str) {
+  return str.charAt(0).toLowerCase() + str.slice(1);
+};
+
+
+pie.string.modularize = function(str) {
+  return str.replace(/([^_])_([^_])/g, function(match, a, b){ return a + b.toUpperCase(); });
+};
+
+
+pie.string.pluralize = function(str) {
+  if(/ss$/i.test(str)) return str + 'es';
+  if(/s$/i.test(str)) return str;
+  if(/[a-z]$/i.test(str)) return str + 's';
+  return str;
+};
+
+
+// string templating
+pie.string.template = sudo.template;
+
+
+pie.string.titleize = function(str) {
+  return str.replace(/(^| )([a-z])/g, function(match, a, b){ return a + b.toUpperCase(); });
+};
+
+
+pie.string.underscore = function(str) {
+  return str.replace(/([a-z])([A-Z])/g, function(match, a, b){ return a + '_' + b.toLowerCase(); }).toLowerCase();
+};
+
 
 pie.string.urlConcat = function() {
   var args = pie.array.compact(pie.array.args(arguments), true),
@@ -345,43 +581,6 @@ pie.string.urlConcat = function() {
   base = base.replace('?&', '?').replace('&&', '&').replace('??', '?');
   if(base.indexOf('?') === base.length - 1) base = base.substr(0, base.length - 1);
   return base;
-};
-
-// Escapes a string for HTML interpolation
-pie.string.escape = function(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g,'&#x2F;');
-};
-
-
-pie.string.underscore = function(str) {
-  return str.replace(/([a-z])([A-Z])/g, function(match, a, b){ return a + '_' + b.toLowerCase(); }).toLowerCase();
-};
-
-pie.string.humanize = function(str) {
-  return str.replace(/_id$/, '').replace(/([a-z][A-Z]|[a-z]_[a-z])/g, function(match, a){ return a[0] + ' ' + a[a.length-1]; });
-};
-
-pie.string.titleize = function(str) {
-  return str.replace(/(^| )([a-z])/g, function(match, a, b){ return a + b.toUpperCase(); });
-};
-
-pie.string.pluralize = function(str) {
-  if(/ss$/i.test(str)) return str + 'es';
-  if(/s$/i.test(str)) return str;
-  if(/[a-z]$/i.test(str)) return str + 's';
-  return str;
-};
-
-pie.string.capitalize = function(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
-
-pie.string.lowerize = function(str) {
-  return str.charAt(0).toLowerCase() + str.slice(1);
-};
-
-pie.string.modularize = function(str) {
-  return str.replace(/([^_])_([^_])/g, function(match, a, b){ return a + b.toUpperCase(); });
 };
 
 // A mixin to provide two way data binding between a model and form inputs.
@@ -541,133 +740,6 @@ pie.mixins.inheritance = {
   }
 
 };
-
-// create an element based on the content provided.
-pie.util.createElement = function(str) {
-  var wrap = document.createElement('div');
-  wrap.innerHTML = str;
-  return wrap.removeChild(wrap.firstElementChild);
-};
-
-// deep merge
-pie.util.deepExtend = function() {
-  var args = pie.array.args(arguments),
-      targ = args.shift(),
-      obj;
-
-  function fn(k) {
-    if(k in targ && typeof targ[k] === 'object') {
-      targ[k] = pie.util.deepExtend(targ[k], obj[k]);
-    } else {
-      targ[k] = obj[k];
-    }
-  }
-
-  // iterate over each passed in obj remaining
-  for (; args.length;) {
-    obj = args.shift();
-    if(obj) Object.keys(obj).forEach(fn);
-  }
-  return targ;
-};
-
-// deserialize query string into object
-pie.util.deserialize = function(str) {
-  var params = {}, arrRegex = /^(.+)\[\]$/, idx, pieces, segments, arr, key, value, arr;
-
-  if(!str) return params;
-
-  idx = str.indexOf('?');
-  if(~idx) str = str.slice(idx+1);
-
-  pieces = str.split('&');
-  pieces.forEach(function(piece){
-    segments = piece.split('=');
-    key = decodeURIComponent(segments[0] || '');
-    value = decodeURIComponent(segments[1] || '');
-
-    arr = key.match(arrRegex);
-    // array
-    if(!!arr) {
-      key = arr[1];
-      params[key] = params[key] || [];
-      params[key].push(value);
-    } else {
-      params[key] = value;
-    }
-  });
-
-  return params;
-};
-
-// shallow merge
-pie.util.extend = function() {
-  var args = pie.array.args(arguments),
-      targ = args.shift(),
-      obj;
-
-  function fn(k) {
-    targ[k] = obj[k];
-  }
-
-  // iterate over each passed in obj remaining
-  for (; args.length; ) {
-    obj = args.shift();
-    if(obj) Object.keys(obj).forEach(fn);
-  }
-
-  return targ;
-};
-
-// extract from subobjects
-pie.util.getPath  = sudo.getPath;
-
-// does the object have the described path
-pie.util.hasPath = function(path, obj) {
-  var parts = path.split('.'), part;
-  while(part = parts.shift()) {
-
-    /* jslint eqeq:true */
-    if(obj != null && obj.hasOwnProperty(part)) {
-      obj = obj[part];
-    } else {
-      return false;
-    }
-  }
-
-  return true;
-};
-
-// serialize object into query string
-pie.util.serialize = function(obj, removeEmpty) {
-  if(!obj) return '';
-  if(removeEmpty) obj = pie.object.compact(obj, true);
-
-  var arr = [], keys = Object.keys(obj), v;
-
-  keys = keys.sort();
-
-  keys.forEach(function(k){
-    v = obj[k];
-
-    if(Array.isArray(v)) {
-      k = k + '[]';
-      v.forEach(function(av){
-        arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(av));
-      });
-    } else {
-      arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
-    }
-  });
-
-  return arr.join('&');
-};
-
-// set subobjects
-pie.util.setPath = sudo.setPath;
-
-// string templating
-pie.util.template = sudo.template;
 pie.container = {
 
   addChild: function(name, child) {
@@ -763,14 +835,14 @@ pie.container = {
   }
 };
 pie.model = function(d, options) {
-  this.data = pie.util.extend({}, d);
+  this.data = pie.object.extend({}, d);
   this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
   this.changeRecords = [];
 };
 
-pie.util.extend(pie.model.prototype, pie.mixins.inheritance);
+pie.object.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
 pie.model.prototype.deliverChangeRecords = function() {
@@ -794,7 +866,7 @@ pie.model.prototype.deliverChangeRecords = function() {
 
 
 pie.model.prototype.get = function(key) {
-  return pie.util.getPath(key, this.data);
+  return pie.object.getPath(this.data, key);
 };
 
 
@@ -804,7 +876,7 @@ pie.model.prototype.gets = function() {
   args = pie.array.compact(args);
 
   args.forEach(function(arg){
-    o[arg] = pie.util.getPath(arg, this.data);
+    o[arg] = pie.object.getPath(this.data, arg);
   }.bind(this));
 
   return pie.object.compact(o);
@@ -834,15 +906,15 @@ pie.model.prototype.observe = function() {
 pie.model.prototype.set = function(key, value, skipObservers) {
   var change = { name: key, object: this.data };
 
-  if(pie.util.hasPath(key, this.data)) {
+  if(pie.object.hasPath(this.data, key)) {
     change.type = 'update';
-    change.oldValue = pie.util.getPath(key, this.data);
+    change.oldValue = pie.object.getPath(this.data, key);
   } else {
     change.type = 'add';
   }
 
   change.value = value;
-  pie.util.setPath(key, value, this.data);
+  pie.object.setPath(this.data, key, value);
 
   this.changeRecords.push(change);
   this.trackTimestamps(key, skipObservers);
@@ -1065,14 +1137,14 @@ pie.list.prototype.unshift = function(value, skipObservers) {
 pie.view = function(app, options) {
   this.app = app;
   this.options = options || {};
-  this.el = this.options.el || pie.util.createElement('<div />');
+  this.el = this.options.el || pie.dom.createElement('<div />');
   this.uid = pie.unique();
   this.changeCallbacks = [];
 };
 
-pie.util.extend(pie.view.prototype, pie.mixins.inheritance);
-pie.util.extend(pie.view.prototype, pie.container);
-pie.util.extend(pie.view.prototype, pie.mixins.bindings);
+pie.object.extend(pie.view.prototype, pie.mixins.inheritance);
+pie.object.extend(pie.view.prototype, pie.container);
+pie.object.extend(pie.view.prototype, pie.mixins.bindings);
 
 
 // placeholder for default functionality
@@ -1146,7 +1218,7 @@ pie.view.prototype.parseFields = function() {
   for(;i<arguments.length;i++) {
     n = arguments[i];
     el = e.querySelector('[name="' + n + '"]:not([disabled])');
-    if(el) pie.util.setPath(n, el.value, o);
+    if(el) pie.object.setPath(o, n, el.value);
   }
   return o;
 };
@@ -1258,7 +1330,7 @@ pie.services.ajax = function ajax(app) {
 
 // default ajax options. override this method to
 pie.services.ajax.prototype._defaultAjaxOptions = function() {
-  return pie.util.extend({}, this.defaultAjaxOptions, {
+  return pie.object.extend({}, this.defaultAjaxOptions, {
     dataType: 'json',
     type: 'GET',
     error: this.app.errorHandler.handleXhrError
@@ -1276,7 +1348,7 @@ pie.services.ajax.prototype._defaultAjaxOptions = function() {
 pie.services.ajax.prototype.ajax = function(options) {
 
   options = pie.object.compact(options);
-  options = pie.util.extend({}, this._defaultAjaxOptions(), options);
+  options = pie.object.extend({}, this._defaultAjaxOptions(), options);
 
   if(options.extraError) {
     var oldError = options.error;
@@ -1333,22 +1405,22 @@ pie.services.ajax.prototype.ajax = function(options) {
 };
 
 pie.services.ajax.prototype.get = function(options) {
-  options = pie.util.extend({type: 'GET'}, options);
+  options = pie.object.extend({type: 'GET'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.post = function(options) {
-  options = pie.util.extend({type: 'POST'}, options);
+  options = pie.object.extend({type: 'POST'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.put = function(options) {
-  options = pie.util.extend({type: 'PUT'}, options);
+  options = pie.object.extend({type: 'PUT'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.del = function(options) {
-  options = pie.util.extend({type: 'DELETE'}, options);
+  options = pie.object.extend({type: 'DELETE'}, options);
   return this.ajax(options);
 };
 
@@ -1554,13 +1626,13 @@ pie.services.i18n.prototype._utc = function(t) {
 
 
 pie.services.i18n.prototype.load = function(data, shallow) {
-  var f = shallow ? pie.util.extend : pie.util.deepExtend;
+  var f = shallow ? pie.object.extend : pie.object.deepExtend;
   f.call(null, this.translations, data);
 };
 
 
 pie.services.i18n.prototype.translate = function(path, data) {
-  var translation = pie.util.getPath(path, this.translations), count;
+  var translation = pie.object.getPath(this.translations, path), count;
 
   if (data && data.hasOwnProperty('count') && typeof translation === 'object') {
     count = (data.count || 0).toString();
@@ -1703,7 +1775,7 @@ pie.services.navigator.prototype.start = function() {
 
 pie.services.navigator.prototype.setDataFromLocation = function() {
   var query = window.location.search.slice(1);
-  query = pie.util.deserialize(query);
+  query = pie.string.deserialize(query);
 
   this.sets({
     url: window.location.href,
@@ -1754,7 +1826,7 @@ pie.services.notifier.prototype.notify = function(messages, type, autoClose) {
   messages = pie.array.from(messages);
 
   var content = this.app.template('alert', {"type" : type, "messages": messages});
-  content = pie.util.createElement(content);
+  content = pie.dom.createElement(content);
 
   this.notifications[type] = this.notifications[type] || [];
   this.notifications[type].push(content);
@@ -1805,7 +1877,7 @@ pie.services.router = function(app) {
 // # => /things/page/3.json?q=newQuery
 pie.services.router.prototype.changedUrl = function(changes) {
   var current = this.app.parsedUrl;
-  return this.router.path(current.name || current.path, pie.util.extend({}, current.interpolations, current.query, changes));
+  return this.router.path(current.name || current.path, pie.object.extend({}, current.interpolations, current.query, changes));
 },
 
 
@@ -1855,7 +1927,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 
       k = this.normalizePath(k);
 
-      this.routes[k] = pie.util.extend({}, defaults, r);
+      this.routes[k] = pie.object.extend({}, defaults, r);
 
       if(r.hasOwnProperty('name')) {
         this.namedRoutes[r.name] = k;
@@ -1888,7 +1960,7 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
   });
 
   unusedData = pie.object.except(data, usedKeys);
-  params = pie.util.serialize(pie.object.compact(unusedData, true));
+  params = pie.object.serialize(pie.object.compact(unusedData, true));
 
   if(!interpolateOnly && params.length) {
     s = pie.string.urlConcat(s, params);
@@ -1942,7 +2014,7 @@ pie.services.router.prototype.parseUrl = function(path) {
   splitUrl = path.split('/');
 
   if(match) {
-    match = pie.util.extend({routeKey: path}, match);
+    match = pie.object.extend({routeKey: path}, match);
   } else {
     while (i < keys.length && !match) {
       key = keys[i];
@@ -1955,7 +2027,7 @@ pie.services.router.prototype.parseUrl = function(path) {
       this.routes[key].regex = this.routes[key].regex || new RegExp('^' + key.replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
 
       if (this.routes[key].regex.test(path)) {
-        match = pie.util.extend({routeKey: key}, this.routes[key]);
+        match = pie.object.extend({routeKey: key}, this.routes[key]);
         splitKey = key.split('/');
         for(j = 0; j < splitKey.length; j++){
           if(/^:/.test(splitKey[j])) {
@@ -1968,10 +2040,10 @@ pie.services.router.prototype.parseUrl = function(path) {
     }
   }
 
-  query = pie.util.deserialize(query);
-  fullPath = pie.array.compact([path, pie.util.serialize(query)], true).join('?');
+  query = pie.string.deserialize(query);
+  fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
 
-  return pie.util.extend({
+  return pie.object.extend({
     interpolations: interpolations,
     path: path,
     query: query,
@@ -1983,7 +2055,7 @@ pie.services.router.prototype.parseUrl = function(path) {
 pie.app = function app(options) {
 
   // general app options
-  this.options = pie.util.deepExtend({
+  this.options = pie.object.deepExtend({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
     notificationUiTarget: '.notification-container'
@@ -2047,7 +2119,7 @@ pie.app = function app(options) {
 };
 
 
-pie.util.extend(pie.app.prototype, pie.container);
+pie.object.extend(pie.app.prototype, pie.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.
@@ -2187,7 +2259,7 @@ pie.app.prototype.navigationChanged = function() {
   this.notifier.clear();
 
   // use the view key of the parsedUrl to find the viewClass
-  var viewClass = pie.util.getPath(this.options.viewNamespace + '.' + this.parsedUrl.view, window), child;
+  var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
   // the instance to be added.
 
   // add the instance as our 'currentView'
@@ -2315,7 +2387,7 @@ pie.app.prototype.template = function(name, data) {
 
     if(node) {
       this.debug('Compiling and storing template: ' + name);
-      this._templates[name] = sudo.template(node.textContent);
+      this._templates[name] = pie.string.template(node.textContent);
     } else {
       throw new Error("[PIE] Unknown template error: " + name);
     }

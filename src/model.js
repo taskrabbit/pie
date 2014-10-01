@@ -1,12 +1,12 @@
 pie.model = function(d, options) {
-  this.data = pie.util.extend({}, d);
+  this.data = pie.object.extend({}, d);
   this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
   this.changeRecords = [];
 };
 
-pie.util.extend(pie.model.prototype, pie.mixins.inheritance);
+pie.object.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
 pie.model.prototype.deliverChangeRecords = function() {
@@ -30,7 +30,7 @@ pie.model.prototype.deliverChangeRecords = function() {
 
 
 pie.model.prototype.get = function(key) {
-  return pie.util.getPath(key, this.data);
+  return pie.object.getPath(this.data, key);
 };
 
 
@@ -40,7 +40,7 @@ pie.model.prototype.gets = function() {
   args = pie.array.compact(args);
 
   args.forEach(function(arg){
-    o[arg] = pie.util.getPath(arg, this.data);
+    o[arg] = pie.object.getPath(this.data, arg);
   }.bind(this));
 
   return pie.object.compact(o);
@@ -70,15 +70,15 @@ pie.model.prototype.observe = function() {
 pie.model.prototype.set = function(key, value, skipObservers) {
   var change = { name: key, object: this.data };
 
-  if(pie.util.hasPath(key, this.data)) {
+  if(pie.object.hasPath(this.data, key)) {
     change.type = 'update';
-    change.oldValue = pie.util.getPath(key, this.data);
+    change.oldValue = pie.object.getPath(this.data, key);
   } else {
     change.type = 'add';
   }
 
   change.value = value;
-  pie.util.setPath(key, value, this.data);
+  pie.object.setPath(this.data, key, value);
 
   this.changeRecords.push(change);
   this.trackTimestamps(key, skipObservers);
