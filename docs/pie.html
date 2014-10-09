@@ -463,7 +463,7 @@ pie.array.union = <span class="hljs-function"><span class="hljs-keyword">functio
             
             <div class="content"><div class='highlight'><pre>pie.date.dateFromISO = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(isoDateString)</span> </span>{
   <span class="hljs-keyword">if</span>(!isoDateString) <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
-  <span class="hljs-keyword">var</span> parts = isoDateString.split(<span class="hljs-string">'T'</span>)[<span class="hljs-number">0</span>].split(<span class="hljs-string">'-'</span>);
+  <span class="hljs-keyword">var</span> parts = isoDateString.split(<span class="hljs-regexp">/T|\s/</span>)[<span class="hljs-number">0</span>].split(<span class="hljs-string">'-'</span>);
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(parts[<span class="hljs-number">0</span>], parts[<span class="hljs-number">1</span>] - <span class="hljs-number">1</span>, parts[<span class="hljs-number">2</span>]);
 };</pre></div></div>
             
@@ -482,7 +482,7 @@ pie.array.union = <span class="hljs-function"><span class="hljs-keyword">functio
             
             <div class="content"><div class='highlight'><pre>pie.date.timeFromISO = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(isoTimeString)</span> </span>{
   <span class="hljs-keyword">if</span>(!isoTimeString) <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
-  <span class="hljs-keyword">if</span>(isoTimeString.indexOf(<span class="hljs-string">'T'</span>) &lt; <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> pie.date.dateFromISO(isoTimeString);
+  <span class="hljs-keyword">if</span>(!<span class="hljs-regexp">/T|\s/</span>.test(isoTimeString)) <span class="hljs-keyword">return</span> pie.date.dateFromISO(isoTimeString);
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(isoTimeString);
 };</pre></div></div>
             

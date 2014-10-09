@@ -20,6 +20,9 @@ $(debug):
 test: $(deploy)
 	open specRunner.html
 
+spec: $(deploy)
+	open specRunner.html
+
 clean:
 	rm -rf build
 
