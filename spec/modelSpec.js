@@ -150,7 +150,7 @@ describe("pie.model", function() {
 
       var foo = function(){
         pie.model.apply(this, arguments);
-        this.compute('full_name', 'first_name', 'last_name', this.fullName.bind(this));
+        this.compute('full_name', this.fullName.bind(this), 'first_name', 'last_name');
       };
 
       foo.prototype = Object.create(pie.model.prototype);

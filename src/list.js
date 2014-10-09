@@ -30,7 +30,6 @@ pie.list.prototype._trackMutations = function(skipObservers, fn) {
   }
 
   this.changeRecords = this.changeRecords.concat(changes);
-  this.trackTimestamps('items', skipObservers);
 
   if(skipObservers) return this;
   return this.deliverChangeRecords();
