@@ -55,45 +55,58 @@ pie.mixins.validatable = {
     }.bind(this));
   },
 
+  // asyncronous validation processing.
   validateAll: function(app, success, failure) {
-    var ok = true;
+    var ok = true,
+    keys = Object.keys(this.validations),
+    completeCount = keys.length,
+    completed = 0,
 
-    Object.keys(this.validations).forEach(function(k) {
-      ok = this.validate(app, k) && ok;
+    callback = function(bool) {
+      ok = ok && bool;
+      completed++;
+
+      if(completeCount === completed) {
+        if(ok && success) success.call();
+        else if (!ok && failure) failure.call();
+      }
+    };
+
+    keys.forEach(function(k) {
+      this.validate(app, k, callback);
     }.bind(this));
-
-    if(ok && success) success.call();
-    else if(!ok && failure) failure.call();
-
-    return ok;
   },
 
-  validate: function(app, k) {
+
+  validate: function(app, k, cb) {
     var validators = app.validator,
     validations = pie.array.from(this.validations[k]),
     value = this.get(k),
     valid = true,
-    i = 0,
     messages = [],
-    validation,
-    validator;
+    completeCount = validations.length,
+    completed = 0,
+    validator,
+    result,
 
+    callback = function(validation, bool) {
+      valid = valid && bool;
+      completed++;
 
-    for(; i < validations.length; i++) {
-      validation  = validations[i];
-      validator   = validators[validation.type];
-      if(!validator.call(validators, value, validation.options)) {
-        valid = false;
-        messages.push(validators.errorMessage(validation.type, validation.options));
+      if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
+
+      if(completed === completeCount) {
+        this.reportValidationError(k, messages);
+        if(cb) cb.call(null, valid);
       }
-    }
+    };
 
-    if(valid) {
-      this.reportValidationError(k, undefined);
-    } else {
-      this.reportValidationError(k, messages);
-    }
-
-    return valid;
+    validations.forEach(function(validation){
+      validator = validators[validation.type];
+      result = validator.call(validators, value, validation.options, callback);
+      if(result === true || result === false) {
+        callback.call()
+      } // else if undefined, the validator is assumed to call the callback.
+    });
   }
 };

@@ -136,9 +136,9 @@ pie.validator.prototype.email = function email(value, options) {
 };
 
 
-pie.validator.prototype.fn = function(value, options) {
+pie.validator.prototype.fn = function(value, options, cb) {
   return this.withStandardChecks(value, options, function(){
-    return options.fn.call(null, value, options);
+    return options.fn.call(null, value, options, cb);
   });
 };
 
