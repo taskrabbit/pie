@@ -105,6 +105,10 @@ pie.object.hasPath = function(obj, path) {
   return true;
 };
 
+pie.object.isObject = function(thing) {
+  return Object.prototype.toString.call(thing) === '[object Object]';
+};
+
 
 // serialize object into query string
 pie.object.serialize = function(obj, removeEmpty) {
@@ -152,9 +156,5 @@ pie.object.slice = function(){
 
 // return all the values of the object
 pie.object.values = function(a) {
-  var values = [];
-  Object.keys(a).forEach(function(k) {
-    values.push(a[k]);
-  });
-  return values;
+  return Object.keys(a).map(function(k) { return a[k]; });
 };

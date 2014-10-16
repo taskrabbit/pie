@@ -126,7 +126,7 @@ pie.array.last = function(arr) {
 // pie.array.map([0,1,2], 'toFixed') => [toFixed(){}, toFixed(){}, toFixed(){}]
 // pie.array.map([0,1,2], 'toFixed', true) => ["0", "1", "2"]
 pie.array.map = function(a, f, callInternalFunction){
-  var b = [], callingF;
+  var callingF;
 
   if(typeof(f) !== 'function') {
     callingF = function(e){
@@ -141,11 +141,7 @@ pie.array.map = function(a, f, callInternalFunction){
     callingF = f;
   }
 
-  a.forEach(function(e){
-    b.push(callingF(e));
-  });
-
-  return b;
+  return a.map(function(e){ return callingF(e); });
 };
 
 

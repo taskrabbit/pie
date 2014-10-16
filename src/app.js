@@ -34,10 +34,13 @@ pie.app = function app(options) {
   this.router = classOption('router', pie.services.router);
   this.addChild('router', this.router);
 
-
   // the only navigator which should exist in this app.
   this.navigator = classOption('navigator', pie.services.navigator);
   this.addChild('navigator', this.navigator);
+
+  // the validator which should be used in the context of the app
+  this.validator = classOption('validator', pie.validator);
+  this.addChild('validator', this.validator);
 
   // app.models is globally available. app.models is solely for page context.
   // this is not a singleton container or anything like that. it's just for passing

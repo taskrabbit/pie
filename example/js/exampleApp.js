@@ -25,7 +25,6 @@ app.i18n.load({
 });
 
 // Routes
-
 app.router.route({
   '/example.html' : { view: 'layout' }
 });
@@ -54,6 +53,12 @@ example.views.layout = function layout(app) {
   // this is our page "context". It represents a list of items.
   this.list = new pie.list([], {
     timestamps: true
+  });
+
+  pie.object.extend(this.list, pie.mixins.validatable);
+
+  this.list.validates({
+    nextItem: {presence: {message: "You can't submit a blank item!"}}
   });
 };
 
@@ -112,6 +117,12 @@ example.views.form.prototype = pie.object.extend(Object.create(pie.simpleView.pr
     // we observe the form submission and invoke handleSubmission when it occurs.
     this.on('submit', 'form', this.handleSubmission.bind(this));
 
+    // any time the input changes, we force validation, which we observe below.
+    this.on('keyup', 'input', this.validate.bind(this));
+
+    // observe changes to our validation
+    this.onChange(this.list, this.validationChanged.bind(this), 'validationErrors.nextItem');
+
     // do this last, since we are rendering in it (renderOnAddedToParent is used in the constructor).
     this._super('addedToParent');
   },
@@ -121,15 +132,32 @@ example.views.form.prototype = pie.object.extend(Object.create(pie.simpleView.pr
     // don't really submit it...
     e.preventDefault();
 
-    if(!this.list.get('nextItem')) return;
+    this.list.validateAll(this.app, function() {
+      // insert the item at the beginning.
+      var newItem = new pie.model({title: this.list.get('nextItem'), completed: false});
+      this.list.push(newItem);
 
-    // insert the item at the beginning.
-    var newItem = new pie.model({title: this.list.get('nextItem'), completed: false});
-    this.list.push(newItem);
+      // remove the nextItem attribute, updating the UI.
+      this.list.set('nextItem', '');
+    }.bind(this));
+  },
 
-    // remove the nextItem attribute, updating the UI.
-    this.list.set('nextItem', '');
+  // when the validation changes, determine the correct bg color.
+  validationChanged: function(changes) {
+    var change = pie.array.last(changes),
+    el = this.qs('input');
+    if(change.value) {
+      el.style.backgroundColor = 'rgba(255,0,0,0.2)';
+    } else {
+      el.style.backgroundColor = 'inherit';
+    }
+  },
+
+  // validate the nextItem of the list.
+  validate: function() {
+    this.list.validate(this.app, 'nextItem');
   }
+
 });
 
 
