@@ -366,7 +366,7 @@ describe("pie.services.i18n", function() {
           }
         });
 
-        this.d = this.i18n._normalizedDate("2014-09-08T17:00:05.854-0400");
+        this.d = this.i18n._normalizedDate("2014-09-08T17:00:05.854-04:00");
       });
 
       afterEach(function() {

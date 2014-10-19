@@ -8,7 +8,6 @@ pie.mixins.validatable = {
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
   // validates({name: ['presence', {format: /[a]/}]})
-
   validates: function(obj) {
     var resultValidations = {}, configs, resultConfigs, test;
 
@@ -55,30 +54,47 @@ pie.mixins.validatable = {
     }.bind(this));
   },
 
-  // asyncronous validation processing.
+  // Invoke validateAll with a set of optional callbacks for the success case and the failure case.
+  // this.validateAll(function(){ alert('Success!'); }, function(){ alert('Errors!'); });
+  // validateAll will perform all registered validations, asynchronously. When all validations have completed, the callbacks
+  // will be invoked.
   validateAll: function(app, success, failure) {
     var ok = true,
     keys = Object.keys(this.validations),
     completeCount = keys.length,
     completed = 0,
+    callback;
 
-    callback = function(bool) {
-      ok = ok && bool;
-      completed++;
+    if(!keys.length) {
+      if(success) success(true);
+      return void(0);
+    } else {
 
-      if(completeCount === completed) {
-        if(ok && success) success.call();
-        else if (!ok && failure) failure.call();
-      }
-    };
 
-    keys.forEach(function(k) {
-      this.validate(app, k, callback);
-    }.bind(this));
+      // The callback which is invoked after each individual validation.
+      // This keeps track of our progress, and when we are completed, invokes our provided callbacks.
+      callback = function(bool) {
+        ok = !!(ok && bool);
+        completed++;
+
+        if(completeCount === completed) {
+          if(ok && success) success(true);
+          else if (!ok && failure) failure(false);
+        }
+      };
+
+      // start all the validations
+      keys.forEach(function(k) {
+        this.validate(app, k, callback, callback);
+      }.bind(this));
+
+      return void(0); // return undefined to ensure we make our point about asynchronous validation.
+    }
   },
 
 
-  validate: function(app, k, cb) {
+  // validate a specific key and optionally invoke a callback.
+  validate: function(app, k, success, failure) {
     var validators = app.validator,
     validations = pie.array.from(this.validations[k]),
     value = this.get(k),
@@ -88,25 +104,41 @@ pie.mixins.validatable = {
     completed = 0,
     validator,
     result,
+    callback;
 
-    callback = function(validation, bool) {
-      valid = valid && bool;
-      completed++;
+    if(!validations.length) {
+      if(success) success(true);
+      return void(0);
+    } else {
 
-      if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
+      // The callback invoked after each individual validation is run.
+      // Keeps track of progress through our stack and updates the error keys.
+      // Once completed, our provided callback is invoked with the result.
+      callback = function(validation, bool) {
+        valid = !!(valid && bool);
+        completed++;
 
-      if(completed === completeCount) {
-        this.reportValidationError(k, messages);
-        if(cb) cb.call(null, valid);
-      }
-    };
+        if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
 
-    validations.forEach(function(validation){
-      validator = validators[validation.type];
-      result = validator.call(validators, value, validation.options, callback);
-      if(result === true || result === false) {
-        callback.call()
-      } // else if undefined, the validator is assumed to call the callback.
-    });
+        if(completed === completeCount) {
+          this.reportValidationError(k, messages);
+          if(valid && success) success(valid);
+          else if(!valid && failure) failure(valid);
+        }
+      };
+
+      // grab the validator for each validation then invoke it.
+      // if true or false is returned immediately, we invoke the callback otherwise we assume
+      // the validation is running asynchronously and it will invoke the callback with the result.
+      validations.forEach(function(validation){
+        validator = validators[validation.type];
+        result = validator(value, validation.options, callback);
+        if(result === true || result === false) {
+          callback(result);
+        } // if undefined, then the validation assumes responsibility for invoking the callback.
+      });
+
+      return void(0);
+    }
   }
 };

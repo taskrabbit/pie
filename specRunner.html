@@ -46,6 +46,29 @@
         "app" : {
           "errors" : {
             "401" : "Sorry, you aren't authorized to view this page."
+          },
+          "validations" : {
+
+            "cc" : "does not look like a credit card number",
+            "chosen" : "must be chosen",
+            "cvv" : "is not a valid security code",
+            "date" : "is not a valid date",
+            "email" : "must be a valid email",
+            "format" : "is invalid",
+            "integer" : "must be an integer",
+            "length" : "length must be",
+            "number" : "must be a number",
+            "phone" : "is not a valid phone number",
+            "presence" : "can't be blank",
+            "url" : "must be a valid url",
+
+            "range_messages" : {
+              "eq" : "equal to %{count}",
+              "lt" : "less than %{count}",
+              "gt" : "greater than %{count}",
+              "lte" : "less than or equal to %{count}",
+              "gte" : "greater than or equal to %{count}"
+            }
           }
         }
       })
@@ -95,6 +118,7 @@
     <script type="text/javascript" src="spec/services/i18nSpec.js"></script>
     <script type="text/javascript" src="spec/services/notifierSpec.js"></script>
     <script type="text/javascript" src="spec/services/routerSpec.js"></script>
+    <script type="text/javascript" src="spec/validatorSpec.js"></script>
     <script type="text/javascript" src="spec/viewSpec.js"></script>
     <script type="text/javascript" src="spec/bindingsSpec.js"></script>
 

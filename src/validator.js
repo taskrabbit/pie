@@ -24,19 +24,29 @@ pie.validator.rangeOptions.prototype.t = function(key, options) {
   return this.i18n.t('app.validations.range_messages.' + key, options);
 };
 
+pie.validator.rangeOptions.prototype.matches = function(value) {
+  var valid = true;
+  valid = valid && (!this.has('gt') || value > this.get('gt'));
+  valid = valid && (!this.has('lt') || value < this.get('lt'));
+  valid = valid && (!this.has('gte') || value >= this.get('gte'));
+  valid = valid && (!this.has('lte') || value <= this.get('lte'));
+  valid = valid && (!this.has('eq') || value === this.get('eq'));
+  return valid;
+};
+
 pie.validator.rangeOptions.prototype.message = function() {
   if(this.has('eq')) {
     return this.t('eq', {count: this.get('eq')});
   } else {
     var s = ["", ""];
 
-    if(this.has('gt')) s[0] += " " + this.t('gt', {count: this.get('gt')});
-    else if(this.has('gte')) s[0] += " " + this.t('gte', {count: this.get('gte')});
+    if(this.has('gt')) s[0] += this.t('gt', {count: this.get('gt')});
+    else if(this.has('gte')) s[0] += this.t('gte', {count: this.get('gte')});
 
     if(this.has('lt')) s[1] += this.t('lt', {count: this.get('lt')});
     else if(this.has('lte')) s[1] += this.t('lte', {count: this.get('lte')});
 
-    return pie.array.toSentence(pie.array.compact(s, true), this.i18n);
+    return pie.array.toSentence(pie.array.compact(s, true), this.i18n).trim();
   }
 };
 
@@ -71,22 +81,11 @@ pie.validator.prototype.withStandardChecks = function(value, options, f){
 };
 
 
-pie.validator.prototype.compare = function(value, options) {
-  var valid = true, ro = new pie.validator.rangeOptions(options);
-  valid = valid && (!ro.has('gt') || value > ro.get('gt'));
-  valid = valid && (!ro.has('lt') || value < ro.get('lt'));
-  valid = valid && (!ro.has('gte') || value >= ro.get('gte'));
-  valid = valid && (!ro.has('lte') || value <= ro.get('lte'));
-  valid = valid && (!ro.has('eq') || value === ro.get('eq'));
-  return valid;
-};
-
-
 pie.validator.prototype.cc = function(value, options){
   return this.withStandardChecks(value, options, function(){
 
     // don't get rid of letters because we don't want a mix of letters and numbers passing through
-    var sanitized = value.replace(/[^a-zA-Z0-9]/g, '');
+    var sanitized = String(value).replace(/[^a-zA-Z0-9]/g, '');
     return this.number(sanitized) &&
            this.length(sanitized, {gte: 15, lte: 16});
   }.bind(this));
@@ -123,7 +122,10 @@ pie.validator.prototype.date = function(value, options) {
       });
       options.sanitized = true;
     }
-    return this.compare(value, options);
+
+    var ro = new pie.validator.rangeOptions(options);
+    return ro.matches(value);
+
   }.bind(this));
 };
 
@@ -146,7 +148,7 @@ pie.validator.prototype.fn = function(value, options, cb) {
 pie.validator.prototype.format = function(value, options) {
   options = options || {};
   return this.withStandardChecks(value, options, function() {
-    var fmt = options.format;
+    var fmt = options.format || options['with'];
 
     if(fmt === 'isoDate'){
       fmt = /^\d{4}\-\d{2}\-\d{2}$/;
@@ -199,15 +201,10 @@ pie.validator.prototype.number = function number(value, options){
     if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
 
     var valid = true,
-    number = parseFloat(value);
+    number = parseFloat(value),
+    ro = new pie.validator.rangeOptions(options);
 
-    valid = valid && (!('gt'  in options) || number > options.gt);
-    valid = valid && (!('lt'  in options) || number < options.lt);
-    valid = valid && (!('gte' in options) || number >= options.gte);
-    valid = valid && (!('lte' in options) || number <= options.lte);
-    valid = valid && (!('eq'  in options) || number === options.eq);
-
-    return valid;
+    return ro.matches(number);
   });
 };
 

@@ -66,7 +66,7 @@ describe("Date extensions", function() {
 
     it("should not blow up on a falsy value", function() {
       var d = pie.date.timeFromISO();
-      expect(d).toEqual(null);
+      expect(d).toEqual(NaN);
     });
 
 

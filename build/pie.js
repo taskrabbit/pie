@@ -249,12 +249,55 @@ pie.date.dateFromISO = function(isoDateString) {
   return new Date(parts[0], parts[1] - 1, parts[2]);
 };
 
-// assuming that we're on ES5 and can use new Date(isoString).
-pie.date.timeFromISO = function(isoTimeString) {
-  if(!isoTimeString) return null;
-  if(!/T|\s/.test(isoTimeString)) return pie.date.dateFromISO(isoTimeString);
-  return new Date(isoTimeString);
-};
+
+/**
+ * STOLEN FROM HERE:
+ * Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
+ * © 2011 Colin Snover <http://zetafleet.com>
+ * Released under MIT license.
+ */
+
+pie.date.timeFromISO = (function() {
+
+  var numericKeys = [1, 4, 5, 6, 7, 10, 11];
+
+  return function(date) {
+    if(!date) return NaN;
+    if(!/T|\s/.test(date)) return pie.date.dateFromISO(date);
+
+    var timestamp, struct, minutesOffset = 0;
+
+    // ES5 §15.9.4.2 states that the string should attempt to be parsed as a Date Time String Format string
+    // before falling back to any implementation-specific date parsing, so that’s what we do, even if native
+    // implementations could be faster
+    //              1 YYYY                2 MM       3 DD           4 HH    5 mm       6 ss        7 msec        8 Z 9 ±    10 tzHH    11 tzmm
+    if ((struct = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/.exec(date))) {
+      // avoid NaN timestamps caused by “undefined” values being passed to Date.UTC
+      for (var i = 0, k; (k = numericKeys[i]); ++i) {
+        struct[k] = +struct[k] || 0;
+      }
+
+      // allow undefined days and months
+      struct[2] = (+struct[2] || 1) - 1;
+      struct[3] = +struct[3] || 1;
+
+      if (struct[8] !== 'Z' && struct[9] !== undefined) {
+        minutesOffset = struct[10] * 60 + struct[11];
+
+        if (struct[9] === '+') {
+          minutesOffset = 0 - minutesOffset;
+        }
+      }
+
+      timestamp = Date.UTC(struct[1], struct[2], struct[3], struct[4], struct[5] + minutesOffset, struct[6], struct[7]);
+    } else {
+      timestamp = NaN;
+    }
+
+    return new Date(timestamp);
+  };
+
+})();
 // create an element based on the content provided.
 pie.dom.createElement = function(str) {
   var wrap = document.createElement('div');
@@ -746,7 +789,6 @@ pie.mixins.validatable = {
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
   // validates({name: ['presence', {format: /[a]/}]})
-
   validates: function(obj) {
     var resultValidations = {}, configs, resultConfigs, test;
 
@@ -793,46 +835,92 @@ pie.mixins.validatable = {
     }.bind(this));
   },
 
+  // Invoke validateAll with a set of optional callbacks for the success case and the failure case.
+  // this.validateAll(function(){ alert('Success!'); }, function(){ alert('Errors!'); });
+  // validateAll will perform all registered validations, asynchronously. When all validations have completed, the callbacks
+  // will be invoked.
   validateAll: function(app, success, failure) {
-    var ok = true;
+    var ok = true,
+    keys = Object.keys(this.validations),
+    completeCount = keys.length,
+    completed = 0,
+    callback;
 
-    Object.keys(this.validations).forEach(function(k) {
-      ok = this.validate(app, k) && ok;
-    }.bind(this));
+    if(!keys.length) {
+      if(success) success(true);
+      return void(0);
+    } else {
 
-    if(ok && success) success.call();
-    else if(!ok && failure) failure.call();
 
-    return ok;
+      // The callback which is invoked after each individual validation.
+      // This keeps track of our progress, and when we are completed, invokes our provided callbacks.
+      callback = function(bool) {
+        ok = !!(ok && bool);
+        completed++;
+
+        if(completeCount === completed) {
+          if(ok && success) success(true);
+          else if (!ok && failure) failure(false);
+        }
+      };
+
+      // start all the validations
+      keys.forEach(function(k) {
+        this.validate(app, k, callback, callback);
+      }.bind(this));
+
+      return void(0); // return undefined to ensure we make our point about asynchronous validation.
+    }
   },
 
-  validate: function(app, k) {
+
+  // validate a specific key and optionally invoke a callback.
+  validate: function(app, k, success, failure) {
     var validators = app.validator,
     validations = pie.array.from(this.validations[k]),
     value = this.get(k),
     valid = true,
-    i = 0,
     messages = [],
-    validation,
-    validator;
+    completeCount = validations.length,
+    completed = 0,
+    validator,
+    result,
+    callback;
 
-
-    for(; i < validations.length; i++) {
-      validation  = validations[i];
-      validator   = validators[validation.type];
-      if(!validator.call(validators, value, validation.options)) {
-        valid = false;
-        messages.push(validators.errorMessage(validation.type, validation.options));
-      }
-    }
-
-    if(valid) {
-      this.reportValidationError(k, undefined);
+    if(!validations.length) {
+      if(success) success(true);
+      return void(0);
     } else {
-      this.reportValidationError(k, messages);
-    }
 
-    return valid;
+      // The callback invoked after each individual validation is run.
+      // Keeps track of progress through our stack and updates the error keys.
+      // Once completed, our provided callback is invoked with the result.
+      callback = function(validation, bool) {
+        valid = !!(valid && bool);
+        completed++;
+
+        if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
+
+        if(completed === completeCount) {
+          this.reportValidationError(k, messages);
+          if(valid && success) success(valid);
+          else if(!valid && failure) failure(valid);
+        }
+      };
+
+      // grab the validator for each validation then invoke it.
+      // if true or false is returned immediately, we invoke the callback otherwise we assume
+      // the validation is running asynchronously and it will invoke the callback with the result.
+      validations.forEach(function(validation){
+        validator = validators[validation.type];
+        result = validator(value, validation.options, callback);
+        if(result === true || result === false) {
+          callback(result);
+        } // if undefined, then the validation assumes responsibility for invoking the callback.
+      });
+
+      return void(0);
+    }
   }
 };
 pie.container = {
@@ -1514,19 +1602,29 @@ pie.validator.rangeOptions.prototype.t = function(key, options) {
   return this.i18n.t('app.validations.range_messages.' + key, options);
 };
 
+pie.validator.rangeOptions.prototype.matches = function(value) {
+  var valid = true;
+  valid = valid && (!this.has('gt') || value > this.get('gt'));
+  valid = valid && (!this.has('lt') || value < this.get('lt'));
+  valid = valid && (!this.has('gte') || value >= this.get('gte'));
+  valid = valid && (!this.has('lte') || value <= this.get('lte'));
+  valid = valid && (!this.has('eq') || value === this.get('eq'));
+  return valid;
+};
+
 pie.validator.rangeOptions.prototype.message = function() {
   if(this.has('eq')) {
     return this.t('eq', {count: this.get('eq')});
   } else {
     var s = ["", ""];
 
-    if(this.has('gt')) s[0] += " " + this.t('gt', {count: this.get('gt')});
-    else if(this.has('gte')) s[0] += " " + this.t('gte', {count: this.get('gte')});
+    if(this.has('gt')) s[0] += this.t('gt', {count: this.get('gt')});
+    else if(this.has('gte')) s[0] += this.t('gte', {count: this.get('gte')});
 
     if(this.has('lt')) s[1] += this.t('lt', {count: this.get('lt')});
     else if(this.has('lte')) s[1] += this.t('lte', {count: this.get('lte')});
 
-    return pie.array.toSentence(pie.array.compact(s, true), this.i18n);
+    return pie.array.toSentence(pie.array.compact(s, true), this.i18n).trim();
   }
 };
 
@@ -1561,22 +1659,11 @@ pie.validator.prototype.withStandardChecks = function(value, options, f){
 };
 
 
-pie.validator.prototype.compare = function(value, options) {
-  var valid = true, ro = new pie.validator.rangeOptions(options);
-  valid = valid && (!ro.has('gt') || value > ro.get('gt'));
-  valid = valid && (!ro.has('lt') || value < ro.get('lt'));
-  valid = valid && (!ro.has('gte') || value >= ro.get('gte'));
-  valid = valid && (!ro.has('lte') || value <= ro.get('lte'));
-  valid = valid && (!ro.has('eq') || value === ro.get('eq'));
-  return valid;
-};
-
-
 pie.validator.prototype.cc = function(value, options){
   return this.withStandardChecks(value, options, function(){
 
     // don't get rid of letters because we don't want a mix of letters and numbers passing through
-    var sanitized = value.replace(/[^a-zA-Z0-9]/g, '');
+    var sanitized = String(value).replace(/[^a-zA-Z0-9]/g, '');
     return this.number(sanitized) &&
            this.length(sanitized, {gte: 15, lte: 16});
   }.bind(this));
@@ -1613,7 +1700,10 @@ pie.validator.prototype.date = function(value, options) {
       });
       options.sanitized = true;
     }
-    return this.compare(value, options);
+
+    var ro = new pie.validator.rangeOptions(options);
+    return ro.matches(value);
+
   }.bind(this));
 };
 
@@ -1626,9 +1716,9 @@ pie.validator.prototype.email = function email(value, options) {
 };
 
 
-pie.validator.prototype.fn = function(value, options) {
+pie.validator.prototype.fn = function(value, options, cb) {
   return this.withStandardChecks(value, options, function(){
-    return options.fn.call(null, value, options);
+    return options.fn.call(null, value, options, cb);
   });
 };
 
@@ -1636,7 +1726,7 @@ pie.validator.prototype.fn = function(value, options) {
 pie.validator.prototype.format = function(value, options) {
   options = options || {};
   return this.withStandardChecks(value, options, function() {
-    var fmt = options.format;
+    var fmt = options.format || options['with'];
 
     if(fmt === 'isoDate'){
       fmt = /^\d{4}\-\d{2}\-\d{2}$/;
@@ -1689,15 +1779,10 @@ pie.validator.prototype.number = function number(value, options){
     if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
 
     var valid = true,
-    number = parseFloat(value);
+    number = parseFloat(value),
+    ro = new pie.validator.rangeOptions(options);
 
-    valid = valid && (!('gt'  in options) || number > options.gt);
-    valid = valid && (!('lt'  in options) || number < options.lt);
-    valid = valid && (!('gte' in options) || number >= options.gte);
-    valid = valid && (!('lte' in options) || number <= options.lte);
-    valid = valid && (!('eq'  in options) || number === options.eq);
-
-    return valid;
+    return ro.matches(number);
   });
 };
 
@@ -2523,6 +2608,9 @@ pie.app = function app(options) {
 
   // once the dom is loaded
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
+
+  // set a global instance which can be used as a backup within the pie library.
+  window.pieInstance = window.pieInstance || this;
 };
 
 
