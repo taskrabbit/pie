@@ -9,7 +9,7 @@ pie.mixins.validatable = {
   // validates({name: {presence: true}});
   // validates({name: ['presence', {format: /[a]/}]})
   validates: function(obj) {
-    var resultValidations = {}, configs, resultConfigs, test;
+    var configs, resultConfigs;
 
     this.validations = this.validations || {};
 

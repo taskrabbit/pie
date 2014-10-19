@@ -79,7 +79,7 @@ pie.object.extend(pie.model.prototype, pie.mixins.inheritance);
 
 // After updates have been made we deliver our change records to our observers.
 pie.model.prototype.deliverChangeRecords = function() {
-  var observers = {}, os, o, change, all;
+  var observers = {}, os, o, change;
 
   // grab each change record
   while(change = this.changeRecords.shift()) {
@@ -197,7 +197,7 @@ pie.model.prototype.compute = function(/* name, fn[, prop1, prop2 ] */) {
   name = props.shift(),
   fn = props.shift();
 
-  this.observe(function(changes){
+  this.observe(function(/* changes */){
     this.set(name, fn.call(this));
   }.bind(this), props);
 

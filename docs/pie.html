@@ -1479,7 +1479,7 @@ validates({name: [‘presence’, {format: /[a]/}]})</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  validates: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
-    <span class="hljs-keyword">var</span> resultValidations = {}, configs, resultConfigs, test;
+    <span class="hljs-keyword">var</span> configs, resultConfigs;
 
     <span class="hljs-keyword">this</span>.validations = <span class="hljs-keyword">this</span>.validations || {};
 
@@ -1977,7 +1977,7 @@ pie.model = <span class="hljs-function"><span class="hljs-keyword">function</spa
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.model.prototype.deliverChangeRecords = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-  <span class="hljs-keyword">var</span> observers = {}, os, o, change, all;</pre></div></div>
+  <span class="hljs-keyword">var</span> observers = {}, os, o, change;</pre></div></div>
             
         </li>
         
@@ -2225,7 +2225,7 @@ Provide all properties which invalidate the definition.</p>
   name = props.shift(),
   fn = props.shift();
 
-  <span class="hljs-keyword">this</span>.observe(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span></span>{
+  <span class="hljs-keyword">this</span>.observe(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* changes */</span>)</span></span>{
     <span class="hljs-keyword">this</span>.set(name, fn.call(<span class="hljs-keyword">this</span>));
   }.bind(<span class="hljs-keyword">this</span>), props);</pre></div></div>
             
@@ -3073,8 +3073,7 @@ pie.validator.prototype.format = <span class="hljs-function"><span class="hljs-k
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(!<span class="hljs-regexp">/^([\-])?([\d]+)?\.?[\d]+$/</span>.test(<span class="hljs-built_in">String</span>(value))) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
 
-    <span class="hljs-keyword">var</span> valid = <span class="hljs-literal">true</span>,
-    number = <span class="hljs-built_in">parseFloat</span>(value),
+    <span class="hljs-keyword">var</span> number = <span class="hljs-built_in">parseFloat</span>(value),
     ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(options);
 
     <span class="hljs-keyword">return</span> ro.matches(number);

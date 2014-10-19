@@ -790,7 +790,7 @@ pie.mixins.validatable = {
   // validates({name: {presence: true}});
   // validates({name: ['presence', {format: /[a]/}]})
   validates: function(obj) {
-    var resultValidations = {}, configs, resultConfigs, test;
+    var configs, resultConfigs;
 
     this.validations = this.validations || {};
 
@@ -1098,7 +1098,7 @@ pie.object.extend(pie.model.prototype, pie.mixins.inheritance);
 
 // After updates have been made we deliver our change records to our observers.
 pie.model.prototype.deliverChangeRecords = function() {
-  var observers = {}, os, o, change, all;
+  var observers = {}, os, o, change;
 
   // grab each change record
   while(change = this.changeRecords.shift()) {
@@ -1216,7 +1216,7 @@ pie.model.prototype.compute = function(/* name, fn[, prop1, prop2 ] */) {
   name = props.shift(),
   fn = props.shift();
 
-  this.observe(function(changes){
+  this.observe(function(/* changes */){
     this.set(name, fn.call(this));
   }.bind(this), props);
 
@@ -1778,8 +1778,7 @@ pie.validator.prototype.number = function number(value, options){
     // not using parseFloat because it accepts multiple decimals
     if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
 
-    var valid = true,
-    number = parseFloat(value),
+    var number = parseFloat(value),
     ro = new pie.validator.rangeOptions(options);
 
     return ro.matches(number);

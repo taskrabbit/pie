@@ -200,8 +200,7 @@ pie.validator.prototype.number = function number(value, options){
     // not using parseFloat because it accepts multiple decimals
     if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
 
-    var valid = true,
-    number = parseFloat(value),
+    var number = parseFloat(value),
     ro = new pie.validator.rangeOptions(options);
 
     return ro.matches(number);
