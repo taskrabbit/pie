@@ -2862,11 +2862,11 @@ pie.validator.prototype.errorMessage = <span class="hljs-function"><span class="
   <span class="hljs-keyword">if</span>(validationOptions.message) <span class="hljs-keyword">return</span> validationOptions.message;
 
   <span class="hljs-keyword">var</span> base = <span class="hljs-keyword">this</span>.i18n.t(<span class="hljs-string">'app.validations.'</span> + validationType),
-  rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(validationOptions),
+  rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, validationOptions),
   range = rangeOptions.message();
 
   <span class="hljs-keyword">if</span>(!range &amp;&amp; validationType === <span class="hljs-string">'length'</span>) {
-    rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions({gt: <span class="hljs-number">0</span>});
+    rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, {gt: <span class="hljs-number">0</span>});
     range = rangeOptions.message();
   }
 
@@ -2875,6 +2875,8 @@ pie.validator.prototype.errorMessage = <span class="hljs-function"><span class="
 
 
 pie.validator.prototype.withStandardChecks = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options, f)</span></span>{
+  options = options || {};
+
   <span class="hljs-keyword">if</span>(options.allowBlank &amp;&amp; !<span class="hljs-keyword">this</span>.presence(value))
     <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
   <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(options.unless &amp;&amp; options.unless.call())
@@ -2951,7 +2953,7 @@ pie.validator.prototype.cvv = <span class="hljs-function"><span class="hljs-keyw
       options.sanitized = <span class="hljs-literal">true</span>;
     }
 
-    <span class="hljs-keyword">var</span> ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(options);
+    <span class="hljs-keyword">var</span> ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, options);
     <span class="hljs-keyword">return</span> ro.matches(value);
 
   }.bind(<span class="hljs-keyword">this</span>));
@@ -3024,7 +3026,7 @@ pie.validator.prototype.format = <span class="hljs-function"><span class="hljs-k
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.validator.prototype.length = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">length</span><span class="hljs-params">(value, options)</span></span>{
-  options = pie.object.extend({allowBlank: <span class="hljs-literal">false</span>}, options || {});
+  options = pie.object.extend({allowBlank: <span class="hljs-literal">false</span>}, options);
 
   <span class="hljs-keyword">if</span>(!(<span class="hljs-string">'gt'</span>  <span class="hljs-keyword">in</span> options)  &amp;&amp;
      !(<span class="hljs-string">'gte'</span> <span class="hljs-keyword">in</span> options)  &amp;&amp;
@@ -3074,7 +3076,7 @@ pie.validator.prototype.format = <span class="hljs-function"><span class="hljs-k
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(!<span class="hljs-regexp">/^([\-])?([\d]+)?\.?[\d]+$/</span>.test(<span class="hljs-built_in">String</span>(value))) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
 
     <span class="hljs-keyword">var</span> number = <span class="hljs-built_in">parseFloat</span>(value),
-    ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(options);
+    ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, options);
 
     <span class="hljs-keyword">return</span> ro.matches(number);
   });

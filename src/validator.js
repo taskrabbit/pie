@@ -57,11 +57,11 @@ pie.validator.prototype.errorMessage = function(validationType, validationOption
   if(validationOptions.message) return validationOptions.message;
 
   var base = this.i18n.t('app.validations.' + validationType),
-  rangeOptions = new pie.validator.rangeOptions(validationOptions),
+  rangeOptions = new pie.validator.rangeOptions(this.app, validationOptions),
   range = rangeOptions.message();
 
   if(!range && validationType === 'length') {
-    rangeOptions = new pie.validator.rangeOptions({gt: 0});
+    rangeOptions = new pie.validator.rangeOptions(this.app, {gt: 0});
     range = rangeOptions.message();
   }
 
@@ -70,6 +70,8 @@ pie.validator.prototype.errorMessage = function(validationType, validationOption
 
 
 pie.validator.prototype.withStandardChecks = function(value, options, f){
+  options = options || {};
+
   if(options.allowBlank && !this.presence(value))
     return true;
   else if(options.unless && options.unless.call())
@@ -123,7 +125,7 @@ pie.validator.prototype.date = function(value, options) {
       options.sanitized = true;
     }
 
-    var ro = new pie.validator.rangeOptions(options);
+    var ro = new pie.validator.rangeOptions(this.app, options);
     return ro.matches(value);
 
   }.bind(this));
@@ -174,7 +176,7 @@ pie.validator.prototype.integer = function(value, options){
 
 // min/max length of the field
 pie.validator.prototype.length = function length(value, options){
-  options = pie.object.extend({allowBlank: false}, options || {});
+  options = pie.object.extend({allowBlank: false}, options);
 
   if(!('gt'  in options)  &&
      !('gte' in options)  &&
@@ -201,7 +203,7 @@ pie.validator.prototype.number = function number(value, options){
     if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
 
     var number = parseFloat(value),
-    ro = new pie.validator.rangeOptions(options);
+    ro = new pie.validator.rangeOptions(this.app, options);
 
     return ro.matches(number);
   });
