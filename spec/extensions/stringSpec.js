@@ -57,18 +57,42 @@ describe("String extensions", function() {
     });
 
     it('should parse [] params into arrays', function() {
+      // foo[]=first&foo[]=second
       var query = pie.string.deserialize('foo%5B%5D=first&foo%5B%5D=second');
       expect(query).toEqual({
         'foo' : ['first', 'second']
       });
     });
 
-    it('should not handle double arrays, because... really?', function() {
-      // foo[0][]=first&foo[1][]=second
-      var query = pie.string.deserialize('foo%5B0%5D%5B%5D=first&foo%5B1%5D%5B%5D=second');
+    it('should not blow up on nested arrays. that said, it\'s likely not doing what\'s desired.', function() {
+      // foo[][]=first&foo[][]=second
+      var query = pie.string.deserialize('foo%5B%5D%5B%5D=first&foo%5B%5D%5B%5D=second');
       expect(query).toEqual({
-        'foo[0]' : ['first'],
-        'foo[1]' : ['second']
+        'foo' : [['first'], ['second']]
+      });
+    });
+
+    it('should parse objects into subobjects', function() {
+      // foo[alpha]=Adam&foo[beta]=Billy
+      var query = pie.string.deserialize('foo%5Balpha%5D=Adam&foo%5Bbeta%5D=Billy');
+      expect(query).toEqual({
+        'foo' : {
+          'alpha' : 'Adam',
+          'beta' : 'Billy'
+        }
+      });
+    });
+
+    it('should parse nested objects just fine', function() {
+      // foo[alpha][fname]=Adam&foo[alpha][lname]=Miller
+      var query = pie.string.deserialize('foo%5Balpha%5D%5Bfname%5D=Adam&foo%5Balpha%5D%5Blname%5D=Miller');
+      expect(query).toEqual({
+        'foo' : {
+          'alpha' : {
+            'fname' : 'Adam',
+            'lname' : 'Miller'
+          }
+        }
       });
     });
 

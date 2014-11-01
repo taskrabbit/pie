@@ -441,30 +441,43 @@ pie.object.isObject = function(thing) {
   return Object.prototype.toString.call(thing) === '[object Object]';
 };
 
-
 // serialize object into query string
+// {foo: 'bar'} => foo=bar
+// {foo: {inner: 'bar'}} => foo[inner]=bar
+// {foo: [3]} => foo[]=3
+// {foo: [{inner: 'bar'}]} => foo[][inner]=bar
 pie.object.serialize = function(obj, removeEmpty) {
-  if(!obj) return '';
-  if(removeEmpty) obj = pie.object.compact(obj, true);
+  var s = [], append, appendEmpty, build, prefix, rbracket = /\[\]$/;
 
-  var arr = [], keys = Object.keys(obj), v;
+  append = function(k,v){
+    v = pie.func.valueFrom(v);
+    if(removeEmpty && !rbracket.test(k) && (v == null || !v.toString().length)) return;
+    s.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(v)));
+  };
 
-  keys = keys.sort();
+  appendEmpty = function(k) {
+    s.push(encodeURIComponent(k) + '=');
+  };
 
-  keys.forEach(function(k){
-    v = obj[k];
-
-    if(Array.isArray(v)) {
-      k = k + '[]';
-      v.forEach(function(av){
-        arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(av));
+  build = function(prefix, o, append) {
+    if(Array.isArray(o)) {
+      o.forEach(function(v, i) {
+        build(prefix + '[]', v, append);
+      });
+    } else if(pie.object.isObject(o)) {
+      Object.keys(o).sort().forEach(function(k){
+        build(prefix + '[' + k + ']', o[k], append);
       });
     } else {
-      arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+      append(prefix, o);
     }
+  };
+
+  Object.keys(obj).sort().forEach(function(k) {
+    build(k, obj[k], append);
   });
 
-  return arr.join('&');
+  return s.join('&');
 };
 
 
@@ -521,8 +534,42 @@ pie.string.deserialize = (function(){
     return parseInt(f, 10);
   }
 
+  // foo[][0][thing]=bar
+  // => [{'0' : {thing: 'bar'}}]
+  // foo[]=thing&foo[]=bar
+  // => {foo: [thing, bar]}
+  function applyValue(key, value, params) {
+    var pieces = key.split('['),
+    segmentRegex = /^\[(.+)?\]$/,
+    match, piece, target;
+
+    key = pieces.shift();
+    pieces = pieces.map(function(p){ return '[' + p; });
+
+    target = params;
+
+    while(piece = pieces.shift()) {
+      match = piece.match(segmentRegex);
+      // obj
+      if(match[1]) {
+        target[key] = target[key] || {};
+        target = target[key];
+        key = match[1];
+      // array
+      } else {
+        target[key] = target[key] || [];
+        target = target[key];
+        key = target.length;
+      }
+    }
+
+    target[key] = value;
+
+    return params;
+  }
+
   return function(str, parse) {
-    var params = {}, arrRegex = /^(.+)\[\]$/, idx, pieces, segments, arr, key, value;
+    var params = {}, idx, pieces, segments, match, key, value;
 
     if(!str) return params;
 
@@ -536,15 +583,8 @@ pie.string.deserialize = (function(){
       value = decodeURIComponent(segments[1] || '');
 
       if(parse) value = parseQueryValue(value);
-      arr = key.match(arrRegex);
-      // array
-      if(!!arr) {
-        key = arr[1];
-        params[key] = params[key] || [];
-        params[key].push(value);
-      } else {
-        params[key] = value;
-      }
+
+      applyValue(key, value, params);
     });
 
     return params;

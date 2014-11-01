@@ -29,8 +29,42 @@ pie.string.deserialize = (function(){
     return parseInt(f, 10);
   }
 
+  // foo[][0][thing]=bar
+  // => [{'0' : {thing: 'bar'}}]
+  // foo[]=thing&foo[]=bar
+  // => {foo: [thing, bar]}
+  function applyValue(key, value, params) {
+    var pieces = key.split('['),
+    segmentRegex = /^\[(.+)?\]$/,
+    match, piece, target;
+
+    key = pieces.shift();
+    pieces = pieces.map(function(p){ return '[' + p; });
+
+    target = params;
+
+    while(piece = pieces.shift()) {
+      match = piece.match(segmentRegex);
+      // obj
+      if(match[1]) {
+        target[key] = target[key] || {};
+        target = target[key];
+        key = match[1];
+      // array
+      } else {
+        target[key] = target[key] || [];
+        target = target[key];
+        key = target.length;
+      }
+    }
+
+    target[key] = value;
+
+    return params;
+  }
+
   return function(str, parse) {
-    var params = {}, arrRegex = /^(.+)\[\]$/, idx, pieces, segments, arr, key, value;
+    var params = {}, idx, pieces, segments, match, key, value;
 
     if(!str) return params;
 
@@ -44,15 +78,8 @@ pie.string.deserialize = (function(){
       value = decodeURIComponent(segments[1] || '');
 
       if(parse) value = parseQueryValue(value);
-      arr = key.match(arrRegex);
-      // array
-      if(!!arr) {
-        key = arr[1];
-        params[key] = params[key] || [];
-        params[key].push(value);
-      } else {
-        params[key] = value;
-      }
+
+      applyValue(key, value, params);
     });
 
     return params;

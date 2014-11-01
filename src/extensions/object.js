@@ -109,30 +109,43 @@ pie.object.isObject = function(thing) {
   return Object.prototype.toString.call(thing) === '[object Object]';
 };
 
-
 // serialize object into query string
+// {foo: 'bar'} => foo=bar
+// {foo: {inner: 'bar'}} => foo[inner]=bar
+// {foo: [3]} => foo[]=3
+// {foo: [{inner: 'bar'}]} => foo[][inner]=bar
 pie.object.serialize = function(obj, removeEmpty) {
-  if(!obj) return '';
-  if(removeEmpty) obj = pie.object.compact(obj, true);
+  var s = [], append, appendEmpty, build, prefix, rbracket = /\[\]$/;
 
-  var arr = [], keys = Object.keys(obj), v;
+  append = function(k,v){
+    v = pie.func.valueFrom(v);
+    if(removeEmpty && !rbracket.test(k) && (v == null || !v.toString().length)) return;
+    s.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(v)));
+  };
 
-  keys = keys.sort();
+  appendEmpty = function(k) {
+    s.push(encodeURIComponent(k) + '=');
+  };
 
-  keys.forEach(function(k){
-    v = obj[k];
-
-    if(Array.isArray(v)) {
-      k = k + '[]';
-      v.forEach(function(av){
-        arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(av));
+  build = function(prefix, o, append) {
+    if(Array.isArray(o)) {
+      o.forEach(function(v, i) {
+        build(prefix + '[]', v, append);
+      });
+    } else if(pie.object.isObject(o)) {
+      Object.keys(o).sort().forEach(function(k){
+        build(prefix + '[' + k + ']', o[k], append);
       });
     } else {
-      arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+      append(prefix, o);
     }
+  };
+
+  Object.keys(obj).sort().forEach(function(k) {
+    build(k, obj[k], append);
   });
 
-  return arr.join('&');
+  return s.join('&');
 };
 
 
