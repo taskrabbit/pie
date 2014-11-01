@@ -79,6 +79,11 @@ describe("Object extension", function() {
       expect(query).toEqual('foo%5B%5D=first&foo%5B%5D=second');
     });
 
+    it('should remove empty arrays', function() {
+      var query = pie.object.serialize({'foo' : [], 'bar' : 'baz'});
+      expect(query).toEqual('bar=baz');
+    });
+
     it('should not exclude falsy values when serializing an array', function() {
       var query = pie.object.serialize({'foo' : ['first', '', false]});
       expect(query).toEqual('foo%5B%5D=first&foo%5B%5D=&foo%5B%5D=false');
