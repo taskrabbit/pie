@@ -24,8 +24,9 @@ pie.simpleView.prototype.removedFromParent = function(parent) {
   pie.view.prototype.removedFromParent.call(this, parent);
 
   // remove our el if we still have a parent node.
+  // don't use pie.dom.remove since we don't want to remove the cache.
   if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
-}
+};
 
 pie.simpleView.prototype.renderData = function() {
   if(this.model) {

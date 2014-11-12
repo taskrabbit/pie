@@ -26,7 +26,7 @@ describe("View Integration", function() {
 
     el.value = 'barstool';
     expect(this.model.get('foo')).toEqual('bar');
-    $(el).trigger('change');
+    pie.dom.trigger(el, 'change');
 
     expect(this.model.get('foo')).toEqual('barstool');
   });

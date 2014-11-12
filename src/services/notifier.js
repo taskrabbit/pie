@@ -66,7 +66,7 @@ pie.services.notifier.prototype.remove = function(el) {
   if(type) {
     pie.array.remove(this.notifications[type] || [], el);
   }
-  $(el).remove();
+  pie.dom.remove(el);
 };
 
 // remove the alert that was clicked.

@@ -17,7 +17,7 @@ pie.services.navigator.prototype.go = function(path, params, replace) {
 
   if(Object.keys(params).length) {
     url += '?';
-    url += $.serialize(params);
+    url += pie.object.serialize(params);
   }
 
   window.history[replace ? 'replaceState' : 'pushState']({}, document.title, url);

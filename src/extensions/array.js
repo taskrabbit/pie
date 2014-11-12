@@ -81,7 +81,9 @@ pie.array.flatten = function(a, depth, into) {
 
 // return an array from a value. if the value is an array it will be returned.
 pie.array.from = function(value) {
-  return Array.isArray(value) ? value : pie.array.compact([value], false);
+  if(Array.isArray(value)) return value;
+  if(value instanceof NodeList || value instanceof HTMLCollection) return Array.prototype.slice.call(value, 0);
+  return pie.array.compact([value], false);
 };
 
 

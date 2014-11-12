@@ -287,7 +287,7 @@ pie.app.prototype.setupNotifier = function() {
 
 // when a link is clicked, go there without a refresh if we recognize the route.
 pie.app.prototype.setupSinglePageLinks = function() {
-  $(document.body).on('click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
+  pie.dom.on(document.body, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
 };
 
 

@@ -119,7 +119,9 @@ pie.array.flatten = function(a, depth, into) {
 
 // return an array from a value. if the value is an array it will be returned.
 pie.array.from = function(value) {
-  return Array.isArray(value) ? value : pie.array.compact([value], false);
+  if(Array.isArray(value)) return value;
+  if(value instanceof NodeList || value instanceof HTMLCollection) return Array.prototype.slice.call(value, 0);
+  return pie.array.compact([value], false);
 };
 
 
@@ -303,6 +305,99 @@ pie.dom.createElement = function(str) {
   var wrap = document.createElement('div');
   wrap.innerHTML = str;
   return wrap.removeChild(wrap.firstElementChild);
+};
+
+pie.dom.cache = function() {
+  pie.elementCache = pie.elementCache || new pie.cache();
+  return pie.elementCache;
+};
+
+pie.dom.remove = function(el) {
+  var uid = pie.setUid(el);
+  pie.dome.cache().del('element-' + el.uid);
+  if(el.parentNode) el.parentNode.removeChild(el);
+};
+
+
+pie.dom.off = function(el, event, fn, cap) {
+  var eventSplit = event.split('.'),
+    uid = pie.setUid(el),
+    namespace, all, events;
+
+  event = eventSplit.shift();
+  namespace = eventSplit.join('.');
+  all = event === '*';
+
+  events = pie.dom.cache().getOrSet('element-' + uid + '.dom-events', {});
+
+  (all ? Object.keys(events) : [event]).forEach(function(k) {
+    pie.array.from(events[k]).forEach(function(obj, i, ary) {
+      if(!cap && (k === 'focus' || k === 'blur') && obj.sel) cap = true;
+      if((!namespace || namespace === obj.ns) && (!fn || fn === obj.fn) && (cap === obj.cap)) {
+        el.removeEventListener(k, obj.cb, obj.cap);
+        delete ary[i];
+      }
+
+      events[k] = pie.array.compact(pie.array.from(events[k]));
+    });
+  });
+};
+
+
+pie.dom.on = function(el, event, fn, selector, capture) {
+  var eventSplit = event.split('.'),
+      cb, namespace, uid, events;
+
+  event = eventSplit.shift();
+  namespace = eventSplit.join('.');
+  uid = pie.setUid(el);
+
+  // we force capture so that delegation works.
+  if(!capture && (event === 'focus' || event === 'blur') && selector) capture = true;
+
+  events = pie.dom.cache().getOrSet('element-' + uid  + '.dom-events', {});
+  events[event] = events[event] || [];
+
+  cb = function(e) {
+    var targ, els;
+
+    if(namespace) {
+      e.namespace = namespace;
+    }
+
+    if(!selector) {
+      fn.call(el, e);
+    } else {
+      els = pie.array.from(el.querySelectorAll(selector));
+
+      targ = pie.array.detect(els, function(qel) {
+        return qel === e.target || qel.contains(e.target);
+      });
+
+      if(targ) {
+        e.delegateTarget = targ;
+        fn.call(targ, e);
+      }
+    }
+  };
+
+  events[event].push({
+    ns: namespace,
+    sel: selector,
+    cb: cb,
+    fn: fn,
+    cap: capture
+  });
+
+  el.addEventListener(event, cb, capture);
+  return cb;
+};
+
+
+pie.dom.trigger = function(el, e) {
+  var event = document.createEvent('Event');
+  event.initEvent(e, true, true);
+  return e.dispatchEvent(event);
 };
 // Returns a function, that, as long as it continues to be invoked, will not
 // be triggered. The function will be called after it stops being called for
@@ -1267,6 +1362,89 @@ pie.model.prototype.compute = function(/* name, fn[, prop1, prop2 ] */) {
 
 
 
+pie.cache = function(data) {
+  pie.model.prototype.constructor.call(this, data);
+};
+
+
+pie.object.extend(pie.cache.prototype, pie.model.prototype);
+
+
+pie.cache.prototype.del = function(path) {
+  this.set(path, undefined);
+};
+
+pie.cache.prototype.expire = function(path, ttl) {
+  var value = this.get(path);
+
+  if(value === undefined) return false;
+
+  this.set(path, value, {ttl: ttl});
+  return true;
+};
+
+
+pie.cache.prototype.get = function(path) {
+  var wrap = pie.model.prototype.get(path);
+  if(!wrap) return undefined;
+  if(wrap.expiresAt && wrap.expiresAt < this.currentTime()) {
+    this.set(path, undefined);
+    return undefined;
+  }
+
+  return wrap.data;
+};
+
+
+pie.cache.prototype.getOrSet = function(path, value, options) {
+  var result = this.get(path);
+  if(result !== undefined) return result;
+  this.set(path, value, options);
+  return value;
+};
+
+
+pie.cache.prototype.set = function(path, value, options) {
+  if(value === undefined) {
+    pie.model.prototype.set.call(this, path, undefined);
+  } else {
+    var wrap = this.wrap(value, options);
+    pie.model.prototype.set.call(this, path, wrap);
+  }
+};
+
+
+pie.cache.prototype.wrap = function(obj, options) {
+  options = options || {};
+
+  // it could come in on a couple different keys.
+  var expiresAt = options.expiresAt || options.expiresIn || options.ttl;
+
+  if(expiresAt) {
+    // make sure we don't have a date.
+    if(expiresAt instanceof Date) expiresAt = expiresAt.getTime();
+    // or a string
+    if(typeof expiresAt === 'string') {
+      // check for a numeric
+      if(/^\d+$/.test(expiresAt)) expiresAt = parseInt(expiresAt, 10);
+      // otherwise assume ISO
+      else expiresAt = pie.date.timeFromIso(expiresAt).getTime();
+    }
+
+    // we're dealing with something smaller than a current milli epoch, assume we're dealing with a ttl.
+    if(String(expiresAt).length < 13) expiresAt = this.currentTime() + expiresAt;
+  }
+
+  return {
+    data: obj,
+    expiresAt: expiresAt
+  };
+};
+
+
+pie.cache.prototype.currentTime = function() {
+  return new Date().getTime();
+};
 pie.list = function(array, options) {
   array = array || [];
   pie.model.call(this, {items: array}, options);
@@ -1479,7 +1657,7 @@ pie.view.prototype.on = function(e, sel, f) {
 
   e.split(' ').forEach(function(ev) {
     ev += "." + ns;
-    $(this.el).on(ev, f2, sel);
+    pie.dom.on(this.el, ev, f2, sel);
   }.bind(this));
 
   return this;
@@ -1548,8 +1726,8 @@ pie.view.prototype.removeLoadingStyle = function(){
 
 // release all observed events.
 pie.view.prototype._unobserveEvents = function() {
-  $(this.el).off('*.' + this.eventNamespace());
-  $(document.body).off('*.' + this.eventNamespace());
+  pie.dom.off(this.el, '*.' + this.eventNamespace());
+  pie.dom.off(document.body, '*.' + this.eventNamespace());
 };
 
 
@@ -1566,9 +1744,12 @@ pie.view.prototype._unobserveChangeCallbacks = function() {
 // this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
 pie.view.prototype._loadingStyle = function(bool) {
   this.el.classList[bool ? 'add' : 'remove']('loading');
-  $(this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable')).
-    all(bool ? 'classList.add' : 'classList.remove', 'btn-loading').
-    all(bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
+  var buttons = pie.array.from(this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable'));
+
+  buttons.forEach(function(button){
+    button.classList[bool ? 'add' : 'remove']('btn-loading');
+    button[bool ? 'setAttribute' : 'removeAttribute']('disabled', 'disabled');
+  });
 };
 pie.simpleView = function simpleView(app, options) {
   pie.view.call(this, app, options);
@@ -1596,8 +1777,9 @@ pie.simpleView.prototype.removedFromParent = function(parent) {
   pie.view.prototype.removedFromParent.call(this, parent);
 
   // remove our el if we still have a parent node.
+  // don't use pie.dom.remove since we don't know if we'll be added somewhere else.
   if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
-}
+};
 
 pie.simpleView.prototype.renderData = function() {
   if(this.model) {
@@ -2290,7 +2472,7 @@ pie.services.navigator.prototype.go = function(path, params, replace) {
 
   if(Object.keys(params).length) {
     url += '?';
-    url += $.serialize(params);
+    url += pie.object.serialize(params);
   }
 
   window.history[replace ? 'replaceState' : 'pushState']({}, document.title, url);
@@ -2383,7 +2565,7 @@ pie.services.notifier.prototype.remove = function(el) {
   if(type) {
     pie.array.remove(this.notifications[type] || [], el);
   }
-  $(el).remove();
+  pie.dom.remove(el);
 };
 
 // remove the alert that was clicked.
@@ -2869,7 +3051,7 @@ pie.app.prototype.setupNotifier = function() {
 
 // when a link is clicked, go there without a refresh if we recognize the route.
 pie.app.prototype.setupSinglePageLinks = function() {
-  $(document.body).on('click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
+  pie.dom.on(document.body, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
 };
 
 

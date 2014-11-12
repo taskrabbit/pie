@@ -51,7 +51,7 @@ pie.view.prototype.on = function(e, sel, f) {
 
   e.split(' ').forEach(function(ev) {
     ev += "." + ns;
-    $(this.el).on(ev, f2, sel);
+    pie.dom.on(this.el, ev, f2, sel);
   }.bind(this));
 
   return this;
@@ -120,8 +120,8 @@ pie.view.prototype.removeLoadingStyle = function(){
 
 // release all observed events.
 pie.view.prototype._unobserveEvents = function() {
-  $(this.el).off('*.' + this.eventNamespace());
-  $(document.body).off('*.' + this.eventNamespace());
+  pie.dom.off(this.el, '*.' + this.eventNamespace());
+  pie.dom.off(document.body, '*.' + this.eventNamespace());
 };
 
 
@@ -138,7 +138,10 @@ pie.view.prototype._unobserveChangeCallbacks = function() {
 // this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
 pie.view.prototype._loadingStyle = function(bool) {
   this.el.classList[bool ? 'add' : 'remove']('loading');
-  $(this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable')).
-    all(bool ? 'classList.add' : 'classList.remove', 'btn-loading').
-    all(bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
+  var buttons = pie.array.from(this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable'));
+
+  buttons.forEach(function(button){
+    button.classList[bool ? 'add' : 'remove']('btn-loading');
+    button[bool ? 'setAttribute' : 'removeAttribute']('disabled', 'disabled');
+  });
 };
