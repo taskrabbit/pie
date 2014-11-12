@@ -124,9 +124,21 @@ pie.string.pluralize = function(str) {
 };
 
 
-// string templating
-pie.string.template = sudo.template;
-
+// string templating via John Resig
+pie.string.template = function(str) {
+  return new Function("data",
+    "var p=[]; with(data){p.push('" +
+    str.replace(/[\r\t\n]/g, " ")
+       .replace(/'(?=[^%]*%\])/g,"\t")
+       .split("'").join("\\'")
+       .split("\t").join("'")
+       .replace(/\[%=(.+?)%\]/g, "',$1,'")
+       .replace(/\[%-(.+?)%\]/g, "',pie.string.escape($1),'")
+       .split("[%").join("');")
+       .split("%]").join("p.push('") +
+       "');}return p.join('');"
+  );
+};
 
 pie.string.titleize = function(str) {
   return str.replace(/(^| )([a-z])/g, function(match, a, b){ return a + b.toUpperCase(); });

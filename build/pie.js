@@ -1,12 +1,3 @@
-// prepare sudo for pie standards
-// [% evaluate %], [%= interpolate %], [%- sanitize(interpolate) %]
-sudo.templateSettings = {
-  evaluate:    /\[%([\s\S]+?)%\]/g,
-  interpolate: /\[%=([\s\S]+?)%\]/g,
-  escape:      /\[%-([\s\S]+?)%\]/g
-};
-
-
 // pie namespace;
 window.pie = {
 
@@ -28,9 +19,15 @@ window.pie = {
   // service objects
   services: {},
 
-  uid: 0,
+  uid: 1,
 
-  unique: function() { return this.uid++; },
+  unique: function() {
+    return this.uid++;
+  },
+
+  setUid: function(obj) {
+    return obj.pieId = obj.pieId || pie.unique();
+  },
 
   // application utilities
   util: {},
@@ -314,7 +311,7 @@ pie.dom.cache = function() {
 
 pie.dom.remove = function(el) {
   var uid = pie.setUid(el);
-  pie.dome.cache().del('element-' + el.uid);
+  pie.dom.cache().del('element-' + el.uid);
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 
@@ -397,7 +394,7 @@ pie.dom.on = function(el, event, fn, selector, capture) {
 pie.dom.trigger = function(el, e) {
   var event = document.createEvent('Event');
   event.initEvent(e, true, true);
-  return e.dispatchEvent(event);
+  return el.dispatchEvent(event);
 };
 // Returns a function, that, as long as it continues to be invoked, will not
 // be triggered. The function will be called after it stops being called for
@@ -502,8 +499,14 @@ pie.object.forEach = function(o, f) {
 };
 
 
-pie.object.getPath = function(o, path) {
-  return sudo.getPath(path, o);
+pie.object.getPath = function(obj, path) {
+  var key, p;
+  p = path.split('.');
+  for (key; p.length && (key = p.shift());) {
+    if (!p.length) return obj[key];
+    else obj = obj[key] || {};
+  }
+  return obj;
 };
 
 
@@ -576,8 +579,14 @@ pie.object.serialize = function(obj, removeEmpty) {
 };
 
 
-pie.object.setPath = function(o, path, value) {
-  return sudo.setPath(path, value, o);
+pie.object.setPath = function(obj, path, value) {
+  var p = path.split('.'),
+      key;
+  for (key; p.length && (key = p.shift());) {
+    if (!p.length) obj[key] = value;
+    else if (obj[key]) obj = obj[key];
+    else obj = obj[key] = {};
+  }
 };
 
 
@@ -724,9 +733,21 @@ pie.string.pluralize = function(str) {
 };
 
 
-// string templating
-pie.string.template = sudo.template;
-
+// string templating via John Resig
+pie.string.template = function(str) {
+  return new Function("data",
+    "var p=[]; with(data){p.push('" +
+    str.replace(/[\r\t\n]/g, " ")
+       .replace(/'(?=[^%]*%\])/g,"\t")
+       .split("'").join("\\'")
+       .split("\t").join("'")
+       .replace(/\[%=(.+?)%\]/g, "',$1,'")
+       .replace(/\[%-(.+?)%\]/g, "',pie.string.escape($1),'")
+       .split("[%").join("');")
+       .split("%]").join("p.push('") +
+       "');}return p.join('');"
+  );
+};
 
 pie.string.titleize = function(str) {
   return str.replace(/(^| )([a-z])/g, function(match, a, b){ return a + b.toUpperCase(); });
@@ -1363,7 +1384,7 @@ pie.model.prototype.compute = function(/* name, fn[, prop1, prop2 ] */) {
 
 
 pie.cache = function(data) {
-  pie.model.prototype.constructor.call(this, data);
+  pie.model.prototype.constructor.call(this, data || {});
 };
 
 
@@ -1385,9 +1406,9 @@ pie.cache.prototype.expire = function(path, ttl) {
 
 
 pie.cache.prototype.get = function(path) {
-  var wrap = pie.model.prototype.get(path);
+  var wrap = pie.model.prototype.get.call(this, path);
   if(!wrap) return undefined;
-  if(wrap.expiresAt && wrap.expiresAt < this.currentTime()) {
+  if(wrap.expiresAt && wrap.expiresAt <= this.currentTime()) {
     this.set(path, undefined);
     return undefined;
   }
@@ -1428,7 +1449,7 @@ pie.cache.prototype.wrap = function(obj, options) {
       // check for a numeric
       if(/^\d+$/.test(expiresAt)) expiresAt = parseInt(expiresAt, 10);
       // otherwise assume ISO
-      else expiresAt = pie.date.timeFromIso(expiresAt).getTime();
+      else expiresAt = pie.date.timeFromISO(expiresAt).getTime();
     }
 
     // we're dealing with something smaller than a current milli epoch, assume we're dealing with a ttl.
@@ -1777,7 +1798,7 @@ pie.simpleView.prototype.removedFromParent = function(parent) {
   pie.view.prototype.removedFromParent.call(this, parent);
 
   // remove our el if we still have a parent node.
-  // don't use pie.dom.remove since we don't know if we'll be added somewhere else.
+  // don't use pie.dom.remove since we don't want to remove the cache.
   if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
 };
 

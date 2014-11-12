@@ -1,12 +1,3 @@
-// prepare sudo for pie standards
-// [% evaluate %], [%= interpolate %], [%- sanitize(interpolate) %]
-sudo.templateSettings = {
-  evaluate:    /\[%([\s\S]+?)%\]/g,
-  interpolate: /\[%=([\s\S]+?)%\]/g,
-  escape:      /\[%-([\s\S]+?)%\]/g
-};
-
-
 // pie namespace;
 window.pie = {
 
@@ -28,9 +19,15 @@ window.pie = {
   // service objects
   services: {},
 
-  uid: 0,
+  uid: 1,
 
-  unique: function() { return this.uid++; },
+  unique: function() {
+    return this.uid++;
+  },
+
+  setUid: function(obj) {
+    return obj.pieId = obj.pieId || pie.unique();
+  },
 
   // application utilities
   util: {},

@@ -23,9 +23,9 @@ describe("pie.view", function() {
   });
 
   it("should remove all events from it's el when it's removed from it's parent", function() {
-    spyOn($, 'off');
+    spyOn(pie.dom, 'off');
     this.view.removedFromParent(app);
-    expect($.off).toHaveBeenCalledWith('*.' + this.view.eventNamespace());
+    expect(pie.dom.off).toHaveBeenCalledWith(this.view.el, '*.' + this.view.eventNamespace());
   });
 
   it("should remove all observers when removed from it's parent", function() {

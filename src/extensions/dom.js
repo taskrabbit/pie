@@ -12,7 +12,7 @@ pie.dom.cache = function() {
 
 pie.dom.remove = function(el) {
   var uid = pie.setUid(el);
-  pie.dome.cache().del('element-' + el.uid);
+  pie.dom.cache().del('element-' + el.uid);
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 
@@ -95,5 +95,5 @@ pie.dom.on = function(el, event, fn, selector, capture) {
 pie.dom.trigger = function(el, e) {
   var event = document.createEvent('Event');
   event.initEvent(e, true, true);
-  return e.dispatchEvent(event);
+  return el.dispatchEvent(event);
 };

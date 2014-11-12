@@ -75,8 +75,14 @@ pie.object.forEach = function(o, f) {
 };
 
 
-pie.object.getPath = function(o, path) {
-  return sudo.getPath(path, o);
+pie.object.getPath = function(obj, path) {
+  var key, p;
+  p = path.split('.');
+  for (key; p.length && (key = p.shift());) {
+    if (!p.length) return obj[key];
+    else obj = obj[key] || {};
+  }
+  return obj;
 };
 
 
@@ -149,8 +155,14 @@ pie.object.serialize = function(obj, removeEmpty) {
 };
 
 
-pie.object.setPath = function(o, path, value) {
-  return sudo.setPath(path, value, o);
+pie.object.setPath = function(obj, path, value) {
+  var p = path.split('.'),
+      key;
+  for (key; p.length && (key = p.shift());) {
+    if (!p.length) obj[key] = value;
+    else if (obj[key]) obj = obj[key];
+    else obj = obj[key] = {};
+  }
 };
 
 

@@ -1,5 +1,5 @@
 pie.cache = function(data) {
-  pie.model.prototype.constructor.call(this, data);
+  pie.model.prototype.constructor.call(this, data || {});
 };
 
 
@@ -21,9 +21,9 @@ pie.cache.prototype.expire = function(path, ttl) {
 
 
 pie.cache.prototype.get = function(path) {
-  var wrap = pie.model.prototype.get(path);
+  var wrap = pie.model.prototype.get.call(this, path);
   if(!wrap) return undefined;
-  if(wrap.expiresAt && wrap.expiresAt < this.currentTime()) {
+  if(wrap.expiresAt && wrap.expiresAt <= this.currentTime()) {
     this.set(path, undefined);
     return undefined;
   }
@@ -64,7 +64,7 @@ pie.cache.prototype.wrap = function(obj, options) {
       // check for a numeric
       if(/^\d+$/.test(expiresAt)) expiresAt = parseInt(expiresAt, 10);
       // otherwise assume ISO
-      else expiresAt = pie.date.timeFromIso(expiresAt).getTime();
+      else expiresAt = pie.date.timeFromISO(expiresAt).getTime();
     }
 
     // we're dealing with something smaller than a current milli epoch, assume we're dealing with a ttl.

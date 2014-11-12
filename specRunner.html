@@ -13,15 +13,13 @@
     <script type="text/javascript" src="vendor/jasmine-2.0.2/mock-ajax.js"></script>
 
     <!-- include source files here... -->
-    <script type="text/javascript" src="vendor/sudo.js"></script>
-    <script type="text/javascript" src="vendor/cash.js"></script>
     <script type="text/javascript" src="build/pie.js"></script>
 
     <script type="text/pie-template" id="alert">
       <div class="pie-alert pie-alert-[%= data.type %]">
         <ul>
           [% data.messages.forEach(function(m){ %]
-            <li>[%- m %]</li>
+            <li>[%= m %]</li>
           [% }); %]
         </ul>
       </div>
@@ -31,7 +29,7 @@
       <input name="foo" />
       <ul>
         [% data.items.forEach(function(item){ %]
-          <li>[%- item.name %]</li>
+          <li>[%= item.name %]</li>
         [% }); %]
       </ul>
     </script>
