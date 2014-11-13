@@ -66,7 +66,7 @@
 
 
 pie.model = function(d, options) {
-  this.data = pie.object.extend({}, d);
+  this.data = pie.object.merge({}, d);
   this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
@@ -74,7 +74,7 @@ pie.model = function(d, options) {
 };
 
 // Give ourselves _super functionality.
-pie.object.extend(pie.model.prototype, pie.mixins.inheritance);
+pie.object.merge(pie.model.prototype, pie.mixins.inheritance);
 
 
 // After updates have been made we deliver our change records to our observers.

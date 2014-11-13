@@ -310,13 +310,13 @@ pie.dom.cache = function() {
 };
 
 pie.dom.remove = function(el) {
-  var uid = pie.setUid(el);
+  pie.setUid(el);
   pie.dom.cache().del('element-' + el.uid);
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 
 
-pie.dom.off = function(el, event, fn, cap) {
+pie.dom.off = function(el, event, fn, selector, cap) {
   var eventSplit = event.split('.'),
     uid = pie.setUid(el),
     namespace, all, events;
@@ -330,7 +330,7 @@ pie.dom.off = function(el, event, fn, cap) {
   (all ? Object.keys(events) : [event]).forEach(function(k) {
     pie.array.from(events[k]).forEach(function(obj, i, ary) {
       if(!cap && (k === 'focus' || k === 'blur') && obj.sel) cap = true;
-      if((!namespace || namespace === obj.ns) && (!fn || fn === obj.fn) && (cap === obj.cap)) {
+      if((!namespace || namespace === obj.ns) && (!fn || fn === obj.fn) && (!selector || selector === obj.sel) && (cap === obj.cap)) {
         el.removeEventListener(k, obj.cb, obj.cap);
         delete ary[i];
       }
@@ -425,7 +425,7 @@ pie.math.precision = function(number, places) {
 // deletes all undefined and null values.
 // returns a new object less any empty key/values.
 pie.object.compact = function(a, removeEmpty){
-  var b = pie.object.extend({}, a);
+  var b = pie.object.merge({}, a);
   Object.keys(b).forEach(function(k) {
     if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
   });
@@ -434,14 +434,14 @@ pie.object.compact = function(a, removeEmpty){
 
 
 // deep merge
-pie.object.deepExtend = function() {
+pie.object.deepMerge = function() {
   var args = pie.array.args(arguments),
       targ = args.shift(),
       obj;
 
   function fn(k) {
     if(k in targ && typeof targ[k] === 'object') {
-      targ[k] = pie.object.deepExtend(targ[k], obj[k]);
+      targ[k] = pie.object.deepMerge(targ[k], obj[k]);
     } else {
       targ[k] = obj[k];
     }
@@ -469,7 +469,7 @@ pie.object.except = function(){
 
 
 // shallow merge
-pie.object.extend = function() {
+pie.object.merge = function() {
   var args = pie.array.args(arguments),
       targ = args.shift(),
       obj;
@@ -500,11 +500,12 @@ pie.object.forEach = function(o, f) {
 
 
 pie.object.getPath = function(obj, path) {
-  var key, p;
-  p = path.split('.');
-  for (key; p.length && (key = p.shift());) {
+  var p = path.split('.'), key;
+  while(p.length) {
+    if(!obj) return obj;
+    key = p.shift();
     if (!p.length) return obj[key];
-    else obj = obj[key] || {};
+    else obj = obj[key];
   }
   return obj;
 };
@@ -545,7 +546,7 @@ pie.object.isObject = function(thing) {
 // {foo: [3]} => foo[]=3
 // {foo: [{inner: 'bar'}]} => foo[][inner]=bar
 pie.object.serialize = function(obj, removeEmpty) {
-  var s = [], append, appendEmpty, build, prefix, rbracket = /\[\]$/;
+  var s = [], append, appendEmpty, build, rbracket = /\[\]$/;
 
   append = function(k,v){
     v = pie.func.valueFrom(v);
@@ -559,7 +560,7 @@ pie.object.serialize = function(obj, removeEmpty) {
 
   build = function(prefix, o, append) {
     if(Array.isArray(o)) {
-      o.forEach(function(v, i) {
+      o.forEach(function(v) {
         build(prefix + '[]', v, append);
       });
     } else if(pie.object.isObject(o)) {
@@ -580,9 +581,9 @@ pie.object.serialize = function(obj, removeEmpty) {
 
 
 pie.object.setPath = function(obj, path, value) {
-  var p = path.split('.'),
-      key;
-  for (key; p.length && (key = p.shift());) {
+  var p = path.split('.'), key;
+  while(p.length) {
+    key = p.shift();
     if (!p.length) obj[key] = value;
     else if (obj[key]) obj = obj[key];
     else obj = obj[key] = {};
@@ -673,7 +674,7 @@ pie.string.deserialize = (function(){
   }
 
   return function(str, parse) {
-    var params = {}, idx, pieces, segments, match, key, value;
+    var params = {}, idx, pieces, segments, key, value;
 
     if(!str) return params;
 
@@ -977,7 +978,7 @@ pie.mixins.validatable = {
             } else {
               resultConfigs.push({
                 type: confKey,
-                options: pie.object.extend({}, conf)
+                options: pie.object.merge({}, conf)
               });
             }
           });
@@ -1241,7 +1242,7 @@ pie.container = {
 
 
 pie.model = function(d, options) {
-  this.data = pie.object.extend({}, d);
+  this.data = pie.object.merge({}, d);
   this.options = options || {};
   this.uid = pie.unique();
   this.observations = {};
@@ -1249,7 +1250,7 @@ pie.model = function(d, options) {
 };
 
 // Give ourselves _super functionality.
-pie.object.extend(pie.model.prototype, pie.mixins.inheritance);
+pie.object.merge(pie.model.prototype, pie.mixins.inheritance);
 
 
 // After updates have been made we deliver our change records to our observers.
@@ -1388,7 +1389,7 @@ pie.cache = function(data) {
 };
 
 
-pie.object.extend(pie.cache.prototype, pie.model.prototype);
+pie.object.merge(pie.cache.prototype, pie.model.prototype);
 
 
 pie.cache.prototype.del = function(path) {
@@ -1635,9 +1636,9 @@ pie.view = function(app, options) {
   this.changeCallbacks = [];
 };
 
-pie.object.extend(pie.view.prototype, pie.mixins.inheritance);
-pie.object.extend(pie.view.prototype, pie.container);
-pie.object.extend(pie.view.prototype, pie.mixins.bindings);
+pie.object.merge(pie.view.prototype, pie.mixins.inheritance);
+pie.object.merge(pie.view.prototype, pie.container);
+pie.object.merge(pie.view.prototype, pie.mixins.bindings);
 
 
 // placeholder for default functionality
@@ -1954,7 +1955,7 @@ pie.validator.prototype.date = function(value, options) {
 
 
 pie.validator.prototype.email = function email(value, options) {
-  options = pie.object.extend({allowBlank: false}, options || {});
+  options = pie.object.merge({allowBlank: false}, options || {});
   return this.withStandardChecks(value, options, function(){
     return (/^.+@.+\..+$/).test(value);
   });
@@ -1997,7 +1998,7 @@ pie.validator.prototype.integer = function(value, options){
 
 // min/max length of the field
 pie.validator.prototype.length = function length(value, options){
-  options = pie.object.extend({allowBlank: false}, options);
+  options = pie.object.merge({allowBlank: false}, options);
 
   if(!('gt'  in options)  &&
      !('gte' in options)  &&
@@ -2033,7 +2034,7 @@ pie.validator.prototype.number = function number(value, options){
 
 // clean out all things that are not numbers and + and get a minimum of 10 digits.
 pie.validator.prototype.phone = function phone(value, options) {
-  options = pie.object.extend({allowBlank: false}, options || {});
+  options = pie.object.merge({allowBlank: false}, options || {});
 
   return this.withStandardChecks(value, options, function(){
     var clean = String(value).replace(/[^\+\d]+/g, '');
@@ -2044,7 +2045,7 @@ pie.validator.prototype.phone = function phone(value, options) {
 
 // does the value have any non-whitespace characters
 pie.validator.prototype.presence = function presence(value, options){
-  return this.withStandardChecks(value, pie.object.extend({}, options, {allowBlank: false}), function(){
+  return this.withStandardChecks(value, pie.object.merge({}, options, {allowBlank: false}), function(){
     return !!(value && (/[^ ]/).test(String(value)));
   });
 };
@@ -2063,7 +2064,7 @@ pie.services.ajax = function ajax(app) {
 
 // default ajax options. override this method to
 pie.services.ajax.prototype._defaultAjaxOptions = function() {
-  return pie.object.extend({}, this.defaultAjaxOptions, {
+  return pie.object.merge({}, this.defaultAjaxOptions, {
     dataType: 'json',
     type: 'GET',
     error: this.app.errorHandler.handleXhrError
@@ -2081,7 +2082,7 @@ pie.services.ajax.prototype._defaultAjaxOptions = function() {
 pie.services.ajax.prototype.ajax = function(options) {
 
   options = pie.object.compact(options);
-  options = pie.object.extend({}, this._defaultAjaxOptions(), options);
+  options = pie.object.merge({}, this._defaultAjaxOptions(), options);
 
   if(options.extraError) {
     var oldError = options.error;
@@ -2138,22 +2139,22 @@ pie.services.ajax.prototype.ajax = function(options) {
 };
 
 pie.services.ajax.prototype.get = function(options) {
-  options = pie.object.extend({type: 'GET'}, options);
+  options = pie.object.merge({type: 'GET'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.post = function(options) {
-  options = pie.object.extend({type: 'POST'}, options);
+  options = pie.object.merge({type: 'POST'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.put = function(options) {
-  options = pie.object.extend({type: 'PUT'}, options);
+  options = pie.object.merge({type: 'PUT'}, options);
   return this.ajax(options);
 };
 
 pie.services.ajax.prototype.del = function(options) {
-  options = pie.object.extend({type: 'DELETE'}, options);
+  options = pie.object.merge({type: 'DELETE'}, options);
   return this.ajax(options);
 };
 
@@ -2359,7 +2360,7 @@ pie.services.i18n.prototype._utc = function(t) {
 
 
 pie.services.i18n.prototype.load = function(data, shallow) {
-  var f = shallow ? pie.object.extend : pie.object.deepExtend;
+  var f = shallow ? pie.object.merge : pie.object.deepMerge;
   f.call(null, this.translations, data);
 };
 
@@ -2610,7 +2611,7 @@ pie.services.router = function(app) {
 // # => /things/page/3.json?q=newQuery
 pie.services.router.prototype.changedUrl = function(changes) {
   var current = this.app.parsedUrl;
-  return this.router.path(current.name || current.path, pie.object.extend({}, current.interpolations, current.query, changes));
+  return this.router.path(current.name || current.path, pie.object.merge({}, current.interpolations, current.query, changes));
 },
 
 
@@ -2660,7 +2661,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 
       k = this.normalizePath(k);
 
-      this.routes[k] = pie.object.extend({}, defaults, r);
+      this.routes[k] = pie.object.merge({}, defaults, r);
 
       if(r.hasOwnProperty('name')) {
         this.namedRoutes[r.name] = k;
@@ -2747,7 +2748,7 @@ pie.services.router.prototype.parseUrl = function(path) {
   splitUrl = path.split('/');
 
   if(match) {
-    match = pie.object.extend({routeKey: path}, match);
+    match = pie.object.merge({routeKey: path}, match);
   } else {
     while (i < keys.length && !match) {
       key = keys[i];
@@ -2760,7 +2761,7 @@ pie.services.router.prototype.parseUrl = function(path) {
       this.routes[key].regex = this.routes[key].regex || new RegExp('^' + key.replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
 
       if (this.routes[key].regex.test(path)) {
-        match = pie.object.extend({routeKey: key}, this.routes[key]);
+        match = pie.object.merge({routeKey: key}, this.routes[key]);
         splitKey = key.split('/');
         for(j = 0; j < splitKey.length; j++){
           if(/^:/.test(splitKey[j])) {
@@ -2776,7 +2777,7 @@ pie.services.router.prototype.parseUrl = function(path) {
   query = pie.string.deserialize(query);
   fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
 
-  return pie.object.extend({
+  return pie.object.merge({
     interpolations: interpolations,
     path: path,
     query: query,
@@ -2788,7 +2789,7 @@ pie.services.router.prototype.parseUrl = function(path) {
 pie.app = function app(options) {
 
   // general app options
-  this.options = pie.object.deepExtend({
+  this.options = pie.object.deepMerge({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
     notificationUiTarget: '.notification-container'
@@ -2858,7 +2859,7 @@ pie.app = function app(options) {
 };
 
 
-pie.object.extend(pie.app.prototype, pie.container);
+pie.object.merge(pie.app.prototype, pie.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.

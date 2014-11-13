@@ -40,7 +40,7 @@ pie.mixins.validatable = {
             } else {
               resultConfigs.push({
                 type: confKey,
-                options: pie.object.extend({}, conf)
+                options: pie.object.merge({}, conf)
               });
             }
           });

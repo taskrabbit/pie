@@ -1,7 +1,7 @@
 // deletes all undefined and null values.
 // returns a new object less any empty key/values.
 pie.object.compact = function(a, removeEmpty){
-  var b = pie.object.extend({}, a);
+  var b = pie.object.merge({}, a);
   Object.keys(b).forEach(function(k) {
     if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
   });
@@ -10,14 +10,14 @@ pie.object.compact = function(a, removeEmpty){
 
 
 // deep merge
-pie.object.deepExtend = function() {
+pie.object.deepMerge = function() {
   var args = pie.array.args(arguments),
       targ = args.shift(),
       obj;
 
   function fn(k) {
     if(k in targ && typeof targ[k] === 'object') {
-      targ[k] = pie.object.deepExtend(targ[k], obj[k]);
+      targ[k] = pie.object.deepMerge(targ[k], obj[k]);
     } else {
       targ[k] = obj[k];
     }
@@ -45,7 +45,7 @@ pie.object.except = function(){
 
 
 // shallow merge
-pie.object.extend = function() {
+pie.object.merge = function() {
   var args = pie.array.args(arguments),
       targ = args.shift(),
       obj;
@@ -76,11 +76,12 @@ pie.object.forEach = function(o, f) {
 
 
 pie.object.getPath = function(obj, path) {
-  var key, p;
-  p = path.split('.');
-  for (key; p.length && (key = p.shift());) {
+  var p = path.split('.'), key;
+  while(p.length) {
+    if(!obj) return obj;
+    key = p.shift();
     if (!p.length) return obj[key];
-    else obj = obj[key] || {};
+    else obj = obj[key];
   }
   return obj;
 };
@@ -121,7 +122,7 @@ pie.object.isObject = function(thing) {
 // {foo: [3]} => foo[]=3
 // {foo: [{inner: 'bar'}]} => foo[][inner]=bar
 pie.object.serialize = function(obj, removeEmpty) {
-  var s = [], append, appendEmpty, build, prefix, rbracket = /\[\]$/;
+  var s = [], append, appendEmpty, build, rbracket = /\[\]$/;
 
   append = function(k,v){
     v = pie.func.valueFrom(v);
@@ -135,7 +136,7 @@ pie.object.serialize = function(obj, removeEmpty) {
 
   build = function(prefix, o, append) {
     if(Array.isArray(o)) {
-      o.forEach(function(v, i) {
+      o.forEach(function(v) {
         build(prefix + '[]', v, append);
       });
     } else if(pie.object.isObject(o)) {
@@ -156,9 +157,9 @@ pie.object.serialize = function(obj, removeEmpty) {
 
 
 pie.object.setPath = function(obj, path, value) {
-  var p = path.split('.'),
-      key;
-  for (key; p.length && (key = p.shift());) {
+  var p = path.split('.'), key;
+  while(p.length) {
+    key = p.shift();
     if (!p.length) obj[key] = value;
     else if (obj[key]) obj = obj[key];
     else obj = obj[key] = {};

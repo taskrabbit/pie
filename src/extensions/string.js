@@ -64,7 +64,7 @@ pie.string.deserialize = (function(){
   }
 
   return function(str, parse) {
-    var params = {}, idx, pieces, segments, match, key, value;
+    var params = {}, idx, pieces, segments, key, value;
 
     if(!str) return params;
 

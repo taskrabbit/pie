@@ -154,8 +154,11 @@ describe("pie.services.i18n", function() {
   describe("date and time functionality", function() {
 
     beforeEach(function() {
-      var offset = new Date().getTimezoneOffset();
-      if(offset !== 240) pending("Time tests are assumed to occur with a timezone offset of 240. Pending since that's not the case.");
+      var offsetStandardTime = new Date(2014,7,1).getTimezoneOffset(),
+      offsetDaylightTime = new Date(2014,1,1).getTimezoneOffset();
+      if(offsetStandardTime !== 240 || offsetDaylightTime !== 300) {
+        pending("Time tests are assumed to occur within a EST timezone. Pending since that's not the case.");
+      }
     });
 
     describe("#_normalizedDate", function() {
@@ -295,7 +298,7 @@ describe("pie.services.i18n", function() {
         this.then.setMonth(this.then.getMonth() - 8);
 
         var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
-        expect(response).toEqual('7 months ago');
+        expect(response).toEqual('8 months ago');
       });
 
       it("should return year results", function() {

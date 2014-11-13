@@ -6,7 +6,7 @@ describe("Object extension", function() {
       var a = {'foo' : 'bar'},
       b = {'biz' : 'baz'};
 
-      pie.object.extend(a, b);
+      pie.object.merge(a, b);
 
       expect(a.biz).toEqual('baz');
     });
@@ -15,7 +15,7 @@ describe("Object extension", function() {
       var a = {'foo' : 'bar'},
       b = {'biz' : 'baz'};
 
-      pie.object.extend(a, null, undefined, false, b);
+      pie.object.merge(a, null, undefined, false, b);
 
       expect(a.biz).toEqual('baz');
     });
@@ -24,7 +24,7 @@ describe("Object extension", function() {
       var a = null, b = {'biz' : 'baz'};
 
       expect(function(){
-        pie.object.extend(a, b);
+        pie.object.merge(a, b);
       }).toThrowError();
 
     });
@@ -34,7 +34,7 @@ describe("Object extension", function() {
       b = "thing";
 
       expect(function(){
-        pie.object.extend(a, b);
+        pie.object.merge(a, b);
       }).toThrowError();
     });
 

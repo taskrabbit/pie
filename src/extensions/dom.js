@@ -11,13 +11,13 @@ pie.dom.cache = function() {
 };
 
 pie.dom.remove = function(el) {
-  var uid = pie.setUid(el);
+  pie.setUid(el);
   pie.dom.cache().del('element-' + el.uid);
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 
 
-pie.dom.off = function(el, event, fn, cap) {
+pie.dom.off = function(el, event, fn, selector, cap) {
   var eventSplit = event.split('.'),
     uid = pie.setUid(el),
     namespace, all, events;
@@ -31,7 +31,7 @@ pie.dom.off = function(el, event, fn, cap) {
   (all ? Object.keys(events) : [event]).forEach(function(k) {
     pie.array.from(events[k]).forEach(function(obj, i, ary) {
       if(!cap && (k === 'focus' || k === 'blur') && obj.sel) cap = true;
-      if((!namespace || namespace === obj.ns) && (!fn || fn === obj.fn) && (cap === obj.cap)) {
+      if((!namespace || namespace === obj.ns) && (!fn || fn === obj.fn) && (!selector || selector === obj.sel) && (cap === obj.cap)) {
         el.removeEventListener(k, obj.cb, obj.cap);
         delete ary[i];
       }

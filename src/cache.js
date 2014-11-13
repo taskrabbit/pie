@@ -3,7 +3,7 @@ pie.cache = function(data) {
 };
 
 
-pie.object.extend(pie.cache.prototype, pie.model.prototype);
+pie.object.merge(pie.cache.prototype, pie.model.prototype);
 
 
 pie.cache.prototype.del = function(path) {

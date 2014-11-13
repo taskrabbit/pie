@@ -3,7 +3,7 @@
 pie.app = function app(options) {
 
   // general app options
-  this.options = pie.object.deepExtend({
+  this.options = pie.object.deepMerge({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
     notificationUiTarget: '.notification-container'
@@ -73,7 +73,7 @@ pie.app = function app(options) {
 };
 
 
-pie.object.extend(pie.app.prototype, pie.container);
+pie.object.merge(pie.app.prototype, pie.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.

@@ -4,7 +4,7 @@ describe("pie.view", function() {
     this.view = new pie.view(app);
   });
 
-  it("should correctly build an event namespaced", function() {
+  it("should correctly build an event namespace", function() {
     var uid = this.view.uid;
     expect(uid).not.toBeFalsy();
     expect(this.view.eventNamespace()).toEqual('view' + uid);
@@ -40,6 +40,25 @@ describe("pie.view", function() {
 
     expect(this.view.changeCallbacks.length).toEqual(0);
     expect(model.observations.__all__.length).toEqual(0);
+  });
+
+  it("should remove it's el from the dom, but not call pie.dom.remove on it's el", function() {
+    spyOn(pie.dom, 'remove');
+    this.view.removedFromParent(app);
+    expect(pie.dom.remove).not.toHaveBeenCalledWith();
+  });
+
+  it("should observe events on it's el via this.on and remove the events", function() {
+    var f = function(){};
+    spyOn(pie.dom, 'on');
+    spyOn(pie.dom, 'off');
+    this.view.on('click', 'a', f);
+    this.view.removedFromParent(app);
+    var args = pie.dom.on.calls.argsFor(0);
+    expect(args[0]).toEqual(this.view.el);
+    expect(args[1]).toEqual('click.' + this.view.eventNamespace());
+    expect(args[3]).toEqual('a');
+    expect(pie.dom.off).toHaveBeenCalledWith(this.view.el, '*.' + this.view.eventNamespace());
   });
 
 

@@ -8,9 +8,9 @@ pie.view = function(app, options) {
   this.changeCallbacks = [];
 };
 
-pie.object.extend(pie.view.prototype, pie.mixins.inheritance);
-pie.object.extend(pie.view.prototype, pie.container);
-pie.object.extend(pie.view.prototype, pie.mixins.bindings);
+pie.object.merge(pie.view.prototype, pie.mixins.inheritance);
+pie.object.merge(pie.view.prototype, pie.container);
+pie.object.merge(pie.view.prototype, pie.mixins.bindings);
 
 
 // placeholder for default functionality

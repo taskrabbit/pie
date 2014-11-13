@@ -109,7 +109,7 @@ pie.services.i18n.prototype._utc = function(t) {
 
 
 pie.services.i18n.prototype.load = function(data, shallow) {
-  var f = shallow ? pie.object.extend : pie.object.deepExtend;
+  var f = shallow ? pie.object.merge : pie.object.deepMerge;
   f.call(null, this.translations, data);
 };
 
