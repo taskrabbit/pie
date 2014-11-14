@@ -128,7 +128,7 @@ pie.services.router.prototype.routeKeys = function() {
 };
 
 // look at the path and determine the route which this matches.
-pie.services.router.prototype.parseUrl = function(path) {
+pie.services.router.prototype.parseUrl = function(path, parseQuery) {
 
   var keys = this.routeKeys(),
     i = 0,
@@ -177,13 +177,18 @@ pie.services.router.prototype.parseUrl = function(path) {
     }
   }
 
-  query = pie.string.deserialize(query);
+  query = pie.string.deserialize(query, parseQuery);
+
+  // if we are expected to parse the values of the query, lets do it for the interpolations as well.
+  if(parseQuery) interpolations = pie.string.deserialize(pie.object.serialize(interpolations), parseQuery);
+
   fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
 
   return pie.object.merge({
     interpolations: interpolations,
-    path: path,
     query: query,
+    data: pie.object.merge({}, interpolations, query),
+    path: path,
     fullPath: fullPath
   }, match);
 };

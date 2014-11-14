@@ -19,10 +19,10 @@ window.pie = {
   // service objects
   services: {},
 
-  uid: 1,
+  pieId: 1,
 
   unique: function() {
-    return this.uid++;
+    return String(this.pidId++);
   },
 
   setUid: function(obj) {

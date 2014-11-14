@@ -101,6 +101,7 @@ describe("pie.services.router", function(){
     o = r.parseUrl('/t/a?q=1');
     expect(o.view).toEqual('a');
     expect(o.query.q).toEqual('1');
+    expect(o.data.q).toEqual('1');
     expect(o.path).toEqual('/t/a');
     expect(o.fullPath).toEqual('/t/a?q=1');
 
@@ -118,6 +119,16 @@ describe("pie.services.router", function(){
     expect(o.name).toEqual('bSpecificRoute');
     expect(o[':id']).toEqual('things');
     expect(o.interpolations.id).toEqual('things');
+    expect(o.data.id).toEqual('things');
+
+    o = r.parseUrl('/t/things/b?q=1');
+    expect(o.data.id).toEqual('things');
+    expect(o.data.q).toEqual('1');
+
+    o = r.parseUrl('/t/30/b?q=1&foo=true', true);
+    expect(o.data.id).toEqual(30);
+    expect(o.data.q).toEqual(1);
+    expect(o.data.foo).toEqual(true);
 
     o = r.parseUrl('/unrecognized/path');
     expect(o.view).toEqual(undefined);

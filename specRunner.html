@@ -81,10 +81,10 @@
 
       lib = { views: {} };
 
-      lib.views.listView = function listView(app) {
+      lib.views.listView = function listView() {
         this.model = this.items = new pie.model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
 
-        pie.simpleView.call(this, app, {
+        pie.simpleView.call(this, {
           template: 'list'
         });
       };
@@ -102,7 +102,7 @@
 
 
     <!-- include spec files here... -->
-    <script type="text/javascript" src="spec/SpecHelper.js"></script>
+    <script type="text/javascript" src="spec/specHelper.js"></script>
     <script type="text/javascript" src="spec/modelSpec.js"></script>
     <script type="text/javascript" src="spec/cacheSpec.js"></script>
     <script type="text/javascript" src="spec/listSpec.js"></script>

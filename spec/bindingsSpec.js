@@ -1,7 +1,7 @@
-describe("View Integration", function() {
+describe("View Binding Integration", function() {
 
   beforeEach(function() {
-    var v = new window.lib.views.listView(app);
+    var v = new window.lib.views.listView();
     app.addChild('integrationTest', v);
     v.render();
 
@@ -31,7 +31,7 @@ describe("View Integration", function() {
     expect(this.model.get('foo')).toEqual('barstool');
   });
 
-  it("should be able to initialize form fields by invokding initBoundFields()", function() {
+  it("should be able to initialize form fields by invoking initBoundFields()", function() {
     var el = this.view.qs('input[name="foo"]');
 
     this.model.data.foo = 'wingdings';

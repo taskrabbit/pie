@@ -50,6 +50,15 @@ pie.array.detect = function(a, f) {
   }
 };
 
+pie.array.detectLast = function(a, f) {
+  var i = a.length-1, l = 0;
+  for(;i>=l;i--) {
+    if(pie.object.getValue(a[i], f)) {
+      return a[i];
+    }
+  }
+};
+
 
 pie.array.dup = function(a) {
   return a.slice(0);

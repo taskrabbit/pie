@@ -12,21 +12,21 @@ pie.dom.cache = function() {
 
 pie.dom.remove = function(el) {
   pie.setUid(el);
-  pie.dom.cache().del('element-' + el.uid);
+  pie.dom.cache().del('element-' + el.pieId);
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 
 
 pie.dom.off = function(el, event, fn, selector, cap) {
   var eventSplit = event.split('.'),
-    uid = pie.setUid(el),
     namespace, all, events;
 
+  pie.setUid(el);
   event = eventSplit.shift();
   namespace = eventSplit.join('.');
   all = event === '*';
 
-  events = pie.dom.cache().getOrSet('element-' + uid + '.dom-events', {});
+  events = pie.dom.cache().getOrSet('element-' + el.pieId + '.dom-events', {});
 
   (all ? Object.keys(events) : [event]).forEach(function(k) {
     pie.array.from(events[k]).forEach(function(obj, i, ary) {
@@ -44,16 +44,16 @@ pie.dom.off = function(el, event, fn, selector, cap) {
 
 pie.dom.on = function(el, event, fn, selector, capture) {
   var eventSplit = event.split('.'),
-      cb, namespace, uid, events;
+      cb, namespace, events;
 
   event = eventSplit.shift();
   namespace = eventSplit.join('.');
-  uid = pie.setUid(el);
+  pie.setUid(el);
 
   // we force capture so that delegation works.
   if(!capture && (event === 'focus' || event === 'blur') && selector) capture = true;
 
-  events = pie.dom.cache().getOrSet('element-' + uid  + '.dom-events', {});
+  events = pie.dom.cache().getOrSet('element-' + el.pieId  + '.dom-events', {});
   events[event] = events[event] || [];
 
   cb = function(e) {

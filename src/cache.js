@@ -1,5 +1,5 @@
-pie.cache = function(data) {
-  pie.model.prototype.constructor.call(this, data || {});
+pie.cache = function(data, options) {
+  pie.model.prototype.constructor.call(this, data, options);
 };
 
 

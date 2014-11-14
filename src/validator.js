@@ -1,5 +1,5 @@
 pie.validator = function(app) {
-  this.app = app;
+  this.app = app || window.app;
   this.i18n = app.i18n;
 };
 

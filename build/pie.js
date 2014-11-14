@@ -19,10 +19,10 @@ window.pie = {
   // service objects
   services: {},
 
-  uid: 1,
+  pieId: 1,
 
   unique: function() {
-    return this.uid++;
+    return String(this.pidId++);
   },
 
   setUid: function(obj) {
@@ -79,6 +79,15 @@ pie.array.compact = function(a, removeAllFalsy){
 pie.array.detect = function(a, f) {
   var i = 0, l = a.length;
   for(;i<l;i++) {
+    if(pie.object.getValue(a[i], f)) {
+      return a[i];
+    }
+  }
+};
+
+pie.array.detectLast = function(a, f) {
+  var i = a.length-1, l = 0;
+  for(;i>=l;i--) {
     if(pie.object.getValue(a[i], f)) {
       return a[i];
     }
@@ -311,21 +320,21 @@ pie.dom.cache = function() {
 
 pie.dom.remove = function(el) {
   pie.setUid(el);
-  pie.dom.cache().del('element-' + el.uid);
+  pie.dom.cache().del('element-' + el.pieId);
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 
 
 pie.dom.off = function(el, event, fn, selector, cap) {
   var eventSplit = event.split('.'),
-    uid = pie.setUid(el),
     namespace, all, events;
 
+  pie.setUid(el);
   event = eventSplit.shift();
   namespace = eventSplit.join('.');
   all = event === '*';
 
-  events = pie.dom.cache().getOrSet('element-' + uid + '.dom-events', {});
+  events = pie.dom.cache().getOrSet('element-' + el.pieId + '.dom-events', {});
 
   (all ? Object.keys(events) : [event]).forEach(function(k) {
     pie.array.from(events[k]).forEach(function(obj, i, ary) {
@@ -343,16 +352,16 @@ pie.dom.off = function(el, event, fn, selector, cap) {
 
 pie.dom.on = function(el, event, fn, selector, capture) {
   var eventSplit = event.split('.'),
-      cb, namespace, uid, events;
+      cb, namespace, events;
 
   event = eventSplit.shift();
   namespace = eventSplit.join('.');
-  uid = pie.setUid(el);
+  pie.setUid(el);
 
   // we force capture so that delegation works.
   if(!capture && (event === 'focus' || event === 'blur') && selector) capture = true;
 
-  events = pie.dom.cache().getOrSet('element-' + uid  + '.dom-events', {});
+  events = pie.dom.cache().getOrSet('element-' + el.pieId  + '.dom-events', {});
   events[event] = events[event] || [];
 
   cb = function(e) {
@@ -418,6 +427,25 @@ pie.func.debounce = function(func, wait, immediate) {
 pie.func.valueFrom = function(f, binding) {
   if(typeof f === 'function') return f.call(binding);
   return f;
+};
+
+
+
+pie.func.async = function(fns, cb, counterObserver) {
+  var completeCount = fns.length,
+  completed = 0,
+  counter = function() {
+    completed++;
+    if(counterObserver) counterObserver.apply(null, arguments);
+    if(completed === completeCount) {
+      cb();
+    }
+  };
+
+  fns.forEach(function(fn) {
+    fn(counter);
+  });
+
 };
 pie.math.precision = function(number, places) {
   return Math.round(number * Math.pow(10, places)) / Math.pow(10, places);
@@ -913,174 +941,7 @@ pie.mixins.bindings = (function(){
 
   };
 })();
-pie.mixins.inheritance = {
-
-  _super: function() {
-    var args = pie.array.args(arguments),
-    name = args.shift(),
-    obj = this,
-    curr;
-
-    if(args.length === 1 && String(args[0]) === "[object Arguments]") args = pie.array.args(args[0]);
-
-    while(true) {
-      curr = Object.getPrototypeOf(obj);
-      if(!curr) throw new Error("No super method defined: " + name);
-      if(curr === obj) return;
-      if(curr[name] && curr[name] !== this[name]) {
-        return curr[name].apply(this, args);
-      } else {
-        obj = curr;
-      }
-    }
-  }
-
-};
-pie.mixins.validatable = {
-
-  // default to a model implementation
-  reportValidationError: function(key, errors) {
-    this.set('validationErrors.' + key, errors);
-  },
-
-  // validates({name: 'presence'});
-  // validates({name: {presence: true}});
-  // validates({name: ['presence', {format: /[a]/}]})
-  validates: function(obj) {
-    var configs, resultConfigs;
-
-    this.validations = this.validations || {};
-
-    Object.keys(obj).forEach(function(k) {
-      // always convert to an array
-      configs = pie.array.from(obj[k]);
-      resultConfigs = [];
-
-      configs.forEach(function(conf) {
-
-        // if it's a string or a function, throw it in directly, with no options
-        if(typeof conf === 'string') {
-          resultConfigs.push({type: conf, options: {}});
-        // if it's a function, make it a type function, then provide the function as an option
-        } else if(typeof conf === 'function'){
-          resultConfigs.push({type: 'fn', options: {fn: conf}});
-        // otherwise, we have an object
-        } else {
-
-          // iterate the keys, adding a validation for each
-          Object.keys(conf).forEach(function(confKey){
-            if (pie.object.isObject(conf[confKey])) {
-              resultConfigs.push({type: confKey, options: conf[confKey]});
-
-            // in this case, we convert the value to an option
-            // {presence: true} -> {type: 'presence', {presence: true}}
-            // {format: /.+/} -> {type: 'format', {format: /.+/}}
-            } else {
-              resultConfigs.push({
-                type: confKey,
-                options: pie.object.merge({}, conf)
-              });
-            }
-          });
-        }
-
-      });
-
-      // append the validations to the existing ones
-      this.validations[k] = this.validations[k] || [];
-      this.validations[k] = this.validations[k].concat(resultConfigs);
-    }.bind(this));
-  },
-
-  // Invoke validateAll with a set of optional callbacks for the success case and the failure case.
-  // this.validateAll(function(){ alert('Success!'); }, function(){ alert('Errors!'); });
-  // validateAll will perform all registered validations, asynchronously. When all validations have completed, the callbacks
-  // will be invoked.
-  validateAll: function(app, success, failure) {
-    var ok = true,
-    keys = Object.keys(this.validations),
-    completeCount = keys.length,
-    completed = 0,
-    callback;
-
-    if(!keys.length) {
-      if(success) success(true);
-      return void(0);
-    } else {
-
-
-      // The callback which is invoked after each individual validation.
-      // This keeps track of our progress, and when we are completed, invokes our provided callbacks.
-      callback = function(bool) {
-        ok = !!(ok && bool);
-        completed++;
-
-        if(completeCount === completed) {
-          if(ok && success) success(true);
-          else if (!ok && failure) failure(false);
-        }
-      };
-
-      // start all the validations
-      keys.forEach(function(k) {
-        this.validate(app, k, callback, callback);
-      }.bind(this));
-
-      return void(0); // return undefined to ensure we make our point about asynchronous validation.
-    }
-  },
-
-
-  // validate a specific key and optionally invoke a callback.
-  validate: function(app, k, success, failure) {
-    var validators = app.validator,
-    validations = pie.array.from(this.validations[k]),
-    value = this.get(k),
-    valid = true,
-    messages = [],
-    completeCount = validations.length,
-    completed = 0,
-    validator,
-    result,
-    callback;
-
-    if(!validations.length) {
-      if(success) success(true);
-      return void(0);
-    } else {
-
-      // The callback invoked after each individual validation is run.
-      // Keeps track of progress through our stack and updates the error keys.
-      // Once completed, our provided callback is invoked with the result.
-      callback = function(validation, bool) {
-        valid = !!(valid && bool);
-        completed++;
-
-        if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
-
-        if(completed === completeCount) {
-          this.reportValidationError(k, messages);
-          if(valid && success) success(valid);
-          else if(!valid && failure) failure(valid);
-        }
-      };
-
-      // grab the validator for each validation then invoke it.
-      // if true or false is returned immediately, we invoke the callback otherwise we assume
-      // the validation is running asynchronously and it will invoke the callback with the result.
-      validations.forEach(function(validation){
-        validator = validators[validation.type];
-        result = validator(value, validation.options, callback);
-        if(result === true || result === false) {
-          callback(result);
-        } // if undefined, then the validation assumes responsibility for invoking the callback.
-      });
-
-      return void(0);
-    }
-  }
-};
-pie.container = {
+pie.mixins.container = {
 
   addChild: function(name, child) {
     var children = this.children(),
@@ -1174,6 +1035,174 @@ pie.container = {
     return this;
   }
 };
+pie.mixins.inheritance = {
+
+  _super: function() {
+    var args = pie.array.args(arguments),
+    name = args.shift(),
+    obj = this,
+    curr;
+
+    if(args.length === 1 && String(args[0]) === "[object Arguments]") args = pie.array.args(args[0]);
+
+    while(true) {
+      curr = Object.getPrototypeOf(obj);
+      if(!curr) throw new Error("No super method defined: " + name);
+      if(curr === obj) return;
+      if(curr[name] && curr[name] !== this[name]) {
+        return curr[name].apply(this, args);
+      } else {
+        obj = curr;
+      }
+    }
+  }
+
+};
+pie.mixins.validatable = {
+
+  // default to a model implementation
+  reportValidationError: function(key, errors) {
+    this.set('validationErrors.' + key, errors);
+  },
+
+  // validates({name: 'presence'});
+  // validates({name: {presence: true}});
+  // validates({name: ['presence', {format: /[a]/}]})
+  validates: function(obj, observeChanges) {
+    var configs, resultConfigs;
+
+    this.validations = this.validations || {};
+
+    Object.keys(obj).forEach(function(k) {
+      // always convert to an array
+      configs = pie.array.from(obj[k]);
+      resultConfigs = [];
+
+      configs.forEach(function(conf) {
+
+        // if it's a string or a function, throw it in directly, with no options
+        if(typeof conf === 'string') {
+          resultConfigs.push({type: conf, options: {}});
+        // if it's a function, make it a type function, then provide the function as an option
+        } else if(typeof conf === 'function'){
+          resultConfigs.push({type: 'fn', options: {fn: conf}});
+        // otherwise, we have an object
+        } else {
+
+          // iterate the keys, adding a validation for each
+          Object.keys(conf).forEach(function(confKey){
+            if (pie.object.isObject(conf[confKey])) {
+              resultConfigs.push({type: confKey, options: conf[confKey]});
+
+            // in this case, we convert the value to an option
+            // {presence: true} -> {type: 'presence', {presence: true}}
+            // {format: /.+/} -> {type: 'format', {format: /.+/}}
+            } else {
+              resultConfigs.push({
+                type: confKey,
+                options: pie.object.merge({}, conf)
+              });
+            }
+          });
+        }
+
+      });
+
+      // append the validations to the existing ones
+      this.validations[k] = this.validations[k] || [];
+      this.validations[k] = this.validations[k].concat(resultConfigs);
+
+      if(observeChanges) {
+        this.observe(function(){ this.validate(k); }.bind(this), k);
+      }
+    }.bind(this));
+  },
+
+  // Invoke validateAll with a set of optional callbacks for the success case and the failure case.
+  // this.validateAll(function(){ alert('Success!'); }, function(){ alert('Errors!'); });
+  // validateAll will perform all registered validations, asynchronously. When all validations have completed, the callbacks
+  // will be invoked.
+  validateAll: function(cb) {
+    var ok = true,
+    keys = Object.keys(this.validations),
+    fns,
+    callback,
+    whenComplete = function() {
+      if(cb) cb(ok);
+      return void(0);
+    },
+    counterObserver = function(bool) {
+      ok = !!(ok && bool);
+    };
+
+    if(!keys.length) {
+      return whenComplete();
+    } else {
+
+      fns = keys.map(function(k){
+        return function(cb) {
+          return this.validate(k, cb);
+        }.bind(this);
+      }.bind(this));
+
+      // start all the validations
+      pie.func.async(fns, whenComplete, counterObserver);
+
+      return void(0); // return undefined to ensure we make our point about asynchronous validation.
+    }
+  },
+
+
+  // validate a specific key and optionally invoke a callback.
+  validate: function(k, cb) {
+    var validators = this.app.validator,
+    validations = pie.array.from(this.validations[k]),
+    value = this.get(k),
+    valid = true,
+    fns,
+    messages = [],
+
+    // The callback invoked after each individual validation is run.
+    // It updates our validity boolean
+    counterObserver = function(validation, bool) {
+      valid = !!(valid && bool);
+      if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
+    },
+
+    // When all validations for the key have run, we report any errors and let the callback know
+    // of the result;
+    whenComplete = function() {
+      this.reportValidationError(k, messages);
+      if(cb) cb(valid);
+      return void(0);
+    }.bind(this);
+
+    if(!validations.length) {
+      return whenComplete();
+    } else {
+
+      // grab the validator for each validation then invoke it.
+      // if true or false is returned immediately, we invoke the callback otherwise we assume
+      // the validation is running asynchronously and it will invoke the callback with the result.
+      fns = validations.map(function(validation) {
+
+        return function(callback) {
+          var validator = validators[validation.type],
+          innerCB = function(result) { callback(validation, result); },
+          result = validator.call(validators, value, validation.options, innerCB);
+
+          if(result === true || result === false) {
+            callback(validation, result);
+          } // if anything else, then the validation assumes responsibility for invoking the callback.
+        };
+      });
+
+      pie.func.async(fns, whenComplete, counterObserver);
+
+      return void(0);
+    }
+  }
+};
 
 //    **Setters and Getters**
 //    pie.model provides a basic interface for object management and observation.
@@ -1244,9 +1273,10 @@ pie.container = {
 pie.model = function(d, options) {
   this.data = pie.object.merge({}, d);
   this.options = options || {};
-  this.uid = pie.unique();
+  this.app = this.options.app || window.app;
   this.observations = {};
   this.changeRecords = [];
+  pie.setUid(this);
 };
 
 // Give ourselves _super functionality.
@@ -1265,8 +1295,8 @@ pie.model.prototype.deliverChangeRecords = function() {
 
     // then for each observer, build or concatenate to the array of changes.
     while(o = os.shift()) {
-      observers[o.uid] = observers[o.uid] || {fn: o, changes: []};
-      observers[o.uid].changes.push(change);
+      observers[o.pieId] = observers[o.pieId] || {fn: o, changes: []};
+      observers[o.pieId].changes.push(change);
     }
   }
 
@@ -1302,8 +1332,6 @@ pie.model.prototype.gets = function() {
 pie.model.prototype.observe = function(/* fn[, key1, key2, key3] */) {
   var keys = pie.array.args(arguments),
   fn = keys.shift();
-
-  fn.uid = fn.uid || String(pie.unique());
 
   keys = pie.array.flatten(keys);
 
@@ -1384,8 +1412,8 @@ pie.model.prototype.compute = function(/* name, fn[, prop1, prop2 ] */) {
 
 
 
-pie.cache = function(data) {
-  pie.model.prototype.constructor.call(this, data || {});
+pie.cache = function(data, options) {
+  pie.model.prototype.constructor.call(this, data, options);
 };
 
 
@@ -1628,17 +1656,16 @@ pie.list.prototype.unshift = function(value, skipObservers) {
 };
 // The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
-pie.view = function(app, options) {
-  this.app = app;
+pie.view = function(options) {
   this.options = options || {};
+  this.app = this.options.app || window.app;
   this.el = this.options.el || pie.dom.createElement('<div />');
-  this.uid = pie.unique();
   this.changeCallbacks = [];
+  pie.setUid(this);
 };
 
 pie.object.merge(pie.view.prototype, pie.mixins.inheritance);
-pie.object.merge(pie.view.prototype, pie.container);
-pie.object.merge(pie.view.prototype, pie.mixins.bindings);
+pie.object.merge(pie.view.prototype, pie.mixins.container);
 
 
 // placeholder for default functionality
@@ -1649,7 +1676,7 @@ pie.view.prototype.addedToParent = function(){
 
 // all events observed using view.on() will use the unique namespace for this instance.
 pie.view.prototype.eventNamespace = function() {
-  return 'view'+ this.uid;
+  return 'view'+ this.pieId;
 };
 
 
@@ -1773,8 +1800,8 @@ pie.view.prototype._loadingStyle = function(bool) {
     button[bool ? 'setAttribute' : 'removeAttribute']('disabled', 'disabled');
   });
 };
-pie.simpleView = function simpleView(app, options) {
-  pie.view.call(this, app, options);
+pie.simpleView = function simpleView(options) {
+  pie.view.call(this, options);
 };
 
 pie.simpleView.prototype = Object.create(pie.view.prototype);
@@ -1821,7 +1848,7 @@ pie.simpleView.prototype.render = function() {
   return this;
 };
 pie.validator = function(app) {
-  this.app = app;
+  this.app = app || window.app;
   this.i18n = app.i18n;
 };
 
@@ -2725,7 +2752,7 @@ pie.services.router.prototype.routeKeys = function() {
 };
 
 // look at the path and determine the route which this matches.
-pie.services.router.prototype.parseUrl = function(path) {
+pie.services.router.prototype.parseUrl = function(path, parseQuery) {
 
   var keys = this.routeKeys(),
     i = 0,
@@ -2774,13 +2801,18 @@ pie.services.router.prototype.parseUrl = function(path) {
     }
   }
 
-  query = pie.string.deserialize(query);
+  query = pie.string.deserialize(query, parseQuery);
+
+  // if we are expected to parse the values of the query, lets do it for the interpolations as well.
+  if(parseQuery) interpolations = pie.string.deserialize(pie.object.serialize(interpolations), parseQuery);
+
   fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
 
   return pie.object.merge({
     interpolations: interpolations,
-    path: path,
     query: query,
+    data: pie.object.merge({}, interpolations, query),
+    path: path,
     fullPath: fullPath
   }, match);
 };
@@ -2859,7 +2891,7 @@ pie.app = function app(options) {
 };
 
 
-pie.object.merge(pie.app.prototype, pie.container);
+pie.object.merge(pie.app.prototype, pie.mixins.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.

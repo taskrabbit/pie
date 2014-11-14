@@ -1,16 +1,15 @@
 // The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
-pie.view = function(app, options) {
-  this.app = app;
+pie.view = function(options) {
   this.options = options || {};
+  this.app = this.options.app || window.app;
   this.el = this.options.el || pie.dom.createElement('<div />');
-  this.uid = pie.unique();
   this.changeCallbacks = [];
+  pie.setUid(this);
 };
 
 pie.object.merge(pie.view.prototype, pie.mixins.inheritance);
-pie.object.merge(pie.view.prototype, pie.container);
-pie.object.merge(pie.view.prototype, pie.mixins.bindings);
+pie.object.merge(pie.view.prototype, pie.mixins.container);
 
 
 // placeholder for default functionality
@@ -21,7 +20,7 @@ pie.view.prototype.addedToParent = function(){
 
 // all events observed using view.on() will use the unique namespace for this instance.
 pie.view.prototype.eventNamespace = function() {
-  return 'view'+ this.uid;
+  return 'view'+ this.pieId;
 };
 
 

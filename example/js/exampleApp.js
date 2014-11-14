@@ -39,9 +39,9 @@ window.example = {
 
 // the page level view.
 // this view handles managing it's children, initializes page context via the pie.list.
-example.views.layout = function layout(app) {
+example.views.layout = function layout() {
 
-  pie.simpleView.call(this, app, {
+  pie.simpleView.call(this, {
 
     // this is the template this view renders.
     template: 'layoutContainer',
@@ -74,22 +74,22 @@ example.views.layout.prototype = pie.object.merge(Object.create(pie.simpleView.p
 
     // add our form view which will handle the addition of data.
     // addChild sets up the child view and relates it to this view (the parent).
-    this.addChild('form', new example.views.form(this.app, this.list));
+    this.addChild('form', new example.views.form(this.list));
 
     // we still haven't added it to the dom yet, though. So we choose where to put it.
     this.qs('.form-container').appendChild(this.getChild('form').el);
 
     // add our list view.
-    this.addChild('list', new example.views.list(this.app, this.list));
+    this.addChild('list', new example.views.list(this.list));
     this.qs('.list-container').appendChild(this.getChild('list').el);
   }
 });
 
 // this view handles taking in user input to modify the list model.
 // notice the model is provided to the form explicity. This isn't necessary, but is generally a good idea.
-example.views.form = function form(app, listModel) {
+example.views.form = function form(listModel) {
 
-  pie.simpleView.call(this, app, {
+  pie.simpleView.call(this, {
     template: 'formContainer',
     renderOnAddedToParent: true
   });
@@ -98,7 +98,7 @@ example.views.form = function form(app, listModel) {
   this.list = this.model = listModel;
 };
 
-example.views.form.prototype = pie.object.merge(Object.create(pie.simpleView.prototype), {
+example.views.form.prototype = pie.object.merge(Object.create(pie.simpleView.prototype), pie.mixins.bindings, {
 
   // we override addedToParent to set up events.
   addedToParent: function() {
@@ -132,7 +132,7 @@ example.views.form.prototype = pie.object.merge(Object.create(pie.simpleView.pro
     // don't really submit it...
     e.preventDefault();
 
-    this.list.validateAll(this.app, function() {
+    this.list.validateAll(function() {
       // insert the item at the beginning.
       var newItem = new pie.model({title: this.list.get('nextItem'), completed: false});
       this.list.push(newItem);
@@ -146,7 +146,7 @@ example.views.form.prototype = pie.object.merge(Object.create(pie.simpleView.pro
   validationChanged: function(changes) {
     var change = pie.array.last(changes),
     el = this.qs('input');
-    if(change.value) {
+    if(change.value && change.value.length) {
       el.style.backgroundColor = 'rgba(255,0,0,0.2)';
     } else {
       el.style.backgroundColor = 'inherit';
@@ -155,18 +155,18 @@ example.views.form.prototype = pie.object.merge(Object.create(pie.simpleView.pro
 
   // validate the nextItem of the list.
   validate: function() {
-    this.list.validate(this.app, 'nextItem');
+    this.list.validate('nextItem');
   }
 
 });
 
 
 // this view handles rendering the list and dealing with removals.
-example.views.list = function list(app, listModel) {
+example.views.list = function list(listModel) {
 
   // this time we use autoRender to automatically render this view
   // any time the "items" attribute of the model changes.
-  pie.simpleView.call(this, app, {
+  pie.simpleView.call(this, {
     template: 'listContainer',
     renderOnAddedToParent: true
   });
@@ -201,10 +201,10 @@ example.views.list.prototype = pie.object.merge(Object.create(pie.simpleView.pro
   },
 
   itemAdded: function(change) {
-    var sibling = change.oldValue && this.getChild('view-' + change.oldValue.uid),
-    child = new example.views.item(this.app, this.list, change.value);
+    var sibling = change.oldValue && this.getChild('view-' + change.oldValue.pidId),
+    child = new example.views.item(this.list, change.value);
 
-    this.addChild('view-' + change.value.uid, child);
+    this.addChild('view-' + change.value.pidId, child);
 
     if(sibling) {
       sibling.el.parentNode.insertBefore(child.el, sibling.el);
@@ -218,7 +218,7 @@ example.views.list.prototype = pie.object.merge(Object.create(pie.simpleView.pro
   },
 
   itemRemoved: function(change) {
-    var child = this.getChild('view-' + change.oldValue.uid);
+    var child = this.getChild('view-' + change.oldValue.pieId);
     this.removeChild(child);
   },
 
@@ -253,11 +253,11 @@ example.views.list.prototype = pie.object.merge(Object.create(pie.simpleView.pro
 });
 
 // this view handles rendering an individual item
-example.views.item = function item(app, listModel, itemModel) {
+example.views.item = function item(listModel, itemModel) {
 
   // this time we use autoRender to automatically render this view
   // any time the "items" attribute of the model changes.
-  pie.simpleView.call(this, app, {
+  pie.simpleView.call(this, {
     template: 'itemContainer',
     renderOnAddedToParent: true
   });
@@ -268,7 +268,7 @@ example.views.item = function item(app, listModel, itemModel) {
 
 
 
-example.views.item.prototype = pie.object.merge(Object.create(pie.simpleView.prototype), {
+example.views.item.prototype = pie.object.merge(Object.create(pie.simpleView.prototype),  pie.mixins.bindings, {
 
   // set up our events, then invoke super.
   addedToParent: function() {

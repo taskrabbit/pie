@@ -1,4 +1,4 @@
-pie.container = {
+pie.mixins.container = {
 
   addChild: function(name, child) {
     var children = this.children(),

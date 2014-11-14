@@ -1,5 +1,5 @@
-pie.simpleView = function simpleView(app, options) {
-  pie.view.call(this, app, options);
+pie.simpleView = function simpleView(options) {
+  pie.view.call(this, options);
 };
 
 pie.simpleView.prototype = Object.create(pie.view.prototype);

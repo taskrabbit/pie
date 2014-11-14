@@ -68,9 +68,10 @@
 pie.model = function(d, options) {
   this.data = pie.object.merge({}, d);
   this.options = options || {};
-  this.uid = pie.unique();
+  this.app = this.options.app || window.app;
   this.observations = {};
   this.changeRecords = [];
+  pie.setUid(this);
 };
 
 // Give ourselves _super functionality.
@@ -89,8 +90,8 @@ pie.model.prototype.deliverChangeRecords = function() {
 
     // then for each observer, build or concatenate to the array of changes.
     while(o = os.shift()) {
-      observers[o.uid] = observers[o.uid] || {fn: o, changes: []};
-      observers[o.uid].changes.push(change);
+      observers[o.pieId] = observers[o.pieId] || {fn: o, changes: []};
+      observers[o.pieId].changes.push(change);
     }
   }
 
@@ -126,8 +127,6 @@ pie.model.prototype.gets = function() {
 pie.model.prototype.observe = function(/* fn[, key1, key2, key3] */) {
   var keys = pie.array.args(arguments),
   fn = keys.shift();
-
-  fn.uid = fn.uid || String(pie.unique());
 
   keys = pie.array.flatten(keys);
 

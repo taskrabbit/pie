@@ -21,3 +21,22 @@ pie.func.valueFrom = function(f, binding) {
   if(typeof f === 'function') return f.call(binding);
   return f;
 };
+
+
+
+pie.func.async = function(fns, cb, counterObserver) {
+  var completeCount = fns.length,
+  completed = 0,
+  counter = function() {
+    completed++;
+    if(counterObserver) counterObserver.apply(null, arguments);
+    if(completed === completeCount) {
+      cb();
+    }
+  };
+
+  fns.forEach(function(fn) {
+    fn(counter);
+  });
+
+};

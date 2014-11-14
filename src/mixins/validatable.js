@@ -8,7 +8,7 @@ pie.mixins.validatable = {
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
   // validates({name: ['presence', {format: /[a]/}]})
-  validates: function(obj) {
+  validates: function(obj, observeChanges) {
     var configs, resultConfigs;
 
     this.validations = this.validations || {};
@@ -51,6 +51,10 @@ pie.mixins.validatable = {
       // append the validations to the existing ones
       this.validations[k] = this.validations[k] || [];
       this.validations[k] = this.validations[k].concat(resultConfigs);
+
+      if(observeChanges) {
+        this.observe(function(){ this.validate(k); }.bind(this), k);
+      }
     }.bind(this));
   },
 
@@ -58,35 +62,31 @@ pie.mixins.validatable = {
   // this.validateAll(function(){ alert('Success!'); }, function(){ alert('Errors!'); });
   // validateAll will perform all registered validations, asynchronously. When all validations have completed, the callbacks
   // will be invoked.
-  validateAll: function(app, success, failure) {
+  validateAll: function(cb) {
     var ok = true,
     keys = Object.keys(this.validations),
-    completeCount = keys.length,
-    completed = 0,
-    callback;
+    fns,
+    callback,
+    whenComplete = function() {
+      if(cb) cb(ok);
+      return void(0);
+    },
+    counterObserver = function(bool) {
+      ok = !!(ok && bool);
+    };
 
     if(!keys.length) {
-      if(success) success(true);
-      return void(0);
+      return whenComplete();
     } else {
 
-
-      // The callback which is invoked after each individual validation.
-      // This keeps track of our progress, and when we are completed, invokes our provided callbacks.
-      callback = function(bool) {
-        ok = !!(ok && bool);
-        completed++;
-
-        if(completeCount === completed) {
-          if(ok && success) success(true);
-          else if (!ok && failure) failure(false);
-        }
-      };
+      fns = keys.map(function(k){
+        return function(cb) {
+          return this.validate(k, cb);
+        }.bind(this);
+      }.bind(this));
 
       // start all the validations
-      keys.forEach(function(k) {
-        this.validate(app, k, callback, callback);
-      }.bind(this));
+      pie.func.async(fns, whenComplete, counterObserver);
 
       return void(0); // return undefined to ensure we make our point about asynchronous validation.
     }
@@ -94,49 +94,50 @@ pie.mixins.validatable = {
 
 
   // validate a specific key and optionally invoke a callback.
-  validate: function(app, k, success, failure) {
-    var validators = app.validator,
+  validate: function(k, cb) {
+    var validators = this.app.validator,
     validations = pie.array.from(this.validations[k]),
     value = this.get(k),
     valid = true,
+    fns,
     messages = [],
-    completeCount = validations.length,
-    completed = 0,
-    validator,
-    result,
-    callback;
+
+    // The callback invoked after each individual validation is run.
+    // It updates our validity boolean
+    counterObserver = function(validation, bool) {
+      valid = !!(valid && bool);
+      if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
+    },
+
+    // When all validations for the key have run, we report any errors and let the callback know
+    // of the result;
+    whenComplete = function() {
+      this.reportValidationError(k, messages);
+      if(cb) cb(valid);
+      return void(0);
+    }.bind(this);
 
     if(!validations.length) {
-      if(success) success(true);
-      return void(0);
+      return whenComplete();
     } else {
-
-      // The callback invoked after each individual validation is run.
-      // Keeps track of progress through our stack and updates the error keys.
-      // Once completed, our provided callback is invoked with the result.
-      callback = function(validation, bool) {
-        valid = !!(valid && bool);
-        completed++;
-
-        if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
-
-        if(completed === completeCount) {
-          this.reportValidationError(k, messages);
-          if(valid && success) success(valid);
-          else if(!valid && failure) failure(valid);
-        }
-      };
 
       // grab the validator for each validation then invoke it.
       // if true or false is returned immediately, we invoke the callback otherwise we assume
       // the validation is running asynchronously and it will invoke the callback with the result.
-      validations.forEach(function(validation){
-        validator = validators[validation.type];
-        result = validator(value, validation.options, callback);
-        if(result === true || result === false) {
-          callback(result);
-        } // if undefined, then the validation assumes responsibility for invoking the callback.
+      fns = validations.map(function(validation) {
+
+        return function(callback) {
+          var validator = validators[validation.type],
+          innerCB = function(result) { callback(validation, result); },
+          result = validator.call(validators, value, validation.options, innerCB);
+
+          if(result === true || result === false) {
+            callback(validation, result);
+          } // if anything else, then the validation assumes responsibility for invoking the callback.
+        };
       });
+
+      pie.func.async(fns, whenComplete, counterObserver);
 
       return void(0);
     }

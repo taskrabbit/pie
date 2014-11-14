@@ -73,7 +73,7 @@ pie.app = function app(options) {
 };
 
 
-pie.object.merge(pie.app.prototype, pie.container);
+pie.object.merge(pie.app.prototype, pie.mixins.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.
