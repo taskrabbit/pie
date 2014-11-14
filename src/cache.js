@@ -2,8 +2,7 @@ pie.cache = function(data, options) {
   pie.model.prototype.constructor.call(this, data, options);
 };
 
-
-pie.object.merge(pie.cache.prototype, pie.model.prototype);
+pie.inherit(pie.cache, pie.model);
 
 
 pie.cache.prototype.del = function(path) {

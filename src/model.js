@@ -75,7 +75,7 @@ pie.model = function(d, options) {
 };
 
 // Give ourselves _super functionality.
-pie.object.merge(pie.model.prototype, pie.mixins.inheritance);
+pie.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
 // After updates have been made we deliver our change records to our observers.

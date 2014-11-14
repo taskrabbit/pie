@@ -4,7 +4,7 @@ pie.list = function(array, options) {
 };
 
 
-pie.list.prototype = Object.create(pie.model.prototype);
+pie.inherit(pie.list, pie.model);
 
 
 pie.list.prototype._normalizedIndex = function(wanted) {

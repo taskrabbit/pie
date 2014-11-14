@@ -53,15 +53,14 @@ example.views.layout = function layout() {
   // this is our page "context". It represents a list of items.
   this.list = new pie.list([]);
 
-  pie.object.merge(this.list, pie.mixins.validatable);
+  pie.extend(this.list, pie.mixins.validatable);
 
   this.list.validates({
     nextItem: {presence: {message: "You can't submit a blank item!"}}
   });
 };
 
-// setup our prototype and override some of the default functionality.
-example.views.layout.prototype = pie.object.merge(Object.create(pie.simpleView.prototype), {
+pie.inherit(example.views.layout, pie.simpleView, {
   render: function() {
     // since this is a simpleView and we provide the template name in the constructor,
     // we have to invoke super here.
@@ -96,7 +95,7 @@ example.views.form = function form(listModel) {
   this.list = this.model = listModel;
 };
 
-example.views.form.prototype = pie.object.merge(Object.create(pie.simpleView.prototype), pie.mixins.bindings, {
+pie.inherit(example.views.form, pie.simpleView, pie.mixins.bindings, {
 
   // we override addedToParent to set up events.
   addedToParent: function() {
@@ -176,8 +175,7 @@ example.views.list = function list(listModel) {
 };
 
 
-
-example.views.list.prototype = pie.object.merge(Object.create(pie.simpleView.prototype), {
+pie.inherit(example.views.list, pie.simpleView, {
 
   // set up our events, then invoke super.
   addedToParent: function() {
@@ -264,9 +262,7 @@ example.views.item = function item(listModel, itemModel) {
   this.item = this.model = itemModel;
 };
 
-
-
-example.views.item.prototype = pie.object.merge(Object.create(pie.simpleView.prototype),  pie.mixins.bindings, {
+pie.inherit(example.views.item, pie.simpleView, pie.mixins.bindings, {
 
   // set up our events, then invoke super.
   addedToParent: function() {

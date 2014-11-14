@@ -8,8 +8,8 @@ pie.view = function(options) {
   pie.setUid(this);
 };
 
-pie.object.merge(pie.view.prototype, pie.mixins.inheritance);
-pie.object.merge(pie.view.prototype, pie.mixins.container);
+pie.extend(pie.view.prototype, pie.mixins.inheritance);
+pie.extend(pie.view.prototype, pie.mixins.container);
 
 
 // placeholder for default functionality
@@ -58,8 +58,7 @@ pie.view.prototype.on = function(e, sel, f) {
 
 
 // Observe changes to an observable, unobserving them when the view is removed.
-// If the object is not observable, the observable extensions will automatically
-// be extended in.
+// If the object is not observable, an error will be thrown.
 pie.view.prototype.onChange = function() {
   var observable = arguments[0], args = pie.array.args(arguments).slice(1);
   if(!('observe' in observable)) throw new Error("Observable does not respond to observe");

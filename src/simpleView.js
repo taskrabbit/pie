@@ -2,8 +2,7 @@ pie.simpleView = function simpleView(options) {
   pie.view.call(this, options);
 };
 
-pie.simpleView.prototype = Object.create(pie.view.prototype);
-pie.simpleView.prototype.constructor = pie.simpleView;
+pie.inherit(pie.simpleView, pie.view);
 
 pie.simpleView.prototype.addedToParent = function(parent) {
   pie.view.prototype.addedToParent.call(this, parent);

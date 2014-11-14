@@ -119,7 +119,7 @@ pie.validator.prototype.date = function(value, options) {
     if(!options.sanitized) {
       Object.keys(options).forEach(function(k){
         iso = options[k];
-        iso = iso.getFullYear() + '-' + (iso.getMonth() < 9 ? '0' : '') + (iso.getMonth() + 1) + '-' + (iso.getDate() < 10 ? '0' : '') + iso.getDate();
+        iso = this.app.i18n.l(iso, 'isoDate');
         options[k] = iso;
       });
       options.sanitized = true;

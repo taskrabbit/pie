@@ -348,22 +348,6 @@ describe("pie.services.i18n", function() {
 
       });
 
-
-      it("should lookup named formats if the string doesnt contain a %", function() {
-        var response = this.i18n.l(this.d, 'strftimetest');
-        expect(response).toEqual('2014-9-8');
-      });
-
-      it("build an iso timestamp", function() {
-        var response = this.i18n.l(this.d, 'isoTime');
-        expect(response).toEqual("2014-09-08T09:00:05.054-04:00");
-      });
-
-      it("build an iso date", function() {
-        var response = this.i18n.l(this.d, 'isoDate');
-        expect(response).toEqual("2014-09-08");
-      });
-
       expectations = {
         '%a' : 'Mon',
         '%A' : 'Monday',

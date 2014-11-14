@@ -90,7 +90,7 @@
       };
 
       lib.views.listView.prototype = Object.create(pie.simpleView.prototype);
-      pie.object.merge(lib.views.listView.prototype, pie.mixins.bindings);
+      pie.extend(lib.views.listView.prototype, pie.mixins.bindings);
 
       lib.views.listView.prototype.addedToParent = function() {
         this._super('addedToParent');

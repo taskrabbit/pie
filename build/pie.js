@@ -22,7 +22,7 @@ window.pie = {
   pieId: 1,
 
   unique: function() {
-    return String(this.pidId++);
+    return String(this.pieId++);
   },
 
   setUid: function(obj) {
@@ -31,6 +31,33 @@ window.pie = {
 
   // application utilities
   util: {},
+
+
+  inherit: function(/* child, parent, extensions */) {
+    var args = pie.array.args(arguments),
+    child = args.shift(),
+    parent = args.shift();
+
+    child.prototype = Object.create(parent.prototype);
+    child.prototype.constructor = child;
+
+    if(!child.prototype._super) pie.extend(child.prototype, pie.mixins.inheritance);
+    if(args.length) pie.extend(child.prototype, args);
+
+    return child;
+  },
+
+  // maybe this will get more complicated in the future, maybe not.
+  extend: function(/* proto, extension1[, extension2, ...] */) {
+    var extensions = pie.array.args(arguments),
+    proto = extensions.shift();
+
+    extensions = pie.array.compact(pie.array.flatten(extensions), true);
+
+    extensions.forEach(function(ext) {
+      pie.object.merge(proto, ext);
+    });
+  }
 
 };
 pie.array.areAll = function(a, f) {
@@ -1281,7 +1308,7 @@ pie.model = function(d, options) {
 };
 
 // Give ourselves _super functionality.
-pie.object.merge(pie.model.prototype, pie.mixins.inheritance);
+pie.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
 // After updates have been made we deliver our change records to our observers.
@@ -1417,8 +1444,7 @@ pie.cache = function(data, options) {
   pie.model.prototype.constructor.call(this, data, options);
 };
 
-
-pie.object.merge(pie.cache.prototype, pie.model.prototype);
+pie.inherit(pie.cache, pie.model);
 
 
 pie.cache.prototype.del = function(path) {
@@ -1502,7 +1528,7 @@ pie.list = function(array, options) {
 };
 
 
-pie.list.prototype = Object.create(pie.model.prototype);
+pie.inherit(pie.list, pie.model);
 
 
 pie.list.prototype._normalizedIndex = function(wanted) {
@@ -1665,8 +1691,8 @@ pie.view = function(options) {
   pie.setUid(this);
 };
 
-pie.object.merge(pie.view.prototype, pie.mixins.inheritance);
-pie.object.merge(pie.view.prototype, pie.mixins.container);
+pie.extend(pie.view.prototype, pie.mixins.inheritance);
+pie.extend(pie.view.prototype, pie.mixins.container);
 
 
 // placeholder for default functionality
@@ -1715,8 +1741,7 @@ pie.view.prototype.on = function(e, sel, f) {
 
 
 // Observe changes to an observable, unobserving them when the view is removed.
-// If the object is not observable, the observable extensions will automatically
-// be extended in.
+// If the object is not observable, an error will be thrown.
 pie.view.prototype.onChange = function() {
   var observable = arguments[0], args = pie.array.args(arguments).slice(1);
   if(!('observe' in observable)) throw new Error("Observable does not respond to observe");
@@ -1805,8 +1830,7 @@ pie.simpleView = function simpleView(options) {
   pie.view.call(this, options);
 };
 
-pie.simpleView.prototype = Object.create(pie.view.prototype);
-pie.simpleView.prototype.constructor = pie.simpleView;
+pie.inherit(pie.simpleView, pie.view);
 
 pie.simpleView.prototype.addedToParent = function(parent) {
   pie.view.prototype.addedToParent.call(this, parent);
@@ -1969,7 +1993,7 @@ pie.validator.prototype.date = function(value, options) {
     if(!options.sanitized) {
       Object.keys(options).forEach(function(k){
         iso = options[k];
-        iso = iso.getFullYear() + '-' + (iso.getMonth() < 9 ? '0' : '') + (iso.getMonth() + 1) + '-' + (iso.getDate() < 10 ? '0' : '') + iso.getDate();
+        iso = this.app.i18n.l(iso, 'isoDate');
         options[k] = iso;
       });
       options.sanitized = true;
@@ -2610,8 +2634,7 @@ pie.services.navigator = function(app) {
   pie.model.prototype.constructor.call(this, {});
 };
 
-pie.services.navigator.prototype = Object.create(pie.model.prototype);
-
+pie.inherit(pie.services.navigator, pie.model);
 
 pie.services.navigator.prototype.go = function(path, params, replace) {
   var url = path;
@@ -2656,7 +2679,7 @@ pie.services.notifier = function notifier(app) {
   this.notifications = {};
 };
 
-pie.services.notifier.prototype = Object.create(pie.view.prototype);
+pie.inherit(pie.services.notifier, pie.view);
 
 
 pie.services.notifier.prototype.addedToParent = function() {
@@ -2994,7 +3017,7 @@ pie.app = function app(options) {
 };
 
 
-pie.object.merge(pie.app.prototype, pie.mixins.container);
+pie.extend(pie.app.prototype, pie.mixins.container);
 
 
 // just in case the client wants to override the standard confirmation dialog.

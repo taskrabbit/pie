@@ -5,7 +5,7 @@ pie.services.notifier = function notifier(app) {
   this.notifications = {};
 };
 
-pie.services.notifier.prototype = Object.create(pie.view.prototype);
+pie.inherit(pie.services.notifier, pie.view);
 
 
 pie.services.notifier.prototype.addedToParent = function() {

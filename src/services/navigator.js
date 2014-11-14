@@ -3,8 +3,7 @@ pie.services.navigator = function(app) {
   pie.model.prototype.constructor.call(this, {});
 };
 
-pie.services.navigator.prototype = Object.create(pie.model.prototype);
-
+pie.inherit(pie.services.navigator, pie.model);
 
 pie.services.navigator.prototype.go = function(path, params, replace) {
   var url = path;
