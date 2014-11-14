@@ -316,52 +316,6 @@ describe("pie.services.i18n", function() {
         this.i18n.load({
           'app' : {
             'time' : {
-              'day_names' : [
-                'Sunday',
-                'Monday',
-                'Tuesday',
-                'Wednesday',
-                'Thursday',
-                'Friday',
-                'Saturday'
-              ],
-              'month_names' : [
-                'January',
-                'February',
-                'March',
-                'April',
-                'May',
-                'June',
-                'July',
-                'August',
-                'September',
-                'October',
-                'November',
-                'December'
-              ],
-              'short_day_names' : [
-                'Sun',
-                'Mon',
-                'Tues',
-                'Wed',
-                'Thurs',
-                'Fri',
-                'Sat'
-              ],
-              'short_month_names' : [
-                'Jan',
-                'Feb',
-                'Mar',
-                'Apr',
-                'May',
-                'Jun',
-                'Jul',
-                'Aug',
-                'Sep',
-                'Oct',
-                'Nov',
-                'Dec'
-              ],
               'formats' : {
                 'strftimetest' : '%Y-%-m-%-d'
               }
@@ -369,40 +323,76 @@ describe("pie.services.i18n", function() {
           }
         });
 
-        this.d = this.i18n._normalizedDate("2014-09-08T17:00:05.854-04:00");
+        this.d = this.i18n._normalizedDate("2014-09-08T09:00:05.054-04:00");
       });
 
       afterEach(function() {
         delete this.i18n.translations.app.time.formats.strftimetest;
       });
 
-      it("should lookup named formats if the string doesnt start with %", function() {
+      var expectations = {
+        'strftimetest' : '2014-9-8',
+        'isoTime' : "2014-09-08T09:00:05.054-04:00",
+        'isoDate' : "2014-09-08",
+        'shortDate' : "09/08/2014",
+        'longDate' : "September 8th, 2014"
+      };
+
+      Object.keys(expectations).forEach(function(k) {
+        var expectation = expectations[k];
+
+        it("should correctly transform the named format: " + k, function() {
+          var response = this.i18n.l(this.d, k);
+          expect(response).toEqual(expectation);
+        });
+
+      });
+
+
+      it("should lookup named formats if the string doesnt contain a %", function() {
         var response = this.i18n.l(this.d, 'strftimetest');
         expect(response).toEqual('2014-9-8');
       });
 
-      var expectations = {
+      it("build an iso timestamp", function() {
+        var response = this.i18n.l(this.d, 'isoTime');
+        expect(response).toEqual("2014-09-08T09:00:05.054-04:00");
+      });
+
+      it("build an iso date", function() {
+        var response = this.i18n.l(this.d, 'isoDate');
+        expect(response).toEqual("2014-09-08");
+      });
+
+      expectations = {
         '%a' : 'Mon',
         '%A' : 'Monday',
-        '%b' : 'Sep',
+        '%B' : 'September',
+        '%b' : 'Sept',
         '%d' : '08',
         '%e' : ' 8',
+        '%-do' : '8th',
         '%-d' : '8',
-        '%H' : '17',
-        '%k' : '17',
-        '%I' : '05',
-        '%l' : '5',
+        '%H' : '09',
+        '%k' : ' 9',
+        '%-H' : '9',
+        '%-k' : '9',
+        '%I' : '09',
+        '%l' : '9',
         '%m' : '09',
         '%-m' : '9',
         '%M' : '00',
-        '%p' : 'PM',
-        '%P' : 'pm',
+        '%p' : 'AM',
+        '%P' : 'am',
         '%S' : '05',
         '%-S' : '5',
+        '%L' : '054',
+        '%-L' : '54',
         '%w' : '1',
         '%y' : '14',
         '%Y' : '2014',
         '%z' : '-0400',
+        '%:z' : '-04:00',
         '%Z' : 'EDT'
       };
 

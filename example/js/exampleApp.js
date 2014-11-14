@@ -51,9 +51,7 @@ example.views.layout = function layout() {
   });
 
   // this is our page "context". It represents a list of items.
-  this.list = new pie.list([], {
-    timestamps: true
-  });
+  this.list = new pie.list([]);
 
   pie.object.merge(this.list, pie.mixins.validatable);
 

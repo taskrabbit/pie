@@ -116,7 +116,8 @@ pie.string.modularize = function(str) {
 };
 
 
-pie.string.pluralize = function(str) {
+pie.string.pluralize = function(str, count) {
+  if(count === 1) return str;
   if(/ss$/i.test(str)) return str + 'es';
   if(/s$/i.test(str)) return str;
   if(/[a-z]$/i.test(str)) return str + 's';

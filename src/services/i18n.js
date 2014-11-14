@@ -1,12 +1,114 @@
 // made to be used as an instance so multiple translations could exist if we so choose.
 pie.services.i18n = function i18n(app) {
-  this.translations = {};
+  this.translations = pie.object.merge({}, pie.services.i18n.defaultTranslations);
   this.app = app;
+};
+
+pie.services.i18n.defaultTranslations = {
+  app: {
+    timeago: {
+      now: "just now",
+      minutes: {
+        one: "%{count} minute ago",
+        other: "%{count} minutes ago"
+      },
+      hours: {
+        one: "%{count} hour ago",
+        other: "%{count} hours ago"
+      },
+      days: {
+        one: "%{count} day ago",
+        other: "%{count} days ago"
+      },
+      weeks: {
+        one: "%{count} week ago",
+        other: "%{count} weeks ago"
+      },
+      months: {
+        one: "%{count} month ago",
+        other: "%{count} months ago"
+      },
+      years: {
+        one: "%{count} year ago",
+        other: "%{count} years ago"
+      }
+    },
+    time: {
+      formats: {
+        isoDate: '%Y-%m-%d',
+        isoTime: '%Y-%m-%dT%H:%M:%S.%L%:z',
+        shortDate: '%m/%d/%Y',
+        longDate: '%B %-do, %Y'
+      },
+      meridiems: {
+        am: 'am',
+        pm: 'pm'
+      },
+      ordinals: {
+        o0: "th",
+        o1: "st",
+        o2: "nd",
+        o3: "rd",
+        o4: "th",
+        o5: "th",
+        o6: "th",
+        o7: "th",
+        o8: "th",
+        o9: "th"
+      },
+      day_names: [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday'
+      ],
+      short_day_names: [
+        'Sun',
+        'Mon',
+        'Tue',
+        'Wed',
+        'Thu',
+        'Fri',
+        'Sat'
+      ],
+      month_names: [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+      ],
+      short_month_names: [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'June',
+        'July',
+        'Aug',
+        'Sept',
+        'Oct',
+        'Nov',
+        'Dec'
+      ]
+    }
+  }
 };
 
 
 pie.services.i18n.prototype._ampm = function(num) {
-  return num >= 12 ? 'pm' : 'am';
+  return this.t('app.time.meridiems.' + (num >= 12 ? 'pm' : 'am'));
 };
 
 
@@ -26,22 +128,6 @@ pie.services.i18n.prototype._hour = function(h) {
   if(h > 12) h -= 12;
   if(!h) h += 12;
   return h;
-};
-
-
-pie.services.i18n.prototype._isoDate = function(t, convertToUtc) {
-  if(convertToUtc) t = this._utc(t);
-  return t.getFullYear() + '-' + this._pad(t.getMonth() + 1, 2, '0') + '-' + this._pad(t.getDate(), 2, '0');
-};
-
-
-pie.services.i18n.prototype._isoTime = function(t) {
-  t = this._utc(t);
-  return  this._pad(t.getHours(), 2, '0') + ':' +
-          this._pad(t.getMinutes(), 2, '0') + ':' +
-          this._pad(t.getSeconds(), 2, '0') + '.' +
-          this._pad(t.getMilliseconds(), 3, '0') +
-          'Z';
 };
 
 
@@ -94,6 +180,14 @@ pie.services.i18n.prototype._pad = function(num, cnt, pad) {
   return s + num.toString();
 };
 
+pie.services.i18n.prototype._ordinal = function(number) {
+  var unit = number % 100;
+
+  if(unit >= 11 && unit <= 13) unit = 0;
+  else unit = number % 10;
+
+  return this.t('app.time.ordinals.o' + unit);
+},
 
 pie.services.i18n.prototype._timezoneAbbr = function(date) {
   var str = date && date.toString();
@@ -126,7 +220,7 @@ pie.services.i18n.prototype.translate = function(path, data) {
   if(!translation) {
 
     if(data && data.hasOwnProperty('default')) {
-      translation = data.default;
+      translation = pie.func.valueFrom(data.default);
     } else {
       this.app.debug("Translation not found: " + path);
       return "";
@@ -180,7 +274,7 @@ pie.services.i18n.prototype.strftime = function(date, f) {
   date = this._normalizedDate(date);
 
   // named format from translations.time.
-  if(f && f.charAt(0) !== '%') f = this.t('app.time.formats.' + f);
+  if(!~f.indexOf('%')) f = this.t('app.time.formats.' + f);
 
   var weekDay           = date.getDay(),
       day               = date.getDate(),
@@ -188,9 +282,10 @@ pie.services.i18n.prototype.strftime = function(date, f) {
       month             = date.getMonth() + 1,
       hour              = date.getHours(),
       hour12            = this._hour(hour),
-      meridian          = this._ampm(hour),
+      meridiem          = this._ampm(hour),
       secs              = date.getSeconds(),
       mins              = date.getMinutes(),
+      mills             = date.getMilliseconds(),
       offset            = date.getTimezoneOffset(),
       absOffsetHours    = Math.floor(Math.abs(offset / 60)),
       absOffsetMinutes  = Math.abs(offset) - (absOffsetHours * 60),
@@ -198,25 +293,32 @@ pie.services.i18n.prototype.strftime = function(date, f) {
 
   f = f.replace("%a", this._shortDayName(weekDay))
       .replace("%A",  this._dayName(weekDay))
+      .replace("%B",  this._monthName(month - 1))
       .replace("%b",  this._shortMonthName(month - 1))
       .replace("%d",  this._pad(day, 2, '0'))
       .replace("%e",  this._pad(day, 2, ' '))
+      .replace("%-do", day + this._ordinal(day))
       .replace("%-d", day)
       .replace("%H",  this._pad(hour, 2, '0'))
-      .replace("%k",  hour)
+      .replace("%k",  this._pad(hour, 2, ' '))
+      .replace('%-H', hour)
+      .replace('%-k', hour)
       .replace("%I",  this._pad(hour12, 2, '0'))
       .replace("%l",  hour12)
       .replace("%m",  this._pad(month, 2, '0'))
       .replace("%-m", month)
       .replace("%M",  this._pad(mins, 2, '0'))
-      .replace("%p",  meridian.toUpperCase())
-      .replace("%P",  meridian)
+      .replace("%p",  meridiem.toUpperCase())
+      .replace("%P",  meridiem)
       .replace("%S",  this._pad(secs, 2, '0'))
       .replace("%-S", secs)
+      .replace('%L',  this._pad(mills, 3, '0'))
+      .replace('%-L', mills)
       .replace("%w",  weekDay)
       .replace("%y",  this._pad(year % 100))
       .replace("%Y",  year)
       .replace("%z",  timezoneoffset)
+      .replace("%:z", timezoneoffset.slice(0,3) + ':' + timezoneoffset.slice(3))
       .replace("%Z",  this._timezoneAbbr(date));
 
   return f;
