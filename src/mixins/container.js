@@ -42,7 +42,7 @@ pie.mixins.container = {
     return ~idx && this.children()[idx] || undefined;
   },
 
-  send: function() {
+  bubble: function() {
     var args = pie.array.args(arguments),
     fname = args.shift(),
     obj = this.parent;

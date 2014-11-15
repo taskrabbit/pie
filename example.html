@@ -26,16 +26,18 @@
     </script>
 
     <script type="text/pie-template" id="listContainer">
-    <a class="js-complete-all" href="#">Mark all as completed</a>
       <ul>
       </ul>
       <p id="summary"></p>
+      <a class="js-complete-all" href="#">Mark all as completed</a>
     </script>
 
     <script type="text/pie-template" id="itemContainer">
       <li>
-        <input type="checkbox" name="completed"></input>
-        <span>[%- data.title %]</span>
+        <label>
+          <input type="checkbox" name="completed"></input>
+          <span>[%- data.title %]</span>
+        </label>
         <a href="#" class="js-delete">x</a>
       </li>
     </script>

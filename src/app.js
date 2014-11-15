@@ -34,6 +34,10 @@ pie.app = function app(options) {
   this.router = classOption('router', pie.services.router);
   this.addChild('router', this.router);
 
+  // app.resources is used for managing the loading of external resources.
+  this.resources = classOption('resources', pie.services.resources);
+  this.addChild('resources', this.resources);
+
   // the only navigator which should exist in this app.
   this.navigator = classOption('navigator', pie.services.navigator);
   this.addChild('navigator', this.navigator);

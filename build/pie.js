@@ -333,6 +333,54 @@ pie.date.timeFromISO = (function() {
   };
 
 })();
+pie.dom._all = function(originalArgs, returnValues) {
+  var nodes = pie.array.from(originalArgs[0]),
+  meths = originalArgs[1].split('.'),
+  args = Array.prototype.slice.call(originalArgs, 2),
+  meth = meths[meths.length-1],
+  assign = /=$/.test(meth),
+  r, f, i, v;
+
+  if(assign) meth = meth.substr(0,meth.length-1);
+  if(returnValues) r = [];
+
+  nodes.forEach(function(e){
+    for(i=0;i < meths.length-1;i++) {
+      f = e[meths[i]];
+      e = pie.func.valueFrom(f);
+    }
+    if(assign) v = e[meth] = args[0];
+    else {
+      f = e[meth];
+      v = pie.func.valueFrom(f, e, args);
+    }
+
+    if(returnValues) r.push(v);
+  });
+
+  return returnValues ? r : undefined;
+};
+
+// ###all
+// Invokes the provided method or method chain with the provided arguments to all elements in the nodeList.
+// Example usage:
+// * pie.dom.all(nodeList, 'setAttribute', 'foo', 'bar');
+// * pie.dom.all(nodeList, 'classList.add', 'active');
+// * pie.dom.all(nodeList, 'clicked=', true);
+//
+// `nodeList` can either be a node, nodeList, or an array of nodes.
+// `methodName` can be a string representing a method name, an attribute, or a property. Can be chained with periods. Can end in a `=` to invoke an assignment.
+pie.dom.all = function(/* nodeList, methodName[, arg1, arg2, ...] */) {
+  return pie.dom._all(arguments, false);
+};
+
+// Has the same method signature of `pie.dom.all` but returns the values of the result
+// Example usage:
+// * pie.dom.getAll(nodeList, 'clicked') //=> [true, true, false]
+pie.dom.getAll = function() {
+  return pie.dom._all(arguments, true);
+};
+
 // create an element based on the content provided.
 pie.dom.createElement = function(str) {
   var wrap = document.createElement('div');
@@ -451,8 +499,8 @@ pie.func.debounce = function(func, wait, immediate) {
   };
 };
 
-pie.func.valueFrom = function(f, binding) {
-  if(typeof f === 'function') return f.call(binding);
+pie.func.valueFrom = function(f, binding, args) {
+  if(typeof f === 'function') return f.apply(binding, args);
   return f;
 };
 
@@ -1013,7 +1061,7 @@ pie.mixins.container = {
     return ~idx && this.children()[idx] || undefined;
   },
 
-  send: function() {
+  bubble: function() {
     var args = pie.array.args(arguments),
     fname = args.shift(),
     obj = this.parent;
@@ -1154,7 +1202,6 @@ pie.mixins.validatable = {
     var ok = true,
     keys = Object.keys(this.validations),
     fns,
-    callback,
     whenComplete = function() {
       if(cb) cb(ok);
       return void(0);
@@ -1360,6 +1407,9 @@ pie.model.prototype.gets = function() {
 pie.model.prototype.observe = function(/* fn[, key1, key2, key3] */) {
   var keys = pie.array.args(arguments),
   fn = keys.shift();
+
+  // uid is needed later for ensuring unique change record delivery.
+  pie.setUid(fn);
 
   keys = pie.array.flatten(keys);
 
@@ -1707,13 +1757,6 @@ pie.view.prototype.eventNamespace = function() {
 };
 
 
-// add or remove the default loading style.
-pie.view.prototype.loadingStyle = function(bool) {
-  if(bool === undefined) bool = true;
-  this._loadingStyle(bool);
-};
-
-
 pie.view.prototype.navigationUpdated = function() {
   this.children().forEach(function(c){
     if('navigationUpdated' in c) c.navigationUpdated();
@@ -1751,25 +1794,6 @@ pie.view.prototype.onChange = function() {
 };
 
 
-// If the first option passed is a node, it will use that as the query scope.
-// Return an object representing the values of fields within this.el.
-pie.view.prototype.parseFields = function() {
-  var o = {}, e = arguments[0], i = 0, n, el;
-
-  if('string' === typeof e) {
-    e = this.el;
-  } else {
-    i++;
-  }
-
-  for(;i<arguments.length;i++) {
-    n = arguments[i];
-    el = e.querySelector('[name="' + n + '"]:not([disabled])');
-    if(el) pie.object.setPath(o, n, el.value);
-  }
-  return o;
-};
-
 // shortcut for this.el.querySelector
 pie.view.prototype.qs = function(selector) {
   return this.el.querySelector(selector);
@@ -1786,16 +1810,10 @@ pie.view.prototype.removedFromParent = function() {
   this._unobserveEvents();
   this._unobserveChangeCallbacks();
 
-  // views remove their children upon removal.
+  // views remove their children upon removal to ensure all irrelevant observations are cleaned up.
   this.removeChildren();
 
   return this;
-};
-
-
-// convenience method which is useful for ajax callbacks.
-pie.view.prototype.removeLoadingStyle = function(){
-  this._loadingStyle(false);
 };
 
 
@@ -1814,25 +1832,14 @@ pie.view.prototype._unobserveChangeCallbacks = function() {
     a[0].unobserve.apply(a[0], a[1]);
   }
 };
-
-
-// this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
-pie.view.prototype._loadingStyle = function(bool) {
-  this.el.classList[bool ? 'add' : 'remove']('loading');
-  var buttons = pie.array.from(this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable'));
-
-  buttons.forEach(function(button){
-    button.classList[bool ? 'add' : 'remove']('btn-loading');
-    button[bool ? 'setAttribute' : 'removeAttribute']('disabled', 'disabled');
-  });
-};
-pie.simpleView = function simpleView(options) {
+// a view class which handles some basic functionality
+pie.activeView = function activeView(options) {
   pie.view.call(this, options);
 };
 
-pie.inherit(pie.simpleView, pie.view);
+pie.inherit(pie.activeView, pie.view);
 
-pie.simpleView.prototype.addedToParent = function(parent) {
+pie.activeView.prototype.addedToParent = function(parent) {
   pie.view.prototype.addedToParent.call(this, parent);
 
   if(this.options.autoRender && this.model) {
@@ -1847,7 +1854,32 @@ pie.simpleView.prototype.addedToParent = function(parent) {
   return this;
 };
 
-pie.simpleView.prototype.removedFromParent = function(parent) {
+// add or remove the default loading style.
+pie.activeView.prototype.loadingStyle = function(bool) {
+  if(bool === undefined) bool = true;
+  this._loadingStyle(bool);
+};
+
+// If the first option passed is a node, it will use that as the query scope.
+// Return an object representing the values of fields within this.el.
+pie.activeView.prototype.parseFields = function() {
+  var o = {}, e = arguments[0], i = 0, n, el;
+
+  if('string' === typeof e) {
+    e = this.el;
+  } else {
+    i++;
+  }
+
+  for(;i<arguments.length;i++) {
+    n = arguments[i];
+    el = e.querySelector('[name="' + n + '"]:not([disabled])');
+    if(el) pie.object.setPath(o, n, el.value);
+  }
+  return o;
+};
+
+pie.activeView.prototype.removedFromParent = function(parent) {
   pie.view.prototype.removedFromParent.call(this, parent);
 
   // remove our el if we still have a parent node.
@@ -1855,7 +1887,14 @@ pie.simpleView.prototype.removedFromParent = function(parent) {
   if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
 };
 
-pie.simpleView.prototype.renderData = function() {
+
+// convenience method which is useful for ajax callbacks.
+pie.activeView.prototype.removeLoadingStyle = function(){
+  this._loadingStyle(false);
+};
+
+
+pie.activeView.prototype.renderData = function() {
   if(this.model) {
     return this.model.data;
   }
@@ -1863,7 +1902,7 @@ pie.simpleView.prototype.renderData = function() {
   return {};
 };
 
-pie.simpleView.prototype.render = function() {
+pie.activeView.prototype.render = function() {
 
   if(this.options.template) {
     var content = this.app.template(this.options.template, this.renderData());
@@ -1872,6 +1911,18 @@ pie.simpleView.prototype.render = function() {
 
   return this;
 };
+
+
+// this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
+pie.activeView.prototype._loadingStyle = function(bool) {
+  this.el.classList[bool ? 'add' : 'remove']('loading');
+
+  var buttons = this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable');
+
+  pie.dom.all(buttons, bool ? 'classList.add' : 'classList.remove', 'btn-loading');
+  pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
+};
+
 pie.validator = function(app) {
   this.app = app || window.app;
   this.i18n = app.i18n;
@@ -2748,6 +2799,36 @@ pie.services.notifier.prototype.handleAlertClick = function(e) {
   this.remove(e.delegateTarget);
   e.preventDefault();
 };
+pie.services.resources = function(app) {
+  this.app = app;
+  this.loaded = {};
+  this.srcMap = {};
+};
+
+pie.services.resources.prototype.define = function(name, src) {
+  this.srcMap[name] = src;
+};
+
+pie.services.resources.prototype.require = function(src, cb) {
+  src = this.srcMap[src] || src;
+
+  // we've already taken care of this.
+  if(this.loaded[src]) {
+    if(cb) cb();
+    return true;
+  }
+
+  this.loaded[src] = true;
+
+  var script = document.createElement('script');
+  script.src = src;
+  script.async = true;
+  script.onload = cb;
+
+  document.querySelector('head').appendChild(script);
+
+  return false;
+};
 pie.services.router = function(app) {
   this.app = app;
   this.routes = {};
@@ -2977,6 +3058,10 @@ pie.app = function app(options) {
   // app.router is used to determine which view should be rendered based on the url
   this.router = classOption('router', pie.services.router);
   this.addChild('router', this.router);
+
+  // app.resources is used for managing the loading of external resources.
+  this.resources = classOption('resources', pie.services.resources);
+  this.addChild('resources', this.resources);
 
   // the only navigator which should exist in this app.
   this.navigator = classOption('navigator', pie.services.navigator);

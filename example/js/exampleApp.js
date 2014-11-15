@@ -41,7 +41,7 @@ window.example = {
 // this view handles managing it's children, initializes page context via the pie.list.
 example.views.layout = function layout() {
 
-  pie.simpleView.call(this, {
+  pie.activeView.call(this, {
 
     // this is the template this view renders.
     template: 'layoutContainer',
@@ -60,7 +60,7 @@ example.views.layout = function layout() {
   });
 };
 
-pie.inherit(example.views.layout, pie.simpleView, {
+pie.inherit(example.views.layout, pie.activeView, {
   render: function() {
     // since this is a simpleView and we provide the template name in the constructor,
     // we have to invoke super here.
@@ -86,7 +86,7 @@ pie.inherit(example.views.layout, pie.simpleView, {
 // notice the model is provided to the form explicity. This isn't necessary, but is generally a good idea.
 example.views.form = function form(listModel) {
 
-  pie.simpleView.call(this, {
+  pie.activeView.call(this, {
     template: 'formContainer',
     renderOnAddedToParent: true
   });
@@ -95,7 +95,7 @@ example.views.form = function form(listModel) {
   this.list = this.model = listModel;
 };
 
-pie.inherit(example.views.form, pie.simpleView, pie.mixins.bindings, {
+pie.inherit(example.views.form, pie.activeView, pie.mixins.bindings, {
 
   // we override addedToParent to set up events.
   addedToParent: function() {
@@ -163,7 +163,7 @@ example.views.list = function list(listModel) {
 
   // this time we use autoRender to automatically render this view
   // any time the "items" attribute of the model changes.
-  pie.simpleView.call(this, {
+  pie.activeView.call(this, {
     template: 'listContainer',
     renderOnAddedToParent: true
   });
@@ -175,7 +175,7 @@ example.views.list = function list(listModel) {
 };
 
 
-pie.inherit(example.views.list, pie.simpleView, {
+pie.inherit(example.views.list, pie.activeView, {
 
   // set up our events, then invoke super.
   addedToParent: function() {
@@ -197,10 +197,10 @@ pie.inherit(example.views.list, pie.simpleView, {
   },
 
   itemAdded: function(change) {
-    var sibling = change.oldValue && this.getChild('view-' + change.oldValue.pidId),
+    var sibling = change.oldValue && this.getChild('view-' + change.oldValue.pieId),
     child = new example.views.item(this.list, change.value);
 
-    this.addChild('view-' + change.value.pidId, child);
+    this.addChild('view-' + change.value.pieId, child);
 
     if(sibling) {
       sibling.el.parentNode.insertBefore(child.el, sibling.el);
@@ -245,6 +245,7 @@ pie.inherit(example.views.list, pie.simpleView, {
     completed = l && this.app.i18n.t('list.completed', {count: this.qsa('input[name="completed"]:checked').length});
 
     this.qs('#summary').innerHTML = pie.array.compact([total, completed], true).join(', ');
+    this.qs('.js-complete-all').style.display = l ? 'block' : 'none';
   }
 });
 
@@ -253,7 +254,7 @@ example.views.item = function item(listModel, itemModel) {
 
   // this time we use autoRender to automatically render this view
   // any time the "items" attribute of the model changes.
-  pie.simpleView.call(this, {
+  pie.activeView.call(this, {
     template: 'itemContainer',
     renderOnAddedToParent: true
   });
@@ -262,7 +263,7 @@ example.views.item = function item(listModel, itemModel) {
   this.item = this.model = itemModel;
 };
 
-pie.inherit(example.views.item, pie.simpleView, pie.mixins.bindings, {
+pie.inherit(example.views.item, pie.activeView, pie.mixins.bindings, {
 
   // set up our events, then invoke super.
   addedToParent: function() {
@@ -281,7 +282,7 @@ pie.inherit(example.views.item, pie.simpleView, pie.mixins.bindings, {
   },
 
   completedChanged: function() {
-    this.send('itemCompleted', this.item);
+    this.bubble('itemCompleted', this.item);
   },
 
   deleteItem: function(e) {

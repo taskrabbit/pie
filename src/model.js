@@ -128,6 +128,9 @@ pie.model.prototype.observe = function(/* fn[, key1, key2, key3] */) {
   var keys = pie.array.args(arguments),
   fn = keys.shift();
 
+  // uid is needed later for ensuring unique change record delivery.
+  pie.setUid(fn);
+
   keys = pie.array.flatten(keys);
 
   if(!keys.length) keys.push('__all__');

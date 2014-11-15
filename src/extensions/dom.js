@@ -1,3 +1,51 @@
+pie.dom._all = function(originalArgs, returnValues) {
+  var nodes = pie.array.from(originalArgs[0]),
+  meths = originalArgs[1].split('.'),
+  args = Array.prototype.slice.call(originalArgs, 2),
+  meth = meths[meths.length-1],
+  assign = /=$/.test(meth),
+  r, f, i, v;
+
+  if(assign) meth = meth.substr(0,meth.length-1);
+  if(returnValues) r = [];
+
+  nodes.forEach(function(e){
+    for(i=0;i < meths.length-1;i++) {
+      f = e[meths[i]];
+      e = pie.func.valueFrom(f);
+    }
+    if(assign) v = e[meth] = args[0];
+    else {
+      f = e[meth];
+      v = pie.func.valueFrom(f, e, args);
+    }
+
+    if(returnValues) r.push(v);
+  });
+
+  return returnValues ? r : undefined;
+};
+
+// ###all
+// Invokes the provided method or method chain with the provided arguments to all elements in the nodeList.
+// Example usage:
+// * pie.dom.all(nodeList, 'setAttribute', 'foo', 'bar');
+// * pie.dom.all(nodeList, 'classList.add', 'active');
+// * pie.dom.all(nodeList, 'clicked=', true);
+//
+// `nodeList` can either be a node, nodeList, or an array of nodes.
+// `methodName` can be a string representing a method name, an attribute, or a property. Can be chained with periods. Can end in a `=` to invoke an assignment.
+pie.dom.all = function(/* nodeList, methodName[, arg1, arg2, ...] */) {
+  return pie.dom._all(arguments, false);
+};
+
+// Has the same method signature of `pie.dom.all` but returns the values of the result
+// Example usage:
+// * pie.dom.getAll(nodeList, 'clicked') //=> [true, true, false]
+pie.dom.getAll = function() {
+  return pie.dom._all(arguments, true);
+};
+
 // create an element based on the content provided.
 pie.dom.createElement = function(str) {
   var wrap = document.createElement('div');

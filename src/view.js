@@ -24,13 +24,6 @@ pie.view.prototype.eventNamespace = function() {
 };
 
 
-// add or remove the default loading style.
-pie.view.prototype.loadingStyle = function(bool) {
-  if(bool === undefined) bool = true;
-  this._loadingStyle(bool);
-};
-
-
 pie.view.prototype.navigationUpdated = function() {
   this.children().forEach(function(c){
     if('navigationUpdated' in c) c.navigationUpdated();
@@ -68,25 +61,6 @@ pie.view.prototype.onChange = function() {
 };
 
 
-// If the first option passed is a node, it will use that as the query scope.
-// Return an object representing the values of fields within this.el.
-pie.view.prototype.parseFields = function() {
-  var o = {}, e = arguments[0], i = 0, n, el;
-
-  if('string' === typeof e) {
-    e = this.el;
-  } else {
-    i++;
-  }
-
-  for(;i<arguments.length;i++) {
-    n = arguments[i];
-    el = e.querySelector('[name="' + n + '"]:not([disabled])');
-    if(el) pie.object.setPath(o, n, el.value);
-  }
-  return o;
-};
-
 // shortcut for this.el.querySelector
 pie.view.prototype.qs = function(selector) {
   return this.el.querySelector(selector);
@@ -103,16 +77,10 @@ pie.view.prototype.removedFromParent = function() {
   this._unobserveEvents();
   this._unobserveChangeCallbacks();
 
-  // views remove their children upon removal.
+  // views remove their children upon removal to ensure all irrelevant observations are cleaned up.
   this.removeChildren();
 
   return this;
-};
-
-
-// convenience method which is useful for ajax callbacks.
-pie.view.prototype.removeLoadingStyle = function(){
-  this._loadingStyle(false);
 };
 
 
@@ -130,16 +98,4 @@ pie.view.prototype._unobserveChangeCallbacks = function() {
     a = this.changeCallbacks.pop();
     a[0].unobserve.apply(a[0], a[1]);
   }
-};
-
-
-// this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
-pie.view.prototype._loadingStyle = function(bool) {
-  this.el.classList[bool ? 'add' : 'remove']('loading');
-  var buttons = pie.array.from(this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable'));
-
-  buttons.forEach(function(button){
-    button.classList[bool ? 'add' : 'remove']('btn-loading');
-    button[bool ? 'setAttribute' : 'removeAttribute']('disabled', 'disabled');
-  });
 };

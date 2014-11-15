@@ -17,8 +17,8 @@ pie.func.debounce = function(func, wait, immediate) {
   };
 };
 
-pie.func.valueFrom = function(f, binding) {
-  if(typeof f === 'function') return f.call(binding);
+pie.func.valueFrom = function(f, binding, args) {
+  if(typeof f === 'function') return f.apply(binding, args);
   return f;
 };
 

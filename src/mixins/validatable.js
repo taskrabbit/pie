@@ -66,7 +66,6 @@ pie.mixins.validatable = {
     var ok = true,
     keys = Object.keys(this.validations),
     fns,
-    callback,
     whenComplete = function() {
       if(cb) cb(ok);
       return void(0);

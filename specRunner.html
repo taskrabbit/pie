@@ -84,12 +84,12 @@
       lib.views.listView = function listView() {
         this.model = this.items = new pie.model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
 
-        pie.simpleView.call(this, {
+        pie.activeView.call(this, {
           template: 'list'
         });
       };
 
-      lib.views.listView.prototype = Object.create(pie.simpleView.prototype);
+      lib.views.listView.prototype = Object.create(pie.activeView.prototype);
       pie.extend(lib.views.listView.prototype, pie.mixins.bindings);
 
       lib.views.listView.prototype.addedToParent = function() {
