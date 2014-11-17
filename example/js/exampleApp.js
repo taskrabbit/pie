@@ -47,7 +47,10 @@ example.views.layout = function layout() {
     template: 'layoutContainer',
 
     // since we don't need to retrieve anything from a web service, we can render immediately.
-    renderOnAddedToParent: true
+    renderOnInit: true,
+
+    // lol, jk
+    // resources: ['//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js']
   });
 
   // this is our page "context". It represents a list of items.
@@ -88,7 +91,7 @@ example.views.form = function form(listModel) {
 
   pie.activeView.call(this, {
     template: 'formContainer',
-    renderOnAddedToParent: true
+    renderOnInit: true
   });
 
   // this.model is special in that the default renderData() implementation checks for this.
@@ -97,31 +100,32 @@ example.views.form = function form(listModel) {
 
 pie.inherit(example.views.form, pie.activeView, pie.mixins.bindings, {
 
-  // we override addedToParent to set up events.
-  addedToParent: function() {
+  // we override init to set up events.
+  init: function() {
 
-    // first, we setup our bound attributes.
-    // this simple form of the bind is equivalent to:
-    // this.bind({
-    //   model: this.model,
-    //   attr: 'nextItem',
-    //   sel: 'input[name="nextItem"]',
-    //   trigger: 'keyup change',
-    //   debounce: false
-    // })
-    this.bind({attr: 'nextItem'});
+    this._super('init', function() {
+      // first, we setup our bound attributes.
+      // this simple form of the bind is equivalent to:
+      // this.bind({
+      //   model: this.model,
+      //   attr: 'nextItem',
+      //   sel: 'input[name="nextItem"]',
+      //   trigger: 'keyup change',
+      //   debounce: false
+      // })
+      this.bind({attr: 'nextItem'});
 
-    // we observe the form submission and invoke handleSubmission when it occurs.
-    this.on('submit', 'form', this.handleSubmission.bind(this));
+      // we observe the form submission and invoke handleSubmission when it occurs.
+      this.on('submit', 'form', this.handleSubmission.bind(this));
 
-    // any time the input changes, we force validation, which we observe below.
-    this.on('keyup', 'input', this.validate.bind(this));
+      // any time the input changes, we force validation, which we observe below.
+      this.on('keyup', 'input', this.validate.bind(this));
 
-    // observe changes to our validation
-    this.onChange(this.list, this.validationChanged.bind(this), 'validationErrors.nextItem');
+      // observe changes to our validation
+      this.onChange(this.list, this.validationChanged.bind(this), 'validationErrors.nextItem');
 
-    // do this last, since we are rendering in it (renderOnAddedToParent is used in the constructor).
-    this._super('addedToParent');
+    }.bind(this));
+
   },
 
   // handle our form submission.
@@ -165,12 +169,12 @@ example.views.list = function list(listModel) {
   // any time the "items" attribute of the model changes.
   pie.activeView.call(this, {
     template: 'listContainer',
-    renderOnAddedToParent: true
+    renderOnInit: true
   });
 
   // this.model is needed for autoRender
   // if you didn't use autoRender you would have to add
-  // this.onChange(this.list, this.render.bind(this), 'items') in addedToParent.
+  // this.onChange(this.list, this.render.bind(this), 'items') in init.
   this.list = this.model = listModel;
 };
 
@@ -178,14 +182,14 @@ example.views.list = function list(listModel) {
 pie.inherit(example.views.list, pie.activeView, {
 
   // set up our events, then invoke super.
-  addedToParent: function() {
+  init: function() {
 
     this.on('click', '.js-complete-all', this.completeAll.bind(this));
 
     this.onChange(this.list, this.listChanged.bind(this));
 
     // do this last, since we are rendering in it.
-    this._super('addedToParent');
+    this._super('init');
   },
 
   completeAll: function(e) {
@@ -256,7 +260,7 @@ example.views.item = function item(listModel, itemModel) {
   // any time the "items" attribute of the model changes.
   pie.activeView.call(this, {
     template: 'itemContainer',
-    renderOnAddedToParent: true
+    renderOnInit: true
   });
 
   this.list = listModel;
@@ -266,7 +270,7 @@ example.views.item = function item(listModel, itemModel) {
 pie.inherit(example.views.item, pie.activeView, pie.mixins.bindings, {
 
   // set up our events, then invoke super.
-  addedToParent: function() {
+  init: function() {
 
     this.bind({attr: 'completed'});
 
@@ -276,7 +280,7 @@ pie.inherit(example.views.item, pie.activeView, pie.mixins.bindings, {
     this.on('click', '.js-delete', this.deleteItem.bind(this));
 
     // do this last, since we are rendering in it.
-    this._super('addedToParent');
+    this._super('init');
 
     this.initBoundFields();
   },

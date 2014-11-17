@@ -92,9 +92,10 @@
       lib.views.listView.prototype = Object.create(pie.activeView.prototype);
       pie.extend(lib.views.listView.prototype, pie.mixins.bindings);
 
-      lib.views.listView.prototype.addedToParent = function() {
-        this._super('addedToParent');
-        this.bind({attr: 'foo'});
+      lib.views.listView.prototype.init = function() {
+        this._super('init', function(){
+          this.bind({attr: 'foo'});
+        }.bind(this));
       }
 
     </script>

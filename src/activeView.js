@@ -3,21 +3,27 @@ pie.activeView = function activeView(options) {
   pie.view.call(this, options);
 };
 
-pie.inherit(pie.activeView, pie.view);
+pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources, pie.mixins.validatable);
 
-pie.activeView.prototype.addedToParent = function(parent) {
-  pie.view.prototype.addedToParent.call(this, parent);
+pie.activeView.prototype.init = function(setupFunc) {
+  pie.view.prototype.init.call(this, function() {
 
-  if(this.options.autoRender && this.model) {
-    var field = typeof this.options.autoRender === 'string' ? this.options.autoRender : 'updated_at';
-    this.onChange(this.model, this.render.bind(this), field);
-  }
+    this.loadExternalResources(this.options.resources, function() {
 
-  if(this.options.renderOnAddedToParent) {
-    this.render();
-  }
+      if(setupFunc) setupFunc();
 
-  return this;
+      if(this.options.autoRender && this.model) {
+        var field = typeof this.options.autoRender === 'string' ? this.options.autoRender : 'updated_at';
+        this.onChange(this.model, this.render.bind(this), field);
+      }
+
+      if(this.options.renderOnInit) {
+        this.render();
+      }
+
+    }.bind(this));
+
+  }.bind(this));
 };
 
 // add or remove the default loading style.

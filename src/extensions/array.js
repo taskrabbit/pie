@@ -14,6 +14,17 @@ pie.array.areAny = function(a, f) {
   return false;
 };
 
+pie.array.change = function() {
+  var args = pie.array.args(arguments),
+  arr = args.shift();
+  args.forEach(function(m) {
+    arr = pie.array[m](arr);
+  });
+
+  return arr;
+};
+
+
 
 // turn arguments into an array
 pie.array.args = function(argumentsObject) {

@@ -13,7 +13,7 @@ pie.mixins.container = {
     child._nameWithinParent = name;
     child.parent = this;
 
-    if('addedToParent' in child) child.addedToParent.call(child, this);
+    if('addedToParent' in child) child.addedToParent.call(child);
 
     return this;
   },

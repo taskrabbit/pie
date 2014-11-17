@@ -10,9 +10,6 @@ window.pie = {
   object: {},
   string: {},
 
-  // inheritance helper
-  inheritance: {},
-
   // extensions to be used within pie apps.
   mixins: {},
 
@@ -22,15 +19,12 @@ window.pie = {
   pieId: 1,
 
   unique: function() {
-    return String(this.pieId++);
+    return String(pie.pieId++);
   },
 
   setUid: function(obj) {
     return obj.pieId = obj.pieId || pie.unique();
   },
-
-  // application utilities
-  util: {},
 
 
   inherit: function(/* child, parent, extensions */) {
@@ -57,6 +51,33 @@ window.pie = {
     extensions.forEach(function(ext) {
       pie.object.merge(proto, ext);
     });
+  },
+
+
+  // provide a util object for your app which utilizes pie's features.
+  // window._ = pie.util();
+  // _.a.detect(/* .. */);
+  // _.o.merge(a, b);
+  // _.inherit(child, parent);
+  // _.unique(); //=> '95'
+  util: function(as) {
+    var o = {};
+
+    o.a = pie.array;
+    o.d = pie.date;
+    o.$ = pie.dom;
+    o.f = pie.func;
+    o.m = pie.math;
+    o.o = pie.object;
+    o.s = pie.string;
+    o.x = pie.mixins;
+
+    o.unique  = pie.unique;
+    o.setUid  = pie.setUid;
+    o.inherit = pie.inherit;
+    o.extend  = pie.extend;
+
+    return o;
   }
 
 };
@@ -75,6 +96,17 @@ pie.array.areAny = function(a, f) {
   }
   return false;
 };
+
+pie.array.change = function() {
+  var args = pie.array.args(arguments),
+  arr = args.shift();
+  args.forEach(function(m) {
+    arr = pie.array[m](arr);
+  });
+
+  return arr;
+};
+
 
 
 // turn arguments into an array
@@ -285,6 +317,11 @@ pie.date.dateFromISO = function(isoDateString) {
 };
 
 
+// current timestamp
+pie.date.now = function() {
+  return new Date().getTime();
+};
+
 /**
  * STOLEN FROM HERE:
  * Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -484,23 +521,41 @@ pie.dom.trigger = function(el, e) {
 // be triggered. The function will be called after it stops being called for
 // N milliseconds. If `immediate` is passed, trigger the function on the
 // leading edge, instead of the trailing.
+// Lifted from underscore.js
 pie.func.debounce = function(func, wait, immediate) {
-  var timeout;
-  return function() {
-    var context = this, args = arguments;
-    var later = function() {
+  var timeout, args, context, timestamp, result;
+
+  var later = function() {
+    var last = pie.date.now() - timestamp;
+
+    if (last < wait && last > 0) {
+      timeout = setTimeout(later, wait - last);
+    } else {
       timeout = null;
-      if (!immediate) func.apply(context, args);
-    };
+      if (!immediate) {
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+      }
+    }
+  };
+
+  return function() {
+    context = this;
+    args = arguments;
+    timestamp = pie.date.now();
     var callNow = immediate && !timeout;
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-    if (callNow) func.apply(context, args);
+    if (!timeout) timeout = setTimeout(later, wait);
+    if (callNow) {
+      result = func.apply(context, args);
+      context = args = null;
+    }
+
+    return result;
   };
 };
 
 pie.func.valueFrom = function(f, binding, args) {
-  if(typeof f === 'function') return f.apply(binding, args);
+  if(typeof f === 'function') return f.apply(binding, args) ;
   return f;
 };
 
@@ -509,6 +564,13 @@ pie.func.valueFrom = function(f, binding, args) {
 pie.func.async = function(fns, cb, counterObserver) {
   var completeCount = fns.length,
   completed = 0,
+  counter;
+
+  if(!fns.length) {
+    cb();
+    return;
+  }
+
   counter = function() {
     completed++;
     if(counterObserver) counterObserver.apply(null, arguments);
@@ -718,8 +780,7 @@ pie.string.capitalize = function(str) {
 
 pie.string.change = function() {
   var args = pie.array.args(arguments),
-  str = args[0];
-  args = args.slice(1);
+  str = args.shift();
   args.forEach(function(m) {
     str = pie.string[m](str);
   });
@@ -1032,7 +1093,7 @@ pie.mixins.container = {
     child._nameWithinParent = name;
     child.parent = this;
 
-    if('addedToParent' in child) child.addedToParent.call(child, this);
+    if('addedToParent' in child) child.addedToParent.call(child);
 
     return this;
   },
@@ -1110,6 +1171,26 @@ pie.mixins.container = {
 
     return this;
   }
+};
+pie.mixins.externalResources = {
+
+  loadExternalResources: function(/* res1, res2, res3, cb */) {
+    var resources = pie.array.args(arguments),
+    cb = resources.pop(),
+    fns;
+
+    resources = pie.array.change(resources, 'flatten', 'compact');
+
+    fns = resources.map(function(r){
+      return function(asyncCb){
+        this.app.resources.load(r, asyncCb);
+      }.bind(this);
+    }.bind(this));
+
+    pie.func.async(fns, cb);
+    return void(0);
+  }
+
 };
 pie.mixins.inheritance = {
 
@@ -1739,14 +1820,22 @@ pie.view = function(options) {
   this.el = this.options.el || pie.dom.createElement('<div />');
   this.changeCallbacks = [];
   pie.setUid(this);
+  if(this.options.init) this.init();
 };
 
 pie.extend(pie.view.prototype, pie.mixins.inheritance);
 pie.extend(pie.view.prototype, pie.mixins.container);
 
 
+pie.view.prototype.addedToParent = function() {
+  this.init();
+};
+
 // placeholder for default functionality
-pie.view.prototype.addedToParent = function(){
+pie.view.prototype.init = function(setupFn){
+  if(this.isInit) return this;
+  if(setupFn) setupFn();
+  this.isInit = true;
   return this;
 };
 
@@ -1837,21 +1926,27 @@ pie.activeView = function activeView(options) {
   pie.view.call(this, options);
 };
 
-pie.inherit(pie.activeView, pie.view);
+pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources, pie.mixins.validatable);
 
-pie.activeView.prototype.addedToParent = function(parent) {
-  pie.view.prototype.addedToParent.call(this, parent);
+pie.activeView.prototype.init = function(setupFunc) {
+  pie.view.prototype.init.call(this, function() {
 
-  if(this.options.autoRender && this.model) {
-    var field = typeof this.options.autoRender === 'string' ? this.options.autoRender : 'updated_at';
-    this.onChange(this.model, this.render.bind(this), field);
-  }
+    this.loadExternalResources(this.options.resources, function() {
 
-  if(this.options.renderOnAddedToParent) {
-    this.render();
-  }
+      if(setupFunc) setupFunc();
 
-  return this;
+      if(this.options.autoRender && this.model) {
+        var field = typeof this.options.autoRender === 'string' ? this.options.autoRender : 'updated_at';
+        this.onChange(this.model, this.render.bind(this), field);
+      }
+
+      if(this.options.renderOnInit) {
+        this.render();
+      }
+
+    }.bind(this));
+
+  }.bind(this));
 };
 
 // add or remove the default loading style.
@@ -2724,16 +2819,15 @@ pie.services.navigator.prototype.setDataFromLocation = function() {
   return this;
 };
 // notifier is a class which provides an interface for rendering page-level notifications.
-pie.services.notifier = function notifier(app) {
-  pie.view.prototype.constructor.call(this);
-  this.app = app;
+pie.services.notifier = function notifier(app, options) {
+  pie.view.prototype.constructor.call(this, pie.object.merge({app: app}, options));
   this.notifications = {};
 };
 
 pie.inherit(pie.services.notifier, pie.view);
 
 
-pie.services.notifier.prototype.addedToParent = function() {
+pie.services.notifier.prototype.init = function() {
   this.on('click', '.page-alert', this.handleAlertClick.bind(this));
 };
 
@@ -2809,23 +2903,32 @@ pie.services.resources.prototype.define = function(name, src) {
   this.srcMap[name] = src;
 };
 
-pie.services.resources.prototype.require = function(src, cb) {
+pie.services.resources.prototype.load = function(src, cb) {
   src = this.srcMap[src] || src;
 
   // we've already taken care of this.
-  if(this.loaded[src]) {
+  if(this.loaded[src] === true) {
     if(cb) cb();
     return true;
   }
 
-  this.loaded[src] = true;
+  // we're already working on retrieving this src, just append our cb to the callbacks..
+  if(this.loaded[src]) {
+    this.loaded[src].push(cb);
+  } else {
+    this.loaded[src] = [cb];
 
-  var script = document.createElement('script');
-  script.src = src;
-  script.async = true;
-  script.onload = cb;
+    var script = document.createElement('script');
+    script.async = true;
+    script.onload = function() {
+      console.log('loaded ' + src);
+      pie.array.map(pie.array.compact(this.loaded[src]), 'call', true);
+      this.loaded[src] = true;
+    }.bind(this);
 
-  document.querySelector('head').appendChild(script);
+    document.querySelector('head').appendChild(script);
+    script.src = src;
+  }
 
   return false;
 };

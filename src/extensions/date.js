@@ -6,6 +6,11 @@ pie.date.dateFromISO = function(isoDateString) {
 };
 
 
+// current timestamp
+pie.date.now = function() {
+  return new Date().getTime();
+};
+
 /**
  * STOLEN FROM HERE:
  * Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>

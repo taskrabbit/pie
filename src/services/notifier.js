@@ -1,14 +1,13 @@
 // notifier is a class which provides an interface for rendering page-level notifications.
-pie.services.notifier = function notifier(app) {
-  pie.view.prototype.constructor.call(this);
-  this.app = app;
+pie.services.notifier = function notifier(app, options) {
+  pie.view.prototype.constructor.call(this, pie.object.merge({app: app}, options));
   this.notifications = {};
 };
 
 pie.inherit(pie.services.notifier, pie.view);
 
 
-pie.services.notifier.prototype.addedToParent = function() {
+pie.services.notifier.prototype.init = function() {
   this.on('click', '.page-alert', this.handleAlertClick.bind(this));
 };
 

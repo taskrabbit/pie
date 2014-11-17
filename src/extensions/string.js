@@ -5,8 +5,7 @@ pie.string.capitalize = function(str) {
 
 pie.string.change = function() {
   var args = pie.array.args(arguments),
-  str = args[0];
-  args = args.slice(1);
+  str = args.shift();
   args.forEach(function(m) {
     str = pie.string[m](str);
   });

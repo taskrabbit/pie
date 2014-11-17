@@ -10,9 +10,6 @@ window.pie = {
   object: {},
   string: {},
 
-  // inheritance helper
-  inheritance: {},
-
   // extensions to be used within pie apps.
   mixins: {},
 
@@ -22,15 +19,12 @@ window.pie = {
   pieId: 1,
 
   unique: function() {
-    return String(this.pieId++);
+    return String(pie.pieId++);
   },
 
   setUid: function(obj) {
     return obj.pieId = obj.pieId || pie.unique();
   },
-
-  // application utilities
-  util: {},
 
 
   inherit: function(/* child, parent, extensions */) {
@@ -57,6 +51,33 @@ window.pie = {
     extensions.forEach(function(ext) {
       pie.object.merge(proto, ext);
     });
+  },
+
+
+  // provide a util object for your app which utilizes pie's features.
+  // window._ = pie.util();
+  // _.a.detect(/* .. */);
+  // _.o.merge(a, b);
+  // _.inherit(child, parent);
+  // _.unique(); //=> '95'
+  util: function(as) {
+    var o = {};
+
+    o.a = pie.array;
+    o.d = pie.date;
+    o.$ = pie.dom;
+    o.f = pie.func;
+    o.m = pie.math;
+    o.o = pie.object;
+    o.s = pie.string;
+    o.x = pie.mixins;
+
+    o.unique  = pie.unique;
+    o.setUid  = pie.setUid;
+    o.inherit = pie.inherit;
+    o.extend  = pie.extend;
+
+    return o;
   }
 
 };

@@ -6,14 +6,22 @@ pie.view = function(options) {
   this.el = this.options.el || pie.dom.createElement('<div />');
   this.changeCallbacks = [];
   pie.setUid(this);
+  if(this.options.init) this.init();
 };
 
 pie.extend(pie.view.prototype, pie.mixins.inheritance);
 pie.extend(pie.view.prototype, pie.mixins.container);
 
 
+pie.view.prototype.addedToParent = function() {
+  this.init();
+};
+
 // placeholder for default functionality
-pie.view.prototype.addedToParent = function(){
+pie.view.prototype.init = function(setupFn){
+  if(this.isInit) return this;
+  if(setupFn) setupFn();
+  this.isInit = true;
   return this;
 };
 
