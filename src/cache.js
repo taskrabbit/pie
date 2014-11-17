@@ -78,5 +78,5 @@ pie.cache.prototype.wrap = function(obj, options) {
 
 
 pie.cache.prototype.currentTime = function() {
-  return new Date().getTime();
+  return pie.date.now();
 };

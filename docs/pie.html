@@ -2823,7 +2823,7 @@ pie.cache.prototype.wrap = <span class="hljs-function"><span class="hljs-keyword
 
 
 pie.cache.prototype.currentTime = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().getTime();
+  <span class="hljs-keyword">return</span> pie.date.now();
 };
 pie.list = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(array, options)</span> </span>{
   array = array || [];
