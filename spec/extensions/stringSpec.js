@@ -97,16 +97,17 @@ describe("String extensions", function() {
     });
 
     it('should parse values if asked to', function() {
-      var query = pie.string.deserialize('a=A&b=undefined&c=null&d=false&e=true&f=5.5&g=10.0&h=5', true);
+      var query = pie.string.deserialize('a=A&b=undefined&c=null&d=false&e=true&f=-5.5&g=10.0&h=5&i=2014-12-12', true);
       expect(query).toEqual({
         a: 'A',
         b: undefined,
         c: null,
         d: false,
         e: true,
-        f: 5.5,
+        f: -5.5,
         g: 10.0,
-        h: 5
+        h: 5,
+        i: '2014-12-12'
       });
     });
 

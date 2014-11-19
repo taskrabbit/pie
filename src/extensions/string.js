@@ -22,10 +22,13 @@ pie.string.deserialize = (function(){
     if(value === 'null') return null;
     if(value === 'true') return true;
     if(value === 'false') return false;
-    var f = parseFloat(value);
-    if(isNaN(f)) return value;
-    if(/\./.test(value)) return f;
-    return parseInt(f, 10);
+    if(/^-?\d*(\.\d+)?$/.test(value)) {
+      var f = parseFloat(value, 10),
+          i = parseInt(f, 10);
+      if(!isNaN(f) && f % 1) return f;
+      if(!isNaN(i)) return i;
+    }
+    return value;
   }
 
   // foo[][0][thing]=bar
