@@ -1,27 +1,19 @@
 // notifier is a class which provides an interface for rendering page-level notifications.
 pie.services.notifier = function notifier(app, options) {
-  pie.view.prototype.constructor.call(this, pie.object.merge({app: app}, options));
-  this.notifications = {};
+  this.options = options || {};
+  this.app = this.options.app || window.app;
+  this.notifications = new pie.list([]);
 };
-
-pie.inherit(pie.services.notifier, pie.view);
-
-
-pie.services.notifier.prototype.init = function() {
-  this.on('click', '.page-alert', this.handleAlertClick.bind(this));
-};
-
 
 // remove all alerts, potentially filtering by the type of alert.
 pie.services.notifier.prototype.clear = function(type) {
   if(type) {
-    var nodes = this.notifications[type] || [];
-    while(nodes.length) {
-      this.remove(nodes[nodes.length-1]);
-    }
+    this.notifications.forEach(function(n) {
+      this.remove(n.id);
+    }.bind(this));
   } else {
-    while(this.el.childNodes.length) {
-      this.remove(this.el.childNodes[0]);
+    while(this.notifications.length()) {
+      this.remove(this.notifications.get(0).id);
     }
   }
 };
@@ -31,45 +23,46 @@ pie.services.notifier.prototype.clear = function(type) {
 // Multiple messages will be shown in the same notification, but on separate lines.
 // You can choose to close a notification automatically by providing `true` as the third arg.
 // You can provide a number in milliseconds as the autoClose value as well.
-pie.services.notifier.prototype.notify = function(messages, type, autoClose) {
+pie.services.notifier.prototype.notify = function(messages, type, autoRemove) {
   type = type || 'message';
-  autoClose = this.getAutoCloseTimeout(autoClose);
+  autoRemove = this.getAutoRemoveTimeout(autoRemove);
 
   messages = pie.array.from(messages);
 
-  var content = this.app.template('alert', {"type" : type, "messages": messages});
-  content = pie.dom.createElement(content);
+  messages = messages.map(function(msg) {
+    msg = {
+      id: pie.unique(),
+      message: msg,
+      type: type
+    };
 
-  this.notifications[type] = this.notifications[type] || [];
-  this.notifications[type].push(content);
+    this.notifications.push(msg);
 
-  content._pieNotificationType = type;
-  this.el.insertBefore(content, this.el.firstElementChild);
+    return msg;
+  }.bind(this));
 
-  if(autoClose) {
+  if(autoRemove) {
     setTimeout(function(){
-      this.remove(content);
-    }.bind(this), autoClose);
+      messages.forEach(function(msg){
+        this.remove(msg.id);
+      }.bind(this));
+    }.bind(this), autoRemove);
   }
 
 };
 
-pie.services.notifier.prototype.getAutoCloseTimeout = function(autoClose) {
-  if(autoClose === undefined) autoClose = true;
-  if(autoClose && !pie.object.isNumber(autoClose)) autoClose = 7000;
-  return autoClose;
+pie.services.notifier.prototype.getAutoRemoveTimeout = function(timeout) {
+  if(timeout === undefined) timeout = true;
+  if(timeout && !pie.object.isNumber(timeout)) timeout = 7000;
+  return timeout;
 };
 
-pie.services.notifier.prototype.remove = function(el) {
-  var type = el._pieNotificationType;
-  if(type) {
-    pie.array.remove(this.notifications[type] || [], el);
+pie.services.notifier.prototype.remove = function(msgId) {
+  var msgIdx = pie.array.indexOf(this.notifications.get('items'), function(m) {
+    return m.id === msgId;
+  });
+
+  if(~msgIdx) {
+    this.notifications.remove(msgIdx);
   }
-  pie.dom.remove(el);
-};
-
-// remove the alert that was clicked.
-pie.services.notifier.prototype.handleAlertClick = function(e) {
-  this.remove(e.delegateTarget);
-  e.preventDefault();
 };

@@ -121,6 +121,16 @@ pie.array.groupBy = function(arr, groupingF) {
   return h;
 };
 
+pie.array.indexOf = function(a, f) {
+  var i = 0, l = a.length;
+  for(;i<l;i++) {
+    if(pie.object.getValue(a[i], f)) {
+      return i;
+    }
+  }
+
+  return -1;
+};
 
 pie.array.intersect = function(a, b) {
   return a.filter(function(i) { return ~b.indexOf(i); });
