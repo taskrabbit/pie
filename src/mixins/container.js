@@ -43,7 +43,7 @@ pie.mixins.container = {
   },
 
   bubble: function() {
-    var args = pie.array.args(arguments),
+    var args = pie.array.from(arguments),
     fname = args.shift(),
     obj = this.parent;
 

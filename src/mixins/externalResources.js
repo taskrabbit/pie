@@ -1,7 +1,7 @@
 pie.mixins.externalResources = {
 
   loadExternalResources: function(/* res1, res2, res3, cb */) {
-    var resources = pie.array.args(arguments),
+    var resources = pie.array.from(arguments),
     cb = resources.pop(),
     fns;
 

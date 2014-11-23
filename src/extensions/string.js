@@ -4,7 +4,7 @@ pie.string.capitalize = function(str) {
 
 
 pie.string.change = function() {
-  var args = pie.array.args(arguments),
+  var args = pie.array.from(arguments),
   str = args.shift();
   args.forEach(function(m) {
     str = pie.string[m](str);
@@ -154,7 +154,7 @@ pie.string.underscore = function(str) {
 
 
 pie.string.urlConcat = function() {
-  var args = pie.array.compact(pie.array.args(arguments), true),
+  var args = pie.array.compact(pie.array.from(arguments), true),
   base = args.shift(),
   query = args.join('&');
 

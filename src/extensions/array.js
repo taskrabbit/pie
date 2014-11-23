@@ -15,20 +15,13 @@ pie.array.areAny = function(a, f) {
 };
 
 pie.array.change = function() {
-  var args = pie.array.args(arguments),
+  var args = pie.array.from(arguments),
   arr = args.shift();
   args.forEach(function(m) {
     arr = pie.array[m](arr);
   });
 
   return arr;
-};
-
-
-
-// turn arguments into an array
-pie.array.args = function(argumentsObject) {
-  return Array.prototype.slice.call(argumentsObject);
 };
 
 
@@ -102,7 +95,7 @@ pie.array.flatten = function(a, depth, into) {
 // return an array from a value. if the value is an array it will be returned.
 pie.array.from = function(value) {
   if(Array.isArray(value)) return value;
-  if(value instanceof NodeList || value instanceof HTMLCollection) return Array.prototype.slice.call(value, 0);
+  if(pie.object.isArguments(value) || value instanceof NodeList || value instanceof HTMLCollection) return Array.prototype.slice.call(value, 0);
   return pie.array.compact([value], false);
 };
 
@@ -150,11 +143,11 @@ pie.array.last = function(arr) {
 pie.array.map = function(a, f, callInternalFunction){
   var callingF;
 
-  if(typeof(f) !== 'function') {
+  if(!pie.object.isFunction(f)) {
     callingF = function(e){
       var ef = e[f];
 
-      if(callInternalFunction && typeof(ef) === 'function')
+      if(callInternalFunction && pie.object.isFunction(ef))
         return ef.apply(e);
       else
         return ef;
@@ -213,7 +206,7 @@ pie.array.toSentence = function(arr, i18n) {
 
 
 pie.array.union = function() {
-  var arrs = pie.array.args(arguments);
+  var arrs = pie.array.from(arguments);
   arrs = pie.array.compact(arrs, true);
   arrs = pie.array.flatten(arrs);
   arrs = pie.array.unique(arrs);

@@ -60,7 +60,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 
   pie.object.forEach(routes, function(k,r) {
 
-    if('object' === typeof r) {
+    if(pie.object.isObject(r)) {
 
       k = this.normalizePath(k);
 
@@ -80,7 +80,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
 pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly) {
   var o = this.namedRoutes[nameOrPath],
-  s = ('string' === typeof o) ? o : nameOrPath,
+  s = pie.object.isString(o) ? o : nameOrPath,
   usedKeys = [],
   params,
   unusedData;
@@ -156,7 +156,7 @@ pie.services.router.prototype.parseUrl = function(path, parseQuery) {
     while (i < keys.length && !match) {
       key = keys[i];
 
-      if(typeof this.routes[key] !== 'object') {
+      if(!pie.object.isObject(this.routes[key])) {
         i++;
         continue;
       }

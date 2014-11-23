@@ -107,7 +107,7 @@ pie.app.prototype.debug = function(msg) {
 // app.go('/test-url', true, 'Thanks for your interest') // replaces state with /test-url and shows the provided notification
 // app.go('/test-url', 'Thanks for your interest') // navigates to /test-url and shows the provided notification
 pie.app.prototype.go = function(){
-  var args = pie.array.args(arguments), path, notificationArgs, replaceState, query;
+  var args = pie.array.from(arguments), path, notificationArgs, replaceState, query;
 
   path = args.shift();
 

@@ -59,7 +59,7 @@ pie.cache.prototype.wrap = function(obj, options) {
     // make sure we don't have a date.
     if(expiresAt instanceof Date) expiresAt = expiresAt.getTime();
     // or a string
-    if(typeof expiresAt === 'string') {
+    if(pie.object.isString(expiresAt)) {
       // check for a numeric
       if(/^\d+$/.test(expiresAt)) expiresAt = parseInt(expiresAt, 10);
       // otherwise assume ISO

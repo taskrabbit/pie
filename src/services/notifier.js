@@ -56,7 +56,7 @@ pie.services.notifier.prototype.notify = function(messages, type, autoClose) {
 
 pie.services.notifier.prototype.getAutoCloseTimeout = function(autoClose) {
   if(autoClose === undefined) autoClose = true;
-  if(autoClose && typeof autoClose !== 'number') autoClose = 7000;
+  if(autoClose && !pie.object.isNumber(autoClose)) autoClose = 7000;
   return autoClose;
 };
 

@@ -1,12 +1,12 @@
 pie.mixins.inheritance = {
 
   _super: function() {
-    var args = pie.array.args(arguments),
+    var args = pie.array.from(arguments),
     name = args.shift(),
     obj = this,
     curr;
 
-    if(args.length === 1 && String(args[0]) === "[object Arguments]") args = pie.array.args(args[0]);
+    if(args.length === 1 && String(args[0]) === "[object Arguments]") args = pie.array.from(args[0]);
 
     while(true) {
       curr = Object.getPrototypeOf(obj);

@@ -21,10 +21,10 @@ pie.mixins.validatable = {
       configs.forEach(function(conf) {
 
         // if it's a string or a function, throw it in directly, with no options
-        if(typeof conf === 'string') {
+        if(pie.object.isString(conf)) {
           resultConfigs.push({type: conf, options: {}});
         // if it's a function, make it a type function, then provide the function as an option
-        } else if(typeof conf === 'function'){
+        } else if(pie.object.isFunction(conf)){
           resultConfigs.push({type: 'fn', options: {fn: conf}});
         // otherwise, we have an object
         } else {

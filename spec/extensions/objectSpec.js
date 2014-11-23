@@ -91,4 +91,41 @@ describe("Object extension", function() {
 
   });
 
+
+  describe("#except", function() {
+
+    it("should return the object, less the supplied keys", function() {
+      var a = {foo: 'f', bar: 'b', baz: 'z', qux: 'q'}, b;
+      b = pie.object.except(a, 'foo', 'baz');
+
+      expect(b).toEqual({bar: 'b', qux: 'q'});
+      expect(a).not.toEqual(b);
+    });
+
+    it("should not define keys that are not initially present", function() {
+      var a = {a: 'a'}, b;
+      b = pie.object.except(a, 'b', 'c');
+      expect(b).toEqual(a);
+    });
+
+  });
+
+  describe("#slice", function() {
+
+    it("should return an object with the matching keys", function() {
+      var a = {foo: 'f', bar: 'b', baz: 'z', qux: 'q'}, b;
+      b = pie.object.slice(a, 'foo', 'baz');
+
+      expect(b).toEqual({foo: 'f', baz: 'z'});
+      expect(a).not.toEqual(b);
+    });
+
+    it("should not define keys, or have an issue with extras", function() {
+      var a = {a: 'a'}, b;
+      b = pie.object.slice(a, 'b', 'c');
+      expect(b).toEqual({});
+    });
+
+  });
+
 });

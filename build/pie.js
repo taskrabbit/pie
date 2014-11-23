@@ -28,7 +28,7 @@ window.pie = {
 
 
   inherit: function(/* child, parent, extensions */) {
-    var args = pie.array.args(arguments),
+    var args = pie.array.from(arguments),
     child = args.shift(),
     parent = args.shift();
 
@@ -43,7 +43,7 @@ window.pie = {
 
   // maybe this will get more complicated in the future, maybe not.
   extend: function(/* proto, extension1[, extension2, ...] */) {
-    var extensions = pie.array.args(arguments),
+    var extensions = pie.array.from(arguments),
     proto = extensions.shift();
 
     extensions = pie.array.compact(pie.array.flatten(extensions), true);
@@ -98,20 +98,13 @@ pie.array.areAny = function(a, f) {
 };
 
 pie.array.change = function() {
-  var args = pie.array.args(arguments),
+  var args = pie.array.from(arguments),
   arr = args.shift();
   args.forEach(function(m) {
     arr = pie.array[m](arr);
   });
 
   return arr;
-};
-
-
-
-// turn arguments into an array
-pie.array.args = function(argumentsObject) {
-  return Array.prototype.slice.call(argumentsObject);
 };
 
 
@@ -185,7 +178,7 @@ pie.array.flatten = function(a, depth, into) {
 // return an array from a value. if the value is an array it will be returned.
 pie.array.from = function(value) {
   if(Array.isArray(value)) return value;
-  if(value instanceof NodeList || value instanceof HTMLCollection) return Array.prototype.slice.call(value, 0);
+  if(pie.object.isArguments(value) || value instanceof NodeList || value instanceof HTMLCollection) return Array.prototype.slice.call(value, 0);
   return pie.array.compact([value], false);
 };
 
@@ -233,11 +226,11 @@ pie.array.last = function(arr) {
 pie.array.map = function(a, f, callInternalFunction){
   var callingF;
 
-  if(typeof(f) !== 'function') {
+  if(!pie.object.isFunction(f)) {
     callingF = function(e){
       var ef = e[f];
 
-      if(callInternalFunction && typeof(ef) === 'function')
+      if(callInternalFunction && pie.object.isFunction(ef))
         return ef.apply(e);
       else
         return ef;
@@ -296,7 +289,7 @@ pie.array.toSentence = function(arr, i18n) {
 
 
 pie.array.union = function() {
-  var arrs = pie.array.args(arguments);
+  var arrs = pie.array.from(arguments);
   arrs = pie.array.compact(arrs, true);
   arrs = pie.array.flatten(arrs);
   arrs = pie.array.unique(arrs);
@@ -555,7 +548,7 @@ pie.func.debounce = function(func, wait, immediate) {
 };
 
 pie.func.valueFrom = function(f, binding, args) {
-  if(typeof f === 'function') return f.apply(binding, args) ;
+  if(pie.object.isFunction(f)) return f.apply(binding, args) ;
   return f;
 };
 
@@ -600,12 +593,12 @@ pie.object.compact = function(a, removeEmpty){
 
 // deep merge
 pie.object.deepMerge = function() {
-  var args = pie.array.args(arguments),
+  var args = pie.array.from(arguments),
       targ = args.shift(),
       obj;
 
   function fn(k) {
-    if(k in targ && typeof targ[k] === 'object') {
+    if(k in targ && pie.object.isObject(targ[k])) {
       targ[k] = pie.object.deepMerge(targ[k], obj[k]);
     } else {
       targ[k] = obj[k];
@@ -624,18 +617,57 @@ pie.object.deepMerge = function() {
 // grab the sub-object from the provided object less the provided keys.
 // pie.object.except({foo: 'bar', biz: 'baz'}, 'biz') => {'foo': 'bar'}
 pie.object.except = function(){
-  var b = {}, args = pie.array.args(arguments), a = args[0];
-  args = pie.array.flatten(args.splice(1));
+  var keys = pie.array.from(arguments),
+  a = keys.shift(),
+  b = {};
+
+  keys = pie.array.flatten(keys);
+
   Object.keys(a).forEach(function(k){
-    if(args.indexOf(k) < 0) b[k] = a[k];
+    if(keys.indexOf(k) < 0) b[k] = a[k];
   });
+
   return b;
 };
 
 
+pie.object.flatten = function(a, object, prefix) {
+  var b = object || {};
+  prefix = prefix || '';
+
+  Object.forEach(a, function(k,v) {
+    if(pie.object.isObject(v)) {
+      pie.object.flatten(v, b, k + '.');
+    } else {
+      b[prefix + k] = v;
+    }
+  });
+
+  return b;
+};
+
+// thanks, underscore
+['Object','Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
+  pie.object['is' + name] = function(obj) {
+    return Object.prototype.toString.call(obj) === '[object ' + name + ']';
+  };
+});
+
+(function(){
+  if(!pie.object.isArguments(arguments)) {
+    pie.object.isArguments = function(obj) {
+      return obj && obj.hasOwnProperty('callee');
+    };
+  }
+})();
+
+pie.object.isUndefined = function(obj) {
+  return obj === void 0;
+};
+
 // shallow merge
 pie.object.merge = function() {
-  var args = pie.array.args(arguments),
+  var args = pie.array.from(arguments),
       targ = args.shift(),
       obj;
 
@@ -677,13 +709,16 @@ pie.object.getPath = function(obj, path) {
 
 
 pie.object.getValue = function(o, attribute) {
-  if(typeof attribute === 'function')                     return attribute.call(null, o);
-  else if (o == null)                                     return undefined;
-  else if(typeof o[attribute] === 'function')             return o[attribute].call(o);
-  else if(o.hasOwnProperty(attribute) || attribute in o)  return o[attribute];
-  else                                                    return undefined;
+  if(pie.object.isFunction(attribute))          return attribute.call(null, o);
+  else if (o == null)                           return void 0;
+  else if(pie.object.isFunction(o[attribute]))  return o[attribute].call(o);
+  else if(pie.object.has(o, attribute))         return o[attribute];
+  else                                          return void 0;
 };
 
+pie.object.has = function(obj, key) {
+  return obj && obj.hasOwnProperty(key);
+};
 
 // does the object have the described path
 pie.object.hasPath = function(obj, path) {
@@ -691,7 +726,7 @@ pie.object.hasPath = function(obj, path) {
   while(part = parts.shift()) {
 
     /* jslint eqeq:true */
-    if(obj != null && obj.hasOwnProperty(part)) {
+    if(pie.object.has(obj, part)) {
       obj = obj[part];
     } else {
       return false;
@@ -699,10 +734,6 @@ pie.object.hasPath = function(obj, path) {
   }
 
   return true;
-};
-
-pie.object.isObject = function(thing) {
-  return Object.prototype.toString.call(thing) === '[object Object]';
 };
 
 // serialize object into query string
@@ -758,14 +789,16 @@ pie.object.setPath = function(obj, path, value) {
 
 // grab a sub-object from the provided object.
 // pie.object.slice({foo: 'bar', biz: 'baz'}, 'biz') => {'biz': 'baz'}
-pie.object.slice = function(){
-  var b = {}, i = 1, arg = arguments, a = arg[0];
-  if(Array.isArray(arg[1])) {
-    arg = arg[1];
-    i = 0;
-  }
-  for(;i < arg.length; i++)
-    if(a.hasOwnProperty(arg[i])) b[arg[i]] = a[arg[i]];
+pie.object.slice = function() {
+  var keys = pie.array.from(arguments),
+  a = keys.shift(),
+  b = {};
+
+  keys = pie.array.flatten(keys);
+  keys.forEach(function(k){
+    if(pie.object.has(a, k)) b[k] = a[k];
+  });
+
   return b;
 };
 
@@ -779,7 +812,7 @@ pie.string.capitalize = function(str) {
 
 
 pie.string.change = function() {
-  var args = pie.array.args(arguments),
+  var args = pie.array.from(arguments),
   str = args.shift();
   args.forEach(function(m) {
     str = pie.string[m](str);
@@ -929,7 +962,7 @@ pie.string.underscore = function(str) {
 
 
 pie.string.urlConcat = function() {
-  var args = pie.array.compact(pie.array.args(arguments), true),
+  var args = pie.array.compact(pie.array.from(arguments), true),
   base = args.shift(),
   query = args.join('&');
 
@@ -1126,7 +1159,7 @@ pie.mixins.container = {
   },
 
   bubble: function() {
-    var args = pie.array.args(arguments),
+    var args = pie.array.from(arguments),
     fname = args.shift(),
     obj = this.parent;
 
@@ -1178,7 +1211,7 @@ pie.mixins.container = {
 pie.mixins.externalResources = {
 
   loadExternalResources: function(/* res1, res2, res3, cb */) {
-    var resources = pie.array.args(arguments),
+    var resources = pie.array.from(arguments),
     cb = resources.pop(),
     fns;
 
@@ -1198,12 +1231,12 @@ pie.mixins.externalResources = {
 pie.mixins.inheritance = {
 
   _super: function() {
-    var args = pie.array.args(arguments),
+    var args = pie.array.from(arguments),
     name = args.shift(),
     obj = this,
     curr;
 
-    if(args.length === 1 && String(args[0]) === "[object Arguments]") args = pie.array.args(args[0]);
+    if(args.length === 1 && String(args[0]) === "[object Arguments]") args = pie.array.from(args[0]);
 
     while(true) {
       curr = Object.getPrototypeOf(obj);
@@ -1241,10 +1274,10 @@ pie.mixins.validatable = {
       configs.forEach(function(conf) {
 
         // if it's a string or a function, throw it in directly, with no options
-        if(typeof conf === 'string') {
+        if(pie.object.isString(conf)) {
           resultConfigs.push({type: conf, options: {}});
         // if it's a function, make it a type function, then provide the function as an option
-        } else if(typeof conf === 'function'){
+        } else if(pie.object.isFunction(conf)){
           resultConfigs.push({type: 'fn', options: {fn: conf}});
         // otherwise, we have an object
         } else {
@@ -1475,7 +1508,7 @@ pie.model.prototype.get = function(key) {
 
 // Retrieve multiple values at once.
 pie.model.prototype.gets = function() {
-  var args = pie.array.args(arguments), o = {};
+  var args = pie.array.from(arguments), o = {};
   args = pie.array.flatten(args);
   args = pie.array.compact(args);
 
@@ -1489,7 +1522,7 @@ pie.model.prototype.gets = function() {
 
 // Register an observer and optionally filter by key.
 pie.model.prototype.observe = function(/* fn[, key1, key2, key3] */) {
-  var keys = pie.array.args(arguments),
+  var keys = pie.array.from(arguments),
   fn = keys.shift();
 
   // uid is needed later for ensuring unique change record delivery.
@@ -1542,7 +1575,7 @@ pie.model.prototype.sets = function(obj, skipObservers) {
 
 // Unregister an observer. Optionally for specific keys.
 pie.model.prototype.unobserve = function(/* fn[, key1, key2, key3] */) {
-  var keys = pie.array.args(arguments),
+  var keys = pie.array.from(arguments),
   fn = keys.shift(),
   i;
 
@@ -1559,7 +1592,7 @@ pie.model.prototype.unobserve = function(/* fn[, key1, key2, key3] */) {
 // Register a computed property which is accessible via `name` and defined by `fn`.
 // Provide all properties which invalidate the definition.
 pie.model.prototype.compute = function(/* name, fn[, prop1, prop2 ] */) {
-  var props = pie.array.args(arguments),
+  var props = pie.array.from(arguments),
   name = props.shift(),
   fn = props.shift();
 
@@ -1635,7 +1668,7 @@ pie.cache.prototype.wrap = function(obj, options) {
     // make sure we don't have a date.
     if(expiresAt instanceof Date) expiresAt = expiresAt.getTime();
     // or a string
-    if(typeof expiresAt === 'string') {
+    if(pie.object.isString(expiresAt)) {
       // check for a numeric
       if(/^\d+$/.test(expiresAt)) expiresAt = parseInt(expiresAt, 10);
       // otherwise assume ISO
@@ -1878,7 +1911,7 @@ pie.view.prototype.on = function(e, sel, f) {
 // Observe changes to an observable, unobserving them when the view is removed.
 // If the object is not observable, an error will be thrown.
 pie.view.prototype.onChange = function() {
-  var observable = arguments[0], args = pie.array.args(arguments).slice(1);
+  var observable = arguments[0], args = pie.array.from(arguments).slice(1);
   if(!('observe' in observable)) throw new Error("Observable does not respond to observe");
 
   this.changeCallbacks.push([observable, args]);
@@ -1939,7 +1972,7 @@ pie.activeView.prototype.init = function(setupFunc) {
       if(setupFunc) setupFunc();
 
       if(this.options.autoRender && this.model) {
-        var field = typeof this.options.autoRender === 'string' ? this.options.autoRender : 'updated_at';
+        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : 'updated_at';
         this.onChange(this.model, this.render.bind(this), field);
       }
 
@@ -1963,7 +1996,7 @@ pie.activeView.prototype.loadingStyle = function(bool) {
 pie.activeView.prototype.parseFields = function() {
   var o = {}, e = arguments[0], i = 0, n, el;
 
-  if('string' === typeof e) {
+  if(pie.object.isString(e)) {
     e = this.el;
   } else {
     i++;
@@ -2332,7 +2365,7 @@ pie.services.ajax.prototype.ajax = function(options) {
   };
 
   if(options.type !== 'GET') {
-    d = options.data ? (typeof options.data === 'string' ? options.data : JSON.stringify(pie.object.compact(options.data))) : undefined;
+    d = options.data ? (pie.object.isString(options.data) ? options.data : JSON.stringify(pie.object.compact(options.data))) : undefined;
   }
 
   xhr.send(d);
@@ -2601,7 +2634,7 @@ pie.services.i18n.prototype._normalizedDate = function(d) {
     d = parseInt(d, 10);
     if(String(d).length < 13) d *= 1000;
     d = new Date(d);
-  } else if(typeof d === 'string') {
+  } else if(pie.object.isString(d)) {
     d = pie.date.timeFromISO(d);
   } else {
     // let the system parse
@@ -2663,7 +2696,7 @@ pie.services.i18n.prototype.load = function(data, shallow) {
 pie.services.i18n.prototype.translate = function(path, data) {
   var translation = pie.object.getPath(this.translations, path), count;
 
-  if (data && data.hasOwnProperty('count') && typeof translation === 'object') {
+  if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {
     count = (data.count || 0).toString();
     count = this._countAlias[count] || (count > 0 ? 'other' : 'negother');
     translation = translation[count] === undefined ? translation.other : translation[count];
@@ -2680,7 +2713,7 @@ pie.services.i18n.prototype.translate = function(path, data) {
   }
 
 
-  if(typeof translation === 'string') {
+  if(pie.object.isString(translation)) {
 
     translation = translation.indexOf('${') === -1 ? translation : this._nestedTranslate(translation, data);
     return translation.indexOf('%{') === -1 ? translation : pie.string.expand(translation, data);
@@ -2879,7 +2912,7 @@ pie.services.notifier.prototype.notify = function(messages, type, autoClose) {
 
 pie.services.notifier.prototype.getAutoCloseTimeout = function(autoClose) {
   if(autoClose === undefined) autoClose = true;
-  if(autoClose && typeof autoClose !== 'number') autoClose = 7000;
+  if(autoClose && !pie.object.isNumber(autoClose)) autoClose = 7000;
   return autoClose;
 };
 
@@ -2997,7 +3030,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 
   pie.object.forEach(routes, function(k,r) {
 
-    if('object' === typeof r) {
+    if(pie.object.isObject(r)) {
 
       k = this.normalizePath(k);
 
@@ -3017,7 +3050,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
 pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly) {
   var o = this.namedRoutes[nameOrPath],
-  s = ('string' === typeof o) ? o : nameOrPath,
+  s = pie.object.isString(o) ? o : nameOrPath,
   usedKeys = [],
   params,
   unusedData;
@@ -3093,7 +3126,7 @@ pie.services.router.prototype.parseUrl = function(path, parseQuery) {
     while (i < keys.length && !match) {
       key = keys[i];
 
-      if(typeof this.routes[key] !== 'object') {
+      if(!pie.object.isObject(this.routes[key])) {
         i++;
         continue;
       }
@@ -3238,7 +3271,7 @@ pie.app.prototype.debug = function(msg) {
 // app.go('/test-url', true, 'Thanks for your interest') // replaces state with /test-url and shows the provided notification
 // app.go('/test-url', 'Thanks for your interest') // navigates to /test-url and shows the provided notification
 pie.app.prototype.go = function(){
-  var args = pie.array.args(arguments), path, notificationArgs, replaceState, query;
+  var args = pie.array.from(arguments), path, notificationArgs, replaceState, query;
 
   path = args.shift();
 

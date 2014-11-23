@@ -13,7 +13,7 @@ pie.activeView.prototype.init = function(setupFunc) {
       if(setupFunc) setupFunc();
 
       if(this.options.autoRender && this.model) {
-        var field = typeof this.options.autoRender === 'string' ? this.options.autoRender : 'updated_at';
+        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : 'updated_at';
         this.onChange(this.model, this.render.bind(this), field);
       }
 
@@ -37,7 +37,7 @@ pie.activeView.prototype.loadingStyle = function(bool) {
 pie.activeView.prototype.parseFields = function() {
   var o = {}, e = arguments[0], i = 0, n, el;
 
-  if('string' === typeof e) {
+  if(pie.object.isString(e)) {
     e = this.el;
   } else {
     i++;

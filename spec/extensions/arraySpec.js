@@ -31,7 +31,7 @@ describe("Array extensions", function() {
   describe('#args', function() {
 
     it('should convert an Arguments object to an array', function() {
-      var f = function(){ return pie.array.args(arguments); };
+      var f = function(){ return pie.array.from(arguments); };
 
       expect(f('a', 'b', 'c')).toEqual(['a', 'b', 'c']);
       expect(f(['a', 'b', 'c'])).toEqual([['a', 'b', 'c']]);

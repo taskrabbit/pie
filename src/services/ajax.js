@@ -73,7 +73,7 @@ pie.services.ajax.prototype.ajax = function(options) {
   };
 
   if(options.type !== 'GET') {
-    d = options.data ? (typeof options.data === 'string' ? options.data : JSON.stringify(pie.object.compact(options.data))) : undefined;
+    d = options.data ? (pie.object.isString(options.data) ? options.data : JSON.stringify(pie.object.compact(options.data))) : undefined;
   }
 
   xhr.send(d);

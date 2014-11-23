@@ -11,12 +11,12 @@ pie.object.compact = function(a, removeEmpty){
 
 // deep merge
 pie.object.deepMerge = function() {
-  var args = pie.array.args(arguments),
+  var args = pie.array.from(arguments),
       targ = args.shift(),
       obj;
 
   function fn(k) {
-    if(k in targ && typeof targ[k] === 'object') {
+    if(k in targ && pie.object.isObject(targ[k])) {
       targ[k] = pie.object.deepMerge(targ[k], obj[k]);
     } else {
       targ[k] = obj[k];
@@ -35,18 +35,57 @@ pie.object.deepMerge = function() {
 // grab the sub-object from the provided object less the provided keys.
 // pie.object.except({foo: 'bar', biz: 'baz'}, 'biz') => {'foo': 'bar'}
 pie.object.except = function(){
-  var b = {}, args = pie.array.args(arguments), a = args[0];
-  args = pie.array.flatten(args.splice(1));
+  var keys = pie.array.from(arguments),
+  a = keys.shift(),
+  b = {};
+
+  keys = pie.array.flatten(keys);
+
   Object.keys(a).forEach(function(k){
-    if(args.indexOf(k) < 0) b[k] = a[k];
+    if(keys.indexOf(k) < 0) b[k] = a[k];
   });
+
   return b;
 };
 
 
+pie.object.flatten = function(a, object, prefix) {
+  var b = object || {};
+  prefix = prefix || '';
+
+  Object.forEach(a, function(k,v) {
+    if(pie.object.isObject(v)) {
+      pie.object.flatten(v, b, k + '.');
+    } else {
+      b[prefix + k] = v;
+    }
+  });
+
+  return b;
+};
+
+// thanks, underscore
+['Object','Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
+  pie.object['is' + name] = function(obj) {
+    return Object.prototype.toString.call(obj) === '[object ' + name + ']';
+  };
+});
+
+(function(){
+  if(!pie.object.isArguments(arguments)) {
+    pie.object.isArguments = function(obj) {
+      return obj && obj.hasOwnProperty('callee');
+    };
+  }
+})();
+
+pie.object.isUndefined = function(obj) {
+  return obj === void 0;
+};
+
 // shallow merge
 pie.object.merge = function() {
-  var args = pie.array.args(arguments),
+  var args = pie.array.from(arguments),
       targ = args.shift(),
       obj;
 
@@ -88,13 +127,16 @@ pie.object.getPath = function(obj, path) {
 
 
 pie.object.getValue = function(o, attribute) {
-  if(typeof attribute === 'function')                     return attribute.call(null, o);
-  else if (o == null)                                     return undefined;
-  else if(typeof o[attribute] === 'function')             return o[attribute].call(o);
-  else if(o.hasOwnProperty(attribute) || attribute in o)  return o[attribute];
-  else                                                    return undefined;
+  if(pie.object.isFunction(attribute))          return attribute.call(null, o);
+  else if (o == null)                           return void 0;
+  else if(pie.object.isFunction(o[attribute]))  return o[attribute].call(o);
+  else if(pie.object.has(o, attribute))         return o[attribute];
+  else                                          return void 0;
 };
 
+pie.object.has = function(obj, key) {
+  return obj && obj.hasOwnProperty(key);
+};
 
 // does the object have the described path
 pie.object.hasPath = function(obj, path) {
@@ -102,7 +144,7 @@ pie.object.hasPath = function(obj, path) {
   while(part = parts.shift()) {
 
     /* jslint eqeq:true */
-    if(obj != null && obj.hasOwnProperty(part)) {
+    if(pie.object.has(obj, part)) {
       obj = obj[part];
     } else {
       return false;
@@ -110,10 +152,6 @@ pie.object.hasPath = function(obj, path) {
   }
 
   return true;
-};
-
-pie.object.isObject = function(thing) {
-  return Object.prototype.toString.call(thing) === '[object Object]';
 };
 
 // serialize object into query string
@@ -169,14 +207,16 @@ pie.object.setPath = function(obj, path, value) {
 
 // grab a sub-object from the provided object.
 // pie.object.slice({foo: 'bar', biz: 'baz'}, 'biz') => {'biz': 'baz'}
-pie.object.slice = function(){
-  var b = {}, i = 1, arg = arguments, a = arg[0];
-  if(Array.isArray(arg[1])) {
-    arg = arg[1];
-    i = 0;
-  }
-  for(;i < arg.length; i++)
-    if(a.hasOwnProperty(arg[i])) b[arg[i]] = a[arg[i]];
+pie.object.slice = function() {
+  var keys = pie.array.from(arguments),
+  a = keys.shift(),
+  b = {};
+
+  keys = pie.array.flatten(keys);
+  keys.forEach(function(k){
+    if(pie.object.has(a, k)) b[k] = a[k];
+  });
+
   return b;
 };
 

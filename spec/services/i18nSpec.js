@@ -225,7 +225,7 @@ describe("pie.services.i18n", function() {
         var stamp = "testing", d;
 
         d = this.i18n._normalizedDate(stamp);
-        expect(typeof d).toEqual('object');
+        expect(pie.object.isDate(d)).toEqual(true);
         expect(d.getUTCFullYear()).toEqual(NaN);
       });
 

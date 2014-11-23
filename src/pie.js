@@ -28,7 +28,7 @@ window.pie = {
 
 
   inherit: function(/* child, parent, extensions */) {
-    var args = pie.array.args(arguments),
+    var args = pie.array.from(arguments),
     child = args.shift(),
     parent = args.shift();
 
@@ -43,7 +43,7 @@ window.pie = {
 
   // maybe this will get more complicated in the future, maybe not.
   extend: function(/* proto, extension1[, extension2, ...] */) {
-    var extensions = pie.array.args(arguments),
+    var extensions = pie.array.from(arguments),
     proto = extensions.shift();
 
     extensions = pie.array.compact(pie.array.flatten(extensions), true);

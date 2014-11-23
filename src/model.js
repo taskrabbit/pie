@@ -111,7 +111,7 @@ pie.model.prototype.get = function(key) {
 
 // Retrieve multiple values at once.
 pie.model.prototype.gets = function() {
-  var args = pie.array.args(arguments), o = {};
+  var args = pie.array.from(arguments), o = {};
   args = pie.array.flatten(args);
   args = pie.array.compact(args);
 
@@ -125,7 +125,7 @@ pie.model.prototype.gets = function() {
 
 // Register an observer and optionally filter by key.
 pie.model.prototype.observe = function(/* fn[, key1, key2, key3] */) {
-  var keys = pie.array.args(arguments),
+  var keys = pie.array.from(arguments),
   fn = keys.shift();
 
   // uid is needed later for ensuring unique change record delivery.
@@ -178,7 +178,7 @@ pie.model.prototype.sets = function(obj, skipObservers) {
 
 // Unregister an observer. Optionally for specific keys.
 pie.model.prototype.unobserve = function(/* fn[, key1, key2, key3] */) {
-  var keys = pie.array.args(arguments),
+  var keys = pie.array.from(arguments),
   fn = keys.shift(),
   i;
 
@@ -195,7 +195,7 @@ pie.model.prototype.unobserve = function(/* fn[, key1, key2, key3] */) {
 // Register a computed property which is accessible via `name` and defined by `fn`.
 // Provide all properties which invalidate the definition.
 pie.model.prototype.compute = function(/* name, fn[, prop1, prop2 ] */) {
-  var props = pie.array.args(arguments),
+  var props = pie.array.from(arguments),
   name = props.shift(),
   fn = props.shift();
 

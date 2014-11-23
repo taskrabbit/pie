@@ -149,7 +149,7 @@ pie.services.i18n.prototype._normalizedDate = function(d) {
     d = parseInt(d, 10);
     if(String(d).length < 13) d *= 1000;
     d = new Date(d);
-  } else if(typeof d === 'string') {
+  } else if(pie.object.isString(d)) {
     d = pie.date.timeFromISO(d);
   } else {
     // let the system parse
@@ -211,7 +211,7 @@ pie.services.i18n.prototype.load = function(data, shallow) {
 pie.services.i18n.prototype.translate = function(path, data) {
   var translation = pie.object.getPath(this.translations, path), count;
 
-  if (data && data.hasOwnProperty('count') && typeof translation === 'object') {
+  if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {
     count = (data.count || 0).toString();
     count = this._countAlias[count] || (count > 0 ? 'other' : 'negother');
     translation = translation[count] === undefined ? translation.other : translation[count];
@@ -228,7 +228,7 @@ pie.services.i18n.prototype.translate = function(path, data) {
   }
 
 
-  if(typeof translation === 'string') {
+  if(pie.object.isString(translation)) {
 
     translation = translation.indexOf('${') === -1 ? translation : this._nestedTranslate(translation, data);
     return translation.indexOf('%{') === -1 ? translation : pie.string.expand(translation, data);
