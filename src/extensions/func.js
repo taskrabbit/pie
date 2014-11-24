@@ -43,15 +43,14 @@ pie.func.valueFrom = function(f, binding, args) {
 
 
 pie.func.async = function(fns, cb, counterObserver) {
-  var completeCount = fns.length,
-  completed = 0,
-  counter;
 
   if(!fns.length) {
     cb();
     return;
   }
 
+  var completeCount = fns.length,
+  completed = 0,
   counter = function() {
     completed++;
     if(counterObserver) counterObserver.apply(null, arguments);

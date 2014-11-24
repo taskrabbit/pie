@@ -868,15 +868,14 @@ pie.func.valueFrom = <span class="hljs-function"><span class="hljs-keyword">func
 
 
 pie.func.async = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fns, cb, counterObserver)</span> </span>{
-  <span class="hljs-keyword">var</span> completeCount = fns.length,
-  completed = <span class="hljs-number">0</span>,
-  counter;
 
   <span class="hljs-keyword">if</span>(!fns.length) {
     cb();
     <span class="hljs-keyword">return</span>;
   }
 
+  <span class="hljs-keyword">var</span> completeCount = fns.length,
+  completed = <span class="hljs-number">0</span>,
   counter = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     completed++;
     <span class="hljs-keyword">if</span>(counterObserver) counterObserver.apply(<span class="hljs-literal">null</span>, <span class="hljs-built_in">arguments</span>);
@@ -4594,7 +4593,6 @@ pie.services.navigator.prototype.setDataFromLocation = <span class="hljs-functio
               </div>
               <p>Show a notification or notifications.
 Messages can be a string or an array of messages.
-Multiple messages will be shown in the same notification, but on separate lines.
 You can choose to close a notification automatically by providing <code>true</code> as the third arg.
 You can provide a number in milliseconds as the autoClose value as well.</p>
 
@@ -4643,18 +4641,26 @@ pie.services.notifier.prototype.remove = <span class="hljs-function"><span class
     <span class="hljs-keyword">this</span>.notifications.remove(msgIdx);
   }
 };
-pie.services.resources = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
+pie.services.resources = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, srcMap)</span> </span>{
   <span class="hljs-keyword">this</span>.app = app;
   <span class="hljs-keyword">this</span>.loaded = {};
-  <span class="hljs-keyword">this</span>.srcMap = {};
+  <span class="hljs-keyword">this</span>.srcMap = srcMap || {};
 };
 
-pie.services.resources.prototype.define = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, src)</span> </span>{
-  <span class="hljs-keyword">this</span>.srcMap[name] = src;
+pie.services.resources.prototype._normalizeSrc = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(srcOrOptions)</span> </span>{
+  <span class="hljs-keyword">var</span> options = pie.object.isString(srcOrOptions) ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
+  <span class="hljs-keyword">return</span> options;
 };
 
-pie.services.resources.prototype.load = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(src, cb)</span> </span>{
-  src = <span class="hljs-keyword">this</span>.srcMap[src] || src;</pre></div></div>
+pie.services.resources.prototype.define = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, srcOrOptions)</span> </span>{
+  <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">this</span>._normalizeSrc(srcOrOptions);
+  <span class="hljs-keyword">this</span>.srcMap[name] = options;
+};
+
+pie.services.resources.prototype.load = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(srcOrOptions, cb)</span> </span>{
+  <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">this</span>._normalizeSrc(srcOrOptions), src;
+  options = <span class="hljs-keyword">this</span>.srcMap[options.src] || options;
+  src = options.src;</pre></div></div>
             
         </li>
         
@@ -4692,13 +4698,21 @@ pie.services.resources.prototype.load = <span class="hljs-function"><span class=
   } <span class="hljs-keyword">else</span> {
     <span class="hljs-keyword">this</span>.loaded[src] = [cb];
 
-    <span class="hljs-keyword">var</span> script = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'script'</span>);
-    script.async = <span class="hljs-literal">true</span>;
-    script.onload = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'loaded '</span> + src);
-      pie.array.map(pie.array.compact(<span class="hljs-keyword">this</span>.loaded[src]), <span class="hljs-string">'call'</span>, <span class="hljs-literal">true</span>);
+    <span class="hljs-keyword">var</span> scriptOnload = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">this</span>.loaded[src].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{ <span class="hljs-keyword">if</span>(fn) fn(); });
       <span class="hljs-keyword">this</span>.loaded[src] = <span class="hljs-literal">true</span>;
+
+      <span class="hljs-keyword">if</span>(options.callbackName) <span class="hljs-keyword">delete</span> <span class="hljs-built_in">window</span>[options.callbackName];
     }.bind(<span class="hljs-keyword">this</span>);
+
+    <span class="hljs-keyword">var</span> script = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'script'</span>);
+
+    <span class="hljs-keyword">if</span>(!options.noAsync) script.async = <span class="hljs-literal">true</span>;
+    <span class="hljs-keyword">if</span>(options.callbackName) {
+      <span class="hljs-built_in">window</span>[options.callbackName] = scriptOnload;
+    } <span class="hljs-keyword">else</span> {
+      script.onload = scriptOnload;
+    }
 
     <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">'head'</span>).appendChild(script);
     script.src = src;

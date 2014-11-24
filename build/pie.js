@@ -565,15 +565,14 @@ pie.func.valueFrom = function(f, binding, args) {
 
 
 pie.func.async = function(fns, cb, counterObserver) {
-  var completeCount = fns.length,
-  completed = 0,
-  counter;
 
   if(!fns.length) {
     cb();
     return;
   }
 
+  var completeCount = fns.length,
+  completed = 0,
   counter = function() {
     completed++;
     if(counterObserver) counterObserver.apply(null, arguments);
@@ -2886,7 +2885,6 @@ pie.services.notifier.prototype.clear = function(type) {
 
 // Show a notification or notifications.
 // Messages can be a string or an array of messages.
-// Multiple messages will be shown in the same notification, but on separate lines.
 // You can choose to close a notification automatically by providing `true` as the third arg.
 // You can provide a number in milliseconds as the autoClose value as well.
 pie.services.notifier.prototype.notify = function(messages, type, autoRemove) {
@@ -2932,18 +2930,26 @@ pie.services.notifier.prototype.remove = function(msgId) {
     this.notifications.remove(msgIdx);
   }
 };
-pie.services.resources = function(app) {
+pie.services.resources = function(app, srcMap) {
   this.app = app;
   this.loaded = {};
-  this.srcMap = {};
+  this.srcMap = srcMap || {};
 };
 
-pie.services.resources.prototype.define = function(name, src) {
-  this.srcMap[name] = src;
+pie.services.resources.prototype._normalizeSrc = function(srcOrOptions) {
+  var options = pie.object.isString(srcOrOptions) ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
+  return options;
 };
 
-pie.services.resources.prototype.load = function(src, cb) {
-  src = this.srcMap[src] || src;
+pie.services.resources.prototype.define = function(name, srcOrOptions) {
+  var options = this._normalizeSrc(srcOrOptions);
+  this.srcMap[name] = options;
+};
+
+pie.services.resources.prototype.load = function(srcOrOptions, cb) {
+  var options = this._normalizeSrc(srcOrOptions), src;
+  options = this.srcMap[options.src] || options;
+  src = options.src;
 
   // we've already taken care of this.
   if(this.loaded[src] === true) {
@@ -2957,13 +2963,21 @@ pie.services.resources.prototype.load = function(src, cb) {
   } else {
     this.loaded[src] = [cb];
 
-    var script = document.createElement('script');
-    script.async = true;
-    script.onload = function() {
-      console.log('loaded ' + src);
-      pie.array.map(pie.array.compact(this.loaded[src]), 'call', true);
+    var scriptOnload = function() {
+      this.loaded[src].forEach(function(fn) { if(fn) fn(); });
       this.loaded[src] = true;
+
+      if(options.callbackName) delete window[options.callbackName];
     }.bind(this);
+
+    var script = document.createElement('script');
+
+    if(!options.noAsync) script.async = true;
+    if(options.callbackName) {
+      window[options.callbackName] = scriptOnload;
+    } else {
+      script.onload = scriptOnload;
+    }
 
     document.querySelector('head').appendChild(script);
     script.src = src;

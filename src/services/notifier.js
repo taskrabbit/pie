@@ -20,7 +20,6 @@ pie.services.notifier.prototype.clear = function(type) {
 
 // Show a notification or notifications.
 // Messages can be a string or an array of messages.
-// Multiple messages will be shown in the same notification, but on separate lines.
 // You can choose to close a notification automatically by providing `true` as the third arg.
 // You can provide a number in milliseconds as the autoClose value as well.
 pie.services.notifier.prototype.notify = function(messages, type, autoRemove) {
