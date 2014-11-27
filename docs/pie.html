@@ -151,7 +151,7 @@ _.unique(); //=&gt; ‘95’</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  util: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(as)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  util: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> o = {};
 
     o.a = pie.array;
@@ -4647,9 +4647,61 @@ pie.services.resources = <span class="hljs-function"><span class="hljs-keyword">
   <span class="hljs-keyword">this</span>.srcMap = srcMap || {};
 };
 
+pie.services.resources.prototype._appendNode = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(node)</span> </span>{
+  <span class="hljs-keyword">var</span> target = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">'head'</span>);
+  target = target || <span class="hljs-built_in">document</span>.body;
+  target.appendChild(node);
+};
+
+pie.services.resources.prototype._inferredResourceType = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(src)</span> </span>{
+  <span class="hljs-keyword">return</span> (<span class="hljs-regexp">/(\.|\/)js(\?|$)/</span>).test(src) ? <span class="hljs-string">'script'</span> : <span class="hljs-string">'link'</span>;
+};
+
 pie.services.resources.prototype._normalizeSrc = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(srcOrOptions)</span> </span>{
-  <span class="hljs-keyword">var</span> options = pie.object.isString(srcOrOptions) ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
+  <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">typeof</span> srcOrOptions === <span class="hljs-string">'string'</span> ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
   <span class="hljs-keyword">return</span> options;
+};
+
+pie.services.resources.prototype._loadscript = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
+
+  <span class="hljs-keyword">var</span> script = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'script'</span>);
+
+  <span class="hljs-keyword">if</span>(!options.noAsync) script.async = <span class="hljs-literal">true</span>;
+
+  <span class="hljs-keyword">if</span>(!options.callbackName) {
+    script.onload = resourceOnload;
+  }
+
+  <span class="hljs-keyword">this</span>._appendNode(script);
+  script.src = options.src;
+
+};
+
+pie.services.resources.prototype._loadlink = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
+  <span class="hljs-keyword">var</span> link = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'link'</span>);
+
+  link.href = options.src;
+  link.media = options.media || <span class="hljs-string">'screen'</span>;
+  link.rel = options.rel || <span class="hljs-string">'stylesheet'</span>;
+  link.type = options.type || <span class="hljs-string">'text/css'</span>;
+
+  <span class="hljs-keyword">this</span>._appendNode(link);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-145">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-145">&#182;</a>
+              </div>
+              <p>need to record that we added this thing.
+the resource may not actually be present yet.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  resourceOnload();
 };
 
 pie.services.resources.prototype.define = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, srcOrOptions)</span> </span>{
@@ -4665,11 +4717,11 @@ pie.services.resources.prototype.load = <span class="hljs-function"><span class=
         </li>
         
         
-        <li id="section-145">
+        <li id="section-146">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-145">&#182;</a>
+                <a class="pilcrow" href="#section-146">&#182;</a>
               </div>
               <p>we’ve already taken care of this.</p>
 
@@ -4683,11 +4735,11 @@ pie.services.resources.prototype.load = <span class="hljs-function"><span class=
         </li>
         
         
-        <li id="section-146">
+        <li id="section-147">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-146">&#182;</a>
+                <a class="pilcrow" href="#section-147">&#182;</a>
               </div>
               <p>we’re already working on retrieving this src, just append our cb to the callbacks..</p>
 
@@ -4698,24 +4750,21 @@ pie.services.resources.prototype.load = <span class="hljs-function"><span class=
   } <span class="hljs-keyword">else</span> {
     <span class="hljs-keyword">this</span>.loaded[src] = [cb];
 
-    <span class="hljs-keyword">var</span> scriptOnload = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> type = options.type || <span class="hljs-keyword">this</span>._inferredResourceType(options.src),
+    resourceOnload = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+
       <span class="hljs-keyword">this</span>.loaded[src].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{ <span class="hljs-keyword">if</span>(fn) fn(); });
       <span class="hljs-keyword">this</span>.loaded[src] = <span class="hljs-literal">true</span>;
 
       <span class="hljs-keyword">if</span>(options.callbackName) <span class="hljs-keyword">delete</span> <span class="hljs-built_in">window</span>[options.callbackName];
     }.bind(<span class="hljs-keyword">this</span>);
 
-    <span class="hljs-keyword">var</span> script = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'script'</span>);
-
-    <span class="hljs-keyword">if</span>(!options.noAsync) script.async = <span class="hljs-literal">true</span>;
     <span class="hljs-keyword">if</span>(options.callbackName) {
-      <span class="hljs-built_in">window</span>[options.callbackName] = scriptOnload;
-    } <span class="hljs-keyword">else</span> {
-      script.onload = scriptOnload;
+      <span class="hljs-built_in">window</span>[options.callbackName] = resourceOnload;
     }
 
-    <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">'head'</span>).appendChild(script);
-    script.src = src;
+
+    <span class="hljs-keyword">this</span>[<span class="hljs-string">'_load'</span> + type](options, resourceOnload);
   }
 
   <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
@@ -4729,11 +4778,11 @@ pie.services.router = <span class="hljs-function"><span class="hljs-keyword">fun
         </li>
         
         
-        <li id="section-147">
+        <li id="section-148">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-147">&#182;</a>
+                <a class="pilcrow" href="#section-148">&#182;</a>
               </div>
               <p>get a url based on the current one but with the changes provided.
 this will even catch interpolated values.
@@ -4752,11 +4801,11 @@ app.changedUrl({page: 3, q: ‘newQuery’});</p>
         </li>
         
         
-        <li id="section-148">
+        <li id="section-149">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-148">&#182;</a>
+                <a class="pilcrow" href="#section-149">&#182;</a>
               </div>
               <p>normalize a path to be evaluated by the router</p>
 
@@ -4767,11 +4816,11 @@ app.changedUrl({page: 3, q: ‘newQuery’});</p>
         </li>
         
         
-        <li id="section-149">
+        <li id="section-150">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-149">&#182;</a>
+                <a class="pilcrow" href="#section-150">&#182;</a>
               </div>
               <p>ensure there’s a leading slash</p>
 
@@ -4791,11 +4840,11 @@ app.changedUrl({page: 3, q: ‘newQuery’});</p>
         </li>
         
         
-        <li id="section-150">
+        <li id="section-151">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-150">&#182;</a>
+                <a class="pilcrow" href="#section-151">&#182;</a>
               </div>
               <p>remove trailing hashtags</p>
 
@@ -4808,11 +4857,11 @@ app.changedUrl({page: 3, q: ‘newQuery’});</p>
         </li>
         
         
-        <li id="section-151">
+        <li id="section-152">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-151">&#182;</a>
+                <a class="pilcrow" href="#section-152">&#182;</a>
               </div>
               <p>remove trailing slashes</p>
 
@@ -4825,11 +4874,11 @@ app.changedUrl({page: 3, q: ‘newQuery’});</p>
         </li>
         
         
-        <li id="section-152">
+        <li id="section-153">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-152">&#182;</a>
+                <a class="pilcrow" href="#section-153">&#182;</a>
               </div>
               <p>remove</p>
 
@@ -4842,11 +4891,11 @@ app.changedUrl({page: 3, q: ‘newQuery’});</p>
         </li>
         
         
-        <li id="section-153">
+        <li id="section-154">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-153">&#182;</a>
+                <a class="pilcrow" href="#section-154">&#182;</a>
               </div>
               <p>invoke to add routes to the routers routeset.
 routes objects which contain a “name” key will be added as a name lookup.
@@ -4860,11 +4909,11 @@ you can pass a set of defaults which will be extended into each route object.</p
         </li>
         
         
-        <li id="section-154">
+        <li id="section-155">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-154">&#182;</a>
+                <a class="pilcrow" href="#section-155">&#182;</a>
               </div>
               <p>remove the cache</p>
 
@@ -4892,11 +4941,11 @@ you can pass a set of defaults which will be extended into each route object.</p
         </li>
         
         
-        <li id="section-155">
+        <li id="section-156">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-155">&#182;</a>
+                <a class="pilcrow" href="#section-156">&#182;</a>
               </div>
               <p>will return the named path. if there is no path with that name it will return itself.
 you can optionally pass a data hash and it will build the path with query params or
@@ -4936,11 +4985,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-156">
+        <li id="section-157">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-156">&#182;</a>
+                <a class="pilcrow" href="#section-157">&#182;</a>
               </div>
               <p>provides the keys of the routes in a sorted order relevant for matching most descriptive to least</p>
 
@@ -4955,11 +5004,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-157">
+        <li id="section-158">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-157">&#182;</a>
+                <a class="pilcrow" href="#section-158">&#182;</a>
               </div>
               <p>sorts the route keys to be the most exact to the most generic</p>
 
@@ -4980,11 +5029,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-158">
+        <li id="section-159">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-158">&#182;</a>
+                <a class="pilcrow" href="#section-159">&#182;</a>
               </div>
               <p>look at the path and determine the route which this matches.</p>
 
@@ -5007,11 +5056,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-159">
+        <li id="section-160">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-159">&#182;</a>
+                <a class="pilcrow" href="#section-160">&#182;</a>
               </div>
               <p>a trailing slash will bork stuff</p>
 
@@ -5022,11 +5071,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-160">
+        <li id="section-161">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-160">&#182;</a>
+                <a class="pilcrow" href="#section-161">&#182;</a>
               </div>
               <p>is there an explicit route for this path? it wins if so</p>
 
@@ -5068,11 +5117,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-161">
+        <li id="section-162">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-161">&#182;</a>
+                <a class="pilcrow" href="#section-162">&#182;</a>
               </div>
               <p>if we are expected to parse the values of the query, lets do it for the interpolations as well.</p>
 
@@ -5094,11 +5143,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-162">
+        <li id="section-163">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-162">&#182;</a>
+                <a class="pilcrow" href="#section-163">&#182;</a>
               </div>
               <p>operator of the site. contains a router, navigator, etc with the intention of holding page context.</p>
 
@@ -5109,11 +5158,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-163">
+        <li id="section-164">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-163">&#182;</a>
+                <a class="pilcrow" href="#section-164">&#182;</a>
               </div>
               <p>general app options</p>
 
@@ -5133,11 +5182,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-164">
+        <li id="section-165">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-164">&#182;</a>
+                <a class="pilcrow" href="#section-165">&#182;</a>
               </div>
               <p>app.i18n is the translation functionality</p>
 
@@ -5149,11 +5198,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-165">
+        <li id="section-166">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-165">&#182;</a>
+                <a class="pilcrow" href="#section-166">&#182;</a>
               </div>
               <p>app.ajax is ajax interface + app specific functionality.</p>
 
@@ -5165,11 +5214,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-166">
+        <li id="section-167">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-166">&#182;</a>
+                <a class="pilcrow" href="#section-167">&#182;</a>
               </div>
               <p>app.notifier is the object responsible for showing page-level notifications, alerts, etc.</p>
 
@@ -5181,11 +5230,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-167">
+        <li id="section-168">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-167">&#182;</a>
+                <a class="pilcrow" href="#section-168">&#182;</a>
               </div>
               <p>app.errorHandler is the object responsible for</p>
 
@@ -5197,11 +5246,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-168">
+        <li id="section-169">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-168">&#182;</a>
+                <a class="pilcrow" href="#section-169">&#182;</a>
               </div>
               <p>app.router is used to determine which view should be rendered based on the url</p>
 
@@ -5213,11 +5262,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-169">
+        <li id="section-170">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-169">&#182;</a>
+                <a class="pilcrow" href="#section-170">&#182;</a>
               </div>
               <p>app.resources is used for managing the loading of external resources.</p>
 
@@ -5229,11 +5278,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-170">
+        <li id="section-171">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-170">&#182;</a>
+                <a class="pilcrow" href="#section-171">&#182;</a>
               </div>
               <p>the only navigator which should exist in this app.</p>
 
@@ -5245,11 +5294,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-171">
+        <li id="section-172">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-171">&#182;</a>
+                <a class="pilcrow" href="#section-172">&#182;</a>
               </div>
               <p>the validator which should be used in the context of the app</p>
 
@@ -5261,11 +5310,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-172">
+        <li id="section-173">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-172">&#182;</a>
+                <a class="pilcrow" href="#section-173">&#182;</a>
               </div>
               <p>app.models is globally available. app.models is solely for page context.
 this is not a singleton container or anything like that. it’s just for passing
@@ -5279,11 +5328,11 @@ after each navigation change, this.models is reset.</p>
         </li>
         
         
-        <li id="section-173">
+        <li id="section-174">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-173">&#182;</a>
+                <a class="pilcrow" href="#section-174">&#182;</a>
               </div>
               <p>app._templates should not be used. app.template() should be the public interface.</p>
 
@@ -5294,11 +5343,11 @@ after each navigation change, this.models is reset.</p>
         </li>
         
         
-        <li id="section-174">
+        <li id="section-175">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-174">&#182;</a>
+                <a class="pilcrow" href="#section-175">&#182;</a>
               </div>
               <p>after a navigation change, app.parsedUrl is the new parsed route</p>
 
@@ -5309,11 +5358,11 @@ after each navigation change, this.models is reset.</p>
         </li>
         
         
-        <li id="section-175">
+        <li id="section-176">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-175">&#182;</a>
+                <a class="pilcrow" href="#section-176">&#182;</a>
               </div>
               <p>the functions to invoke as part of the app’s lifecycle. see app.on().</p>
 
@@ -5325,11 +5374,11 @@ after each navigation change, this.models is reset.</p>
         </li>
         
         
-        <li id="section-176">
+        <li id="section-177">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-176">&#182;</a>
+                <a class="pilcrow" href="#section-177">&#182;</a>
               </div>
               <p>we observe the navigator and handle changing the context of the page</p>
 
@@ -5344,11 +5393,11 @@ after each navigation change, this.models is reset.</p>
         </li>
         
         
-        <li id="section-177">
+        <li id="section-178">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-177">&#182;</a>
+                <a class="pilcrow" href="#section-178">&#182;</a>
               </div>
               <p>once the dom is loaded</p>
 
@@ -5359,11 +5408,11 @@ after each navigation change, this.models is reset.</p>
         </li>
         
         
-        <li id="section-178">
+        <li id="section-179">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-178">&#182;</a>
+                <a class="pilcrow" href="#section-179">&#182;</a>
               </div>
               <p>set a global instance which can be used as a backup within the pie library.</p>
 
@@ -5378,11 +5427,11 @@ pie.extend(pie.app.prototype, pie.mixins.container);</pre></div></div>
         </li>
         
         
-        <li id="section-179">
+        <li id="section-180">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-179">&#182;</a>
+                <a class="pilcrow" href="#section-180">&#182;</a>
               </div>
               <p>just in case the client wants to override the standard confirmation dialog.
 eventually this could create a confirmation view and provide options to it.
@@ -5401,11 +5450,11 @@ the view could have more options but would always end up invoking success or fai
         </li>
         
         
-        <li id="section-180">
+        <li id="section-181">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-180">&#182;</a>
+                <a class="pilcrow" href="#section-181">&#182;</a>
               </div>
               <p>print stuff if we’re not in prod.</p>
 
@@ -5419,11 +5468,11 @@ the view could have more options but would always end up invoking success or fai
         </li>
         
         
-        <li id="section-181">
+        <li id="section-182">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-181">&#182;</a>
+                <a class="pilcrow" href="#section-182">&#182;</a>
               </div>
               <p>use this to navigate. This allows us to apply app-specific navigation logic
 without altering the underling navigator.
@@ -5444,11 +5493,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-182">
+        <li id="section-183">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-182">&#182;</a>
+                <a class="pilcrow" href="#section-183">&#182;</a>
               </div>
               <p>arguments =&gt; ‘/test-url’, ‘?query=string’</p>
 
@@ -5462,11 +5511,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-183">
+        <li id="section-184">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-183">&#182;</a>
+                <a class="pilcrow" href="#section-184">&#182;</a>
               </div>
               <p>arguments =&gt; ‘/test-url’, {query: ‘object’}</p>
 
@@ -5478,11 +5527,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-184">
+        <li id="section-185">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-184">&#182;</a>
+                <a class="pilcrow" href="#section-185">&#182;</a>
               </div>
               <p>arguments =&gt; ‘/test-url’
 arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
@@ -5496,11 +5545,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-185">
+        <li id="section-186">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-185">&#182;</a>
+                <a class="pilcrow" href="#section-186">&#182;</a>
               </div>
               <p>if the next argument is a boolean, we care about replaceState</p>
 
@@ -5513,11 +5562,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-186">
+        <li id="section-187">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-186">&#182;</a>
+                <a class="pilcrow" href="#section-187">&#182;</a>
               </div>
               <p>anything left is considered arguments for the notifier.</p>
 
@@ -5543,11 +5592,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-187">
+        <li id="section-188">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-187">&#182;</a>
+                <a class="pilcrow" href="#section-188">&#182;</a>
               </div>
               <p>go back one page.</p>
 
@@ -5560,11 +5609,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-188">
+        <li id="section-189">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-188">&#182;</a>
+                <a class="pilcrow" href="#section-189">&#182;</a>
               </div>
               <p>callback for when a link is clicked in our app</p>
 
@@ -5575,11 +5624,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-189">
+        <li id="section-190">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-189">&#182;</a>
+                <a class="pilcrow" href="#section-190">&#182;</a>
               </div>
               <p>if the link is targeting something else, let the browser take over</p>
 
@@ -5590,11 +5639,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-190">
+        <li id="section-191">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-190">&#182;</a>
+                <a class="pilcrow" href="#section-191">&#182;</a>
               </div>
               <p>if the user is trying to do something beyond navigate, let the browser take over</p>
 
@@ -5608,11 +5657,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-191">
+        <li id="section-192">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-191">&#182;</a>
+                <a class="pilcrow" href="#section-192">&#182;</a>
               </div>
               <p>if we’re going nowhere, somewhere else, or to an anchor on the page, let the browser take over</p>
 
@@ -5623,11 +5672,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-192">
+        <li id="section-193">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-192">&#182;</a>
+                <a class="pilcrow" href="#section-193">&#182;</a>
               </div>
               <p>ensure that relative links are evaluated as relative</p>
 
@@ -5638,11 +5687,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-193">
+        <li id="section-194">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-193">&#182;</a>
+                <a class="pilcrow" href="#section-194">&#182;</a>
               </div>
               <p>great, we can handle it. let the app decide whether to use pushstate or not</p>
 
@@ -5655,11 +5704,11 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
         </li>
         
         
-        <li id="section-194">
+        <li id="section-195">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-194">&#182;</a>
+                <a class="pilcrow" href="#section-195">&#182;</a>
               </div>
               <p>when we change urls
 we always remove the current before instantiating the next. this ensures are views can prepare
@@ -5674,11 +5723,11 @@ context’s in removedFromParent before the constructor of the next view is invo
         </li>
         
         
-        <li id="section-195">
+        <li id="section-196">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-195">&#182;</a>
+                <a class="pilcrow" href="#section-196">&#182;</a>
               </div>
               <p>let the router determine our new url</p>
 
@@ -5694,11 +5743,11 @@ context’s in removedFromParent before the constructor of the next view is invo
         </li>
         
         
-        <li id="section-196">
+        <li id="section-197">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-196">&#182;</a>
+                <a class="pilcrow" href="#section-197">&#182;</a>
               </div>
               <p>not necessary for a view to exist on each page.
 Maybe the entry point is server generated.</p>
@@ -5712,11 +5761,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-197">
+        <li id="section-198">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-197">&#182;</a>
+                <a class="pilcrow" href="#section-198">&#182;</a>
               </div>
               <p>if the view that’s in there is already loaded, don’t remove / add again.</p>
 
@@ -5730,11 +5779,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-198">
+        <li id="section-199">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-198">&#182;</a>
+                <a class="pilcrow" href="#section-199">&#182;</a>
               </div>
               <p>remove the existing view if there is one.</p>
 
@@ -5749,11 +5798,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-199">
+        <li id="section-200">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-199">&#182;</a>
+                <a class="pilcrow" href="#section-200">&#182;</a>
               </div>
               <p>clear any leftover notifications</p>
 
@@ -5764,11 +5813,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-200">
+        <li id="section-201">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-200">&#182;</a>
+                <a class="pilcrow" href="#section-201">&#182;</a>
               </div>
               <p>use the view key of the parsedUrl to find the viewClass</p>
 
@@ -5779,11 +5828,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-201">
+        <li id="section-202">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-201">&#182;</a>
+                <a class="pilcrow" href="#section-202">&#182;</a>
               </div>
               <p>the instance to be added.</p>
 
@@ -5792,11 +5841,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-202">
+        <li id="section-203">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-202">&#182;</a>
+                <a class="pilcrow" href="#section-203">&#182;</a>
               </div>
               <p>add the instance as our ‘currentView’</p>
 
@@ -5810,11 +5859,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-203">
+        <li id="section-204">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-203">&#182;</a>
+                <a class="pilcrow" href="#section-204">&#182;</a>
               </div>
               <p>remove the leftover model references</p>
 
@@ -5825,11 +5874,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-204">
+        <li id="section-205">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-204">&#182;</a>
+                <a class="pilcrow" href="#section-205">&#182;</a>
               </div>
               <p>get us back to the top of the page.</p>
 
@@ -5843,11 +5892,11 @@ Maybe the entry point is server generated.</p>
         </li>
         
         
-        <li id="section-205">
+        <li id="section-206">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-205">&#182;</a>
+                <a class="pilcrow" href="#section-206">&#182;</a>
               </div>
               <p>invoke fn when the event is triggered.
 if futureOnly is truthy the fn will only be triggered for future events.
@@ -5867,11 +5916,11 @@ todo: allow once-only events.</p>
         </li>
         
         
-        <li id="section-206">
+        <li id="section-207">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-206">&#182;</a>
+                <a class="pilcrow" href="#section-207">&#182;</a>
               </div>
               <p>reload the page without reloading the browser.
 alters the current view’s _pieName to appear as invalid for the route.</p>
@@ -5887,11 +5936,11 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-207">
+        <li id="section-208">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-207">&#182;</a>
+                <a class="pilcrow" href="#section-208">&#182;</a>
               </div>
               <p>safely access localStorage, passing along any errors for reporting.</p>
 
@@ -5921,11 +5970,11 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-208">
+        <li id="section-209">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-208">&#182;</a>
+                <a class="pilcrow" href="#section-209">&#182;</a>
               </div>
               <p>add the notifier’s el to the page if possible</p>
 
@@ -5939,11 +5988,11 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-209">
+        <li id="section-210">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-209">&#182;</a>
+                <a class="pilcrow" href="#section-210">&#182;</a>
               </div>
               <p>when a link is clicked, go there without a refresh if we recognize the route.</p>
 
@@ -5956,11 +6005,11 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-210">
+        <li id="section-211">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-210">&#182;</a>
+                <a class="pilcrow" href="#section-211">&#182;</a>
               </div>
               <p>show any notification which have been preserved via local storage.</p>
 
@@ -5980,11 +6029,11 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-211">
+        <li id="section-212">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-211">&#182;</a>
+                <a class="pilcrow" href="#section-212">&#182;</a>
               </div>
               <p>start the app, apply fake navigation to the current url to get our navigation observation underway.</p>
 
@@ -5999,11 +6048,11 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-212">
+        <li id="section-213">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-212">&#182;</a>
+                <a class="pilcrow" href="#section-213">&#182;</a>
               </div>
               <p>invoke a nav change event on page load.</p>
 
@@ -6020,11 +6069,11 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-213">
+        <li id="section-214">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-213">&#182;</a>
+                <a class="pilcrow" href="#section-214">&#182;</a>
               </div>
               <p>safely access localStorage, passing along any errors for reporting.</p>
 
@@ -6041,11 +6090,11 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-214">
+        <li id="section-215">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-214">&#182;</a>
+                <a class="pilcrow" href="#section-215">&#182;</a>
               </div>
               <p>compile templates on demand and evaluate them with <code>data</code>.
 Templates are assumed to be script tags with type=”text/pie-template”.
@@ -6074,11 +6123,11 @@ Once compiled, the templates are cached in this._templates for later use.</p>
         </li>
         
         
-        <li id="section-215">
+        <li id="section-216">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-215">&#182;</a>
+                <a class="pilcrow" href="#section-216">&#182;</a>
               </div>
               <p>trigger an event (string) on the app.
 any callbacks associated with that event will be invoked.</p>

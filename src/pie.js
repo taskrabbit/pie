@@ -60,7 +60,7 @@ window.pie = {
   // _.o.merge(a, b);
   // _.inherit(child, parent);
   // _.unique(); //=> '95'
-  util: function(as) {
+  util: function() {
     var o = {};
 
     o.a = pie.array;

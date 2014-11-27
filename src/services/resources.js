@@ -4,9 +4,49 @@ pie.services.resources = function(app, srcMap) {
   this.srcMap = srcMap || {};
 };
 
+pie.services.resources.prototype._appendNode = function(node) {
+  var target = document.querySelector('head');
+  target = target || document.body;
+  target.appendChild(node);
+};
+
+pie.services.resources.prototype._inferredResourceType = function(src) {
+  return (/(\.|\/)js(\?|$)/).test(src) ? 'script' : 'link';
+};
+
 pie.services.resources.prototype._normalizeSrc = function(srcOrOptions) {
-  var options = pie.object.isString(srcOrOptions) ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
+  var options = typeof srcOrOptions === 'string' ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
   return options;
+};
+
+pie.services.resources.prototype._loadscript = function(options, resourceOnload) {
+
+  var script = document.createElement('script');
+
+  if(!options.noAsync) script.async = true;
+
+  if(!options.callbackName) {
+    script.onload = resourceOnload;
+  }
+
+  this._appendNode(script);
+  script.src = options.src;
+
+};
+
+pie.services.resources.prototype._loadlink = function(options, resourceOnload) {
+  var link = document.createElement('link');
+
+  link.href = options.src;
+  link.media = options.media || 'screen';
+  link.rel = options.rel || 'stylesheet';
+  link.type = options.type || 'text/css';
+
+  this._appendNode(link);
+
+  // need to record that we added this thing.
+  // the resource may not actually be present yet.
+  resourceOnload();
 };
 
 pie.services.resources.prototype.define = function(name, srcOrOptions) {
@@ -31,24 +71,21 @@ pie.services.resources.prototype.load = function(srcOrOptions, cb) {
   } else {
     this.loaded[src] = [cb];
 
-    var scriptOnload = function() {
+    var type = options.type || this._inferredResourceType(options.src),
+    resourceOnload = function() {
+
       this.loaded[src].forEach(function(fn) { if(fn) fn(); });
       this.loaded[src] = true;
 
       if(options.callbackName) delete window[options.callbackName];
     }.bind(this);
 
-    var script = document.createElement('script');
-
-    if(!options.noAsync) script.async = true;
     if(options.callbackName) {
-      window[options.callbackName] = scriptOnload;
-    } else {
-      script.onload = scriptOnload;
+      window[options.callbackName] = resourceOnload;
     }
 
-    document.querySelector('head').appendChild(script);
-    script.src = src;
+
+    this['_load' + type](options, resourceOnload);
   }
 
   return false;
