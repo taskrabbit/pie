@@ -14,7 +14,7 @@ pie.list.prototype._normalizedIndex = function(wanted) {
 };
 
 
-pie.list.prototype._trackMutations = function(skipObservers, fn) {
+pie.list.prototype._trackMutations = function(options, fn) {
   var oldLength = this.data.items.length,
   changes = [fn.call()],
   newLength = this.data.items.length;
@@ -31,7 +31,7 @@ pie.list.prototype._trackMutations = function(skipObservers, fn) {
 
   this.changeRecords = this.changeRecords.concat(changes);
 
-  if(skipObservers) return this;
+  if(options && options.skipObservers) return this;
   return this.deliverChangeRecords();
 };
 
@@ -47,7 +47,7 @@ pie.list.prototype.get = function(key) {
   if(isNaN(idx)) path = key;
   else path = 'items.' + idx;
 
-  return this._super('get', path);
+  return pie.model.prototype.get.call(this, path);
 };
 
 
@@ -56,10 +56,10 @@ pie.list.prototype.indexOf = function(value) {
 },
 
 
-pie.list.prototype.insert = function(key, value, skipObservers) {
+pie.list.prototype.insert = function(key, value, options) {
   var idx = this._normalizedIndex(key);
 
-  return this._trackMutations(skipObservers, function(){
+  return this._trackMutations(options, function(){
     var change = {
       name: String(idx),
       object: this.data.items,
@@ -80,8 +80,8 @@ pie.list.prototype.length = function() {
 };
 
 
-pie.list.prototype.push = function(value, skipObservers) {
-  return this._trackMutations(skipObservers, function(){
+pie.list.prototype.push = function(value, options) {
+  return this._trackMutations(options, function(){
     var change = {
       name: String(this.data.items.length),
       object: this.data.items,
@@ -97,10 +97,10 @@ pie.list.prototype.push = function(value, skipObservers) {
 };
 
 
-pie.list.prototype.remove = function(key, skipObservers) {
+pie.list.prototype.remove = function(key, options) {
   var idx = this._normalizedIndex(key);
 
-  return this._trackMutations(skipObservers, function(){
+  return this._trackMutations(options, function(){
     var change = {
       name: String(idx),
       object: this.data.items,
@@ -116,14 +116,14 @@ pie.list.prototype.remove = function(key, skipObservers) {
 };
 
 
-pie.list.prototype.set = function(key, value, skipObservers) {
+pie.list.prototype.set = function(key, value, options) {
   var idx = this._normalizedIndex(key);
 
   if(isNaN(idx)) {
-    return this._super('set', key, value, skipObservers);
+    return pie.model.prototype.set.call(this, key, value, options);
   }
 
-  return this._trackMutations(skipObservers, function(){
+  return this._trackMutations(options, function(){
     var change = {
       name: String(idx),
       object: this.data.items,
@@ -138,8 +138,8 @@ pie.list.prototype.set = function(key, value, skipObservers) {
 };
 
 
-pie.list.prototype.shift = function(skipObservers) {
-  return this._trackMutations(skipObservers, function(){
+pie.list.prototype.shift = function(options) {
+  return this._trackMutations(options, function(){
     var change = {
       name: '0',
       object: this.data.items,
@@ -154,6 +154,6 @@ pie.list.prototype.shift = function(skipObservers) {
 };
 
 
-pie.list.prototype.unshift = function(value, skipObservers) {
-  return this.insert(0, value, skipObservers);
+pie.list.prototype.unshift = function(value, options) {
+  return this.insert(0, value, options);
 };

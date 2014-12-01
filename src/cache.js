@@ -41,10 +41,10 @@ pie.cache.prototype.getOrSet = function(path, value, options) {
 
 pie.cache.prototype.set = function(path, value, options) {
   if(value === undefined) {
-    pie.model.prototype.set.call(this, path, undefined);
+    pie.model.prototype.set.call(this, path, undefined, options);
   } else {
     var wrap = this.wrap(value, options);
-    pie.model.prototype.set.call(this, path, wrap);
+    pie.model.prototype.set.call(this, path, wrap, options);
   }
 };
 

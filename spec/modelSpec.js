@@ -97,7 +97,7 @@ describe("pie.model", function() {
       var observer = jasmine.createSpy('observer');
       this.model.observe(observer, 'foo');
 
-      this.model.set('foo', 'bar', true);
+      this.model.set('foo', 'bar', {skipObservers: true});
       this.model.set('foo', 'baz');
 
       expect(observer.calls.count()).toEqual(1);
@@ -215,6 +215,32 @@ describe("pie.model", function() {
         object: this.foo.data
       }]);
     });
+  });
+
+  describe("versioning", function() {
+
+    it("should increment the _version whenever change records are delivered", function() {
+      var v = this.model.get('_version');
+      expect(v).toEqual(1);
+
+      this.model.set('foo', 'bar');
+      v = this.model.get('_version');
+      expect(v).toEqual(2);
+    });
+
+    it("should not increment until change records are delivered", function() {
+      var v = this.model.get('_version');
+      expect(v).toEqual(1);
+
+      this.model.set('foo', 'bar', {skipObservers: true});
+      v = this.model.get('_version');
+      expect(v).toEqual(1);
+
+      this.model.set('foo', 'baz');
+      v = this.model.get('_version');
+      expect(v).toEqual(2);
+    });
+
   });
 
 });

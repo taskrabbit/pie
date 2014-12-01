@@ -67,7 +67,6 @@ pie.app = function app(options) {
 
   this.on('beforeStart', this.showStoredNotifications.bind(this));
   this.on('beforeStart', this.setupSinglePageLinks.bind(this));
-  this.on('beforeStart', this.setupNotifier.bind(this));
 
   // once the dom is loaded
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
@@ -279,13 +278,6 @@ pie.app.prototype.retrieve = function(key, clear) {
   }
 
   return decoded;
-};
-
-
-// add the notifier's el to the page if possible
-pie.app.prototype.setupNotifier = function() {
-  var parent = document.querySelector(this.options.notificationUiTarget);
-  if(parent) parent.appendChild(this.getChild('notifier').el);
 };
 
 

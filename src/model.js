@@ -36,7 +36,7 @@
 //      oldValue:
 //      undefined,
 //      value: 'first',
-//      object: {..}
+//      object: {...}
 //    }]
 //    ```
 //
@@ -66,7 +66,7 @@
 
 
 pie.model = function(d, options) {
-  this.data = pie.object.merge({}, d);
+  this.data = pie.object.merge({_version: 1}, d);
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.observations = {};
@@ -78,9 +78,18 @@ pie.model = function(d, options) {
 pie.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
+pie.model.prototype.trackVersion = function() {
+  if(this.options.trackVersion !== false && this.changeRecords.length) {
+    this.set('_version', this.get('_version') + 1, {skipObservers: true});
+  }
+};
+
+
 // After updates have been made we deliver our change records to our observers.
 pie.model.prototype.deliverChangeRecords = function() {
   var observers = {}, os, o, change;
+
+  this.trackVersion();
 
   // grab each change record
   while(change = this.changeRecords.shift()) {
@@ -146,7 +155,7 @@ pie.model.prototype.observe = function(/* fn[, key1, key2, key3] */) {
 // Set a value and trigger observers.
 // Optionally provide false as the third argument to skip observation.
 // Note: skipping observation does not stop changeRecords from accruing.
-pie.model.prototype.set = function(key, value, skipObservers) {
+pie.model.prototype.set = function(key, value, options) {
   var change = { name: key, object: this.data };
 
   if(pie.object.hasPath(this.data, key)) {
@@ -161,17 +170,17 @@ pie.model.prototype.set = function(key, value, skipObservers) {
 
   this.changeRecords.push(change);
 
-  if(skipObservers) return this;
+  if(options && options.skipObservers) return this;
   return this.deliverChangeRecords();
 };
 
 // Set a bunch of stuff at once.
-pie.model.prototype.sets = function(obj, skipObservers) {
+pie.model.prototype.sets = function(obj, options) {
   pie.object.forEach(obj, function(k,v) {
-    this.set(k, v, true);
+    this.set(k, v, {skipObservers: true});
   }.bind(this));
 
-  if(skipObservers) return this;
+  if(options && options.skipObservers) return this;
   return this.deliverChangeRecords();
 };
 

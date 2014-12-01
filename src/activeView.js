@@ -13,7 +13,7 @@ pie.activeView.prototype.init = function(setupFunc) {
       if(setupFunc) setupFunc();
 
       if(this.options.autoRender && this.model) {
-        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : 'updated_at';
+        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
         this.onChange(this.model, this.render.bind(this), field);
       }
 

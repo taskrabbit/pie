@@ -43,8 +43,6 @@ pie.services.router.prototype.normalizePath = function(path) {
     path = path.substr(0, path.length - 1);
   }
 
-  // remove
-
   return path;
 },
 

@@ -48,7 +48,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the inserted index and the length", function() {
         this.items.insert(1, 'foo');
-        expect(this.changes.length).toEqual(2);
+        expect(this.changes.length).toEqual(3);
 
         expect(this.changes[0].type).toEqual('add');
         expect(this.changes[0].name).toEqual('1');
@@ -73,7 +73,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the new index and the length", function() {
         this.items.push('foo');
-        expect(this.changes.length).toEqual(2);
+        expect(this.changes.length).toEqual(3);
 
         expect(this.changes[0].type).toEqual('add');
         expect(this.changes[0].name).toEqual('4');
@@ -98,7 +98,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the removal and the length change", function() {
         this.items.remove(1);
-        expect(this.changes.length).toEqual(2);
+        expect(this.changes.length).toEqual(3);
 
         expect(this.changes[0].type).toEqual('delete');
         expect(this.changes[0].name).toEqual('1');
@@ -123,7 +123,7 @@ describe("pie.list", function() {
 
       it("should notify observers of a change at the index but not a change in length", function(){
         this.items.set(1, 'foo');
-        expect(this.changes.length).toEqual(1);
+        expect(this.changes.length).toEqual(2);
         expect(this.changes[0].type).toEqual('update');
         expect(this.changes[0].name).toEqual('1');
       });
@@ -140,7 +140,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the removal and the length change", function() {
         this.items.shift();
-        expect(this.changes.length).toEqual(2);
+        expect(this.changes.length).toEqual(3);
 
         expect(this.changes[0].type).toEqual('delete');
         expect(this.changes[0].name).toEqual('0');
@@ -165,7 +165,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the 0 index and the length", function() {
         this.items.unshift('foo');
-        expect(this.changes.length).toEqual(2);
+        expect(this.changes.length).toEqual(3);
 
         expect(this.changes[0].type).toEqual('add');
         expect(this.changes[0].name).toEqual('0');

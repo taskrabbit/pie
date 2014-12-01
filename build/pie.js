@@ -1442,7 +1442,7 @@ pie.mixins.validatable = {
 //      oldValue:
 //      undefined,
 //      value: 'first',
-//      object: {..}
+//      object: {...}
 //    }]
 //    ```
 //
@@ -1472,7 +1472,7 @@ pie.mixins.validatable = {
 
 
 pie.model = function(d, options) {
-  this.data = pie.object.merge({}, d);
+  this.data = pie.object.merge({_version: 1}, d);
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.observations = {};
@@ -1484,9 +1484,18 @@ pie.model = function(d, options) {
 pie.extend(pie.model.prototype, pie.mixins.inheritance);
 
 
+pie.model.prototype.trackVersion = function() {
+  if(this.options.trackVersion !== false && this.changeRecords.length) {
+    this.set('_version', this.get('_version') + 1, {skipObservers: true});
+  }
+};
+
+
 // After updates have been made we deliver our change records to our observers.
 pie.model.prototype.deliverChangeRecords = function() {
   var observers = {}, os, o, change;
+
+  this.trackVersion();
 
   // grab each change record
   while(change = this.changeRecords.shift()) {
@@ -1552,7 +1561,7 @@ pie.model.prototype.observe = function(/* fn[, key1, key2, key3] */) {
 // Set a value and trigger observers.
 // Optionally provide false as the third argument to skip observation.
 // Note: skipping observation does not stop changeRecords from accruing.
-pie.model.prototype.set = function(key, value, skipObservers) {
+pie.model.prototype.set = function(key, value, options) {
   var change = { name: key, object: this.data };
 
   if(pie.object.hasPath(this.data, key)) {
@@ -1567,17 +1576,17 @@ pie.model.prototype.set = function(key, value, skipObservers) {
 
   this.changeRecords.push(change);
 
-  if(skipObservers) return this;
+  if(options && options.skipObservers) return this;
   return this.deliverChangeRecords();
 };
 
 // Set a bunch of stuff at once.
-pie.model.prototype.sets = function(obj, skipObservers) {
+pie.model.prototype.sets = function(obj, options) {
   pie.object.forEach(obj, function(k,v) {
-    this.set(k, v, true);
+    this.set(k, v, {skipObservers: true});
   }.bind(this));
 
-  if(skipObservers) return this;
+  if(options && options.skipObservers) return this;
   return this.deliverChangeRecords();
 };
 
@@ -1659,10 +1668,10 @@ pie.cache.prototype.getOrSet = function(path, value, options) {
 
 pie.cache.prototype.set = function(path, value, options) {
   if(value === undefined) {
-    pie.model.prototype.set.call(this, path, undefined);
+    pie.model.prototype.set.call(this, path, undefined, options);
   } else {
     var wrap = this.wrap(value, options);
-    pie.model.prototype.set.call(this, path, wrap);
+    pie.model.prototype.set.call(this, path, wrap, options);
   }
 };
 
@@ -1714,7 +1723,7 @@ pie.list.prototype._normalizedIndex = function(wanted) {
 };
 
 
-pie.list.prototype._trackMutations = function(skipObservers, fn) {
+pie.list.prototype._trackMutations = function(options, fn) {
   var oldLength = this.data.items.length,
   changes = [fn.call()],
   newLength = this.data.items.length;
@@ -1731,7 +1740,7 @@ pie.list.prototype._trackMutations = function(skipObservers, fn) {
 
   this.changeRecords = this.changeRecords.concat(changes);
 
-  if(skipObservers) return this;
+  if(options && options.skipObservers) return this;
   return this.deliverChangeRecords();
 };
 
@@ -1747,7 +1756,7 @@ pie.list.prototype.get = function(key) {
   if(isNaN(idx)) path = key;
   else path = 'items.' + idx;
 
-  return this._super('get', path);
+  return pie.model.prototype.get.call(this, path);
 };
 
 
@@ -1756,10 +1765,10 @@ pie.list.prototype.indexOf = function(value) {
 },
 
 
-pie.list.prototype.insert = function(key, value, skipObservers) {
+pie.list.prototype.insert = function(key, value, options) {
   var idx = this._normalizedIndex(key);
 
-  return this._trackMutations(skipObservers, function(){
+  return this._trackMutations(options, function(){
     var change = {
       name: String(idx),
       object: this.data.items,
@@ -1780,8 +1789,8 @@ pie.list.prototype.length = function() {
 };
 
 
-pie.list.prototype.push = function(value, skipObservers) {
-  return this._trackMutations(skipObservers, function(){
+pie.list.prototype.push = function(value, options) {
+  return this._trackMutations(options, function(){
     var change = {
       name: String(this.data.items.length),
       object: this.data.items,
@@ -1797,10 +1806,10 @@ pie.list.prototype.push = function(value, skipObservers) {
 };
 
 
-pie.list.prototype.remove = function(key, skipObservers) {
+pie.list.prototype.remove = function(key, options) {
   var idx = this._normalizedIndex(key);
 
-  return this._trackMutations(skipObservers, function(){
+  return this._trackMutations(options, function(){
     var change = {
       name: String(idx),
       object: this.data.items,
@@ -1816,14 +1825,14 @@ pie.list.prototype.remove = function(key, skipObservers) {
 };
 
 
-pie.list.prototype.set = function(key, value, skipObservers) {
+pie.list.prototype.set = function(key, value, options) {
   var idx = this._normalizedIndex(key);
 
   if(isNaN(idx)) {
-    return this._super('set', key, value, skipObservers);
+    return pie.model.prototype.set.call(this, key, value, options);
   }
 
-  return this._trackMutations(skipObservers, function(){
+  return this._trackMutations(options, function(){
     var change = {
       name: String(idx),
       object: this.data.items,
@@ -1838,8 +1847,8 @@ pie.list.prototype.set = function(key, value, skipObservers) {
 };
 
 
-pie.list.prototype.shift = function(skipObservers) {
-  return this._trackMutations(skipObservers, function(){
+pie.list.prototype.shift = function(options) {
+  return this._trackMutations(options, function(){
     var change = {
       name: '0',
       object: this.data.items,
@@ -1854,8 +1863,8 @@ pie.list.prototype.shift = function(skipObservers) {
 };
 
 
-pie.list.prototype.unshift = function(value, skipObservers) {
-  return this.insert(0, value, skipObservers);
+pie.list.prototype.unshift = function(value, options) {
+  return this.insert(0, value, options);
 };
 // The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
@@ -1981,7 +1990,7 @@ pie.activeView.prototype.init = function(setupFunc) {
       if(setupFunc) setupFunc();
 
       if(this.options.autoRender && this.model) {
-        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : 'updated_at';
+        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
         this.onChange(this.model, this.render.bind(this), field);
       }
 
@@ -3067,8 +3076,6 @@ pie.services.router.prototype.normalizePath = function(path) {
     path = path.substr(0, path.length - 1);
   }
 
-  // remove
-
   return path;
 },
 
@@ -3285,7 +3292,6 @@ pie.app = function app(options) {
 
   this.on('beforeStart', this.showStoredNotifications.bind(this));
   this.on('beforeStart', this.setupSinglePageLinks.bind(this));
-  this.on('beforeStart', this.setupNotifier.bind(this));
 
   // once the dom is loaded
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
@@ -3497,13 +3503,6 @@ pie.app.prototype.retrieve = function(key, clear) {
   }
 
   return decoded;
-};
-
-
-// add the notifier's el to the page if possible
-pie.app.prototype.setupNotifier = function() {
-  var parent = document.querySelector(this.options.notificationUiTarget);
-  if(parent) parent.appendChild(this.getChild('notifier').el);
 };
 
 
