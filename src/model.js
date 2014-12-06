@@ -99,7 +99,13 @@ pie.model.prototype.deliverChangeRecords = function() {
 
     // then for each observer, build or concatenate to the array of changes.
     while(o = os.shift()) {
-      observers[o.pieId] = observers[o.pieId] || {fn: o, changes: []};
+
+      if(!observers[o.pieId]) {
+        var changeSet = [];
+        pie.object.merge(changeSet, pie.mixins.changeSet);
+        observers[o.pieId] = {fn: o, changes: changeSet};
+      }
+
       observers[o.pieId].changes.push(change);
     }
   }

@@ -1123,6 +1123,36 @@ pie.mixins.bindings = (function(){
 
   };
 })();
+pie.mixins.changeSet = {
+
+  has: function(name) {
+    return pie.array.areAny(this, function(change) {
+      return change.name === name;
+    });
+  },
+
+  hasAny: function() {
+    var known = this.names(),
+    wanted = pie.array.from(arguments);
+
+    return pie.array.areAny(wanted, function(name) {
+      return !!~known.indexOf(name);
+    });
+  },
+
+  hasAll: function() {
+    var known = this.names(),
+    wanted = pie.array.from(arguments);
+    return pie.array.areAll(wanted, function(name) {
+      return !!~known.indexOf(name);
+    });
+  },
+
+  names: function() {
+    return pie.array.unique(pie.array.map(this, 'name'));
+  }
+
+};
 pie.mixins.container = {
 
   addChild: function(name, child) {
@@ -1505,7 +1535,13 @@ pie.model.prototype.deliverChangeRecords = function() {
 
     // then for each observer, build or concatenate to the array of changes.
     while(o = os.shift()) {
-      observers[o.pieId] = observers[o.pieId] || {fn: o, changes: []};
+
+      if(!observers[o.pieId]) {
+        var changeSet = [];
+        pie.object.merge(changeSet, pie.mixins.changeSet);
+        observers[o.pieId] = {fn: o, changes: changeSet};
+      }
+
       observers[o.pieId].changes.push(change);
     }
   }

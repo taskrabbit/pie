@@ -116,6 +116,27 @@ describe("pie.model", function() {
 
     });
 
+    it("should send an array of changes which is extended with the changeSet mixin", function(done) {
+
+      var observer = function(changes){
+        expect(changes.has('foo')).toEqual(true);
+        expect(changes.has('bar')).toEqual(false);
+
+        expect(changes.hasAll('foo', 'too')).toEqual(true);
+        expect(changes.hasAll('foo', 'bar')).toEqual(false);
+
+        expect(changes.hasAny('foo', 'bar')).toEqual(true);
+        expect(changes.hasAny('bar', 'baz')).toEqual(false);
+
+        done();
+      };
+
+      this.model.observe(observer);
+
+      this.model.set('foo', 'bar', {skipObservers: true});
+      this.model.set('too', 'bar');
+    });
+
   });
 
   describe("inheritance", function() {

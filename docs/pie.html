@@ -1854,6 +1854,36 @@ this.bind({
 
   };
 })();
+pie.mixins.changeSet = {
+
+  has: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
+    <span class="hljs-keyword">return</span> pie.array.areAny(<span class="hljs-keyword">this</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(change)</span> </span>{
+      <span class="hljs-keyword">return</span> change.name === name;
+    });
+  },
+
+  hasAny: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> known = <span class="hljs-keyword">this</span>.names(),
+    wanted = pie.array.from(<span class="hljs-built_in">arguments</span>);
+
+    <span class="hljs-keyword">return</span> pie.array.areAny(wanted, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
+      <span class="hljs-keyword">return</span> !!~known.indexOf(name);
+    });
+  },
+
+  hasAll: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> known = <span class="hljs-keyword">this</span>.names(),
+    wanted = pie.array.from(<span class="hljs-built_in">arguments</span>);
+    <span class="hljs-keyword">return</span> pie.array.areAll(wanted, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
+      <span class="hljs-keyword">return</span> !!~known.indexOf(name);
+    });
+  },
+
+  names: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">return</span> pie.array.unique(pie.array.map(<span class="hljs-keyword">this</span>, <span class="hljs-string">'name'</span>));
+  }
+
+};
 pie.mixins.container = {
 
   addChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, child)</span> </span>{
@@ -2487,7 +2517,13 @@ pie.model.prototype.trackVersion = <span class="hljs-function"><span class="hljs
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">while</span>(o = os.shift()) {
-      observers[o.pieId] = observers[o.pieId] || {fn: o, changes: []};
+
+      <span class="hljs-keyword">if</span>(!observers[o.pieId]) {
+        <span class="hljs-keyword">var</span> changeSet = [];
+        pie.object.merge(changeSet, pie.mixins.changeSet);
+        observers[o.pieId] = {fn: o, changes: changeSet};
+      }
+
       observers[o.pieId].changes.push(change);
     }
   }</pre></div></div>
