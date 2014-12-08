@@ -84,36 +84,7 @@
             
             <div class="content"><div class='highlight'><pre>  services: {},
 
-  pieId: <span class="hljs-number">1</span>,
-
-  unique: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-built_in">String</span>(pie.pieId++);
-  },
-
-  setUid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
-    <span class="hljs-keyword">return</span> obj.pieId = obj.pieId || pie.unique();
-  },
-
-
-  inherit: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* child, parent, extensions */</span>)</span> </span>{
-    <span class="hljs-keyword">var</span> args = pie.array.from(<span class="hljs-built_in">arguments</span>),
-    child = args.shift(),
-    parent = args.shift();
-
-    child.prototype = <span class="hljs-built_in">Object</span>.create(parent.prototype, {
-      constructor: {
-        value: child,
-        enumerable: <span class="hljs-literal">false</span>,
-        writable: <span class="hljs-literal">true</span>,
-        configurable: <span class="hljs-literal">true</span>
-      }
-    });
-
-    <span class="hljs-keyword">if</span>(!child.prototype._super) pie.extend(child.prototype, pie.mixins.inheritance);
-    <span class="hljs-keyword">if</span>(args.length) pie.extend(child.prototype, args);
-
-    <span class="hljs-keyword">return</span> child;
-  },</pre></div></div>
+  pieId: <span class="hljs-number">1</span>,</pre></div></div>
             
         </li>
         
@@ -137,6 +108,40 @@
     extensions.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(ext)</span> </span>{
       pie.object.merge(proto, ext);
     });
+  },
+
+
+  inherit: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* child, parent, extensions */</span>)</span> </span>{
+    <span class="hljs-keyword">var</span> args = pie.array.from(<span class="hljs-built_in">arguments</span>),
+    child = args.shift(),
+    parent = args.shift();
+
+    child.prototype = <span class="hljs-built_in">Object</span>.create(parent.prototype, {
+      constructor: {
+        value: child,
+        enumerable: <span class="hljs-literal">false</span>,
+        writable: <span class="hljs-literal">true</span>,
+        configurable: <span class="hljs-literal">true</span>
+      }
+    });
+
+    <span class="hljs-keyword">if</span>(!child.prototype._super) pie.extend(child.prototype, pie.mixins.inheritance);
+    <span class="hljs-keyword">if</span>(args.length) pie.extend(child.prototype, args);
+
+    <span class="hljs-keyword">return</span> child;
+  },
+
+  ns: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{
+    <span class="hljs-keyword">if</span>(pie.object.hasPath(<span class="hljs-built_in">window</span>, path)) <span class="hljs-keyword">return</span>;
+    pie.object.setPath(<span class="hljs-built_in">window</span>, path, {});
+  },
+
+  setUid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
+    <span class="hljs-keyword">return</span> obj.pieId = obj.pieId || pie.unique();
+  },
+
+  unique: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">String</span>(pie.pieId++);
   },</pre></div></div>
             
         </li>

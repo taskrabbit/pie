@@ -18,12 +18,16 @@ window.pie = {
 
   pieId: 1,
 
-  unique: function() {
-    return String(pie.pieId++);
-  },
+  // maybe this will get more complicated in the future, maybe not.
+  extend: function(/* proto, extension1[, extension2, ...] */) {
+    var extensions = pie.array.from(arguments),
+    proto = extensions.shift();
 
-  setUid: function(obj) {
-    return obj.pieId = obj.pieId || pie.unique();
+    extensions = pie.array.compact(pie.array.flatten(extensions), true);
+
+    extensions.forEach(function(ext) {
+      pie.object.merge(proto, ext);
+    });
   },
 
 
@@ -47,16 +51,17 @@ window.pie = {
     return child;
   },
 
-  // maybe this will get more complicated in the future, maybe not.
-  extend: function(/* proto, extension1[, extension2, ...] */) {
-    var extensions = pie.array.from(arguments),
-    proto = extensions.shift();
+  ns: function(path) {
+    if(pie.object.hasPath(window, path)) return;
+    pie.object.setPath(window, path, {});
+  },
 
-    extensions = pie.array.compact(pie.array.flatten(extensions), true);
+  setUid: function(obj) {
+    return obj.pieId = obj.pieId || pie.unique();
+  },
 
-    extensions.forEach(function(ext) {
-      pie.object.merge(proto, ext);
-    });
+  unique: function() {
+    return String(pie.pieId++);
   },
 
 
