@@ -32,8 +32,14 @@ window.pie = {
     child = args.shift(),
     parent = args.shift();
 
-    child.prototype = Object.create(parent.prototype);
-    child.prototype.constructor = child;
+    child.prototype = Object.create(parent.prototype, {
+      constructor: {
+        value: child,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
 
     if(!child.prototype._super) pie.extend(child.prototype, pie.mixins.inheritance);
     if(args.length) pie.extend(child.prototype, args);

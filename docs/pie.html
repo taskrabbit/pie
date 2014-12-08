@@ -100,8 +100,14 @@
     child = args.shift(),
     parent = args.shift();
 
-    child.prototype = <span class="hljs-built_in">Object</span>.create(parent.prototype);
-    child.prototype.constructor = child;
+    child.prototype = <span class="hljs-built_in">Object</span>.create(parent.prototype, {
+      constructor: {
+        value: child,
+        enumerable: <span class="hljs-literal">false</span>,
+        writable: <span class="hljs-literal">true</span>,
+        configurable: <span class="hljs-literal">true</span>
+      }
+    });
 
     <span class="hljs-keyword">if</span>(!child.prototype._super) pie.extend(child.prototype, pie.mixins.inheritance);
     <span class="hljs-keyword">if</span>(args.length) pie.extend(child.prototype, args);
