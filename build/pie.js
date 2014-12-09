@@ -3011,7 +3011,7 @@ pie.services.resources.prototype._loadscript = function(options, resourceOnload)
 
   var script = document.createElement('script');
 
-  if(!options.noAsync) script.async = true;
+  if(options.noAsync) script.async = false;
 
   if(!options.callbackName) {
     script.onload = resourceOnload;
