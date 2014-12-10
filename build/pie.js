@@ -1759,17 +1759,15 @@ pie.emitter = function() {
   this.eventCallbacks = {};
 };
 
+pie.emitter.prototype.has = function(event) {
+  return !!~this.triggeredEvents.indexOf(event);
+};
+
 // invoke fn when the event is triggered.
-// if futureOnly is truthy the fn will only be triggered for future events.
+// options:
+//  - onceOnly: if the callback should be called a single time then removed.
 pie.emitter.prototype.on = function(event, fn, options) {
   options = options || {};
-
-  if(~this.triggeredEvents.indexOf(event)) {
-    if(!options.futureOnly) {
-      fn();
-      if(options.onceOnly) return;
-    }
-  }
 
   this.eventCallbacks[event] = this.eventCallbacks[event] || [];
   this.eventCallbacks[event].push(pie.object.merge({fn: fn}, options));
@@ -1780,7 +1778,6 @@ pie.emitter.prototype.on = function(event, fn, options) {
 pie.emitter.prototype.fire = function(/* event, arg1, arg2, */) {
   var args = pie.array.from(arguments),
   event = args.shift(),
-  previouslyTriggered = !!~this.triggeredEvents.indexOf(event),
   callbacks = this.eventCallbacks[event],
   compactNeeded = false;
 
@@ -1966,7 +1963,6 @@ pie.list.prototype.shift = function(options) {
 pie.list.prototype.unshift = function(value, options) {
   return this.insert(0, value, options);
 };
-// The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
 pie.view = function(options) {
   this.options = options || {};
@@ -1983,6 +1979,13 @@ pie.extend(pie.view.prototype, pie.mixins.container);
 
 pie.view.prototype.addedToParent = function() {
   this.init();
+};
+
+// we extract the functionality of setting our render target so we can override this as we see fit.
+// for example, other implementation could store the target, then show a loader until render() is called.
+// by default we simply append ourselves to the target.
+pie.view.prototype.setRenderTarget = function(target) {
+  target.appendChild(this.el);
 };
 
 // placeholder for default functionality
@@ -2080,9 +2083,28 @@ pie.activeView = function activeView(options) {
   pie.view.call(this, options);
 
   this.emitter = new pie.emitter();
+  this.emitter.on('afterRender', this._appendToDom.bind(this), {onceOnly: true});
 };
 
 pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources, pie.mixins.validatable);
+
+pie.activeView.prototype._appendToDom = function() {
+  if(!this.renderTarget) return;
+  if(this.el.parentNode) return;
+  this.renderTarget.appendChild(this.el);
+};
+
+
+// this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
+pie.activeView.prototype._loadingStyle = function(bool) {
+  this.el.classList[bool ? 'add' : 'remove']('loading');
+
+  var buttons = this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable');
+
+  pie.dom.all(buttons, bool ? 'classList.add' : 'classList.remove', 'btn-loading');
+  pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
+};
+
 
 pie.activeView.prototype.init = function(setupFunc) {
   this.emitter.around('init', function(){
@@ -2158,26 +2180,21 @@ pie.activeView.prototype.renderData = function() {
   return {};
 };
 
-pie.activeView.prototype.render = function() {
+pie.activeView.prototype.render = function(renderFn) {
   this.emitter.around('render', function(){
     if(this.options.template) {
       var content = this.app.template(this.options.template, this.renderData());
       this.el.innerHTML = content;
     }
 
-    return this;
+    if(renderFn) renderFn();
   }.bind(this));
 };
 
 
-// this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
-pie.activeView.prototype._loadingStyle = function(bool) {
-  this.el.classList[bool ? 'add' : 'remove']('loading');
-
-  var buttons = this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable');
-
-  pie.dom.all(buttons, bool ? 'classList.add' : 'classList.remove', 'btn-loading');
-  pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
+pie.activeView.prototype.setRenderTarget = function(target) {
+  this.renderTarget = target;
+  if(this.emitter.has('afterRender')) this._appendToDom();
 };
 
 pie.validator = function(app) {
@@ -3533,7 +3550,7 @@ pie.app.prototype.navigationChanged = function() {
   if(current) {
     this.removeChild(current);
     if(current.el.parentNode) current.el.parentNode.removeChild(current.el);
-    this.emitter.fire('oldViewRemoved');
+    this.emitter.fire('oldViewRemoved', current);
   }
 
   // clear any leftover notifications
@@ -3546,8 +3563,8 @@ pie.app.prototype.navigationChanged = function() {
   // add the instance as our 'currentView'
   child = new viewClass(this);
   child._pieName = this.parsedUrl.view;
+  child.setRenderTarget(target);
   this.addChild('currentView', child);
-  target.appendChild(child.el);
 
 
   // remove the leftover model references
@@ -3556,7 +3573,7 @@ pie.app.prototype.navigationChanged = function() {
   // get us back to the top of the page.
   window.scrollTo(0,0);
 
-  this.fire('newViewLoaded');
+  this.emitter.fire('newViewLoaded', child);
 };
 
 // reload the page without reloading the browser.
@@ -3610,14 +3627,15 @@ pie.app.prototype.showStoredNotifications = function() {
 
 // start the app, apply fake navigation to the current url to get our navigation observation underway.
 pie.app.prototype.start = function() {
-
-  this.navigator.start();
-
   this.emitter.around('start', function() {
+
+    this.navigator.start();
+
     // invoke a nav change event on page load.
     var url = this.navigator.get('url');
     this.navigator.data.url = null;
     this.navigator.set('url', url);
+
   }.bind(this));
 };
 

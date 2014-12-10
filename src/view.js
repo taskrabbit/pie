@@ -1,4 +1,3 @@
-// The, ahem, base view.
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
 pie.view = function(options) {
   this.options = options || {};
@@ -15,6 +14,13 @@ pie.extend(pie.view.prototype, pie.mixins.container);
 
 pie.view.prototype.addedToParent = function() {
   this.init();
+};
+
+// we extract the functionality of setting our render target so we can override this as we see fit.
+// for example, other implementation could store the target, then show a loader until render() is called.
+// by default we simply append ourselves to the target.
+pie.view.prototype.setRenderTarget = function(target) {
+  target.appendChild(this.el);
 };
 
 // placeholder for default functionality

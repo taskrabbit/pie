@@ -200,7 +200,7 @@ pie.app.prototype.navigationChanged = function() {
   if(current) {
     this.removeChild(current);
     if(current.el.parentNode) current.el.parentNode.removeChild(current.el);
-    this.emitter.fire('oldViewRemoved');
+    this.emitter.fire('oldViewRemoved', current);
   }
 
   // clear any leftover notifications
@@ -213,8 +213,8 @@ pie.app.prototype.navigationChanged = function() {
   // add the instance as our 'currentView'
   child = new viewClass(this);
   child._pieName = this.parsedUrl.view;
+  child.setRenderTarget(target);
   this.addChild('currentView', child);
-  target.appendChild(child.el);
 
 
   // remove the leftover model references
@@ -223,7 +223,7 @@ pie.app.prototype.navigationChanged = function() {
   // get us back to the top of the page.
   window.scrollTo(0,0);
 
-  this.fire('newViewLoaded');
+  this.emitter.fire('newViewLoaded', child);
 };
 
 // reload the page without reloading the browser.
@@ -277,14 +277,15 @@ pie.app.prototype.showStoredNotifications = function() {
 
 // start the app, apply fake navigation to the current url to get our navigation observation underway.
 pie.app.prototype.start = function() {
-
-  this.navigator.start();
-
   this.emitter.around('start', function() {
+
+    this.navigator.start();
+
     // invoke a nav change event on page load.
     var url = this.navigator.get('url');
     this.navigator.data.url = null;
     this.navigator.set('url', url);
+
   }.bind(this));
 };
 

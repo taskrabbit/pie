@@ -3,17 +3,15 @@ pie.emitter = function() {
   this.eventCallbacks = {};
 };
 
+pie.emitter.prototype.has = function(event) {
+  return !!~this.triggeredEvents.indexOf(event);
+};
+
 // invoke fn when the event is triggered.
-// if futureOnly is truthy the fn will only be triggered for future events.
+// options:
+//  - onceOnly: if the callback should be called a single time then removed.
 pie.emitter.prototype.on = function(event, fn, options) {
   options = options || {};
-
-  if(~this.triggeredEvents.indexOf(event)) {
-    if(!options.futureOnly) {
-      fn();
-      if(options.onceOnly) return;
-    }
-  }
 
   this.eventCallbacks[event] = this.eventCallbacks[event] || [];
   this.eventCallbacks[event].push(pie.object.merge({fn: fn}, options));
@@ -24,7 +22,6 @@ pie.emitter.prototype.on = function(event, fn, options) {
 pie.emitter.prototype.fire = function(/* event, arg1, arg2, */) {
   var args = pie.array.from(arguments),
   event = args.shift(),
-  previouslyTriggered = !!~this.triggeredEvents.indexOf(event),
   callbacks = this.eventCallbacks[event],
   compactNeeded = false;
 

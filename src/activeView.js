@@ -3,9 +3,28 @@ pie.activeView = function activeView(options) {
   pie.view.call(this, options);
 
   this.emitter = new pie.emitter();
+  this.emitter.on('afterRender', this._appendToDom.bind(this), {onceOnly: true});
 };
 
 pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources, pie.mixins.validatable);
+
+pie.activeView.prototype._appendToDom = function() {
+  if(!this.renderTarget) return;
+  if(this.el.parentNode) return;
+  this.renderTarget.appendChild(this.el);
+};
+
+
+// this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
+pie.activeView.prototype._loadingStyle = function(bool) {
+  this.el.classList[bool ? 'add' : 'remove']('loading');
+
+  var buttons = this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable');
+
+  pie.dom.all(buttons, bool ? 'classList.add' : 'classList.remove', 'btn-loading');
+  pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
+};
+
 
 pie.activeView.prototype.init = function(setupFunc) {
   this.emitter.around('init', function(){
@@ -81,25 +100,20 @@ pie.activeView.prototype.renderData = function() {
   return {};
 };
 
-pie.activeView.prototype.render = function() {
+pie.activeView.prototype.render = function(renderFn) {
   this.emitter.around('render', function(){
     if(this.options.template) {
       var content = this.app.template(this.options.template, this.renderData());
       this.el.innerHTML = content;
     }
 
-    return this;
+    if(renderFn) renderFn();
   }.bind(this));
 };
 
 
-// this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
-pie.activeView.prototype._loadingStyle = function(bool) {
-  this.el.classList[bool ? 'add' : 'remove']('loading');
-
-  var buttons = this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable');
-
-  pie.dom.all(buttons, bool ? 'classList.add' : 'classList.remove', 'btn-loading');
-  pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
+pie.activeView.prototype.setRenderTarget = function(target) {
+  this.renderTarget = target;
+  if(this.emitter.has('afterRender')) this._appendToDom();
 };
 

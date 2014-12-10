@@ -67,21 +67,23 @@ pie.inherit(example.views.layout, pie.activeView, {
   render: function() {
     // since this is a simpleView and we provide the template name in the constructor,
     // we have to invoke super here.
-    this._super('render');
+    this._super('render', function() {
 
-    // ensure we don't have any children (rerender)
-    this.removeChildren();
+      // ensure we don't have any children (rerender)
+      this.removeChildren();
 
-    // add our form view which will handle the addition of data.
-    // addChild sets up the child view and relates it to this view (the parent).
-    this.addChild('form', new example.views.form(this.list));
+      // add our form view which will handle the addition of data.
+      // addChild sets up the child view and relates it to this view (the parent).
+      this.addChild('form', new example.views.form(this.list));
 
-    // we still haven't added it to the dom yet, though. So we choose where to put it.
-    this.qs('.form-container').appendChild(this.getChild('form').el);
+      // we still haven't added it to the dom yet, though. So we choose where to put it.
+      this.getChild('form').setRenderTarget(this.qs('.form-container'));
 
-    // add our list view.
-    this.addChild('list', new example.views.list(this.list));
-    this.qs('.list-container').appendChild(this.getChild('list').el);
+      // add our list view.
+      this.addChild('list', new example.views.list(this.list));
+      this.getChild('list').setRenderTarget(this.qs('.list-container'));
+
+    }.bind(this));
   }
 });
 
@@ -183,13 +185,11 @@ pie.inherit(example.views.list, pie.activeView, {
 
   // set up our events, then invoke super.
   init: function() {
+    this._super('init', function() {
+      this.on('click', '.js-complete-all', this.completeAll.bind(this));
 
-    this.on('click', '.js-complete-all', this.completeAll.bind(this));
-
-    this.onChange(this.list, this.listChanged.bind(this));
-
-    // do this last, since we are rendering in it.
-    this._super('init');
+      this.onChange(this.list, this.listChanged.bind(this));
+    }.bind(this));
   },
 
   completeAll: function(e) {
@@ -239,8 +239,9 @@ pie.inherit(example.views.list, pie.activeView, {
   },
 
   render: function() {
-    this._super('render');
-    this.updateSummary();
+    this._super('render', function() {
+      this.updateSummary();
+    }.bind(this));
   },
 
   updateSummary: function() {
@@ -272,15 +273,14 @@ pie.inherit(example.views.item, pie.activeView, pie.mixins.bindings, {
   // set up our events, then invoke super.
   init: function() {
 
-    this.bind({attr: 'completed'});
+    this._super('init', function() {
+      this.bind({attr: 'completed'});
 
-    this.onChange(this.item, this.completedChanged.bind(this), 'completed');
+      this.onChange(this.item, this.completedChanged.bind(this), 'completed');
 
-    // any time a js-delete link is clicked, invoke deleteItem.
-    this.on('click', '.js-delete', this.deleteItem.bind(this));
-
-    // do this last, since we are rendering in it.
-    this._super('init');
+      // any time a js-delete link is clicked, invoke deleteItem.
+      this.on('click', '.js-delete', this.deleteItem.bind(this));
+    }.bind(this));
 
     this.initBoundFields();
   },
