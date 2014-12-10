@@ -350,7 +350,7 @@ describe("Array extensions", function() {
     });
 
     it('should allow for i18n translations to be provided', function() {
-      var i18n = new pie.services.i18n();
+      var i18n = new pie.i18n();
       i18n.load({
         sentence: {
           delimeter: '; ',

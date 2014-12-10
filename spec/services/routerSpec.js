@@ -1,7 +1,7 @@
-describe("pie.services.router", function(){
+describe("pie.router", function(){
 
   beforeEach(function(){
-    var r = new pie.services.router({parsedUrl: {}});
+    var r = new pie.router({parsedUrl: {}});
     this.router = r;
 
     this.router.route({

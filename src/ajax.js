@@ -1,11 +1,11 @@
-pie.services.ajax = function ajax(app) {
+pie.ajax = function ajax(app) {
   this.app = app;
   this.defaultAjaxOptions = {};
 };
 
 
 // default ajax options. override this method to
-pie.services.ajax.prototype._defaultAjaxOptions = function() {
+pie.ajax.prototype._defaultAjaxOptions = function() {
   return pie.object.merge({}, this.defaultAjaxOptions, {
     dataType: 'json',
     type: 'GET',
@@ -21,7 +21,7 @@ pie.services.ajax.prototype._defaultAjaxOptions = function() {
 //  progress: this.progressCallback.bind(this),
 //  success: this.
 // })
-pie.services.ajax.prototype.ajax = function(options) {
+pie.ajax.prototype.ajax = function(options) {
 
   options = pie.object.compact(options);
   options = pie.object.merge({}, this._defaultAjaxOptions(), options);
@@ -80,27 +80,27 @@ pie.services.ajax.prototype.ajax = function(options) {
   return xhr;
 };
 
-pie.services.ajax.prototype.get = function(options) {
+pie.ajax.prototype.get = function(options) {
   options = pie.object.merge({type: 'GET'}, options);
   return this.ajax(options);
 };
 
-pie.services.ajax.prototype.post = function(options) {
+pie.ajax.prototype.post = function(options) {
   options = pie.object.merge({type: 'POST'}, options);
   return this.ajax(options);
 };
 
-pie.services.ajax.prototype.put = function(options) {
+pie.ajax.prototype.put = function(options) {
   options = pie.object.merge({type: 'PUT'}, options);
   return this.ajax(options);
 };
 
-pie.services.ajax.prototype.del = function(options) {
+pie.ajax.prototype.del = function(options) {
   options = pie.object.merge({type: 'DELETE'}, options);
   return this.ajax(options);
 };
 
-pie.services.ajax.prototype._applyCsrfToken = function(xhr) {
+pie.ajax.prototype._applyCsrfToken = function(xhr) {
   var tokenEl = document.querySelector('meta[name="csrf-token"]'),
   token = tokenEl ? tokenEl.getAttribute('content') : null;
   if(token) {

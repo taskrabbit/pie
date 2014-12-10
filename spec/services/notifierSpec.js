@@ -1,4 +1,4 @@
-describe("pie.services.notifier", function(){
+describe("pie.notifier", function(){
 
   beforeEach(function(){
     app.notifier.clear();

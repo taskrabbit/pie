@@ -2433,14 +2433,14 @@ pie.validator.prototype.url = function(value, options) {
     return (/^.+\..+$/).test(value);
   });
 };
-pie.services.ajax = function ajax(app) {
+pie.ajax = function ajax(app) {
   this.app = app;
   this.defaultAjaxOptions = {};
 };
 
 
 // default ajax options. override this method to
-pie.services.ajax.prototype._defaultAjaxOptions = function() {
+pie.ajax.prototype._defaultAjaxOptions = function() {
   return pie.object.merge({}, this.defaultAjaxOptions, {
     dataType: 'json',
     type: 'GET',
@@ -2456,7 +2456,7 @@ pie.services.ajax.prototype._defaultAjaxOptions = function() {
 //  progress: this.progressCallback.bind(this),
 //  success: this.
 // })
-pie.services.ajax.prototype.ajax = function(options) {
+pie.ajax.prototype.ajax = function(options) {
 
   options = pie.object.compact(options);
   options = pie.object.merge({}, this._defaultAjaxOptions(), options);
@@ -2515,48 +2515,48 @@ pie.services.ajax.prototype.ajax = function(options) {
   return xhr;
 };
 
-pie.services.ajax.prototype.get = function(options) {
+pie.ajax.prototype.get = function(options) {
   options = pie.object.merge({type: 'GET'}, options);
   return this.ajax(options);
 };
 
-pie.services.ajax.prototype.post = function(options) {
+pie.ajax.prototype.post = function(options) {
   options = pie.object.merge({type: 'POST'}, options);
   return this.ajax(options);
 };
 
-pie.services.ajax.prototype.put = function(options) {
+pie.ajax.prototype.put = function(options) {
   options = pie.object.merge({type: 'PUT'}, options);
   return this.ajax(options);
 };
 
-pie.services.ajax.prototype.del = function(options) {
+pie.ajax.prototype.del = function(options) {
   options = pie.object.merge({type: 'DELETE'}, options);
   return this.ajax(options);
 };
 
-pie.services.ajax.prototype._applyCsrfToken = function(xhr) {
+pie.ajax.prototype._applyCsrfToken = function(xhr) {
   var tokenEl = document.querySelector('meta[name="csrf-token"]'),
   token = tokenEl ? tokenEl.getAttribute('content') : null;
   if(token) {
     xhr.setRequestHeader('X-CSRF-Token', token);
   }
 };
-pie.services.errorHandler = function errorHandler(app) {
+pie.errorHandler = function errorHandler(app) {
   this.app = app;
   this.responseCodeHandlers = {};
 };
 
 
 // extract the "data" object out of an xhr
-pie.services.errorHandler.prototype.data = function(xhr) {
+pie.errorHandler.prototype.data = function(xhr) {
   return xhr.data = xhr.data || (xhr.status ? JSON.parse(xhr.response) : {});
 };
 
 
 // extract an error message from a response. Try to extract the error message from
 // the xhr data diretly, or allow overriding by response code.
-pie.services.errorHandler.prototype.errorMessagesFromRequest = function(xhr) {
+pie.errorHandler.prototype.errorMessagesFromRequest = function(xhr) {
   var d = this.data(xhr),
   errors  = pie.array.map(d.errors || [], 'message'),
   clean;
@@ -2570,7 +2570,7 @@ pie.services.errorHandler.prototype.errorMessagesFromRequest = function(xhr) {
 };
 
 // find a handler for the xhr via response code or the app default.
-pie.services.errorHandler.prototype.handleXhrError = function(xhr) {
+pie.errorHandler.prototype.handleXhrError = function(xhr) {
 
   var handler = this.responseCodeHandlers[xhr.status.toString()];
 
@@ -2583,7 +2583,7 @@ pie.services.errorHandler.prototype.handleXhrError = function(xhr) {
 };
 
 // build errors and send them to the notifier.
-pie.services.errorHandler.prototype.notifyErrors = function(xhr){
+pie.errorHandler.prototype.notifyErrors = function(xhr){
   var n = this.app.notifier, errors = this.errorMessagesFromRequest(xhr);
 
   if(errors.length) {
@@ -2601,13 +2601,13 @@ pie.services.errorHandler.prototype.notifyErrors = function(xhr){
 
 // register a response code handler
 // registerHandler('401', myRedirectCallback);
-pie.services.errorHandler.prototype.registerHandler = function(responseCode, handler) {
+pie.errorHandler.prototype.registerHandler = function(responseCode, handler) {
   this.responseCodeHandlers[responseCode.toString()] = handler;
 };
 
 
 // provide an interface for sending errors to a bug reporting service.
-pie.services.errorHandler.prototype.reportError = function(err, options) {
+pie.errorHandler.prototype.reportError = function(err, options) {
   options = options || {};
 
   if(options.prefix && 'message' in err) {
@@ -2623,16 +2623,16 @@ pie.services.errorHandler.prototype.reportError = function(err, options) {
 
 
 // hook in your own error reporting service. bugsnag, airbrake, etc.
-pie.services.errorHandler.prototype._reportError = function(err) {
+pie.errorHandler.prototype._reportError = function(err) {
   this.app.debug(err);
 };
 // made to be used as an instance so multiple translations could exist if we so choose.
-pie.services.i18n = function i18n(app) {
-  this.translations = pie.object.merge({}, pie.services.i18n.defaultTranslations);
+pie.i18n = function i18n(app) {
+  this.translations = pie.object.merge({}, pie.i18n.defaultTranslations);
   this.app = app;
 };
 
-pie.services.i18n.defaultTranslations = {
+pie.i18n.defaultTranslations = {
   app: {
     timeago: {
       now: "just now",
@@ -2735,36 +2735,36 @@ pie.services.i18n.defaultTranslations = {
 };
 
 
-pie.services.i18n.prototype._ampm = function(num) {
+pie.i18n.prototype._ampm = function(num) {
   return this.t('app.time.meridiems.' + (num >= 12 ? 'pm' : 'am'));
 };
 
 
-pie.services.i18n.prototype._countAlias = {
+pie.i18n.prototype._countAlias = {
   '0' : 'zero',
   '1' : 'one',
   '-1' : 'negone'
 };
 
 
-pie.services.i18n.prototype._dayName = function(d) {
+pie.i18n.prototype._dayName = function(d) {
   return this.t('app.time.day_names.' + d);
 };
 
 
-pie.services.i18n.prototype._hour = function(h) {
+pie.i18n.prototype._hour = function(h) {
   if(h > 12) h -= 12;
   if(!h) h += 12;
   return h;
 };
 
 
-pie.services.i18n.prototype._monthName = function(m) {
+pie.i18n.prototype._monthName = function(m) {
   return this.t('app.time.month_names.' + m);
 };
 
 
-pie.services.i18n.prototype._nestedTranslate = function(t, data) {
+pie.i18n.prototype._nestedTranslate = function(t, data) {
   return t.replace(/\$\{([^\}]+)\}/, function(match, path) {
     return this.translate(path, data);
   }.bind(this));
@@ -2772,7 +2772,7 @@ pie.services.i18n.prototype._nestedTranslate = function(t, data) {
 
 
 // assumes that dates either come in as dates, iso strings, or epoch timestamps
-pie.services.i18n.prototype._normalizedDate = function(d) {
+pie.i18n.prototype._normalizedDate = function(d) {
   if(String(d).match(/^\d+$/)) {
     d = parseInt(d, 10);
     if(String(d).length < 13) d *= 1000;
@@ -2787,17 +2787,17 @@ pie.services.i18n.prototype._normalizedDate = function(d) {
 },
 
 
-pie.services.i18n.prototype._shortDayName = function(d) {
+pie.i18n.prototype._shortDayName = function(d) {
   return this.t('app.time.short_day_names.' + d) || this._dayName(d).slice(0, 3);
 };
 
 
-pie.services.i18n.prototype._shortMonthName = function(m) {
+pie.i18n.prototype._shortMonthName = function(m) {
   return this.t('app.time.short_month_names.' + m) || this._monthName(m).slice(0, 3);
 };
 
 
-pie.services.i18n.prototype._pad = function(num, cnt, pad) {
+pie.i18n.prototype._pad = function(num, cnt, pad) {
   var s = '',
       p = cnt - num.toString().length;
   if(pad === undefined) pad = ' ';
@@ -2808,7 +2808,7 @@ pie.services.i18n.prototype._pad = function(num, cnt, pad) {
   return s + num.toString();
 };
 
-pie.services.i18n.prototype._ordinal = function(number) {
+pie.i18n.prototype._ordinal = function(number) {
   var unit = number % 100;
 
   if(unit >= 11 && unit <= 13) unit = 0;
@@ -2817,26 +2817,26 @@ pie.services.i18n.prototype._ordinal = function(number) {
   return this.t('app.time.ordinals.o' + unit);
 },
 
-pie.services.i18n.prototype._timezoneAbbr = function(date) {
+pie.i18n.prototype._timezoneAbbr = function(date) {
   var str = date && date.toString();
   return str && str.split(/\((.*)\)/)[1];
 },
 
 
-pie.services.i18n.prototype._utc = function(t) {
+pie.i18n.prototype._utc = function(t) {
   var t2 = new Date(t.getTime());
   t2.setMinutes(t2.getMinutes() + t2.getTimezoneOffset());
   return t2;
 };
 
 
-pie.services.i18n.prototype.load = function(data, shallow) {
+pie.i18n.prototype.load = function(data, shallow) {
   var f = shallow ? pie.object.merge : pie.object.deepMerge;
   f.call(null, this.translations, data);
 };
 
 
-pie.services.i18n.prototype.translate = function(path, data) {
+pie.i18n.prototype.translate = function(path, data) {
   var translation = pie.object.getPath(this.translations, path), count;
 
   if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {
@@ -2866,7 +2866,7 @@ pie.services.i18n.prototype.translate = function(path, data) {
 };
 
 
-pie.services.i18n.prototype.timeago = function(t, now, scope) {
+pie.i18n.prototype.timeago = function(t, now, scope) {
   t = this._normalizedDate(t).getTime()  / 1000;
   now = this._normalizedDate(now || new Date()).getTime() / 1000;
 
@@ -2898,7 +2898,7 @@ pie.services.i18n.prototype.timeago = function(t, now, scope) {
 };
 
 // pass in the date instance and the string 'format'
-pie.services.i18n.prototype.strftime = function(date, f) {
+pie.i18n.prototype.strftime = function(date, f) {
   date = this._normalizedDate(date);
 
   // named format from translations.time.
@@ -2952,16 +2952,16 @@ pie.services.i18n.prototype.strftime = function(date, f) {
   return f;
 };
 
-pie.services.i18n.prototype.t = pie.services.i18n.prototype.translate;
-pie.services.i18n.prototype.l = pie.services.i18n.prototype.strftime;
-pie.services.navigator = function(app) {
+pie.i18n.prototype.t = pie.i18n.prototype.translate;
+pie.i18n.prototype.l = pie.i18n.prototype.strftime;
+pie.navigator = function(app) {
   this.app = app;
   pie.model.prototype.constructor.call(this, {});
 };
 
-pie.inherit(pie.services.navigator, pie.model);
+pie.inherit(pie.navigator, pie.model);
 
-pie.services.navigator.prototype.go = function(path, params, replace) {
+pie.navigator.prototype.go = function(path, params, replace) {
   var url = path;
 
   params = params || {};
@@ -2981,11 +2981,11 @@ pie.services.navigator.prototype.go = function(path, params, replace) {
 };
 
 
-pie.services.navigator.prototype.start = function() {
+pie.navigator.prototype.start = function() {
   return this.setDataFromLocation();
 };
 
-pie.services.navigator.prototype.setDataFromLocation = function() {
+pie.navigator.prototype.setDataFromLocation = function() {
   var query = window.location.search.slice(1);
   query = pie.string.deserialize(query);
 
@@ -2998,14 +2998,14 @@ pie.services.navigator.prototype.setDataFromLocation = function() {
   return this;
 };
 // notifier is a class which provides an interface for rendering page-level notifications.
-pie.services.notifier = function notifier(app, options) {
+pie.notifier = function notifier(app, options) {
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.notifications = new pie.list([]);
 };
 
 // remove all alerts, potentially filtering by the type of alert.
-pie.services.notifier.prototype.clear = function(type) {
+pie.notifier.prototype.clear = function(type) {
   if(type) {
     this.notifications.forEach(function(n) {
       this.remove(n.id);
@@ -3021,7 +3021,7 @@ pie.services.notifier.prototype.clear = function(type) {
 // Messages can be a string or an array of messages.
 // You can choose to close a notification automatically by providing `true` as the third arg.
 // You can provide a number in milliseconds as the autoClose value as well.
-pie.services.notifier.prototype.notify = function(messages, type, autoRemove) {
+pie.notifier.prototype.notify = function(messages, type, autoRemove) {
   type = type || 'message';
   autoRemove = this.getAutoRemoveTimeout(autoRemove);
 
@@ -3049,13 +3049,13 @@ pie.services.notifier.prototype.notify = function(messages, type, autoRemove) {
 
 };
 
-pie.services.notifier.prototype.getAutoRemoveTimeout = function(timeout) {
+pie.notifier.prototype.getAutoRemoveTimeout = function(timeout) {
   if(timeout === undefined) timeout = true;
   if(timeout && !pie.object.isNumber(timeout)) timeout = 7000;
   return timeout;
 };
 
-pie.services.notifier.prototype.remove = function(msgId) {
+pie.notifier.prototype.remove = function(msgId) {
   var msgIdx = pie.array.indexOf(this.notifications.get('items'), function(m) {
     return m.id === msgId;
   });
@@ -3064,28 +3064,28 @@ pie.services.notifier.prototype.remove = function(msgId) {
     this.notifications.remove(msgIdx);
   }
 };
-pie.services.resources = function(app, srcMap) {
+pie.resources = function(app, srcMap) {
   this.app = app;
   this.loaded = {};
   this.srcMap = srcMap || {};
 };
 
-pie.services.resources.prototype._appendNode = function(node) {
+pie.resources.prototype._appendNode = function(node) {
   var target = document.querySelector('head');
   target = target || document.body;
   target.appendChild(node);
 };
 
-pie.services.resources.prototype._inferredResourceType = function(src) {
+pie.resources.prototype._inferredResourceType = function(src) {
   return (/(\.|\/)js(\?|$)/).test(src) ? 'script' : 'link';
 };
 
-pie.services.resources.prototype._normalizeSrc = function(srcOrOptions) {
+pie.resources.prototype._normalizeSrc = function(srcOrOptions) {
   var options = typeof srcOrOptions === 'string' ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
   return options;
 };
 
-pie.services.resources.prototype._loadscript = function(options, resourceOnload) {
+pie.resources.prototype._loadscript = function(options, resourceOnload) {
 
   var script = document.createElement('script');
 
@@ -3100,7 +3100,7 @@ pie.services.resources.prototype._loadscript = function(options, resourceOnload)
 
 };
 
-pie.services.resources.prototype._loadlink = function(options, resourceOnload) {
+pie.resources.prototype._loadlink = function(options, resourceOnload) {
   var link = document.createElement('link');
 
   link.href = options.src;
@@ -3115,12 +3115,12 @@ pie.services.resources.prototype._loadlink = function(options, resourceOnload) {
   resourceOnload();
 };
 
-pie.services.resources.prototype.define = function(name, srcOrOptions) {
+pie.resources.prototype.define = function(name, srcOrOptions) {
   var options = this._normalizeSrc(srcOrOptions);
   this.srcMap[name] = options;
 };
 
-pie.services.resources.prototype.load = function(srcOrOptions, cb) {
+pie.resources.prototype.load = function(srcOrOptions, cb) {
   var options = this._normalizeSrc(srcOrOptions), src;
   options = this.srcMap[options.src] || options;
   src = options.src;
@@ -3156,7 +3156,7 @@ pie.services.resources.prototype.load = function(srcOrOptions, cb) {
 
   return false;
 };
-pie.services.router = function(app) {
+pie.router = function(app) {
   this.app = app;
   this.routes = {};
   this.namedRoutes = {};
@@ -3170,14 +3170,14 @@ pie.services.router = function(app) {
 // And the current path == /things/page/1.json?q=test
 // app.changedUrl({page: 3, q: 'newQuery'});
 // # => /things/page/3.json?q=newQuery
-pie.services.router.prototype.changedUrl = function(changes) {
+pie.router.prototype.changedUrl = function(changes) {
   var current = this.app.parsedUrl;
   return this.router.path(current.name || current.path, pie.object.merge({}, current.interpolations, current.query, changes));
 },
 
 
 // normalize a path to be evaluated by the router
-pie.services.router.prototype.normalizePath = function(path) {
+pie.router.prototype.normalizePath = function(path) {
 
   // ensure there's a leading slash
   if(path.charAt(0) !== '/') {
@@ -3208,7 +3208,7 @@ pie.services.router.prototype.normalizePath = function(path) {
 // invoke to add routes to the routers routeset.
 // routes objects which contain a "name" key will be added as a name lookup.
 // you can pass a set of defaults which will be extended into each route object.
-pie.services.router.prototype.route = function(routes, defaults){
+pie.router.prototype.route = function(routes, defaults){
   defaults = defaults || {};
 
   // remove the cache
@@ -3234,7 +3234,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 // will return the named path. if there is no path with that name it will return itself.
 // you can optionally pass a data hash and it will build the path with query params or
 // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
-pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly) {
+pie.router.prototype.path = function(nameOrPath, data, interpolateOnly) {
   var o = this.namedRoutes[nameOrPath],
   s = pie.object.isString(o) ? o : nameOrPath,
   usedKeys = [],
@@ -3264,7 +3264,7 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
 };
 
 // provides the keys of the routes in a sorted order relevant for matching most descriptive to least
-pie.services.router.prototype.routeKeys = function() {
+pie.router.prototype.routeKeys = function() {
   if(this._routeKeys) return this._routeKeys;
   this._routeKeys = Object.keys(this.routes);
 
@@ -3284,7 +3284,7 @@ pie.services.router.prototype.routeKeys = function() {
 };
 
 // look at the path and determine the route which this matches.
-pie.services.router.prototype.parseUrl = function(path, parseQuery) {
+pie.router.prototype.parseUrl = function(path, parseQuery) {
 
   var keys = this.routeKeys(),
     i = 0,
@@ -3368,25 +3368,25 @@ pie.app = function app(options) {
   this.emitter = classOption('emitter', pie.emitter);
 
   // app.i18n is the translation functionality
-  this.i18n = classOption('i18n', pie.services.i18n);
+  this.i18n = classOption('i18n', pie.i18n);
 
   // app.ajax is ajax interface + app specific functionality.
-  this.ajax = classOption('ajax', pie.services.ajax);
+  this.ajax = classOption('ajax', pie.ajax);
 
   // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
-  this.notifier = classOption('notifier', pie.services.notifier);
+  this.notifier = classOption('notifier', pie.notifier);
 
   // app.errorHandler is the object responsible for
-  this.errorHandler = classOption('errorHandler', pie.services.errorHandler);
+  this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
   // app.router is used to determine which view should be rendered based on the url
-  this.router = classOption('router', pie.services.router);
+  this.router = classOption('router', pie.router);
 
   // app.resources is used for managing the loading of external resources.
-  this.resources = classOption('resources', pie.services.resources);
+  this.resources = classOption('resources', pie.resources);
 
   // the only navigator which should exist in this app.
-  this.navigator = classOption('navigator', pie.services.navigator);
+  this.navigator = classOption('navigator', pie.navigator);
 
   // the validator which should be used in the context of the app
   this.validator = classOption('validator', pie.validator);

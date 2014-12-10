@@ -1,11 +1,11 @@
-pie.services.navigator = function(app) {
+pie.navigator = function(app) {
   this.app = app;
   pie.model.prototype.constructor.call(this, {});
 };
 
-pie.inherit(pie.services.navigator, pie.model);
+pie.inherit(pie.navigator, pie.model);
 
-pie.services.navigator.prototype.go = function(path, params, replace) {
+pie.navigator.prototype.go = function(path, params, replace) {
   var url = path;
 
   params = params || {};
@@ -25,11 +25,11 @@ pie.services.navigator.prototype.go = function(path, params, replace) {
 };
 
 
-pie.services.navigator.prototype.start = function() {
+pie.navigator.prototype.start = function() {
   return this.setDataFromLocation();
 };
 
-pie.services.navigator.prototype.setDataFromLocation = function() {
+pie.navigator.prototype.setDataFromLocation = function() {
   var query = window.location.search.slice(1);
   query = pie.string.deserialize(query);
 

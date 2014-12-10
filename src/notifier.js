@@ -1,12 +1,12 @@
 // notifier is a class which provides an interface for rendering page-level notifications.
-pie.services.notifier = function notifier(app, options) {
+pie.notifier = function notifier(app, options) {
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.notifications = new pie.list([]);
 };
 
 // remove all alerts, potentially filtering by the type of alert.
-pie.services.notifier.prototype.clear = function(type) {
+pie.notifier.prototype.clear = function(type) {
   if(type) {
     this.notifications.forEach(function(n) {
       this.remove(n.id);
@@ -22,7 +22,7 @@ pie.services.notifier.prototype.clear = function(type) {
 // Messages can be a string or an array of messages.
 // You can choose to close a notification automatically by providing `true` as the third arg.
 // You can provide a number in milliseconds as the autoClose value as well.
-pie.services.notifier.prototype.notify = function(messages, type, autoRemove) {
+pie.notifier.prototype.notify = function(messages, type, autoRemove) {
   type = type || 'message';
   autoRemove = this.getAutoRemoveTimeout(autoRemove);
 
@@ -50,13 +50,13 @@ pie.services.notifier.prototype.notify = function(messages, type, autoRemove) {
 
 };
 
-pie.services.notifier.prototype.getAutoRemoveTimeout = function(timeout) {
+pie.notifier.prototype.getAutoRemoveTimeout = function(timeout) {
   if(timeout === undefined) timeout = true;
   if(timeout && !pie.object.isNumber(timeout)) timeout = 7000;
   return timeout;
 };
 
-pie.services.notifier.prototype.remove = function(msgId) {
+pie.notifier.prototype.remove = function(msgId) {
   var msgIdx = pie.array.indexOf(this.notifications.get('items'), function(m) {
     return m.id === msgId;
   });

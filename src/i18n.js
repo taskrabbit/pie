@@ -1,10 +1,10 @@
 // made to be used as an instance so multiple translations could exist if we so choose.
-pie.services.i18n = function i18n(app) {
-  this.translations = pie.object.merge({}, pie.services.i18n.defaultTranslations);
+pie.i18n = function i18n(app) {
+  this.translations = pie.object.merge({}, pie.i18n.defaultTranslations);
   this.app = app;
 };
 
-pie.services.i18n.defaultTranslations = {
+pie.i18n.defaultTranslations = {
   app: {
     timeago: {
       now: "just now",
@@ -107,36 +107,36 @@ pie.services.i18n.defaultTranslations = {
 };
 
 
-pie.services.i18n.prototype._ampm = function(num) {
+pie.i18n.prototype._ampm = function(num) {
   return this.t('app.time.meridiems.' + (num >= 12 ? 'pm' : 'am'));
 };
 
 
-pie.services.i18n.prototype._countAlias = {
+pie.i18n.prototype._countAlias = {
   '0' : 'zero',
   '1' : 'one',
   '-1' : 'negone'
 };
 
 
-pie.services.i18n.prototype._dayName = function(d) {
+pie.i18n.prototype._dayName = function(d) {
   return this.t('app.time.day_names.' + d);
 };
 
 
-pie.services.i18n.prototype._hour = function(h) {
+pie.i18n.prototype._hour = function(h) {
   if(h > 12) h -= 12;
   if(!h) h += 12;
   return h;
 };
 
 
-pie.services.i18n.prototype._monthName = function(m) {
+pie.i18n.prototype._monthName = function(m) {
   return this.t('app.time.month_names.' + m);
 };
 
 
-pie.services.i18n.prototype._nestedTranslate = function(t, data) {
+pie.i18n.prototype._nestedTranslate = function(t, data) {
   return t.replace(/\$\{([^\}]+)\}/, function(match, path) {
     return this.translate(path, data);
   }.bind(this));
@@ -144,7 +144,7 @@ pie.services.i18n.prototype._nestedTranslate = function(t, data) {
 
 
 // assumes that dates either come in as dates, iso strings, or epoch timestamps
-pie.services.i18n.prototype._normalizedDate = function(d) {
+pie.i18n.prototype._normalizedDate = function(d) {
   if(String(d).match(/^\d+$/)) {
     d = parseInt(d, 10);
     if(String(d).length < 13) d *= 1000;
@@ -159,17 +159,17 @@ pie.services.i18n.prototype._normalizedDate = function(d) {
 },
 
 
-pie.services.i18n.prototype._shortDayName = function(d) {
+pie.i18n.prototype._shortDayName = function(d) {
   return this.t('app.time.short_day_names.' + d) || this._dayName(d).slice(0, 3);
 };
 
 
-pie.services.i18n.prototype._shortMonthName = function(m) {
+pie.i18n.prototype._shortMonthName = function(m) {
   return this.t('app.time.short_month_names.' + m) || this._monthName(m).slice(0, 3);
 };
 
 
-pie.services.i18n.prototype._pad = function(num, cnt, pad) {
+pie.i18n.prototype._pad = function(num, cnt, pad) {
   var s = '',
       p = cnt - num.toString().length;
   if(pad === undefined) pad = ' ';
@@ -180,7 +180,7 @@ pie.services.i18n.prototype._pad = function(num, cnt, pad) {
   return s + num.toString();
 };
 
-pie.services.i18n.prototype._ordinal = function(number) {
+pie.i18n.prototype._ordinal = function(number) {
   var unit = number % 100;
 
   if(unit >= 11 && unit <= 13) unit = 0;
@@ -189,26 +189,26 @@ pie.services.i18n.prototype._ordinal = function(number) {
   return this.t('app.time.ordinals.o' + unit);
 },
 
-pie.services.i18n.prototype._timezoneAbbr = function(date) {
+pie.i18n.prototype._timezoneAbbr = function(date) {
   var str = date && date.toString();
   return str && str.split(/\((.*)\)/)[1];
 },
 
 
-pie.services.i18n.prototype._utc = function(t) {
+pie.i18n.prototype._utc = function(t) {
   var t2 = new Date(t.getTime());
   t2.setMinutes(t2.getMinutes() + t2.getTimezoneOffset());
   return t2;
 };
 
 
-pie.services.i18n.prototype.load = function(data, shallow) {
+pie.i18n.prototype.load = function(data, shallow) {
   var f = shallow ? pie.object.merge : pie.object.deepMerge;
   f.call(null, this.translations, data);
 };
 
 
-pie.services.i18n.prototype.translate = function(path, data) {
+pie.i18n.prototype.translate = function(path, data) {
   var translation = pie.object.getPath(this.translations, path), count;
 
   if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {
@@ -238,7 +238,7 @@ pie.services.i18n.prototype.translate = function(path, data) {
 };
 
 
-pie.services.i18n.prototype.timeago = function(t, now, scope) {
+pie.i18n.prototype.timeago = function(t, now, scope) {
   t = this._normalizedDate(t).getTime()  / 1000;
   now = this._normalizedDate(now || new Date()).getTime() / 1000;
 
@@ -270,7 +270,7 @@ pie.services.i18n.prototype.timeago = function(t, now, scope) {
 };
 
 // pass in the date instance and the string 'format'
-pie.services.i18n.prototype.strftime = function(date, f) {
+pie.i18n.prototype.strftime = function(date, f) {
   date = this._normalizedDate(date);
 
   // named format from translations.time.
@@ -324,5 +324,5 @@ pie.services.i18n.prototype.strftime = function(date, f) {
   return f;
 };
 
-pie.services.i18n.prototype.t = pie.services.i18n.prototype.translate;
-pie.services.i18n.prototype.l = pie.services.i18n.prototype.strftime;
+pie.i18n.prototype.t = pie.i18n.prototype.translate;
+pie.i18n.prototype.l = pie.i18n.prototype.strftime;

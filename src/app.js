@@ -18,25 +18,25 @@ pie.app = function app(options) {
   this.emitter = classOption('emitter', pie.emitter);
 
   // app.i18n is the translation functionality
-  this.i18n = classOption('i18n', pie.services.i18n);
+  this.i18n = classOption('i18n', pie.i18n);
 
   // app.ajax is ajax interface + app specific functionality.
-  this.ajax = classOption('ajax', pie.services.ajax);
+  this.ajax = classOption('ajax', pie.ajax);
 
   // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
-  this.notifier = classOption('notifier', pie.services.notifier);
+  this.notifier = classOption('notifier', pie.notifier);
 
   // app.errorHandler is the object responsible for
-  this.errorHandler = classOption('errorHandler', pie.services.errorHandler);
+  this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
   // app.router is used to determine which view should be rendered based on the url
-  this.router = classOption('router', pie.services.router);
+  this.router = classOption('router', pie.router);
 
   // app.resources is used for managing the loading of external resources.
-  this.resources = classOption('resources', pie.services.resources);
+  this.resources = classOption('resources', pie.resources);
 
   // the only navigator which should exist in this app.
-  this.navigator = classOption('navigator', pie.services.navigator);
+  this.navigator = classOption('navigator', pie.navigator);
 
   // the validator which should be used in the context of the app
   this.validator = classOption('validator', pie.validator);

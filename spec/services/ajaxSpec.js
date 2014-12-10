@@ -1,4 +1,4 @@
-describe("pie.services.ajax", function() {
+describe("pie.ajax", function() {
 
   beforeEach(function() {
     this.ajax = app.ajax;

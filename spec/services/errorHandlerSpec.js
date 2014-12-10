@@ -1,4 +1,4 @@
-describe('pie.services.errorHandler', function() {
+describe('pie.errorHandler', function() {
 
   beforeEach(function(){
     this.handler = app.errorHandler;

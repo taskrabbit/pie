@@ -3958,7 +3958,7 @@ pie.validator.prototype.url = <span class="hljs-function"><span class="hljs-keyw
     <span class="hljs-keyword">return</span> (<span class="hljs-regexp">/^.+\..+$/</span>).test(value);
   });
 };
-pie.services.ajax = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ajax</span><span class="hljs-params">(app)</span> </span>{
+pie.ajax = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ajax</span><span class="hljs-params">(app)</span> </span>{
   <span class="hljs-keyword">this</span>.app = app;
   <span class="hljs-keyword">this</span>.defaultAjaxOptions = {};
 };</pre></div></div>
@@ -3976,7 +3976,7 @@ pie.services.ajax = <span class="hljs-function"><span class="hljs-keyword">funct
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.ajax.prototype._defaultAjaxOptions = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.ajax.prototype._defaultAjaxOptions = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
   <span class="hljs-keyword">return</span> pie.object.merge({}, <span class="hljs-keyword">this</span>.defaultAjaxOptions, {
     dataType: <span class="hljs-string">'json'</span>,
     type: <span class="hljs-string">'GET'</span>,
@@ -4003,7 +4003,7 @@ app.ajax.post({
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.ajax.prototype.ajax = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.ajax.prototype.ajax = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
 
   options = pie.object.compact(options);
   options = pie.object.merge({}, <span class="hljs-keyword">this</span>._defaultAjaxOptions(), options);
@@ -4062,34 +4062,34 @@ app.ajax.post({
   <span class="hljs-keyword">return</span> xhr;
 };
 
-pie.services.ajax.prototype.get = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+pie.ajax.prototype.get = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
   options = pie.object.merge({type: <span class="hljs-string">'GET'</span>}, options);
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.ajax(options);
 };
 
-pie.services.ajax.prototype.post = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+pie.ajax.prototype.post = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
   options = pie.object.merge({type: <span class="hljs-string">'POST'</span>}, options);
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.ajax(options);
 };
 
-pie.services.ajax.prototype.put = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+pie.ajax.prototype.put = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
   options = pie.object.merge({type: <span class="hljs-string">'PUT'</span>}, options);
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.ajax(options);
 };
 
-pie.services.ajax.prototype.del = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+pie.ajax.prototype.del = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
   options = pie.object.merge({type: <span class="hljs-string">'DELETE'</span>}, options);
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.ajax(options);
 };
 
-pie.services.ajax.prototype._applyCsrfToken = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
+pie.ajax.prototype._applyCsrfToken = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
   <span class="hljs-keyword">var</span> tokenEl = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">'meta[name="csrf-token"]'</span>),
   token = tokenEl ? tokenEl.getAttribute(<span class="hljs-string">'content'</span>) : <span class="hljs-literal">null</span>;
   <span class="hljs-keyword">if</span>(token) {
     xhr.setRequestHeader(<span class="hljs-string">'X-CSRF-Token'</span>, token);
   }
 };
-pie.services.errorHandler = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">errorHandler</span><span class="hljs-params">(app)</span> </span>{
+pie.errorHandler = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">errorHandler</span><span class="hljs-params">(app)</span> </span>{
   <span class="hljs-keyword">this</span>.app = app;
   <span class="hljs-keyword">this</span>.responseCodeHandlers = {};
 };</pre></div></div>
@@ -4107,7 +4107,7 @@ pie.services.errorHandler = <span class="hljs-function"><span class="hljs-keywor
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.errorHandler.prototype.data = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.errorHandler.prototype.data = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
   <span class="hljs-keyword">return</span> xhr.data = xhr.data || (xhr.status ? <span class="hljs-built_in">JSON</span>.parse(xhr.response) : {});
 };</pre></div></div>
             
@@ -4125,7 +4125,7 @@ the xhr data diretly, or allow overriding by response code.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.errorHandler.prototype.errorMessagesFromRequest = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.errorHandler.prototype.errorMessagesFromRequest = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
   <span class="hljs-keyword">var</span> d = <span class="hljs-keyword">this</span>.data(xhr),
   errors  = pie.array.map(d.errors || [], <span class="hljs-string">'message'</span>),
   clean;
@@ -4151,7 +4151,7 @@ the xhr data diretly, or allow overriding by response code.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.errorHandler.prototype.handleXhrError = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.errorHandler.prototype.handleXhrError = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
 
   <span class="hljs-keyword">var</span> handler = <span class="hljs-keyword">this</span>.responseCodeHandlers[xhr.status.toString()];
 
@@ -4176,7 +4176,7 @@ the xhr data diretly, or allow overriding by response code.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.errorHandler.prototype.notifyErrors = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span></span>{
+            <div class="content"><div class='highlight'><pre>pie.errorHandler.prototype.notifyErrors = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span></span>{
   <span class="hljs-keyword">var</span> n = <span class="hljs-keyword">this</span>.app.notifier, errors = <span class="hljs-keyword">this</span>.errorMessagesFromRequest(xhr);
 
   <span class="hljs-keyword">if</span>(errors.length) {</pre></div></div>
@@ -4230,7 +4230,7 @@ registerHandler(‘401’, myRedirectCallback);</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.errorHandler.prototype.registerHandler = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(responseCode, handler)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.errorHandler.prototype.registerHandler = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(responseCode, handler)</span> </span>{
   <span class="hljs-keyword">this</span>.responseCodeHandlers[responseCode.toString()] = handler;
 };</pre></div></div>
             
@@ -4247,7 +4247,7 @@ registerHandler(‘401’, myRedirectCallback);</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.errorHandler.prototype.reportError = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(err, options)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.errorHandler.prototype.reportError = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(err, options)</span> </span>{
   options = options || {};
 
   <span class="hljs-keyword">if</span>(options.prefix &amp;&amp; <span class="hljs-string">'message'</span> <span class="hljs-keyword">in</span> err) {
@@ -4274,7 +4274,7 @@ registerHandler(‘401’, myRedirectCallback);</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.errorHandler.prototype._reportError = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(err)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.errorHandler.prototype._reportError = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(err)</span> </span>{
   <span class="hljs-keyword">this</span>.app.debug(err);
 };</pre></div></div>
             
@@ -4291,12 +4291,12 @@ registerHandler(‘401’, myRedirectCallback);</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.i18n = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">i18n</span><span class="hljs-params">(app)</span> </span>{
-  <span class="hljs-keyword">this</span>.translations = pie.object.merge({}, pie.services.i18n.defaultTranslations);
+            <div class="content"><div class='highlight'><pre>pie.i18n = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">i18n</span><span class="hljs-params">(app)</span> </span>{
+  <span class="hljs-keyword">this</span>.translations = pie.object.merge({}, pie.i18n.defaultTranslations);
   <span class="hljs-keyword">this</span>.app = app;
 };
 
-pie.services.i18n.defaultTranslations = {
+pie.i18n.defaultTranslations = {
   app: {
     timeago: {
       now: <span class="hljs-string">"just now"</span>,
@@ -4399,36 +4399,36 @@ pie.services.i18n.defaultTranslations = {
 };
 
 
-pie.services.i18n.prototype._ampm = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(num)</span> </span>{
+pie.i18n.prototype._ampm = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(num)</span> </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.meridiems.'</span> + (num &gt;= <span class="hljs-number">12</span> ? <span class="hljs-string">'pm'</span> : <span class="hljs-string">'am'</span>));
 };
 
 
-pie.services.i18n.prototype._countAlias = {
+pie.i18n.prototype._countAlias = {
   <span class="hljs-string">'0'</span> : <span class="hljs-string">'zero'</span>,
   <span class="hljs-string">'1'</span> : <span class="hljs-string">'one'</span>,
   <span class="hljs-string">'-1'</span> : <span class="hljs-string">'negone'</span>
 };
 
 
-pie.services.i18n.prototype._dayName = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
+pie.i18n.prototype._dayName = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.day_names.'</span> + d);
 };
 
 
-pie.services.i18n.prototype._hour = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(h)</span> </span>{
+pie.i18n.prototype._hour = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(h)</span> </span>{
   <span class="hljs-keyword">if</span>(h &gt; <span class="hljs-number">12</span>) h -= <span class="hljs-number">12</span>;
   <span class="hljs-keyword">if</span>(!h) h += <span class="hljs-number">12</span>;
   <span class="hljs-keyword">return</span> h;
 };
 
 
-pie.services.i18n.prototype._monthName = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
+pie.i18n.prototype._monthName = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.month_names.'</span> + m);
 };
 
 
-pie.services.i18n.prototype._nestedTranslate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t, data)</span> </span>{
+pie.i18n.prototype._nestedTranslate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t, data)</span> </span>{
   <span class="hljs-keyword">return</span> t.replace(<span class="hljs-regexp">/\$\{([^\}]+)\}/</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, path)</span> </span>{
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.translate(path, data);
   }.bind(<span class="hljs-keyword">this</span>));
@@ -4447,7 +4447,7 @@ pie.services.i18n.prototype._nestedTranslate = <span class="hljs-function"><span
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.i18n.prototype._normalizedDate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.i18n.prototype._normalizedDate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
   <span class="hljs-keyword">if</span>(<span class="hljs-built_in">String</span>(d).match(<span class="hljs-regexp">/^\d+$/</span>)) {
     d = <span class="hljs-built_in">parseInt</span>(d, <span class="hljs-number">10</span>);
     <span class="hljs-keyword">if</span>(<span class="hljs-built_in">String</span>(d).length &lt; <span class="hljs-number">13</span>) d *= <span class="hljs-number">1000</span>;
@@ -4475,17 +4475,17 @@ pie.services.i18n.prototype._nestedTranslate = <span class="hljs-function"><span
 },
 
 
-pie.services.i18n.prototype._shortDayName = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
+pie.i18n.prototype._shortDayName = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_day_names.'</span> + d) || <span class="hljs-keyword">this</span>._dayName(d).slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>);
 };
 
 
-pie.services.i18n.prototype._shortMonthName = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
+pie.i18n.prototype._shortMonthName = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_month_names.'</span> + m) || <span class="hljs-keyword">this</span>._monthName(m).slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>);
 };
 
 
-pie.services.i18n.prototype._pad = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(num, cnt, pad)</span> </span>{
+pie.i18n.prototype._pad = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(num, cnt, pad)</span> </span>{
   <span class="hljs-keyword">var</span> s = <span class="hljs-string">''</span>,
       p = cnt - num.toString().length;
   <span class="hljs-keyword">if</span>(pad === <span class="hljs-literal">undefined</span>) pad = <span class="hljs-string">' '</span>;
@@ -4496,7 +4496,7 @@ pie.services.i18n.prototype._pad = <span class="hljs-function"><span class="hljs
   <span class="hljs-keyword">return</span> s + num.toString();
 };
 
-pie.services.i18n.prototype._ordinal = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(number)</span> </span>{
+pie.i18n.prototype._ordinal = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(number)</span> </span>{
   <span class="hljs-keyword">var</span> unit = number % <span class="hljs-number">100</span>;
 
   <span class="hljs-keyword">if</span>(unit &gt;= <span class="hljs-number">11</span> &amp;&amp; unit &lt;= <span class="hljs-number">13</span>) unit = <span class="hljs-number">0</span>;
@@ -4505,26 +4505,26 @@ pie.services.i18n.prototype._ordinal = <span class="hljs-function"><span class="
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.ordinals.o'</span> + unit);
 },
 
-pie.services.i18n.prototype._timezoneAbbr = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(date)</span> </span>{
+pie.i18n.prototype._timezoneAbbr = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(date)</span> </span>{
   <span class="hljs-keyword">var</span> str = date &amp;&amp; date.toString();
   <span class="hljs-keyword">return</span> str &amp;&amp; str.split(<span class="hljs-regexp">/\((.*)\)/</span>)[<span class="hljs-number">1</span>];
 },
 
 
-pie.services.i18n.prototype._utc = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t)</span> </span>{
+pie.i18n.prototype._utc = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t)</span> </span>{
   <span class="hljs-keyword">var</span> t2 = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(t.getTime());
   t2.setMinutes(t2.getMinutes() + t2.getTimezoneOffset());
   <span class="hljs-keyword">return</span> t2;
 };
 
 
-pie.services.i18n.prototype.load = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, shallow)</span> </span>{
+pie.i18n.prototype.load = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, shallow)</span> </span>{
   <span class="hljs-keyword">var</span> f = shallow ? pie.object.merge : pie.object.deepMerge;
   f.call(<span class="hljs-literal">null</span>, <span class="hljs-keyword">this</span>.translations, data);
 };
 
 
-pie.services.i18n.prototype.translate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, data)</span> </span>{
+pie.i18n.prototype.translate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, data)</span> </span>{
   <span class="hljs-keyword">var</span> translation = pie.object.getPath(<span class="hljs-keyword">this</span>.translations, path), count;
 
   <span class="hljs-keyword">if</span> (pie.object.has(data, <span class="hljs-string">'count'</span>) &amp;&amp; pie.object.isObject(translation)) {
@@ -4554,7 +4554,7 @@ pie.services.i18n.prototype.translate = <span class="hljs-function"><span class=
 };
 
 
-pie.services.i18n.prototype.timeago = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t, now, scope)</span> </span>{
+pie.i18n.prototype.timeago = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t, now, scope)</span> </span>{
   t = <span class="hljs-keyword">this</span>._normalizedDate(t).getTime()  / <span class="hljs-number">1000</span>;
   now = <span class="hljs-keyword">this</span>._normalizedDate(now || <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>()).getTime() / <span class="hljs-number">1000</span>;
 
@@ -4598,7 +4598,7 @@ pie.services.i18n.prototype.timeago = <span class="hljs-function"><span class="h
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.i18n.prototype.strftime = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(date, f)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.i18n.prototype.strftime = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(date, f)</span> </span>{
   date = <span class="hljs-keyword">this</span>._normalizedDate(date);</pre></div></div>
             
         </li>
@@ -4664,16 +4664,16 @@ pie.services.i18n.prototype.timeago = <span class="hljs-function"><span class="h
   <span class="hljs-keyword">return</span> f;
 };
 
-pie.services.i18n.prototype.t = pie.services.i18n.prototype.translate;
-pie.services.i18n.prototype.l = pie.services.i18n.prototype.strftime;
-pie.services.navigator = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
+pie.i18n.prototype.t = pie.i18n.prototype.translate;
+pie.i18n.prototype.l = pie.i18n.prototype.strftime;
+pie.navigator = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
   <span class="hljs-keyword">this</span>.app = app;
   pie.model.prototype.constructor.call(<span class="hljs-keyword">this</span>, {});
 };
 
-pie.inherit(pie.services.navigator, pie.model);
+pie.inherit(pie.navigator, pie.model);
 
-pie.services.navigator.prototype.go = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, params, replace)</span> </span>{
+pie.navigator.prototype.go = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, params, replace)</span> </span>{
   <span class="hljs-keyword">var</span> url = path;
 
   params = params || {};
@@ -4693,11 +4693,11 @@ pie.services.navigator.prototype.go = <span class="hljs-function"><span class="h
 };
 
 
-pie.services.navigator.prototype.start = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+pie.navigator.prototype.start = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.setDataFromLocation();
 };
 
-pie.services.navigator.prototype.setDataFromLocation = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+pie.navigator.prototype.setDataFromLocation = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
   <span class="hljs-keyword">var</span> query = <span class="hljs-built_in">window</span>.location.search.slice(<span class="hljs-number">1</span>);
   query = pie.string.deserialize(query);
 
@@ -4723,7 +4723,7 @@ pie.services.navigator.prototype.setDataFromLocation = <span class="hljs-functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.notifier = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">notifier</span><span class="hljs-params">(app, options)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.notifier = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">notifier</span><span class="hljs-params">(app, options)</span> </span>{
   <span class="hljs-keyword">this</span>.options = options || {};
   <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.options.app || <span class="hljs-built_in">window</span>.app;
   <span class="hljs-keyword">this</span>.notifications = <span class="hljs-keyword">new</span> pie.list([]);
@@ -4742,7 +4742,7 @@ pie.services.navigator.prototype.setDataFromLocation = <span class="hljs-functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.notifier.prototype.clear = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(type)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.notifier.prototype.clear = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(type)</span> </span>{
   <span class="hljs-keyword">if</span>(type) {
     <span class="hljs-keyword">this</span>.notifications.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(n)</span> </span>{
       <span class="hljs-keyword">this</span>.remove(n.id);
@@ -4770,7 +4770,7 @@ You can provide a number in milliseconds as the autoClose value as well.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.notifier.prototype.notify = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(messages, type, autoRemove)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.notifier.prototype.notify = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(messages, type, autoRemove)</span> </span>{
   type = type || <span class="hljs-string">'message'</span>;
   autoRemove = <span class="hljs-keyword">this</span>.getAutoRemoveTimeout(autoRemove);
 
@@ -4798,13 +4798,13 @@ You can provide a number in milliseconds as the autoClose value as well.</p>
 
 };
 
-pie.services.notifier.prototype.getAutoRemoveTimeout = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(timeout)</span> </span>{
+pie.notifier.prototype.getAutoRemoveTimeout = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(timeout)</span> </span>{
   <span class="hljs-keyword">if</span>(timeout === <span class="hljs-literal">undefined</span>) timeout = <span class="hljs-literal">true</span>;
   <span class="hljs-keyword">if</span>(timeout &amp;&amp; !pie.object.isNumber(timeout)) timeout = <span class="hljs-number">7000</span>;
   <span class="hljs-keyword">return</span> timeout;
 };
 
-pie.services.notifier.prototype.remove = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(msgId)</span> </span>{
+pie.notifier.prototype.remove = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(msgId)</span> </span>{
   <span class="hljs-keyword">var</span> msgIdx = pie.array.indexOf(<span class="hljs-keyword">this</span>.notifications.get(<span class="hljs-string">'items'</span>), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
     <span class="hljs-keyword">return</span> m.id === msgId;
   });
@@ -4813,28 +4813,28 @@ pie.services.notifier.prototype.remove = <span class="hljs-function"><span class
     <span class="hljs-keyword">this</span>.notifications.remove(msgIdx);
   }
 };
-pie.services.resources = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, srcMap)</span> </span>{
+pie.resources = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, srcMap)</span> </span>{
   <span class="hljs-keyword">this</span>.app = app;
   <span class="hljs-keyword">this</span>.loaded = {};
   <span class="hljs-keyword">this</span>.srcMap = srcMap || {};
 };
 
-pie.services.resources.prototype._appendNode = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(node)</span> </span>{
+pie.resources.prototype._appendNode = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(node)</span> </span>{
   <span class="hljs-keyword">var</span> target = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">'head'</span>);
   target = target || <span class="hljs-built_in">document</span>.body;
   target.appendChild(node);
 };
 
-pie.services.resources.prototype._inferredResourceType = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(src)</span> </span>{
+pie.resources.prototype._inferredResourceType = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(src)</span> </span>{
   <span class="hljs-keyword">return</span> (<span class="hljs-regexp">/(\.|\/)js(\?|$)/</span>).test(src) ? <span class="hljs-string">'script'</span> : <span class="hljs-string">'link'</span>;
 };
 
-pie.services.resources.prototype._normalizeSrc = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(srcOrOptions)</span> </span>{
+pie.resources.prototype._normalizeSrc = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(srcOrOptions)</span> </span>{
   <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">typeof</span> srcOrOptions === <span class="hljs-string">'string'</span> ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
   <span class="hljs-keyword">return</span> options;
 };
 
-pie.services.resources.prototype._loadscript = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
+pie.resources.prototype._loadscript = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
 
   <span class="hljs-keyword">var</span> script = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'script'</span>);
 
@@ -4849,7 +4849,7 @@ pie.services.resources.prototype._loadscript = <span class="hljs-function"><span
 
 };
 
-pie.services.resources.prototype._loadlink = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
+pie.resources.prototype._loadlink = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
   <span class="hljs-keyword">var</span> link = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'link'</span>);
 
   link.href = options.src;
@@ -4876,12 +4876,12 @@ the resource may not actually be present yet.</p>
             <div class="content"><div class='highlight'><pre>  resourceOnload();
 };
 
-pie.services.resources.prototype.define = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, srcOrOptions)</span> </span>{
+pie.resources.prototype.define = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, srcOrOptions)</span> </span>{
   <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">this</span>._normalizeSrc(srcOrOptions);
   <span class="hljs-keyword">this</span>.srcMap[name] = options;
 };
 
-pie.services.resources.prototype.load = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(srcOrOptions, cb)</span> </span>{
+pie.resources.prototype.load = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(srcOrOptions, cb)</span> </span>{
   <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">this</span>._normalizeSrc(srcOrOptions), src;
   options = <span class="hljs-keyword">this</span>.srcMap[options.src] || options;
   src = options.src;</pre></div></div>
@@ -4941,7 +4941,7 @@ pie.services.resources.prototype.load = <span class="hljs-function"><span class=
 
   <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
 };
-pie.services.router = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
+pie.router = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
   <span class="hljs-keyword">this</span>.app = app;
   <span class="hljs-keyword">this</span>.routes = {};
   <span class="hljs-keyword">this</span>.namedRoutes = {};
@@ -4965,7 +4965,7 @@ app.changedUrl({page: 3, q: ‘newQuery’});</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.router.prototype.changedUrl = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.router.prototype.changedUrl = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span> </span>{
   <span class="hljs-keyword">var</span> current = <span class="hljs-keyword">this</span>.app.parsedUrl;
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.router.path(current.name || current.path, pie.object.merge({}, current.interpolations, current.query, changes));
 },</pre></div></div>
@@ -4983,7 +4983,7 @@ app.changedUrl({page: 3, q: ‘newQuery’});</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.router.prototype.normalizePath = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{</pre></div></div>
+            <div class="content"><div class='highlight'><pre>pie.router.prototype.normalizePath = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{</pre></div></div>
             
         </li>
         
@@ -5061,7 +5061,7 @@ you can pass a set of defaults which will be extended into each route object.</p
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.router.prototype.route = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(routes, defaults)</span></span>{
+            <div class="content"><div class='highlight'><pre>pie.router.prototype.route = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(routes, defaults)</span></span>{
   defaults = defaults || {};</pre></div></div>
             
         </li>
@@ -5111,7 +5111,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.router.prototype.path = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(nameOrPath, data, interpolateOnly)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.router.prototype.path = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(nameOrPath, data, interpolateOnly)</span> </span>{
   <span class="hljs-keyword">var</span> o = <span class="hljs-keyword">this</span>.namedRoutes[nameOrPath],
   s = pie.object.isString(o) ? o : nameOrPath,
   usedKeys = [],
@@ -5153,7 +5153,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.router.prototype.routeKeys = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.router.prototype.routeKeys = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
   <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._routeKeys) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._routeKeys;
   <span class="hljs-keyword">this</span>._routeKeys = <span class="hljs-built_in">Object</span>.keys(<span class="hljs-keyword">this</span>.routes);
 
@@ -5197,7 +5197,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.services.router.prototype.parseUrl = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, parseQuery)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.router.prototype.parseUrl = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, parseQuery)</span> </span>{
 
   <span class="hljs-keyword">var</span> keys = <span class="hljs-keyword">this</span>.routeKeys(),
     i = <span class="hljs-number">0</span>,
@@ -5365,7 +5365,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.i18n = classOption(<span class="hljs-string">'i18n'</span>, pie.services.i18n);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.i18n = classOption(<span class="hljs-string">'i18n'</span>, pie.i18n);</pre></div></div>
             
         </li>
         
@@ -5380,7 +5380,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.ajax = classOption(<span class="hljs-string">'ajax'</span>, pie.services.ajax);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.ajax = classOption(<span class="hljs-string">'ajax'</span>, pie.ajax);</pre></div></div>
             
         </li>
         
@@ -5395,7 +5395,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.notifier = classOption(<span class="hljs-string">'notifier'</span>, pie.services.notifier);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.notifier = classOption(<span class="hljs-string">'notifier'</span>, pie.notifier);</pre></div></div>
             
         </li>
         
@@ -5410,7 +5410,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.errorHandler = classOption(<span class="hljs-string">'errorHandler'</span>, pie.services.errorHandler);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.errorHandler = classOption(<span class="hljs-string">'errorHandler'</span>, pie.errorHandler);</pre></div></div>
             
         </li>
         
@@ -5425,7 +5425,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.router = classOption(<span class="hljs-string">'router'</span>, pie.services.router);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.router = classOption(<span class="hljs-string">'router'</span>, pie.router);</pre></div></div>
             
         </li>
         
@@ -5440,7 +5440,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.resources = classOption(<span class="hljs-string">'resources'</span>, pie.services.resources);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.resources = classOption(<span class="hljs-string">'resources'</span>, pie.resources);</pre></div></div>
             
         </li>
         
@@ -5455,7 +5455,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.navigator = classOption(<span class="hljs-string">'navigator'</span>, pie.services.navigator);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.navigator = classOption(<span class="hljs-string">'navigator'</span>, pie.navigator);</pre></div></div>
             
         </li>
         

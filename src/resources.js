@@ -1,25 +1,25 @@
-pie.services.resources = function(app, srcMap) {
+pie.resources = function(app, srcMap) {
   this.app = app;
   this.loaded = {};
   this.srcMap = srcMap || {};
 };
 
-pie.services.resources.prototype._appendNode = function(node) {
+pie.resources.prototype._appendNode = function(node) {
   var target = document.querySelector('head');
   target = target || document.body;
   target.appendChild(node);
 };
 
-pie.services.resources.prototype._inferredResourceType = function(src) {
+pie.resources.prototype._inferredResourceType = function(src) {
   return (/(\.|\/)js(\?|$)/).test(src) ? 'script' : 'link';
 };
 
-pie.services.resources.prototype._normalizeSrc = function(srcOrOptions) {
+pie.resources.prototype._normalizeSrc = function(srcOrOptions) {
   var options = typeof srcOrOptions === 'string' ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
   return options;
 };
 
-pie.services.resources.prototype._loadscript = function(options, resourceOnload) {
+pie.resources.prototype._loadscript = function(options, resourceOnload) {
 
   var script = document.createElement('script');
 
@@ -34,7 +34,7 @@ pie.services.resources.prototype._loadscript = function(options, resourceOnload)
 
 };
 
-pie.services.resources.prototype._loadlink = function(options, resourceOnload) {
+pie.resources.prototype._loadlink = function(options, resourceOnload) {
   var link = document.createElement('link');
 
   link.href = options.src;
@@ -49,12 +49,12 @@ pie.services.resources.prototype._loadlink = function(options, resourceOnload) {
   resourceOnload();
 };
 
-pie.services.resources.prototype.define = function(name, srcOrOptions) {
+pie.resources.prototype.define = function(name, srcOrOptions) {
   var options = this._normalizeSrc(srcOrOptions);
   this.srcMap[name] = options;
 };
 
-pie.services.resources.prototype.load = function(srcOrOptions, cb) {
+pie.resources.prototype.load = function(srcOrOptions, cb) {
   var options = this._normalizeSrc(srcOrOptions), src;
   options = this.srcMap[options.src] || options;
   src = options.src;

@@ -1,4 +1,4 @@
-describe("pie.services.i18n", function() {
+describe("pie.i18n", function() {
 
   beforeEach(function() {
     this.i18n = app.i18n;

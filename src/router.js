@@ -1,4 +1,4 @@
-pie.services.router = function(app) {
+pie.router = function(app) {
   this.app = app;
   this.routes = {};
   this.namedRoutes = {};
@@ -12,14 +12,14 @@ pie.services.router = function(app) {
 // And the current path == /things/page/1.json?q=test
 // app.changedUrl({page: 3, q: 'newQuery'});
 // # => /things/page/3.json?q=newQuery
-pie.services.router.prototype.changedUrl = function(changes) {
+pie.router.prototype.changedUrl = function(changes) {
   var current = this.app.parsedUrl;
   return this.router.path(current.name || current.path, pie.object.merge({}, current.interpolations, current.query, changes));
 },
 
 
 // normalize a path to be evaluated by the router
-pie.services.router.prototype.normalizePath = function(path) {
+pie.router.prototype.normalizePath = function(path) {
 
   // ensure there's a leading slash
   if(path.charAt(0) !== '/') {
@@ -50,7 +50,7 @@ pie.services.router.prototype.normalizePath = function(path) {
 // invoke to add routes to the routers routeset.
 // routes objects which contain a "name" key will be added as a name lookup.
 // you can pass a set of defaults which will be extended into each route object.
-pie.services.router.prototype.route = function(routes, defaults){
+pie.router.prototype.route = function(routes, defaults){
   defaults = defaults || {};
 
   // remove the cache
@@ -76,7 +76,7 @@ pie.services.router.prototype.route = function(routes, defaults){
 // will return the named path. if there is no path with that name it will return itself.
 // you can optionally pass a data hash and it will build the path with query params or
 // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
-pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly) {
+pie.router.prototype.path = function(nameOrPath, data, interpolateOnly) {
   var o = this.namedRoutes[nameOrPath],
   s = pie.object.isString(o) ? o : nameOrPath,
   usedKeys = [],
@@ -106,7 +106,7 @@ pie.services.router.prototype.path = function(nameOrPath, data, interpolateOnly)
 };
 
 // provides the keys of the routes in a sorted order relevant for matching most descriptive to least
-pie.services.router.prototype.routeKeys = function() {
+pie.router.prototype.routeKeys = function() {
   if(this._routeKeys) return this._routeKeys;
   this._routeKeys = Object.keys(this.routes);
 
@@ -126,7 +126,7 @@ pie.services.router.prototype.routeKeys = function() {
 };
 
 // look at the path and determine the route which this matches.
-pie.services.router.prototype.parseUrl = function(path, parseQuery) {
+pie.router.prototype.parseUrl = function(path, parseQuery) {
 
   var keys = this.routeKeys(),
     i = 0,
