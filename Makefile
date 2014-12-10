@@ -3,7 +3,7 @@
 PATH  := node_modules/.bin:$(PATH)
 SHELL := /bin/bash
 
-source_files     := src/pie.js src/extensions/*.js src/mixins/*.js src/model.js src/cache.js src/list.js src/view.js src/activeView.js src/validator.js src/services/*.js src/app.js
+source_files     := src/pie.js src/extensions/*.js src/mixins/*.js src/model.js src/cache.js src/emitter.js src/list.js src/view.js src/activeView.js src/validator.js src/services/*.js src/app.js
 deploy           := build/pie.js.min
 debug            := build/pie.js
 

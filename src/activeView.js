@@ -1,29 +1,36 @@
 // a view class which handles some basic functionality
 pie.activeView = function activeView(options) {
   pie.view.call(this, options);
+
+  this.emitter = new pie.emitter();
 };
 
 pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources, pie.mixins.validatable);
 
 pie.activeView.prototype.init = function(setupFunc) {
-  pie.view.prototype.init.call(this, function() {
+  this.emitter.around('init', function(){
 
-    this.loadExternalResources(this.options.resources, function() {
+    pie.view.prototype.init.call(this, function() {
 
-      if(setupFunc) setupFunc();
+      this.loadExternalResources(this.options.resources, function() {
 
-      if(this.options.autoRender && this.model) {
-        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-        this.onChange(this.model, this.render.bind(this), field);
-      }
+        if(setupFunc) setupFunc();
 
-      if(this.options.renderOnInit) {
-        this.render();
-      }
+        if(this.options.autoRender && this.model) {
+          var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+          this.onChange(this.model, this.render.bind(this), field);
+        }
+
+        if(this.options.renderOnInit) {
+          this.render();
+        }
+
+      }.bind(this));
 
     }.bind(this));
 
   }.bind(this));
+
 };
 
 // add or remove the default loading style.
@@ -75,13 +82,14 @@ pie.activeView.prototype.renderData = function() {
 };
 
 pie.activeView.prototype.render = function() {
+  this.emitter.around('render', function(){
+    if(this.options.template) {
+      var content = this.app.template(this.options.template, this.renderData());
+      this.el.innerHTML = content;
+    }
 
-  if(this.options.template) {
-    var content = this.app.template(this.options.template, this.renderData());
-    this.el.innerHTML = content;
-  }
-
-  return this;
+    return this;
+  }.bind(this));
 };
 
 

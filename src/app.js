@@ -14,37 +14,32 @@ pie.app = function app(options) {
     return new k(this);
   }.bind(this);
 
+  // app.emitter is an interface for subscribing and observing app events
+  this.emitter = classOption('emitter', pie.emitter);
+
   // app.i18n is the translation functionality
   this.i18n = classOption('i18n', pie.services.i18n);
-  this.addChild('i18n', this.i18n);
 
   // app.ajax is ajax interface + app specific functionality.
   this.ajax = classOption('ajax', pie.services.ajax);
-  this.addChild('ajax', this.ajax);
 
   // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
   this.notifier = classOption('notifier', pie.services.notifier);
-  this.addChild('notifier', this.notifier);
 
   // app.errorHandler is the object responsible for
   this.errorHandler = classOption('errorHandler', pie.services.errorHandler);
-  this.addChild('errorHandler', this.errorHandler);
 
   // app.router is used to determine which view should be rendered based on the url
   this.router = classOption('router', pie.services.router);
-  this.addChild('router', this.router);
 
   // app.resources is used for managing the loading of external resources.
   this.resources = classOption('resources', pie.services.resources);
-  this.addChild('resources', this.resources);
 
   // the only navigator which should exist in this app.
   this.navigator = classOption('navigator', pie.services.navigator);
-  this.addChild('navigator', this.navigator);
 
   // the validator which should be used in the context of the app
   this.validator = classOption('validator', pie.validator);
-  this.addChild('validator', this.validator);
 
   // app.models is globally available. app.models is solely for page context.
   // this is not a singleton container or anything like that. it's just for passing
@@ -58,15 +53,11 @@ pie.app = function app(options) {
   // after a navigation change, app.parsedUrl is the new parsed route
   this.parsedUrl = {};
 
-  // the functions to invoke as part of the app's lifecycle. see app.on().
-  this.eventCallbacks = {};
-  this.triggeredEvents = [];
-
   // we observe the navigator and handle changing the context of the page
   this.navigator.observe(this.navigationChanged.bind(this), 'url');
 
-  this.on('beforeStart', this.showStoredNotifications.bind(this));
-  this.on('beforeStart', this.setupSinglePageLinks.bind(this));
+  this.emitter.on('beforeStart', this.setupSinglePageLinks.bind(this), {onceOnly: true});
+  this.emitter.on('afterStart', this.showStoredNotifications.bind(this), {onceOnly: true});
 
   // once the dom is loaded
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
@@ -76,7 +67,7 @@ pie.app = function app(options) {
 };
 
 
-pie.extend(pie.app.prototype, pie.mixins.container);
+pie.extend(pie.app.prototype, pie.mixins.container, pie.mixins.events);
 
 
 // just in case the client wants to override the standard confirmation dialog.
@@ -190,7 +181,7 @@ pie.app.prototype.navigationChanged = function() {
   this.parsedUrl = this.router.parseUrl(this.navigator.get('path'));
 
   if(this.previousUrl !== this.parsedUrl) {
-    this.trigger('urlChanged');
+    this.emitter.fire('urlChanged');
   }
 
   // not necessary for a view to exist on each page.
@@ -209,7 +200,7 @@ pie.app.prototype.navigationChanged = function() {
   if(current) {
     this.removeChild(current);
     if(current.el.parentNode) current.el.parentNode.removeChild(current.el);
-    this.on('oldViewRemoved');
+    this.emitter.fire('oldViewRemoved');
   }
 
   // clear any leftover notifications
@@ -232,22 +223,8 @@ pie.app.prototype.navigationChanged = function() {
   // get us back to the top of the page.
   window.scrollTo(0,0);
 
-  this.trigger('newViewLoaded');
+  this.fire('newViewLoaded');
 };
-
-
-// invoke fn when the event is triggered.
-// if futureOnly is truthy the fn will only be triggered for future events.
-// todo: allow once-only events.
-pie.app.prototype.on = function(event, fn, futureOnly) {
-  if(!futureOnly && ~this.triggeredEvents.indexOf(event)) {
-    fn();
-  } else {
-    this.eventCallbacks[event] = this.eventCallbacks[event] || [];
-    this.eventCallbacks[event].push(fn);
-  }
-};
-
 
 // reload the page without reloading the browser.
 // alters the current view's _pieName to appear as invalid for the route.
@@ -293,9 +270,7 @@ pie.app.prototype.showStoredNotifications = function() {
 
   if(encoded) {
     decoded = JSON.parse(encoded);
-    this.on('afterStart', function(){
-      this.notifier.notify.apply(this.notifier, decoded);
-    }.bind(this));
+    this.notifier.notify.apply(this.notifier, decoded);
   }
 };
 
@@ -305,15 +280,12 @@ pie.app.prototype.start = function() {
 
   this.navigator.start();
 
-  this.trigger('beforeStart');
-
-  // invoke a nav change event on page load.
-  var url = this.navigator.get('url');
-  this.navigator.data.url = null;
-  this.navigator.set('url', url);
-
-  this.started = true;
-  this.trigger('afterStart');
+  this.emitter.around('start', function() {
+    // invoke a nav change event on page load.
+    var url = this.navigator.get('url');
+    this.navigator.data.url = null;
+    this.navigator.set('url', url);
+  }.bind(this));
 };
 
 
@@ -346,17 +318,4 @@ pie.app.prototype.template = function(name, data) {
   data = data || {};
 
   return this._templates[name](data);
-};
-
-
-// trigger an event (string) on the app.
-// any callbacks associated with that event will be invoked.
-pie.app.prototype.trigger = function(event) {
-  if(this.triggeredEvents.indexOf(event) < 0) {
-    this.triggeredEvents.push(event);
-  }
-
-  (this.eventCallbacks[event] || []).forEach(function(f){
-    f();
-  });
 };
