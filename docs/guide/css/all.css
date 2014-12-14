@@ -1,0 +1,167 @@
+/* http://paletton.com/#uid=10n0u0kllll2ULxc6tsu-deSk5a */
+.c-1{ color: white;  }
+.c0 { color: #FCF4F2 }
+.c1 { color: #EBB492 }
+.c2 { color: #AA6439 }
+.c3 { color: #692B05 }
+.c4 { color: #291000 }
+
+
+/* reset */
+
+html, body, div, span, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+abbr, address, cite, code,
+del, dfn, em, img, ins, kbd, q, samp,
+small, strong, sub, sup, var,
+b, i,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section, summary,
+time, mark, audio, video {
+  margin:0;
+  padding:0;
+  border:0;
+  outline:0;
+  font-size:100%;
+  vertical-align:baseline;
+  background:transparent;
+}
+
+html, body {
+  height: 100%;
+  background-color: #FFFAF8;
+  color: #291000;
+  font-family: 'HelveticaNeueLight', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;;
+}
+
+h1,h2,h3,h4,h5,h6,strong,.heavy {
+  font-weight: normal;
+  font-family: 'HelveticaNeueHeavy', 'HelveticaNeue-Heavy', 'Helvetica Neue Heavy', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+h1{ font-size: 2.5em; }
+h2{ font-size: 1.75em; }
+h3{ font-size: 1.25em; }
+h4{ font-size: 1.1625em; }
+
+article,aside,details,figcaption,figure,
+footer,header,hgroup,menu,nav,section {
+  display:block;
+}
+nav ul {
+  list-style:none;
+}
+blockquote, q {
+  quotes:none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content:'';
+  content:none;
+}
+a {
+  margin:0;
+  padding:0;
+  font-size:100%;
+  vertical-align:baseline;
+  background:transparent;
+  color: #692B05;
+  text-decoration: none;
+}
+/* change colours to suit your needs */
+ins {
+  background-color:#ff9;
+  color:#000;
+  text-decoration:none;
+}
+/* change colours to suit your needs */
+mark {
+  background-color:#ff9;
+  color:#000;
+  font-style:italic;
+  font-weight:bold;
+}
+
+
+strong, b {
+  font-weight: bold;
+}
+
+del {
+  text-decoration: line-through;
+}
+abbr[title], dfn[title] {
+  border-bottom:1px dotted;
+  cursor:help;
+}
+table {
+  border-collapse:collapse;
+  border-spacing:0;
+}
+/* change border colour to suit your needs */
+hr {
+  display:block;
+  height:1px;
+  border:0;
+  border-top:1px solid #cccccc;
+  margin:1em 0;
+  padding:0;
+}
+input, select {
+  vertical-align:middle;
+}
+
+
+.page-nav {
+  width: 250px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  padding: 1em 0;
+  background-color: white;
+}
+
+.page-nav li a {
+  display: block;
+  padding: 0.5em 1em;
+  border-left: 2px solid transparent;
+}
+
+.page-nav li a:hover {
+  border-left: 2px solid #692B05;
+}
+
+.page-nav li.is-active a {
+  border-left: 2px solid #692B05;
+}
+
+.page-nav .home {
+  padding: 1em;
+  display: block;
+  font-weight: bold;
+}
+
+
+.page {
+  position: absolute;
+  left: 250px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  padding: 2em 1em;
+}
+
+
+
+@media all and (max-width: 500px) {
+
+  .page-nav ul, .page-nav li, .page-nav li a {
+    display: block;
+  }
+
+}

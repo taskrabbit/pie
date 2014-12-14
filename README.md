@@ -8,11 +8,11 @@ Hm, none.
 
 ### Usage
 
-Check out the getting started wiki entry.
+Check out the getting started doc or step through the annotated source.
 
 ### What does it look like?
 
-Kinda mvc-ish, there's an app object, views, router, i18n, resource loader, models, native extensions, etc.
+Kinda mvc-ish, there's an app object, views, router, i18n, resource loader, models, ajax interface, native extensions, etc.
 
 ### How big is it?
 

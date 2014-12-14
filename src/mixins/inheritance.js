@@ -1,5 +1,10 @@
 pie.mixins.inheritance = {
 
+  _construct: function() {
+    var proto = Object.getPrototypeOf(Object.getPrototypeOf(this));
+    proto.constructor.apply(this, arguments);
+  },
+
   _super: function() {
     var args = pie.array.from(arguments),
     name = args.shift(),

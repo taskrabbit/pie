@@ -3,13 +3,17 @@ pie.ajax = function ajax(app) {
   this.defaultAjaxOptions = {};
 };
 
+pie.ajax.prototype.GET = 'GET';
+pie.ajax.prototype.POST = 'POST';
+pie.ajax.prototype.PUT = 'PUT';
+pie.ajax.prototype.DELETE = 'DELETE';
 
 // default ajax options. override this method to
 pie.ajax.prototype._defaultAjaxOptions = function() {
   return pie.object.merge({}, this.defaultAjaxOptions, {
-    dataType: 'json',
-    type: 'GET',
-    error: this.app.errorHandler.handleXhrError
+    type: 'json',
+    verb: this.GET,
+    error: this.app.errorHandler.handleXhrError.bind(this.app.errorHandler)
   });
 };
 
@@ -31,12 +35,15 @@ pie.ajax.prototype.ajax = function(options) {
     options.error = function(xhr){ oldError(xhr); options.extraError(xhr); };
   }
 
-  var app = this.app, xhr = new XMLHttpRequest(), url = options.url, d;
+  var xhr = new XMLHttpRequest(),
+  url = options.url,
+  that = this,
+  d;
 
-  if(options.type === 'GET' && options.data) {
-    url = app.router.path(url, options.data);
+  if(options.verb === this.GET && options.data) {
+    url = this.app.router.path(url, options.data);
   } else {
-    url = app.router.path(url);
+    url = this.app.router.path(url);
   }
 
   if(options.progress) {
@@ -45,22 +52,14 @@ pie.ajax.prototype.ajax = function(options) {
     xhr.upload.addEventListener('progress', options.uploadProgress, false);
   }
 
-  xhr.open(options.type, url, true);
+  xhr.open(options.verb, url, true);
 
-  xhr.setRequestHeader('Accept', 'application/json');
-  xhr.setRequestHeader('Content-Type', 'application/json');
-
-  this._applyCsrfToken(xhr);
+  this._applyHeaders(xhr, options);
 
   xhr.onload = function() {
     if(options.tracker) options.tracker(this);
 
-    try{
-      this.data = this.responseText.trim().length ? JSON.parse(this.responseText) : {};
-    } catch(err) {
-      app.debug("could not parse JSON response: " + err);
-      this.data = {};
-    }
+    that._parseResponse(this, options);
 
     if(this.status >= 200 && this.status < 300 || this.status === 304) {
       if(options.dataSuccess) options.dataSuccess(this.data);
@@ -72,7 +71,7 @@ pie.ajax.prototype.ajax = function(options) {
     if(options.complete) options.complete(this);
   };
 
-  if(options.type !== 'GET') {
+  if(options.verb !== this.GET) {
     d = options.data ? (pie.object.isString(options.data) ? options.data : JSON.stringify(pie.object.compact(options.data))) : undefined;
   }
 
@@ -81,29 +80,81 @@ pie.ajax.prototype.ajax = function(options) {
 };
 
 pie.ajax.prototype.get = function(options) {
-  options = pie.object.merge({type: 'GET'}, options);
+  options = pie.object.merge({verb: this.GET}, options);
   return this.ajax(options);
 };
 
 pie.ajax.prototype.post = function(options) {
-  options = pie.object.merge({type: 'POST'}, options);
+  options = pie.object.merge({verb: this.POST}, options);
   return this.ajax(options);
 };
 
 pie.ajax.prototype.put = function(options) {
-  options = pie.object.merge({type: 'PUT'}, options);
+  options = pie.object.merge({verb: this.PUT}, options);
   return this.ajax(options);
 };
 
 pie.ajax.prototype.del = function(options) {
-  options = pie.object.merge({type: 'DELETE'}, options);
+  options = pie.object.merge({verb: this.DELETE}, options);
   return this.ajax(options);
 };
 
-pie.ajax.prototype._applyCsrfToken = function(xhr) {
-  var tokenEl = document.querySelector('meta[name="csrf-token"]'),
-  token = tokenEl ? tokenEl.getAttribute('content') : null;
+pie.ajax.prototype._applyCsrfToken = function(xhr, options) {
+  var token = pie.func.valueFrom(options.csrfToken),
+  tokenEl;
+
+  if(!token) {
+    tokenEl = document.querySelector('meta[name="csrf-token"]'),
+    token = tokenEl ? tokenEl.getAttribute('content') : null;
+  }
+
   if(token) {
     xhr.setRequestHeader('X-CSRF-Token', token);
+  }
+};
+
+pie.ajax.prototype._applyHeaders = function(xhr, options) {
+  var meth = pie.string.modularize('_apply_' + options.type + '_headers');
+  (this[meth] || this._applyDefaultHeaders)(xhr, options);
+
+  this._applyCsrfToken(xhr, options);
+
+  if(pie.object.isString(options.data)) {
+    xhr.setRequestHeader('Content-Type', options.contentType || 'application/x-www-form-urlencoded');
+  // if we aren't already sending a string, we will encode to json.
+  } else {
+    xhr.setRequestHeader('Content-Type', 'application/json');
+  }
+};
+
+pie.ajax.prototype._applyDefaultHeaders = function(xhr, options) {};
+
+pie.ajax.prototype._applyJsonHeaders = function(xhr, options) {
+  xhr.setRequestHeader('Accept', 'application/json');
+};
+
+pie.ajax.prototype._applyHtmlHeaders = function(xhr, options) {
+  xhr.setRequestHeader('Accept', 'text/html');
+};
+
+pie.ajax.prototype._applyTextHeaders = function(xhr, options) {
+  xhr.setRequestHeader('Accept', 'text/plain');
+};
+
+pie.ajax.prototype._parseResponse = function(xhr, options) {
+  var meth = pie.string.modularize('_parse_' + options.type + '_response');
+  (this[meth] || this._parseDefaultResponse)(xhr, options);
+};
+
+pie.ajax.prototype._parseDefaultResponse = function(xhr, options) {
+  xhr.data = xhr.responseText;
+};
+
+pie.ajax.prototype._parseJsonResponse = function(xhr, options) {
+  try{
+    xhr.data = xhr.responseText.trim().length ? JSON.parse(xhr.responseText) : {};
+  } catch(err) {
+    this.app.debug("could not parse JSON response: " + err);
+    xhr.data = {};
   }
 };

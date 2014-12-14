@@ -102,8 +102,10 @@ pie.activeView.prototype.renderData = function() {
 
 pie.activeView.prototype.render = function(renderFn) {
   this.emitter.around('render', function(){
-    if(this.options.template) {
-      var content = this.app.template(this.options.template, this.renderData());
+
+    var templateName = this.templateName();
+    if(templateName) {
+      var content = this.app.template(templateName, this.renderData());
       this.el.innerHTML = content;
     }
 
@@ -115,5 +117,9 @@ pie.activeView.prototype.render = function(renderFn) {
 pie.activeView.prototype.setRenderTarget = function(target) {
   this.renderTarget = target;
   if(this.emitter.has('afterRender')) this._appendToDom();
+};
+
+pie.activeView.prototype.templateName = function() {
+  return this.options.template;
 };
 

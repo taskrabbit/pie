@@ -8,28 +8,28 @@ describe("pie.ajax", function() {
     spyOn(this.ajax, 'ajax');
 
     this.ajax.get({"data" : "test"});
-    expect(this.ajax.ajax).toHaveBeenCalledWith({"type" : "GET", "data" : "test"});
+    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "GET", "data" : "test"});
   });
 
   it("post() should invoke ajax() with a POST", function() {
     spyOn(this.ajax, 'ajax');
 
     this.ajax.post({"data" : "test"});
-    expect(this.ajax.ajax).toHaveBeenCalledWith({"type" : "POST", "data" : "test"});
+    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "POST", "data" : "test"});
   });
 
   it("put() should invoke ajax() with a PUT", function() {
     spyOn(this.ajax, 'ajax');
 
     this.ajax.put({"data" : "test"});
-    expect(this.ajax.ajax).toHaveBeenCalledWith({"type" : "PUT", "data" : "test"});
+    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "PUT", "data" : "test"});
   });
 
   it("del() should invoke ajax() with a DELETE", function() {
     spyOn(this.ajax, 'ajax');
 
     this.ajax.del({"data" : "test"});
-    expect(this.ajax.ajax).toHaveBeenCalledWith({"type" : "DELETE", "data" : "test"});
+    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "DELETE", "data" : "test"});
   });
 
   describe("with mock-ajax running", function() {
@@ -47,6 +47,12 @@ describe("pie.ajax", function() {
         responseText: '{"post" : "response"}',
         status: 200,
         contentType: 'application/json'
+      });
+
+      jasmine.Ajax.stubRequest('/post-path-html').andReturn({
+        responseText: '<span>foo</span>',
+        status: 200,
+        contentType: 'text/html'
       });
 
       jasmine.Ajax.stubRequest('/put-path').andReturn({
@@ -116,6 +122,23 @@ describe("pie.ajax", function() {
       expect(request.requestHeaders['Accept']).toEqual('application/json');
       expect(request.requestHeaders['Content-Type']).toEqual('application/json');
       expect(request.method).toEqual('GET');
+    });
+
+    it("should allow alternate formats to be sent", function() {
+      this.ajax.post({
+        url: '/post-path-html',
+        type: 'html',
+        data: "foo=bar&baz=qux",
+        csrfToken: 'xyz',
+        verb: 'POST'
+      });
+
+      var request = jasmine.Ajax.requests.mostRecent();
+      expect(request.requestHeaders['Accept']).toEqual('text/html');
+      expect(request.requestHeaders['Content-Type']).toEqual('application/x-www-form-urlencoded');
+      expect(request.method).toEqual('POST');
+      expect(request.params).toEqual('foo=bar&baz=qux');
+      expect(request.data).toEqual('<span>foo</span>');
     });
 
   });

@@ -6,7 +6,7 @@ pie.app = function app(options) {
   this.options = pie.object.deepMerge({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
-    notificationUiTarget: '.notification-container'
+    templateSelector: 'script[type="text/pie-template"]'
   }, options);
 
   var classOption = function(key, _default){
@@ -156,7 +156,6 @@ pie.app.prototype.handleSinglePageLinkClick = function(e){
 
 
   var href = e.delegateTarget.getAttribute('href');
-
   // if we're going nowhere, somewhere else, or to an anchor on the page, let the browser take over
   if(!href || /^(#|[a-z]+:\/\/)/.test(href)) return;
 
@@ -306,11 +305,11 @@ pie.app.prototype.store = function(key, data) {
 pie.app.prototype.template = function(name, data) {
   if(!this._templates[name]) {
 
-    var node = document.querySelector('script[id="' + name + '"][type="text/pie-template"]');
+    var node = document.querySelector(this.options.templateSelector + '[id="' + name + '"]');
 
     if(node) {
       this.debug('Compiling and storing template: ' + name);
-      this._templates[name] = pie.string.template(node.textContent);
+      this._templates[name] = pie.string.template(node.content || node.textContent);
     } else {
       throw new Error("[PIE] Unknown template error: " + name);
     }

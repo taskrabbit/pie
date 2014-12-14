@@ -22,7 +22,7 @@ pie.router.prototype.changedUrl = function(changes) {
 pie.router.prototype.normalizePath = function(path) {
 
   // ensure there's a leading slash
-  if(path.charAt(0) !== '/') {
+  if(!path.match(/\w+:\/\//) && path.charAt(0) !== '/') {
     path = '/' + path;
   }
 
@@ -39,7 +39,7 @@ pie.router.prototype.normalizePath = function(path) {
   }
 
   // remove trailing slashes
-  if(path.charAt(path.length - 1) === '/') {
+  if(path.length > 1 && path.charAt(path.length - 1) === '/') {
     path = path.substr(0, path.length - 1);
   }
 

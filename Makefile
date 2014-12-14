@@ -3,12 +3,13 @@
 PATH  := node_modules/.bin:$(PATH)
 SHELL := /bin/bash
 
-source_files     := src/pie.js src/extensions/*.js src/mixins/*.js src/model.js src/cache.js src/emitter.js src/list.js src/view.js src/activeView.js src/validator.js src/ajax.js src/errorHandler.js src/i18n.js src/navigator.js src/notifier.js src/resources.js src/router.js src/app.js
+source_files     := src/pie.js src/extensions/*.js src/mixins/*.js src/app.js src/model.js src/view.js src/activeView.js src/ajax.js src/cache.js src/emitter.js src/errorHandler.js src/i18n.js src/list.js src/navigator.js src/notifier.js src/resources.js src/router.js src/validator.js
 deploy           := build/pie.js.min
 debug            := build/pie.js
+guide            := docs/guide/js/pie.js
 
 
-all: clean $(debug) $(deploy) document
+all: clean $(debug) $(guide) $(deploy) document
 
 $(deploy): $(debug)
 	uglifyjs -cmo $(deploy) $(debug)
@@ -16,6 +17,9 @@ $(deploy): $(debug)
 $(debug):
 	mkdir -p build
 	cat $(source_files) > $(debug)
+
+$(guide): $(debug)
+	cp $(debug) $(guide)
 
 test: $(deploy)
 	open specRunner.html
@@ -27,7 +31,7 @@ clean:
 	rm -rf build
 
 document: $(debug)
-	docco -o docs/ $(debug)
+	docco -o docs/annotated/ $(debug)
 
 watch: $(source_files)
 	fswatch -o $^ | xargs -n1 -I{} make
