@@ -157,9 +157,17 @@ input, select {
   transition: left 0.15s ease-in-out;
 }
 
+.copy p, .copy li {
+  line-height: 1.5em;
+}
+
 .copy > * + * {
   display: block;
   margin-top: 1em;
+}
+
+.copy > h1 + *, .copy > h2 + *, .copy > h3 + *, .copy > h4 + * {
+  margin-top: 0.5em;
 }
 
 

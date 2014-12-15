@@ -1,8 +1,10 @@
+[% var project = app.i18n.t('project'); %]
 <div class="copy">
   <h1>Getting Started</h1>
   <p>
-    The first step to buildng an app with [%= app.i18n.t('project') %] is defining your app instance.
-    The app instance is your top level structure which manages the high level interactions with the browser.
+    The first step to building an app with <em>[%= project %]</em> is defining your app instance.
+    The app instance contains the services which manage the high level interactions with the browser. Services like
+    <em>pushState</em>, <em>localStorage</em>, <em>ajax</em>, <em>i18n</em>, and <em>routing</em>.
   </p>
 
 </div>
