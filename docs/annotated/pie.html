@@ -1400,7 +1400,11 @@ foo[]=thing&amp;foo[]=bar
 
     <span class="hljs-keyword">return</span> params;
   };
-})();</pre></div></div>
+})();
+
+pie.string.downcase = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
+  <span class="hljs-keyword">return</span> str.toLowerCase();
+};</pre></div></div>
             
         </li>
         
@@ -1497,6 +1501,10 @@ pie.string.titleize = <span class="hljs-function"><span class="hljs-keyword">fun
 
 pie.string.underscore = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
   <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/([a-z])([A-Z])/g</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, a, b)</span></span>{ <span class="hljs-keyword">return</span> a + <span class="hljs-string">'_'</span> + b.toLowerCase(); }).toLowerCase();
+};
+
+pie.string.upcase = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
+  <span class="hljs-keyword">return</span> str.toUpperCase();
 };
 
 
@@ -5005,8 +5013,12 @@ pie.i18n.prototype.load = <span class="hljs-function"><span class="hljs-keyword"
 };
 
 
-pie.i18n.prototype.translate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, data)</span> </span>{
-  <span class="hljs-keyword">var</span> translation = pie.object.getPath(<span class="hljs-keyword">this</span>.translations, path), count;
+pie.i18n.prototype.translate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* path, data, stringChange1, stringChange2 */</span>)</span> </span>{
+  <span class="hljs-keyword">var</span> changes = pie.array.from(<span class="hljs-built_in">arguments</span>),
+  path = changes.shift(),
+  data = pie.object.isObject(changes[<span class="hljs-number">0</span>]) ? changes.shift() : <span class="hljs-literal">undefined</span>,
+  translation = pie.object.getPath(<span class="hljs-keyword">this</span>.translations, path),
+  count;
 
   <span class="hljs-keyword">if</span> (pie.object.has(data, <span class="hljs-string">'count'</span>) &amp;&amp; pie.object.isObject(translation)) {
     count = (data.count || <span class="hljs-number">0</span>).toString();
@@ -5026,9 +5038,13 @@ pie.i18n.prototype.translate = <span class="hljs-function"><span class="hljs-key
 
 
   <span class="hljs-keyword">if</span>(pie.object.isString(translation)) {
-
     translation = translation.indexOf(<span class="hljs-string">'${'</span>) === -<span class="hljs-number">1</span> ? translation : <span class="hljs-keyword">this</span>._nestedTranslate(translation, data);
-    <span class="hljs-keyword">return</span> translation.indexOf(<span class="hljs-string">'%{'</span>) === -<span class="hljs-number">1</span> ? translation : pie.string.expand(translation, data);
+    translation = translation.indexOf(<span class="hljs-string">'%{'</span>) === -<span class="hljs-number">1</span> ? translation : pie.string.expand(translation, data);
+  }
+
+  <span class="hljs-keyword">if</span>(changes.length) {
+    changes.unshift(translation);
+    translation = pie.string.change.apply(<span class="hljs-literal">null</span>, changes);
   }
 
   <span class="hljs-keyword">return</span> translation;

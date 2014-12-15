@@ -14,6 +14,8 @@ pie.inherit(lib.views.nav, pie.view, {
   init: function() {
     this.onChange(app.navigator, this.navigationChanged.bind(this), 'path');
     this._super('init');
+
+    this.on('click', '.nav-toggle', this.toggleNav.bind(this));
   },
 
   navigationChanged: function() {
@@ -23,6 +25,11 @@ pie.inherit(lib.views.nav, pie.view, {
     pie.dom.all(this.qsa('li.is-active'), 'classList.remove', 'is-active');
 
     if(target) target.parentNode.classList.add('is-active');
+    this.el.classList.remove('nav-active');
+  },
+
+  toggleNav: function() {
+    this.el.classList.toggle('nav-active');
   }
 
 });
@@ -37,28 +44,45 @@ lib.views.page = function() {
 
 pie.inherit(lib.views.page, pie.activeView, {
 
+  init: function(){
+    this.retrieveTemplate(function(){
+      this._super('init');
+    }.bind(this));
+  },
+
+  navigationUpdated: function() {
+    this.retrieveTemplate(this.render.bind(this));
+  },
+
+  pageName: function() {
+    return app.parsedUrl.data.page || 'gettingStarted';
+  },
+
+  retrieveTemplate: function(cb) {
+    var name = this.pageName(),
+    tmpl = app._templates[name];
+
+    if(tmpl) {
+      cb();
+      return;
+    }
+
+    app.ajax.get({
+      url: app.router.path('/pages/:page.html', {page: name}),
+      verb: app.ajax.GET,
+      type: 'html',
+      dataSuccess: function(html) {
+        app._templates[name] = pie.string.template(html);
+        cb();
+      }.bind(this)
+    });
+  },
+
   templateName: function() {
-    return app.parsedUrl.name + 'Page';
+    return this.pageName();
   }
 
 });
-
-
-lib.views.gettingStarted = function(){ this._construct(); };
-pie.inherit(lib.views.gettingStarted, lib.views.page);
-
-
-lib.views.models = function(){ this._construct(); };
-pie.inherit(lib.views.models, lib.views.page);
-
-
-lib.views.views = function(){ this._construct(); };
-pie.inherit(lib.views.views, lib.views.page);
-
-
-lib.views.utils = function(){ this._construct(); };
-pie.inherit(lib.views.utils, lib.views.page);
-
 
 window.app = new pie.app({ uiTarget: '.page' });
 
@@ -74,8 +98,11 @@ app.emitter.on('beforeStart', function() {
 
 
 app.router.route({
-  '/' : {view: 'gettingStarted', name: 'gettingStarted'},
-  '/models' : {view: 'models', name: 'models'},
-  '/views' : {view: 'views', name: 'views'},
-  '/utils' : {view: 'utils', name: 'utils'}
+  '/' : {view: 'page'},
+  '/:page' : {view: 'page', name: 'page'}
+});
+
+
+app.i18n.load({
+  project: 'pie.js'
 });

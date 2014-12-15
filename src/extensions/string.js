@@ -88,6 +88,9 @@ pie.string.deserialize = (function(){
   };
 })();
 
+pie.string.downcase = function(str) {
+  return str.toLowerCase();
+};
 
 // Escapes a string for HTML interpolation
 pie.string.escape = function(str) {
@@ -150,6 +153,10 @@ pie.string.titleize = function(str) {
 
 pie.string.underscore = function(str) {
   return str.replace(/([a-z])([A-Z])/g, function(match, a, b){ return a + '_' + b.toLowerCase(); }).toLowerCase();
+};
+
+pie.string.upcase = function(str) {
+  return str.toUpperCase();
 };
 
 

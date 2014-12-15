@@ -910,6 +910,9 @@ pie.string.deserialize = (function(){
   };
 })();
 
+pie.string.downcase = function(str) {
+  return str.toLowerCase();
+};
 
 // Escapes a string for HTML interpolation
 pie.string.escape = function(str) {
@@ -972,6 +975,10 @@ pie.string.titleize = function(str) {
 
 pie.string.underscore = function(str) {
   return str.replace(/([a-z])([A-Z])/g, function(match, a, b){ return a + '_' + b.toLowerCase(); }).toLowerCase();
+};
+
+pie.string.upcase = function(str) {
+  return str.toUpperCase();
 };
 
 
@@ -2818,8 +2825,12 @@ pie.i18n.prototype.load = function(data, shallow) {
 };
 
 
-pie.i18n.prototype.translate = function(path, data) {
-  var translation = pie.object.getPath(this.translations, path), count;
+pie.i18n.prototype.translate = function(/* path, data, stringChange1, stringChange2 */) {
+  var changes = pie.array.from(arguments),
+  path = changes.shift(),
+  data = pie.object.isObject(changes[0]) ? changes.shift() : undefined,
+  translation = pie.object.getPath(this.translations, path),
+  count;
 
   if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {
     count = (data.count || 0).toString();
@@ -2839,9 +2850,13 @@ pie.i18n.prototype.translate = function(path, data) {
 
 
   if(pie.object.isString(translation)) {
-
     translation = translation.indexOf('${') === -1 ? translation : this._nestedTranslate(translation, data);
-    return translation.indexOf('%{') === -1 ? translation : pie.string.expand(translation, data);
+    translation = translation.indexOf('%{') === -1 ? translation : pie.string.expand(translation, data);
+  }
+
+  if(changes.length) {
+    changes.unshift(translation);
+    translation = pie.string.change.apply(null, changes);
   }
 
   return translation;

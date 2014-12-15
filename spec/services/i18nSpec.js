@@ -23,6 +23,8 @@ describe("pie.i18n", function() {
         "test" : {
           "direct" : "Direct translation",
           "interpolate" : "Things to %{interp}, even %{interp} again for %{reason}.",
+
+          "changed" : "content that is_changed %{foo}",
           "number" : {
             "one" : "One translation",
             "negone" : "Negative one translation",
@@ -149,6 +151,12 @@ describe("pie.i18n", function() {
       var response = this.i18n.t('test.nesting.interpolate', {interp: "foo", reason: "bar"});
       expect(response).toEqual("Nested translation with interpolation: Things to foo, even foo again for bar.");
     });
+
+    it("should allow the changing of of the result by passing string alterations", function() {
+      var response = this.i18n.t('test.changed', {foo: 'test'}, 'modularize', 'titleize');
+      expect(response).toEqual("Content That IsChanged Test");
+    });
+
   });
 
   describe("date and time functionality", function() {

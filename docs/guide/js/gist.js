@@ -65,5 +65,7 @@
   };
 
   // register element as x-gist
-  window.GistElement = document.registerElement('x-gist', { prototype: proto });
+  window.GistElement = document.registerElement('x-gist', {
+    prototype: proto
+  });
 })();

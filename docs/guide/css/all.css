@@ -54,14 +54,7 @@ footer,header,hgroup,menu,nav,section {
 nav ul {
   list-style:none;
 }
-blockquote, q {
-  quotes:none;
-}
-blockquote:before, blockquote:after,
-q:before, q:after {
-  content:'';
-  content:none;
-}
+
 a {
   margin:0;
   padding:0;
@@ -71,19 +64,7 @@ a {
   color: #692B05;
   text-decoration: none;
 }
-/* change colours to suit your needs */
-ins {
-  background-color:#ff9;
-  color:#000;
-  text-decoration:none;
-}
-/* change colours to suit your needs */
-mark {
-  background-color:#ff9;
-  color:#000;
-  font-style:italic;
-  font-weight:bold;
-}
+
 
 
 strong, b {
@@ -118,25 +99,30 @@ input, select {
 .page-nav {
   width: 250px;
   position: absolute;
-  left: 0;
+  left: -250px;
   top: 0;
   bottom: 0;
   padding: 1em 0;
   background-color: white;
+  z-index: 1;
+}
+
+.page-nav-inner {
+  position: relative;
 }
 
 .page-nav li a {
   display: block;
   padding: 0.5em 1em;
-  border-left: 2px solid transparent;
+  border-left: 3px solid transparent;
 }
 
 .page-nav li a:hover {
-  border-left: 2px solid #692B05;
+  border-left: 3px solid #692B05;
 }
 
 .page-nav li.is-active a {
-  border-left: 2px solid #692B05;
+  border-left: 3px solid #291000;
 }
 
 .page-nav .home {
@@ -145,23 +131,63 @@ input, select {
   font-weight: bold;
 }
 
-
-.page {
+.nav-toggle {
   position: absolute;
-  left: 250px;
+  top: 0;
+  left: 266px;
+  font-size: 1.5em;
+}
+
+.page-container {
+  position: absolute;
+  left: 0;
   top: 0;
   right: 0;
   bottom: 0;
   overflow: auto;
-  padding: 2em 1em;
+}
+
+.page {
+  padding: 3em 1em;
+  max-width: 800px;
+  min-width: 320px;
+}
+
+.page-nav, .page-container {
+  transition: left 0.15s ease-in-out;
+}
+
+.copy > * + * {
+  display: block;
+  margin-top: 1em;
 }
 
 
+.page-nav.nav-active {
+  left: 0;
+}
 
-@media all and (max-width: 500px) {
+.page-nav.nav-active ~ .page-container {
+  left: 250px;
+}
 
-  .page-nav ul, .page-nav li, .page-nav li a {
-    display: block;
+
+@media all and (min-width: 731px) {
+
+  .page-nav {
+    left: 0;
+  }
+
+  .page-container {
+    left: 250px;
+  }
+
+  .page {
+    padding: 2em;
+  }
+
+  .nav-toggle {
+    display: none;
   }
 
 }
