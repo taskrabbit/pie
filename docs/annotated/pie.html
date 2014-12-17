@@ -3973,7 +3973,7 @@ If the object is not observable, an error will be thrown.</p>
   <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>._appendToDom.bind(<span class="hljs-keyword">this</span>), {onceOnly: <span class="hljs-literal">true</span>});
 };
 
-pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources, pie.mixins.validatable);
+pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources);
 
 pie.activeView.prototype._appendToDom = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
   <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.renderTarget) <span class="hljs-keyword">return</span>;

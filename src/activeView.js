@@ -6,7 +6,7 @@ pie.activeView = function activeView(options) {
   this.emitter.on('afterRender', this._appendToDom.bind(this), {onceOnly: true});
 };
 
-pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources, pie.mixins.validatable);
+pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources);
 
 pie.activeView.prototype._appendToDom = function() {
   if(!this.renderTarget) return;
