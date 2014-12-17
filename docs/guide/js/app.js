@@ -38,15 +38,15 @@ pie.inherit(lib.views.nav, pie.view, {
 
 lib.views.page = function() {
   pie.activeView.prototype.constructor.call(this, {
-    renderOnInit: true
+    renderOnSetup: true
   });
 };
 
 pie.inherit(lib.views.page, pie.activeView, {
 
-  init: function(){
+  setup: function(){
     this.retrieveTemplate(function(){
-      this._super('init');
+      this._super('setup');
     }.bind(this));
   },
 
@@ -88,10 +88,10 @@ window.app = new pie.app({ uiTarget: '.page' });
 
 // get a "nav" view in there. this is "outside" of the normal routed application since it's always present.
 // alternatively, we could create a "layout" view to manage this and the current subview.
-app.emitter.on('beforeStart', function() {
+app.emitter.once('beforeStart', function() {
   var nav = new lib.views.nav();
   app.addChild('nav', nav);
-}, {onceOnly: true});
+});
 
 
 // set up our page routes.

@@ -115,6 +115,8 @@ pie.object.forEach = function(o, f) {
 
 
 pie.object.getPath = function(obj, path) {
+  if(!~path.indexOf('.')) return obj[path];
+
   var p = path.split('.'), key;
   while(p.length) {
     if(!obj) return obj;
@@ -140,6 +142,8 @@ pie.object.has = function(obj, key) {
 
 // does the object have the described path
 pie.object.hasPath = function(obj, path) {
+  if(!~path.indexOf('.')) return pie.object.has(obj, path);
+
   var parts = path.split('.'), part;
   while(part = parts.shift()) {
 
@@ -195,6 +199,8 @@ pie.object.serialize = function(obj, removeEmpty) {
 
 
 pie.object.setPath = function(obj, path, value) {
+  if(!~path.indexOf('.')) return obj[path] = value;
+
   var p = path.split('.'), key;
   while(p.length) {
     key = p.shift();

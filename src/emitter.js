@@ -1,7 +1,7 @@
-pie.emitter = function() {
+pie.emitter = pie.create('emitter', function() {
   this.triggeredEvents = [];
   this.eventCallbacks = {};
-};
+});
 
 pie.emitter.prototype.has = function(event) {
   return !!~this.triggeredEvents.indexOf(event);
@@ -15,6 +15,15 @@ pie.emitter.prototype.on = function(event, fn, options) {
 
   this.eventCallbacks[event] = this.eventCallbacks[event] || [];
   this.eventCallbacks[event].push(pie.object.merge({fn: fn}, options));
+};
+
+pie.emitter.prototype.once = function(event, fn, nowIfPrevious) {
+  if(nowIfPrevious && this.has(event)) {
+    fn();
+    return;
+  }
+
+  this.on(event, fn, {onceOnly: true});
 };
 
 // trigger an event (string) on the app.

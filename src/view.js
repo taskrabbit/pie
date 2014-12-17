@@ -1,19 +1,19 @@
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
-pie.view = function(options) {
+pie.view = pie.create('view', function(options) {
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.el = this.options.el || pie.dom.createElement('<div />');
   this.changeCallbacks = [];
   pie.setUid(this);
-  if(this.options.init) this.init();
-};
+  if(this.options.setup) this.setup();
+});
 
-pie.extend(pie.view.prototype, pie.mixins.inheritance);
-pie.extend(pie.view.prototype, pie.mixins.container);
+
+pie.extend(pie.view.prototype, pie.mixins.inheritance, pie.mixins.container);
 
 
 pie.view.prototype.addedToParent = function() {
-  this.init();
+  this.setup();
 };
 
 // we extract the functionality of setting our render target so we can override this as we see fit.
@@ -24,7 +24,7 @@ pie.view.prototype.setRenderTarget = function(target) {
 };
 
 // placeholder for default functionality
-pie.view.prototype.init = function(setupFn){
+pie.view.prototype.setup = function(setupFn){
   if(this.isInit) return this;
   if(setupFn) setupFn();
   this.isInit = true;

@@ -1,14 +1,17 @@
 pie.mixins.container = {
 
+  init: function() {
+    this.children = [];
+    this.childNames = {};
+  },
+
   addChild: function(name, child) {
-    var children = this.children(),
-    names = this.childNames(),
-    idx;
+    var idx;
 
-    children.push(child);
-    idx = children.length - 1;
+    this.children.push(child);
+    idx = this.children.length - 1;
 
-    names[name] = idx;
+    this.childNames[name] = idx;
     child._indexWithinParent = idx;
     child._nameWithinParent = name;
     child.parent = this;
@@ -24,22 +27,14 @@ pie.mixins.container = {
     }.bind(this));
   },
 
-  childNames: function() {
-    return this._childNames = this._childNames || {};
-  },
-
-  children: function() {
-    return this._children = this._children || [];
-  },
-
   getChild: function(obj) {
     var name = obj._nameWithinParent || obj,
-    idx = this.childNames()[name];
+    idx = this.childNames[name];
 
     /* jslint eqeq:true */
     if(idx == null) idx = obj;
 
-    return ~idx && this.children()[idx] || undefined;
+    return ~idx && this.children[idx] || undefined;
   },
 
   bubble: function() {
@@ -55,22 +50,19 @@ pie.mixins.container = {
   },
 
   removeChild: function(obj) {
-    var child = this.getChild(obj),
-    names = this.childNames(),
-    children = this.children(),
-    i;
+    var child = this.getChild(obj), i;
 
     if(child) {
       i = child._indexWithinParent;
-      children.splice(i, 1);
+      this.children.splice(i, 1);
 
-      for(;i < children.length;i++) {
-        children[i]._indexWithinParent = i;
-        names[children[i]._nameWithinParent] = i;
+      for(;i < this.children.length;i++) {
+        this.children[i]._indexWithinParent = i;
+        this.childNames[this.children[i]._nameWithinParent] = i;
       }
 
       // clean up
-      delete names[child._nameWithinParent];
+      delete this.childNames[child._nameWithinParent];
       delete child._indexWithinParent;
       delete child._nameWithinParent;
       delete child.parent;
@@ -82,10 +74,9 @@ pie.mixins.container = {
   },
 
   removeChildren: function() {
-    var children = this.children(),
-    child;
+    var child;
 
-    while(child = children[children.length-1]) {
+    while(child = this.children[this.children.length-1]) {
       this.removeChild(child);
     }
 

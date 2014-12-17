@@ -1,6 +1,6 @@
-pie.cache = function(data, options) {
-  pie.model.prototype.constructor.call(this, data, options);
-};
+pie.cache = pie.create('cache', function(data, options) {
+  this._super('init', data, options);
+});
 
 pie.inherit(pie.cache, pie.model);
 

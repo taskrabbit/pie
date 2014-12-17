@@ -1,10 +1,10 @@
 // a view class which handles some basic functionality
-pie.activeView = function activeView(options) {
-  pie.view.call(this, options);
+pie.activeView = pie.create('activeView', function(options) {
+  this._super('init', options);
 
   this.emitter = new pie.emitter();
-  this.emitter.on('afterRender', this._appendToDom.bind(this), {onceOnly: true});
-};
+  this.emitter.once('afterRender', this._appendToDom.bind(this));
+});
 
 pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources);
 
@@ -26,10 +26,10 @@ pie.activeView.prototype._loadingStyle = function(bool) {
 };
 
 
-pie.activeView.prototype.init = function(setupFunc) {
-  this.emitter.around('init', function(){
+pie.activeView.prototype.setup = function(setupFunc) {
+  this.emitter.around('setup', function(){
 
-    pie.view.prototype.init.call(this, function() {
+    pie.view.prototype.setup.call(this, function() {
 
       this.loadExternalResources(this.options.resources, function() {
 
@@ -40,7 +40,7 @@ pie.activeView.prototype.init = function(setupFunc) {
           this.onChange(this.model, this.render.bind(this), field);
         }
 
-        if(this.options.renderOnInit) {
+        if(this.options.renderOnSetup) {
           this.render();
         }
 

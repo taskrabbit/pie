@@ -1,8 +1,8 @@
 // made to be used as an instance so multiple translations could exist if we so choose.
-pie.i18n = function i18n(app) {
+pie.i18n = pie.create('i18n', function(app) {
   this.translations = pie.object.merge({}, pie.i18n.defaultTranslations);
   this.app = app;
-};
+});
 
 pie.i18n.defaultTranslations = {
   app: {
@@ -102,6 +102,30 @@ pie.i18n.defaultTranslations = {
         'Nov',
         'Dec'
       ]
+    },
+
+    validations: {
+
+      cc:       "does not look like a credit card number",
+      chosen:   "must be chosen",
+      cvv:      "is not a valid security code",
+      date:     "is not a valid date",
+      email:    "must be a valid email",
+      format:   "is invalid",
+      integer:  "must be an integer",
+      length:   "length must be",
+      number:   "must be a number",
+      phone:    "is not a valid phone number",
+      presence: "can't be blank",
+      url:      "must be a valid url",
+
+      range_messages: {
+        eq:  "equal to %{count}",
+        lt:  "less than %{count}",
+        gt:  "greater than %{count}",
+        lte: "less than or equal to %{count}",
+        gte: "greater than or equal to %{count}"
+      }
     }
   }
 };

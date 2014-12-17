@@ -1,7 +1,7 @@
-pie.navigator = function(app) {
+pie.navigator = pie.create('navigator', function(app) {
   this.app = app;
-  pie.model.prototype.constructor.call(this, {});
-};
+  this._super('init', {});
+});
 
 pie.inherit(pie.navigator, pie.model);
 

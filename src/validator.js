@@ -1,7 +1,7 @@
-pie.validator = function(app) {
+pie.validator = pie.create('validator', function(app) {
   this.app = app || window.app;
   this.i18n = app.i18n;
-};
+});
 
 
 // small utility class to handle range options.
