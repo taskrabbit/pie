@@ -65,14 +65,14 @@
 //    ```
 
 
-pie.model = function(d, options) {
+pie.model = pie.create('model', function(d, options) {
   this.data = pie.object.merge({_version: 1}, d);
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.observations = {};
   this.changeRecords = [];
   pie.setUid(this);
-};
+});
 
 // Give ourselves _super functionality.
 pie.extend(pie.model.prototype, pie.mixins.inheritance);

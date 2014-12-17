@@ -18,6 +18,46 @@ window.pie = {
 
   pieId: 1,
 
+  create: function(/* extension1, extension2 */) {
+    var extensions = pie.array.from(arguments),
+    name = pie.object.isString(extensions[0]) ? extensions.shift() : "",
+    init,
+    proto;
+
+    if(pie.object.isFunction(extensions[0])) {
+      init = extensions.shift();
+    } else if (pie.object.isObject(extensions[0])) {
+      init = extensions[0].init;
+      extensions[0] = pie.object.except(extensions[0], 'init');
+    }
+
+    if(!name && init && init.name) name = init.name;
+    proto = new Function("return function " + name + "(){ if(this.init) this.init.apply(this, arguments); };")();
+
+    proto.prototype.init = init;
+
+    pie.extend(proto.prototype, extensions);
+
+    return proto;
+  },
+
+  inherit: function(/* child, parent, extensions */) {
+    var args = pie.array.from(arguments),
+    child = args.shift(),
+    parent = args.shift(),
+    oldInit = child.prototype.init;
+
+    child.prototype = Object.create(parent.prototype);
+    child.prototype.constructor = child;
+    if(oldInit) child.prototype.init = oldInit;
+
+
+    if(!child.prototype._super) args.unshift(pie.mixins.inheritance);
+    if(args.length) pie.extend(child.prototype, args);
+
+    return child;
+  },
+
   // maybe this will get more complicated in the future, maybe not.
   extend: function(/* proto, extension1[, extension2, ...] */) {
     var extensions = pie.array.from(arguments),
@@ -26,23 +66,23 @@ window.pie = {
     extensions = pie.array.compact(pie.array.flatten(extensions), true);
 
     extensions.forEach(function(ext) {
-      pie.object.merge(proto, ext);
+      var beforeInit = ext.beforeInit || ext.init;
+      var afterInit = ext.afterInit;
+      var onInherit = ext.onInherit;
+
+      pie.object.merge(proto, pie.object.except(ext, 'onInherit', 'init', 'afterInit', 'beforeInit'));
+
+      if(onInherit) onInherit(proto);
+
+      if((beforeInit || afterInit) && proto.init) {
+        var oldInit = proto.init;
+        proto.init = function(){
+          if(beforeInit) beforeInit.apply(this, arguments);
+          oldInit.apply(this, arguments);
+          if(afterInit) afterInit.apply(this, arguments);
+        };
+      }
     });
-  },
-
-
-  inherit: function(/* child, parent, extensions */) {
-    var args = pie.array.from(arguments),
-    child = args.shift(),
-    parent = args.shift();
-
-    child.prototype = Object.create(parent.prototype);
-    child.prototype.constructor = child;
-
-    if(!child.prototype._super) pie.extend(child.prototype, pie.mixins.inheritance);
-    if(args.length) pie.extend(child.prototype, args);
-
-    return child;
   },
 
   ns: function(path) {
@@ -711,6 +751,8 @@ pie.object.forEach = function(o, f) {
 
 
 pie.object.getPath = function(obj, path) {
+  if(!~path.indexOf('.')) return obj[path];
+
   var p = path.split('.'), key;
   while(p.length) {
     if(!obj) return obj;
@@ -736,6 +778,8 @@ pie.object.has = function(obj, key) {
 
 // does the object have the described path
 pie.object.hasPath = function(obj, path) {
+  if(!~path.indexOf('.')) return pie.object.has(obj, path);
+
   var parts = path.split('.'), part;
   while(part = parts.shift()) {
 
@@ -791,6 +835,8 @@ pie.object.serialize = function(obj, removeEmpty) {
 
 
 pie.object.setPath = function(obj, path, value) {
+  if(!~path.indexOf('.')) return obj[path] = value;
+
   var p = path.split('.'), key;
   while(p.length) {
     key = p.shift();
@@ -916,6 +962,8 @@ pie.string.downcase = function(str) {
 
 // Escapes a string for HTML interpolation
 pie.string.escape = function(str) {
+  /* jslint eqnull: true */
+  if(str == null) return str;
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g,'&#x2F;');
 };
 
@@ -1167,15 +1215,18 @@ pie.mixins.changeSet = {
 };
 pie.mixins.container = {
 
+  init: function() {
+    this.children = [];
+    this.childNames = {};
+  },
+
   addChild: function(name, child) {
-    var children = this.children(),
-    names = this.childNames(),
-    idx;
+    var idx;
 
-    children.push(child);
-    idx = children.length - 1;
+    this.children.push(child);
+    idx = this.children.length - 1;
 
-    names[name] = idx;
+    this.childNames[name] = idx;
     child._indexWithinParent = idx;
     child._nameWithinParent = name;
     child.parent = this;
@@ -1191,22 +1242,14 @@ pie.mixins.container = {
     }.bind(this));
   },
 
-  childNames: function() {
-    return this._childNames = this._childNames || {};
-  },
-
-  children: function() {
-    return this._children = this._children || [];
-  },
-
   getChild: function(obj) {
     var name = obj._nameWithinParent || obj,
-    idx = this.childNames()[name];
+    idx = this.childNames[name];
 
     /* jslint eqeq:true */
     if(idx == null) idx = obj;
 
-    return ~idx && this.children()[idx] || undefined;
+    return ~idx && this.children[idx] || undefined;
   },
 
   bubble: function() {
@@ -1222,22 +1265,19 @@ pie.mixins.container = {
   },
 
   removeChild: function(obj) {
-    var child = this.getChild(obj),
-    names = this.childNames(),
-    children = this.children(),
-    i;
+    var child = this.getChild(obj), i;
 
     if(child) {
       i = child._indexWithinParent;
-      children.splice(i, 1);
+      this.children.splice(i, 1);
 
-      for(;i < children.length;i++) {
-        children[i]._indexWithinParent = i;
-        names[children[i]._nameWithinParent] = i;
+      for(;i < this.children.length;i++) {
+        this.children[i]._indexWithinParent = i;
+        this.childNames[this.children[i]._nameWithinParent] = i;
       }
 
       // clean up
-      delete names[child._nameWithinParent];
+      delete this.childNames[child._nameWithinParent];
       delete child._indexWithinParent;
       delete child._nameWithinParent;
       delete child.parent;
@@ -1249,10 +1289,9 @@ pie.mixins.container = {
   },
 
   removeChildren: function() {
-    var children = this.children(),
-    child;
+    var child;
 
-    while(child = children[children.length-1]) {
+    while(child = this.children[this.children.length-1]) {
       this.removeChild(child);
     }
 
@@ -1453,7 +1492,7 @@ pie.mixins.validatable = {
 };
 
 // operator of the site. contains a router, navigator, etc with the intention of holding page context.
-pie.app = function app(options) {
+pie.app = pie.create('app', function(options) {
 
   // general app options
   this.options = pie.object.deepMerge({
@@ -1509,15 +1548,15 @@ pie.app = function app(options) {
   // we observe the navigator and handle changing the context of the page
   this.navigator.observe(this.navigationChanged.bind(this), 'url');
 
-  this.emitter.on('beforeStart', this.setupSinglePageLinks.bind(this), {onceOnly: true});
-  this.emitter.on('afterStart', this.showStoredNotifications.bind(this), {onceOnly: true});
+  this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
+  this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
 
   // once the dom is loaded
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
 
   // set a global instance which can be used as a backup within the pie library.
   window.pieInstance = window.pieInstance || this;
-};
+});
 
 
 pie.extend(pie.app.prototype, pie.mixins.container, pie.mixins.events);
@@ -1733,11 +1772,6 @@ pie.app.prototype.start = function() {
 
     this.navigator.start();
 
-    // invoke a nav change event on page load.
-    var url = this.navigator.get('url');
-    this.navigator.data.url = null;
-    this.navigator.set('url', url);
-
   }.bind(this));
 };
 
@@ -1839,14 +1873,14 @@ pie.app.prototype.template = function(name, data) {
 //    ```
 
 
-pie.model = function(d, options) {
+pie.model = pie.create('model', function(d, options) {
   this.data = pie.object.merge({_version: 1}, d);
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.observations = {};
   this.changeRecords = [];
   pie.setUid(this);
-};
+});
 
 // Give ourselves _super functionality.
 pie.extend(pie.model.prototype, pie.mixins.inheritance);
@@ -2000,21 +2034,21 @@ pie.model.prototype.compute = function(/* name, fn[, prop1, prop2 ] */) {
 
 
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
-pie.view = function(options) {
+pie.view = pie.create('view', function(options) {
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.el = this.options.el || pie.dom.createElement('<div />');
   this.changeCallbacks = [];
   pie.setUid(this);
-  if(this.options.init) this.init();
-};
+  if(this.options.setup) this.setup();
+});
 
-pie.extend(pie.view.prototype, pie.mixins.inheritance);
-pie.extend(pie.view.prototype, pie.mixins.container);
+
+pie.extend(pie.view.prototype, pie.mixins.inheritance, pie.mixins.container);
 
 
 pie.view.prototype.addedToParent = function() {
-  this.init();
+  this.setup();
 };
 
 // we extract the functionality of setting our render target so we can override this as we see fit.
@@ -2025,7 +2059,7 @@ pie.view.prototype.setRenderTarget = function(target) {
 };
 
 // placeholder for default functionality
-pie.view.prototype.init = function(setupFn){
+pie.view.prototype.setup = function(setupFn){
   if(this.isInit) return this;
   if(setupFn) setupFn();
   this.isInit = true;
@@ -2115,14 +2149,14 @@ pie.view.prototype._unobserveChangeCallbacks = function() {
   }
 };
 // a view class which handles some basic functionality
-pie.activeView = function activeView(options) {
-  pie.view.call(this, options);
+pie.activeView = pie.create('activeView', function(options) {
+  this._super('init', options);
 
   this.emitter = new pie.emitter();
-  this.emitter.on('afterRender', this._appendToDom.bind(this), {onceOnly: true});
-};
+  this.emitter.once('afterRender', this._appendToDom.bind(this));
+});
 
-pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources, pie.mixins.validatable);
+pie.inherit(pie.activeView, pie.view, pie.mixins.externalResources);
 
 pie.activeView.prototype._appendToDom = function() {
   if(!this.renderTarget) return;
@@ -2142,10 +2176,10 @@ pie.activeView.prototype._loadingStyle = function(bool) {
 };
 
 
-pie.activeView.prototype.init = function(setupFunc) {
-  this.emitter.around('init', function(){
+pie.activeView.prototype.setup = function(setupFunc) {
+  this.emitter.around('setup', function(){
 
-    pie.view.prototype.init.call(this, function() {
+    pie.view.prototype.setup.call(this, function() {
 
       this.loadExternalResources(this.options.resources, function() {
 
@@ -2156,7 +2190,7 @@ pie.activeView.prototype.init = function(setupFunc) {
           this.onChange(this.model, this.render.bind(this), field);
         }
 
-        if(this.options.renderOnInit) {
+        if(this.options.renderOnSetup) {
           this.render();
         }
 
@@ -2239,10 +2273,10 @@ pie.activeView.prototype.templateName = function() {
   return this.options.template;
 };
 
-pie.ajax = function ajax(app) {
+pie.ajax = pie.create('ajax', function(app){
   this.app = app;
   this.defaultAjaxOptions = {};
-};
+});
 
 pie.ajax.prototype.GET = 'GET';
 pie.ajax.prototype.POST = 'POST';
@@ -2399,9 +2433,9 @@ pie.ajax.prototype._parseJsonResponse = function(xhr, options) {
     xhr.data = {};
   }
 };
-pie.cache = function(data, options) {
-  pie.model.prototype.constructor.call(this, data, options);
-};
+pie.cache = pie.create('cache', function(data, options) {
+  this._super('init', data, options);
+});
 
 pie.inherit(pie.cache, pie.model);
 
@@ -2481,10 +2515,10 @@ pie.cache.prototype.wrap = function(obj, options) {
 pie.cache.prototype.currentTime = function() {
   return pie.date.now();
 };
-pie.emitter = function() {
+pie.emitter = pie.create('emitter', function() {
   this.triggeredEvents = [];
   this.eventCallbacks = {};
-};
+});
 
 pie.emitter.prototype.has = function(event) {
   return !!~this.triggeredEvents.indexOf(event);
@@ -2498,6 +2532,15 @@ pie.emitter.prototype.on = function(event, fn, options) {
 
   this.eventCallbacks[event] = this.eventCallbacks[event] || [];
   this.eventCallbacks[event].push(pie.object.merge({fn: fn}, options));
+};
+
+pie.emitter.prototype.once = function(event, fn, nowIfPrevious) {
+  if(nowIfPrevious && this.has(event)) {
+    fn();
+    return;
+  }
+
+  this.on(event, fn, {onceOnly: true});
 };
 
 // trigger an event (string) on the app.
@@ -2531,10 +2574,10 @@ pie.emitter.prototype.around = function(event, fn) {
   fn();
   this.fire(after);
 };
-pie.errorHandler = function errorHandler(app) {
+pie.errorHandler = pie.create('errorHandler', function(app) {
   this.app = app;
   this.responseCodeHandlers = {};
-};
+});
 
 
 // extract the "data" object out of an xhr
@@ -2616,10 +2659,10 @@ pie.errorHandler.prototype._reportError = function(err) {
   this.app.debug(err);
 };
 // made to be used as an instance so multiple translations could exist if we so choose.
-pie.i18n = function i18n(app) {
+pie.i18n = pie.create('i18n', function(app) {
   this.translations = pie.object.merge({}, pie.i18n.defaultTranslations);
   this.app = app;
-};
+});
 
 pie.i18n.defaultTranslations = {
   app: {
@@ -2719,6 +2762,30 @@ pie.i18n.defaultTranslations = {
         'Nov',
         'Dec'
       ]
+    },
+
+    validations: {
+
+      cc:       "does not look like a credit card number",
+      chosen:   "must be chosen",
+      cvv:      "is not a valid security code",
+      date:     "is not a valid date",
+      email:    "must be a valid email",
+      format:   "is invalid",
+      integer:  "must be an integer",
+      length:   "length must be",
+      number:   "must be a number",
+      phone:    "is not a valid phone number",
+      presence: "can't be blank",
+      url:      "must be a valid url",
+
+      range_messages: {
+        eq:  "equal to %{count}",
+        lt:  "less than %{count}",
+        gt:  "greater than %{count}",
+        lte: "less than or equal to %{count}",
+        gte: "greater than or equal to %{count}"
+      }
     }
   }
 };
@@ -2951,10 +3018,10 @@ pie.i18n.prototype.strftime = function(date, f) {
 
 pie.i18n.prototype.t = pie.i18n.prototype.translate;
 pie.i18n.prototype.l = pie.i18n.prototype.strftime;
-pie.list = function(array, options) {
+pie.list = pie.create('list', function(array, options) {
   array = array || [];
-  pie.model.call(this, {items: array}, options);
-};
+  this._super('init', {items: array}, options);
+});
 
 
 pie.inherit(pie.list, pie.model);
@@ -3110,10 +3177,10 @@ pie.list.prototype.shift = function(options) {
 pie.list.prototype.unshift = function(value, options) {
   return this.insert(0, value, options);
 };
-pie.navigator = function(app) {
+pie.navigator = pie.create('navigator', function(app) {
   this.app = app;
-  pie.model.prototype.constructor.call(this, {});
-};
+  this._super('init', {});
+});
 
 pie.inherit(pie.navigator, pie.model);
 
@@ -3154,11 +3221,11 @@ pie.navigator.prototype.setDataFromLocation = function() {
   return this;
 };
 // notifier is a class which provides an interface for rendering page-level notifications.
-pie.notifier = function notifier(app, options) {
+pie.notifier = pie.create('notifier', function(app, options) {
   this.options = options || {};
   this.app = this.options.app || window.app;
   this.notifications = new pie.list([]);
-};
+});
 
 // remove all alerts, potentially filtering by the type of alert.
 pie.notifier.prototype.clear = function(type) {
@@ -3220,11 +3287,11 @@ pie.notifier.prototype.remove = function(msgId) {
     this.notifications.remove(msgIdx);
   }
 };
-pie.resources = function(app, srcMap) {
+pie.resources = pie.create('resources', function(app, srcMap) {
   this.app = app;
   this.loaded = {};
   this.srcMap = srcMap || {};
-};
+});
 
 pie.resources.prototype._appendNode = function(node) {
   var target = document.querySelector('head');
@@ -3312,11 +3379,11 @@ pie.resources.prototype.load = function(srcOrOptions, cb) {
 
   return false;
 };
-pie.router = function(app) {
+pie.router = pie.create('router', function(app) {
   this.app = app;
   this.routes = {};
   this.namedRoutes = {};
-};
+});
 
 
 
@@ -3504,10 +3571,10 @@ pie.router.prototype.parseUrl = function(path, parseQuery) {
     fullPath: fullPath
   }, match);
 };
-pie.validator = function(app) {
+pie.validator = pie.create('validator', function(app) {
   this.app = app || window.app;
   this.i18n = app.i18n;
-};
+});
 
 
 // small utility class to handle range options.

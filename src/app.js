@@ -1,6 +1,6 @@
 
 // operator of the site. contains a router, navigator, etc with the intention of holding page context.
-pie.app = function app(options) {
+pie.app = pie.create('app', function(options) {
 
   // general app options
   this.options = pie.object.deepMerge({
@@ -56,15 +56,15 @@ pie.app = function app(options) {
   // we observe the navigator and handle changing the context of the page
   this.navigator.observe(this.navigationChanged.bind(this), 'url');
 
-  this.emitter.on('beforeStart', this.setupSinglePageLinks.bind(this), {onceOnly: true});
-  this.emitter.on('afterStart', this.showStoredNotifications.bind(this), {onceOnly: true});
+  this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
+  this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
 
   // once the dom is loaded
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
 
   // set a global instance which can be used as a backup within the pie library.
   window.pieInstance = window.pieInstance || this;
-};
+});
 
 
 pie.extend(pie.app.prototype, pie.mixins.container, pie.mixins.events);
@@ -279,11 +279,6 @@ pie.app.prototype.start = function() {
   this.emitter.around('start', function() {
 
     this.navigator.start();
-
-    // invoke a nav change event on page load.
-    var url = this.navigator.get('url');
-    this.navigator.data.url = null;
-    this.navigator.set('url', url);
 
   }.bind(this));
 };

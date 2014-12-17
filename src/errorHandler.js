@@ -1,7 +1,7 @@
-pie.errorHandler = function errorHandler(app) {
+pie.errorHandler = pie.create('errorHandler', function(app) {
   this.app = app;
   this.responseCodeHandlers = {};
-};
+});
 
 
 // extract the "data" object out of an xhr

@@ -1,8 +1,8 @@
-pie.router = function(app) {
+pie.router = pie.create('router', function(app) {
   this.app = app;
   this.routes = {};
   this.namedRoutes = {};
-};
+});
 
 
 

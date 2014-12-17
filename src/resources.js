@@ -1,8 +1,8 @@
-pie.resources = function(app, srcMap) {
+pie.resources = pie.create('resources', function(app, srcMap) {
   this.app = app;
   this.loaded = {};
   this.srcMap = srcMap || {};
-};
+});
 
 pie.resources.prototype._appendNode = function(node) {
   var target = document.querySelector('head');

@@ -94,6 +94,8 @@ pie.string.downcase = function(str) {
 
 // Escapes a string for HTML interpolation
 pie.string.escape = function(str) {
+  /* jslint eqnull: true */
+  if(str == null) return str;
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g,'&#x2F;');
 };
 

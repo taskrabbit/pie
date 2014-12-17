@@ -1,7 +1,7 @@
-pie.list = function(array, options) {
+pie.list = pie.create('list', function(array, options) {
   array = array || [];
-  pie.model.call(this, {items: array}, options);
-};
+  this._super('init', {items: array}, options);
+});
 
 
 pie.inherit(pie.list, pie.model);

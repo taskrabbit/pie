@@ -142,8 +142,9 @@ describe("pie.model", function() {
   describe("inheritance", function() {
 
     beforeEach(function() {
-      var foo = function(){pie.model.call(this);};
-      foo.prototype = Object.create(pie.model.prototype);
+      var foo = pie.create(function(){ this._super('init'); });
+      pie.inherit(foo, pie.model);
+
       foo.prototype.newMethod = function(){ return this._super('newMethod'); };
       foo.prototype.get = function(k) {
         return 'override ' + this._super('get', arguments);
@@ -169,12 +170,12 @@ describe("pie.model", function() {
   describe("computed properties", function() {
     beforeEach(function(){
 
-      var foo = function(){
-        pie.model.apply(this, arguments);
+      var foo = pie.create(function(data){
+        this._super('init', data);
         this.compute('full_name', this.fullName.bind(this), 'first_name', 'last_name');
-      };
+      });
 
-      foo.prototype = Object.create(pie.model.prototype);
+      pie.inherit(foo, pie.model);
 
       foo.prototype.fullName = function() {
         return pie.array.compact([this.get('first_name'), this.get('last_name')]).join(' ');

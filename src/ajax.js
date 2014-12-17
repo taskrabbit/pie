@@ -1,7 +1,7 @@
-pie.ajax = function ajax(app) {
+pie.ajax = pie.create('ajax', function(app){
   this.app = app;
   this.defaultAjaxOptions = {};
-};
+});
 
 pie.ajax.prototype.GET = 'GET';
 pie.ajax.prototype.POST = 'POST';
