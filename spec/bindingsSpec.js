@@ -2,10 +2,8 @@ describe("View Binding Integration", function() {
 
   beforeEach(function() {
     var v = new window.lib.views.listView();
+    v.setRenderTarget(document.body);
     app.addChild('integrationTest', v);
-    v.render();
-
-    document.body.appendChild(v.el);
 
     this.view = v;
     this.model = this.view.model;

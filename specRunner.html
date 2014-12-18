@@ -58,22 +58,21 @@
 
       lib = { views: {} };
 
-      lib.views.listView = function listView() {
+      lib.views.listView = pie.activeView.extend('listView', function() {
         this.model = this.items = new pie.model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
-
-        pie.activeView.call(this, {
-          template: 'list'
+        this._super({
+          template: 'list',
+          renderOnSetup: true
         });
-      };
+      });
 
-      lib.views.listView.prototype = Object.create(pie.activeView.prototype);
-      pie.extend(lib.views.listView.prototype, pie.mixins.bindings);
-
-      lib.views.listView.prototype.setup = function() {
-        this._super('setup', function(){
-          this.bind({attr: 'foo'});
-        }.bind(this));
-      }
+      lib.views.listView.reopen(pie.mixins.bindings, {
+        setup: function() {
+          this._super(function(){
+            this.bind({attr: 'foo'});
+          }.bind(this));
+        }
+      });
 
     </script>
 

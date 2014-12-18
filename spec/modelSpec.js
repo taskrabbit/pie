@@ -142,13 +142,12 @@ describe("pie.model", function() {
   describe("inheritance", function() {
 
     beforeEach(function() {
-      var foo = pie.create(function(){ this._super('init'); });
-      pie.inherit(foo, pie.model);
-
-      foo.prototype.newMethod = function(){ return this._super('newMethod'); };
-      foo.prototype.get = function(k) {
-        return 'override ' + this._super('get', arguments);
-      };
+      var foo = pie.model.extend({
+        newMethod: function(){ return this._super(); },
+        get: function(k) {
+          return 'override ' + this._super(k);
+        }
+      });
 
       this.foo = new foo();
     });
@@ -156,13 +155,6 @@ describe("pie.model", function() {
     it("should provide a _super method", function() {
       this.foo.set('foo', 'bar');
       expect(this.foo.get('foo')).toEqual('override bar');
-      expect(this.foo._super('get', 'foo')).toEqual('bar');
-    });
-
-    it("should throw an error if a _super method is not defined", function() {
-      expect(function() {
-        this.foo.newMethod();
-      }.bind(this)).toThrowError("No super method defined: newMethod");
     });
 
   });
@@ -170,16 +162,14 @@ describe("pie.model", function() {
   describe("computed properties", function() {
     beforeEach(function(){
 
-      var foo = pie.create(function(data){
-        this._super('init', data);
+      var foo = pie.model.extend(function(data){
+        this._super(data);
         this.compute('full_name', this.fullName.bind(this), 'first_name', 'last_name');
+      }, {
+        fullName:  function() {
+          return pie.array.compact([this.get('first_name'), this.get('last_name')]).join(' ');
+        }
       });
-
-      pie.inherit(foo, pie.model);
-
-      foo.prototype.fullName = function() {
-        return pie.array.compact([this.get('first_name'), this.get('last_name')]).join(' ');
-      };
 
       this.foo = new foo();
       this.fooClass = foo;

@@ -3,6 +3,7 @@ pie.mixins.container = {
   init: function() {
     this.children = [];
     this.childNames = {};
+    if(this._super) this._super.apply(this, arguments);
   },
 
   addChild: function(name, child) {
