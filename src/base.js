@@ -78,7 +78,6 @@ pie.base._wrap = function(newF, oldF) {
   /* jslint eqnull:true */
   if(newF == null) return oldF;
   if(!pie.object.isFunction(newF)) return newF;
-  if(!pie.object.isFunction(oldF)) return newF;
 
   return function() {
     var ret, sup = this._super;

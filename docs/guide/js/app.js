@@ -3,19 +3,18 @@
 pie.ns('lib.views');
 
 
-lib.views.nav = function() {
-  this._construct({
+lib.views.nav = pie.view.extend('nav', function() {
+  this._super({
     el: document.querySelector('.page-nav')
   });
-};
+});
 
-pie.inherit(lib.views.nav, pie.view, {
+lib.views.nav.reopen({
 
-  init: function() {
+  setup: function() {
     this.onChange(app.navigator, this.navigationChanged.bind(this), 'path');
-    this._super('init');
-
     this.on('click', '.nav-toggle', this.toggleNav.bind(this));
+    this._super();
   },
 
   navigationChanged: function() {
@@ -36,34 +35,31 @@ pie.inherit(lib.views.nav, pie.view, {
 
 
 
-lib.views.page = function() {
-  pie.activeView.prototype.constructor.call(this, {
-    renderOnSetup: true
-  });
-};
+lib.views.page = pie.activeView.extend('page', function() {
+  this._super();
+});
 
-pie.inherit(lib.views.page, pie.activeView, {
+lib.views.page.reopen({
 
   setup: function(){
-    this.retrieveTemplate(function(){
-      this._super('setup');
-    }.bind(this));
+    this._super();
+    this.retrieveTemplateAndRender();
   },
 
   navigationUpdated: function() {
-    this.retrieveTemplate(this.render.bind(this));
+    this.retrieveTemplateAndRender();
   },
 
   pageName: function() {
     return app.parsedUrl.data.page || 'gettingStarted';
   },
 
-  retrieveTemplate: function(cb) {
+  retrieveTemplateAndRender: function() {
     var name = this.pageName(),
     tmpl = app._templates[name];
 
     if(tmpl) {
-      cb();
+      this.render();
       return;
     }
 
@@ -73,7 +69,7 @@ pie.inherit(lib.views.page, pie.activeView, {
       type: 'html',
       dataSuccess: function(html) {
         app._templates[name] = pie.string.template(html);
-        cb();
+        this.render();
       }.bind(this)
     });
   },

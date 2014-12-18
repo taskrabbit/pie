@@ -2391,7 +2391,6 @@ pie.base._wrap = <span class="hljs-function"><span class="hljs-keyword">function
   <span class="hljs-comment">/* jslint eqnull:true */</span>
   <span class="hljs-keyword">if</span>(newF == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span> oldF;
   <span class="hljs-keyword">if</span>(!pie.object.isFunction(newF)) <span class="hljs-keyword">return</span> newF;
-  <span class="hljs-keyword">if</span>(!pie.object.isFunction(oldF)) <span class="hljs-keyword">return</span> newF;
 
   <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> ret, sup = <span class="hljs-keyword">this</span>._super;
