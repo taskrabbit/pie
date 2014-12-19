@@ -3,7 +3,6 @@ describe("View Binding Integration", function() {
 
   beforeEach(function() {
     var v = new lib.views.listView();
-    v.emitter.on('afterRender', function(){ console.log('rendered'); });
     v.setRenderTarget(document.body);
     app.addChild('integrationTest', v);
 
@@ -40,6 +39,12 @@ describe("View Binding Integration", function() {
     this.view.initBoundFields();
 
     expect(el.value).toEqual('wingdings');
+  });
+
+  it('should be able to set attributes of elements', function() {
+    var el = this.view.qs('input[name="foo"]');
+    this.model.set('baz', 'jazz');
+    expect(el.getAttribute('data-baz')).toEqual('jazz');
   });
 
 });
