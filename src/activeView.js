@@ -26,6 +26,12 @@ pie.activeView.reopen({
     pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
   },
 
+  _removeFromDom: function() {
+    // remove our el if we still have a parent node.
+    // don't use pie.dom.remove since we don't want to remove the cache.
+    if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+  },
+
 
   setup: function(setupFunc) {
     this.emitter.around('setup', function(){
@@ -80,10 +86,7 @@ pie.activeView.reopen({
 
   removedFromParent: function(parent) {
     pie.view.prototype.removedFromParent.call(this, parent);
-
-    // remove our el if we still have a parent node.
-    // don't use pie.dom.remove since we don't want to remove the cache.
-    if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+    this._removeFromDom();
   },
 
 

@@ -6,6 +6,9 @@
     The app instance contains the services which manage the high level interactions with the browser. Services like
     <em>pushState</em>, <em>localStorage</em>, <em>ajax</em>, <em>i18n</em>, and <em>routing</em>.
   </p>
-
+  <x-gist gist="[%= app.i18n.t('gist') %]" filename="appInstance.js"></x-gist>
+  <p>
+    This is the focal point of your application. When the <em>DOMContentLoaded</em> event is fired, your application will begin managing it's state.
+  </p>
 </div>
 

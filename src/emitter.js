@@ -48,7 +48,7 @@ pie.emitter = pie.base.extend('emitter', {
 
     if(compactNeeded) this.eventCallbacks[event] = pie.array.compact(this.eventCallbacks[event]);
 
-    this.triggeredEvents.push(event);
+    if(!this.has(event)) this.triggeredEvents.push(event);
   },
 
   around: function(event, fn) {

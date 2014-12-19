@@ -28,22 +28,21 @@
     if(lines.length) {
       var toStrip = lines[0].match(/^(\s+)/);
 
-      if(toStrip.length) {
+      if(toStrip && toStrip.length) {
         toStrip = toStrip[0];
         var regex = new RegExp("^[\\s]{" + toStrip.length + "}");
         lines = lines.map(function(l){ return l.replace(regex, ""); });
       }
     }
 
-    content = lines.join("\n");
-
     app.resources.load('/css/highlight.css', function() {
       app.resources.load('/js/highlight.js', function(){
 
-        this.innerHTML = '<code><pre>' + content + '</pre></code>';
+        this.innerHTML = "<code><pre>" + lines.join("\n") + "</pre></code>";
 
-        hljs.configure({language: file.language || ['javascript', 'json']});
+        hljs.configure({useBr: true, language: file.language || ['javascript', 'json']});
         hljs.highlightBlock(this.querySelector('pre'));
+
       }.bind(this));
     }.bind(this));
   };

@@ -25,7 +25,7 @@ time, mark, audio, video {
   padding:0;
   border:0;
   outline:0;
-  font-size:100%;
+  font-size:16px;
   vertical-align:baseline;
   background:transparent;
 }
@@ -95,6 +95,11 @@ input, select {
   vertical-align:middle;
 }
 
+code, code * {
+  background-color: white;
+  font-size: 14px;
+  line-height: 16px;
+}
 
 .page-nav {
   width: 250px;
@@ -168,6 +173,11 @@ input, select {
 
 .copy > h1 + *, .copy > h2 + *, .copy > h3 + *, .copy > h4 + * {
   margin-top: 0.5em;
+}
+
+.copy > x-gist {
+  margin-top: 2em;
+  margin-bottom: 2em;
 }
 
 

@@ -4005,6 +4005,25 @@ pie.activeView.reopen({
     pie.dom.all(buttons, bool ? <span class="hljs-string">'setAttribute'</span> : <span class="hljs-string">'removeAttribute'</span>, <span class="hljs-string">'disabled'</span>, <span class="hljs-string">'disabled'</span>);
   },
 
+  _removeFromDom: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-155">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-155">&#182;</a>
+              </div>
+              <p>remove our el if we still have a parent node.
+don’t use pie.dom.remove since we don’t want to remove the cache.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.el.parentNode) <span class="hljs-keyword">this</span>.el.parentNode.removeChild(<span class="hljs-keyword">this</span>.el);
+  },
+
 
   setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(setupFunc)</span> </span>{
     <span class="hljs-keyword">this</span>.emitter.around(<span class="hljs-string">'setup'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
@@ -4035,11 +4054,11 @@ pie.activeView.reopen({
         </li>
         
         
-        <li id="section-155">
+        <li id="section-156">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-155">&#182;</a>
+                <a class="pilcrow" href="#section-156">&#182;</a>
               </div>
               <p>add or remove the default loading style.</p>
 
@@ -4053,11 +4072,11 @@ pie.activeView.reopen({
         </li>
         
         
-        <li id="section-156">
+        <li id="section-157">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-156">&#182;</a>
+                <a class="pilcrow" href="#section-157">&#182;</a>
               </div>
               <p>If the first option passed is a node, it will use that as the query scope.
 Return an object representing the values of fields within this.el.</p>
@@ -4082,23 +4101,8 @@ Return an object representing the values of fields within this.el.</p>
   },
 
   removedFromParent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(parent)</span> </span>{
-    pie.view.prototype.removedFromParent.call(<span class="hljs-keyword">this</span>, parent);</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-157">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-157">&#182;</a>
-              </div>
-              <p>remove our el if we still have a parent node.
-don’t use pie.dom.remove since we don’t want to remove the cache.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.el.parentNode) <span class="hljs-keyword">this</span>.el.parentNode.removeChild(<span class="hljs-keyword">this</span>.el);
+    pie.view.prototype.removedFromParent.call(<span class="hljs-keyword">this</span>, parent);
+    <span class="hljs-keyword">this</span>._removeFromDom();
   },</pre></div></div>
             
         </li>
@@ -4579,7 +4583,7 @@ any callbacks associated with that event will be invoked with the extra argument
 
     <span class="hljs-keyword">if</span>(compactNeeded) <span class="hljs-keyword">this</span>.eventCallbacks[event] = pie.array.compact(<span class="hljs-keyword">this</span>.eventCallbacks[event]);
 
-    <span class="hljs-keyword">this</span>.triggeredEvents.push(event);
+    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.has(event)) <span class="hljs-keyword">this</span>.triggeredEvents.push(event);
   },
 
   around: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, fn)</span> </span>{

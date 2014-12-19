@@ -2161,6 +2161,12 @@ pie.activeView.reopen({
     pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
   },
 
+  _removeFromDom: function() {
+    // remove our el if we still have a parent node.
+    // don't use pie.dom.remove since we don't want to remove the cache.
+    if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+  },
+
 
   setup: function(setupFunc) {
     this.emitter.around('setup', function(){
@@ -2215,10 +2221,7 @@ pie.activeView.reopen({
 
   removedFromParent: function(parent) {
     pie.view.prototype.removedFromParent.call(this, parent);
-
-    // remove our el if we still have a parent node.
-    // don't use pie.dom.remove since we don't want to remove the cache.
-    if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+    this._removeFromDom();
   },
 
 
@@ -2549,7 +2552,7 @@ pie.emitter = pie.base.extend('emitter', {
 
     if(compactNeeded) this.eventCallbacks[event] = pie.array.compact(this.eventCallbacks[event]);
 
-    this.triggeredEvents.push(event);
+    if(!this.has(event)) this.triggeredEvents.push(event);
   },
 
   around: function(event, fn) {
@@ -3839,22 +3842,21 @@ pie.validator.rangeOptions = pie.base.extend('rangeOptions', {
     if(lines.length) {
       var toStrip = lines[0].match(/^(\s+)/);
 
-      if(toStrip.length) {
+      if(toStrip && toStrip.length) {
         toStrip = toStrip[0];
         var regex = new RegExp("^[\\s]{" + toStrip.length + "}");
         lines = lines.map(function(l){ return l.replace(regex, ""); });
       }
     }
 
-    content = lines.join("\n");
-
     app.resources.load('/css/highlight.css', function() {
       app.resources.load('/js/highlight.js', function(){
 
-        this.innerHTML = '<code><pre>' + content + '</pre></code>';
+        this.innerHTML = "<code><pre>" + lines.join("\n") + "</pre></code>";
 
-        hljs.configure({language: file.language || ['javascript', 'json']});
+        hljs.configure({useBr: true, language: file.language || ['javascript', 'json']});
         hljs.highlightBlock(this.querySelector('pre'));
+
       }.bind(this));
     }.bind(this));
   };
@@ -3933,7 +3935,7 @@ lib.views.page.reopen({
   },
 
   pageName: function() {
-    return app.parsedUrl.data.page || 'gettingStarted';
+    return app.parsedUrl.data.page || 'getting-started';
   },
 
   retrieveTemplateAndRender: function() {
@@ -3982,5 +3984,6 @@ app.router.route({
 
 
 app.i18n.load({
-  project: 'pie.js'
+  project: 'pie.js',
+  gist: '994b656c26b16d5c2c77'
 });

@@ -51,7 +51,7 @@ lib.views.page.reopen({
   },
 
   pageName: function() {
-    return app.parsedUrl.data.page || 'gettingStarted';
+    return app.parsedUrl.data.page || 'getting-started';
   },
 
   retrieveTemplateAndRender: function() {
@@ -100,5 +100,6 @@ app.router.route({
 
 
 app.i18n.load({
-  project: 'pie.js'
+  project: 'pie.js',
+  gist: '994b656c26b16d5c2c77'
 });
