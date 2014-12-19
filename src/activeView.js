@@ -34,9 +34,11 @@ pie.activeView.reopen({
 
 
   setup: function(setupFunc) {
+    var sup = this._super;
+
     this.emitter.around('setup', function(){
 
-      this._super(function() {
+      sup(function() {
 
         this.loadExternalResources(this.options.resources, function() {
 
