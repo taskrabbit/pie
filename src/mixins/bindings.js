@@ -6,6 +6,9 @@ pie.mixins.bindings = (function(){
   function setFieldValue(input, value) {
     var t = input.getAttribute('type');
 
+    /* jslint eqnull:true */
+    if(value == null) value = '';
+
     /* jslint eqeq:true */
     if(t === 'checkbox' || t === 'radio') {
 
@@ -76,6 +79,12 @@ pie.mixins.bindings = (function(){
 
   return {
 
+    init: function() {
+      this._bindings = [];
+      this._super.apply(this, arguments);
+      if(this.emitter) this.emitter.on('afterRender', this.initBoundFields.bind(this));
+    },
+
     // Ex: this.bind({attr: 'name', model: this.user});
     // If this.model is defined, you don't have to pass the model.
     // Ex: this.model = user; this.bind({attr: 'name'});
@@ -120,13 +129,12 @@ pie.mixins.bindings = (function(){
 
       this.onChange(model, toElement, attr);
 
-      this._bindings = pie.array.from(this._bindings);
       this._bindings.push({model: model, sel: sel, attr: attr});
     },
 
     // A way to initialize form fields with the values of a model.
     initBoundFields: function() {
-      pie.array.from(this._bindings).forEach(function(binding){
+      this._bindings.forEach(function(binding){
         setValue(this, binding.sel, binding.model.get(binding.attr));
       }.bind(this));
     }

@@ -990,6 +990,9 @@ pie.mixins.bindings = (function(){
   function setFieldValue(input, value) {
     var t = input.getAttribute('type');
 
+    /* jslint eqnull:true */
+    if(value == null) value = '';
+
     /* jslint eqeq:true */
     if(t === 'checkbox' || t === 'radio') {
 
@@ -1060,6 +1063,12 @@ pie.mixins.bindings = (function(){
 
   return {
 
+    init: function() {
+      this._bindings = [];
+      this._super.apply(this, arguments);
+      if(this.emitter) this.emitter.on('afterRender', this.initBoundFields.bind(this));
+    },
+
     // Ex: this.bind({attr: 'name', model: this.user});
     // If this.model is defined, you don't have to pass the model.
     // Ex: this.model = user; this.bind({attr: 'name'});
@@ -1104,13 +1113,12 @@ pie.mixins.bindings = (function(){
 
       this.onChange(model, toElement, attr);
 
-      this._bindings = pie.array.from(this._bindings);
       this._bindings.push({model: model, sel: sel, attr: attr});
     },
 
     // A way to initialize form fields with the values of a model.
     initBoundFields: function() {
-      pie.array.from(this._bindings).forEach(function(binding){
+      this._bindings.forEach(function(binding){
         setValue(this, binding.sel, binding.model.get(binding.attr));
       }.bind(this));
     }
@@ -1480,13 +1488,10 @@ pie.base._wrap = function(newF, oldF) {
 
   return function() {
     var ret, sup = this._super;
-    try{
-      this._super = oldF || function(){};
-      ret = newF.apply(this, arguments);
-    } finally {
-      this._super = sup;
-      return ret;
-    }
+    this._super = oldF || function(){};
+    ret = newF.apply(this, arguments);
+    this._super = sup;
+    return ret;
   };
 
 };
@@ -1664,7 +1669,7 @@ pie.app.reopen({
 
     // let the router determine our new url
     this.previousUrl = this.parsedUrl;
-    this.parsedUrl = this.router.parseUrl(this.navigator.get('path'));
+    this.parsedUrl = this.router.parseUrl(this.navigator.get('fullPath'));
 
     if(this.previousUrl !== this.parsedUrl) {
       this.emitter.fire('urlChanged');
@@ -2169,7 +2174,7 @@ pie.activeView.reopen({
 
 
   setup: function(setupFunc) {
-    var sup = this._super;
+    var sup = this._super.bind(this);
 
     this.emitter.around('setup', function(){
 
@@ -3174,6 +3179,7 @@ pie.list = pie.model.extend('list', {
   }
 });
 pie.navigator = pie.model.extend('navigator', {
+
   init: function(app) {
     this.app = app;
     this._super({});
@@ -3204,12 +3210,13 @@ pie.navigator = pie.model.extend('navigator', {
   },
 
   setDataFromLocation: function() {
-    var query = window.location.search.slice(1);
-    query = pie.string.deserialize(query);
+    var stringQuery = window.location.search.slice(1),
+    query = pie.string.deserialize(stringQuery);
 
     this.sets({
       url: window.location.href,
       path: window.location.pathname,
+      fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
       query: query
     });
 

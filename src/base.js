@@ -81,13 +81,10 @@ pie.base._wrap = function(newF, oldF) {
 
   return function() {
     var ret, sup = this._super;
-    try{
-      this._super = oldF || function(){};
-      ret = newF.apply(this, arguments);
-    } finally {
-      this._super = sup;
-      return ret;
-    }
+    this._super = oldF || function(){};
+    ret = newF.apply(this, arguments);
+    this._super = sup;
+    return ret;
   };
 
 };

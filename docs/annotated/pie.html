@@ -1540,6 +1540,9 @@ This mixin should be used with a pie view.</p>
   <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setFieldValue</span><span class="hljs-params">(input, value)</span> </span>{
     <span class="hljs-keyword">var</span> t = input.getAttribute(<span class="hljs-string">'type'</span>);
 
+    <span class="hljs-comment">/* jslint eqnull:true */</span>
+    <span class="hljs-keyword">if</span>(value == <span class="hljs-literal">null</span>) value = <span class="hljs-string">''</span>;
+
     <span class="hljs-comment">/* jslint eqeq:true */</span>
     <span class="hljs-keyword">if</span>(t === <span class="hljs-string">'checkbox'</span> || t === <span class="hljs-string">'radio'</span>) {</pre></div></div>
             
@@ -1755,7 +1758,13 @@ This mixin should be used with a pie view.</p>
   }
 
 
-  <span class="hljs-keyword">return</span> {</pre></div></div>
+  <span class="hljs-keyword">return</span> {
+
+    init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">this</span>._bindings = [];
+      <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
+      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.emitter) <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>.initBoundFields.bind(<span class="hljs-keyword">this</span>));
+    },</pre></div></div>
             
         </li>
         
@@ -1812,7 +1821,6 @@ this.bind({
 
       <span class="hljs-keyword">this</span>.onChange(model, toElement, attr);
 
-      <span class="hljs-keyword">this</span>._bindings = pie.array.from(<span class="hljs-keyword">this</span>._bindings);
       <span class="hljs-keyword">this</span>._bindings.push({model: model, sel: sel, attr: attr});
     },</pre></div></div>
             
@@ -1830,7 +1838,7 @@ this.bind({
             </div>
             
             <div class="content"><div class='highlight'><pre>    initBoundFields: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      pie.array.from(<span class="hljs-keyword">this</span>._bindings).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(binding)</span></span>{
+      <span class="hljs-keyword">this</span>._bindings.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(binding)</span></span>{
         setValue(<span class="hljs-keyword">this</span>, binding.sel, binding.model.get(binding.attr));
       }.bind(<span class="hljs-keyword">this</span>));
     }
@@ -2394,13 +2402,10 @@ pie.base._wrap = <span class="hljs-function"><span class="hljs-keyword">function
 
   <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> ret, sup = <span class="hljs-keyword">this</span>._super;
-    <span class="hljs-keyword">try</span>{
-      <span class="hljs-keyword">this</span>._super = oldF || <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{};
-      ret = newF.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
-    } <span class="hljs-keyword">finally</span> {
-      <span class="hljs-keyword">this</span>._super = sup;
-      <span class="hljs-keyword">return</span> ret;
-    }
+    <span class="hljs-keyword">this</span>._super = oldF || <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{};
+    ret = newF.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
+    <span class="hljs-keyword">this</span>._super = sup;
+    <span class="hljs-keyword">return</span> ret;
   };
 
 };</pre></div></div>
@@ -2991,7 +2996,7 @@ context’s in removedFromParent before the constructor of the next view is invo
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.previousUrl = <span class="hljs-keyword">this</span>.parsedUrl;
-    <span class="hljs-keyword">this</span>.parsedUrl = <span class="hljs-keyword">this</span>.router.parseUrl(<span class="hljs-keyword">this</span>.navigator.get(<span class="hljs-string">'path'</span>));
+    <span class="hljs-keyword">this</span>.parsedUrl = <span class="hljs-keyword">this</span>.router.parseUrl(<span class="hljs-keyword">this</span>.navigator.get(<span class="hljs-string">'fullPath'</span>));
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.previousUrl !== <span class="hljs-keyword">this</span>.parsedUrl) {
       <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'urlChanged'</span>);
@@ -4026,7 +4031,7 @@ don’t use pie.dom.remove since we don’t want to remove the cache.</p>
 
 
   setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(setupFunc)</span> </span>{
-    <span class="hljs-keyword">var</span> sup = <span class="hljs-keyword">this</span>._super;
+    <span class="hljs-keyword">var</span> sup = <span class="hljs-keyword">this</span>._super.bind(<span class="hljs-keyword">this</span>);
 
     <span class="hljs-keyword">this</span>.emitter.around(<span class="hljs-string">'setup'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
 
@@ -5370,6 +5375,7 @@ pie.list = pie.model.extend(<span class="hljs-string">'list'</span>, {
   }
 });
 pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
+
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
     <span class="hljs-keyword">this</span>.app = app;
     <span class="hljs-keyword">this</span>._super({});
@@ -5400,12 +5406,13 @@ pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
   },
 
   setDataFromLocation: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> query = <span class="hljs-built_in">window</span>.location.search.slice(<span class="hljs-number">1</span>);
-    query = pie.string.deserialize(query);
+    <span class="hljs-keyword">var</span> stringQuery = <span class="hljs-built_in">window</span>.location.search.slice(<span class="hljs-number">1</span>),
+    query = pie.string.deserialize(stringQuery);
 
     <span class="hljs-keyword">this</span>.sets({
       url: <span class="hljs-built_in">window</span>.location.href,
       path: <span class="hljs-built_in">window</span>.location.pathname,
+      fullPath: pie.array.compact([<span class="hljs-built_in">window</span>.location.pathname, stringQuery], <span class="hljs-literal">true</span>).join(<span class="hljs-string">'?'</span>),
       query: query
     });
 

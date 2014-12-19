@@ -34,7 +34,7 @@ pie.activeView.reopen({
 
 
   setup: function(setupFunc) {
-    var sup = this._super;
+    var sup = this._super.bind(this);
 
     this.emitter.around('setup', function(){
 

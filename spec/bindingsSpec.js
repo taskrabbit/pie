@@ -1,7 +1,9 @@
+/* global lib */
 describe("View Binding Integration", function() {
 
   beforeEach(function() {
-    var v = new window.lib.views.listView();
+    var v = new lib.views.listView();
+    v.emitter.on('afterRender', function(){ console.log('rendered'); });
     v.setRenderTarget(document.body);
     app.addChild('integrationTest', v);
 

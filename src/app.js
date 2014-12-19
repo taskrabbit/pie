@@ -172,7 +172,7 @@ pie.app.reopen({
 
     // let the router determine our new url
     this.previousUrl = this.parsedUrl;
-    this.parsedUrl = this.router.parseUrl(this.navigator.get('path'));
+    this.parsedUrl = this.router.parseUrl(this.navigator.get('fullPath'));
 
     if(this.previousUrl !== this.parsedUrl) {
       this.emitter.fire('urlChanged');
