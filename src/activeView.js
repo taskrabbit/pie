@@ -106,16 +106,17 @@ pie.activeView.reopen({
     return {};
   },
 
-  render: function(renderFn) {
+  render: function() {
     this.emitter.around('render', function(){
 
       var templateName = this.templateName();
+
       if(templateName) {
         var content = this.app.template(templateName, this.renderData());
         this.el.innerHTML = content;
       }
 
-      if(renderFn) renderFn();
+      this.emitter.fire('render');
     }.bind(this));
   },
 

@@ -4127,16 +4127,17 @@ Return an object representing the values of fields within this.el.</p>
     <span class="hljs-keyword">return</span> {};
   },
 
-  render: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(renderFn)</span> </span>{
+  render: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>.emitter.around(<span class="hljs-string">'render'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
 
       <span class="hljs-keyword">var</span> templateName = <span class="hljs-keyword">this</span>.templateName();
+
       <span class="hljs-keyword">if</span>(templateName) {
         <span class="hljs-keyword">var</span> content = <span class="hljs-keyword">this</span>.app.template(templateName, <span class="hljs-keyword">this</span>.renderData());
         <span class="hljs-keyword">this</span>.el.innerHTML = content;
       }
 
-      <span class="hljs-keyword">if</span>(renderFn) renderFn();
+      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'render'</span>);
     }.bind(<span class="hljs-keyword">this</span>));
   },
 
