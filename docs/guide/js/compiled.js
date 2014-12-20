@@ -2265,6 +2265,7 @@ pie.activeView = pie.view.extend('activeView', function(options) {
   this._super(options);
 
   this.emitter = new pie.emitter();
+  this.emitter.on('render', this._renderTemplateToDom.bind(this));
   this.emitter.once('afterRender', this._appendToDom.bind(this));
 });
 
@@ -2292,6 +2293,15 @@ pie.activeView.reopen({
     // remove our el if we still have a parent node.
     // don't use pie.dom.remove since we don't want to remove the cache.
     if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
+  },
+
+  _renderTemplateToDom: function() {
+    var templateName = this.templateName();
+
+    if(templateName) {
+      var content = this.app.template(templateName, this.renderData());
+      this.el.innerHTML = content;
+    }
   },
 
 
@@ -2370,14 +2380,6 @@ pie.activeView.reopen({
 
   render: function() {
     this.emitter.around('render', function(){
-
-      var templateName = this.templateName();
-
-      if(templateName) {
-        var content = this.app.template(templateName, this.renderData());
-        this.el.innerHTML = content;
-      }
-
       this.emitter.fire('render');
     }.bind(this));
   },

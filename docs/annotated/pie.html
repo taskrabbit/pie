@@ -3965,6 +3965,7 @@ If the object is not observable, an error will be thrown.</p>
   <span class="hljs-keyword">this</span>._super(options);
 
   <span class="hljs-keyword">this</span>.emitter = <span class="hljs-keyword">new</span> pie.emitter();
+  <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'render'</span>, <span class="hljs-keyword">this</span>._renderTemplateToDom.bind(<span class="hljs-keyword">this</span>));
   <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>._appendToDom.bind(<span class="hljs-keyword">this</span>));
 });
 
@@ -4016,6 +4017,15 @@ don’t use pie.dom.remove since we don’t want to remove the cache.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.el.parentNode) <span class="hljs-keyword">this</span>.el.parentNode.removeChild(<span class="hljs-keyword">this</span>.el);
+  },
+
+  _renderTemplateToDom: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> templateName = <span class="hljs-keyword">this</span>.templateName();
+
+    <span class="hljs-keyword">if</span>(templateName) {
+      <span class="hljs-keyword">var</span> content = <span class="hljs-keyword">this</span>.app.template(templateName, <span class="hljs-keyword">this</span>.renderData());
+      <span class="hljs-keyword">this</span>.el.innerHTML = content;
+    }
   },
 
 
@@ -4129,14 +4139,6 @@ Return an object representing the values of fields within this.el.</p>
 
   render: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>.emitter.around(<span class="hljs-string">'render'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-
-      <span class="hljs-keyword">var</span> templateName = <span class="hljs-keyword">this</span>.templateName();
-
-      <span class="hljs-keyword">if</span>(templateName) {
-        <span class="hljs-keyword">var</span> content = <span class="hljs-keyword">this</span>.app.template(templateName, <span class="hljs-keyword">this</span>.renderData());
-        <span class="hljs-keyword">this</span>.el.innerHTML = content;
-      }
-
       <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'render'</span>);
     }.bind(<span class="hljs-keyword">this</span>));
   },
