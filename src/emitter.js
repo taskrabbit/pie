@@ -5,6 +5,13 @@ pie.emitter = pie.base.extend('emitter', {
     this.eventCallbacks = {};
   },
 
+  _on: function(event, fn, options, meth) {
+    options = options || {},
+
+    this.eventCallbacks[event] = this.eventCallbacks[event] || [];
+    this.eventCallbacks[event][meth](pie.object.merge({fn: fn}, options));
+  },
+
   has: function(event) {
     return !!~this.triggeredEvents.indexOf(event);
   },
@@ -13,14 +20,17 @@ pie.emitter = pie.base.extend('emitter', {
   // options:
   //  - onceOnly: if the callback should be called a single time then removed.
   on: function(event, fn, options) {
-    options = options || {},
-
-    this.eventCallbacks[event] = this.eventCallbacks[event] || [];
-    this.eventCallbacks[event].push(pie.object.merge({fn: fn}, options));
+    this._on(event, fn, options, 'push');
   },
 
-  once: function(event, fn, nowIfPrevious) {
-    if(nowIfPrevious && this.has(event)) {
+  prepend: function(event, fn, options) {
+    this._on(event, fn, options, 'unshift');
+  },
+
+  once: function(event, fn, options) {
+    options = options || {};
+
+    if(options.immediate && this.has(event)) {
       fn();
       return;
     }

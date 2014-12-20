@@ -1185,7 +1185,6 @@ pie.mixins.bindings = (function(){
   };
 
   var initCallbacks = function(binding) {
-    var ignore = false;
 
     if(binding.toModel) {
       binding.toModel = function(e) {
@@ -1886,9 +1885,8 @@ pie.app.reopen({
   // start the app, apply fake navigation to the current url to get our navigation observation underway.
   start: function() {
     this.emitter.around('start', function() {
-
       this.navigator.start();
-
+      this.emitter.fire('start');
     }.bind(this));
   },
 
@@ -2169,10 +2167,7 @@ pie.view.reopen({
   },
 
   // placeholder for default functionality
-  setup: function(setupFn){
-    if(this.isSetup) return this;
-    if(setupFn) setupFn();
-    this.isSetup = true;
+  setup: function(){
     return this;
   },
 
@@ -2305,27 +2300,23 @@ pie.activeView.reopen({
   },
 
 
-  setup: function(setupFunc) {
-    var sup = this._super.bind(this);
+  setup: function() {
+    this.emitter.once('setup', this._super.bind(this));
 
     this.emitter.around('setup', function(){
 
-      sup(function() {
+      this.loadExternalResources(this.options.resources, function() {
 
-        this.loadExternalResources(this.options.resources, function() {
+        this.emitter.fire('setup');
 
-          if(setupFunc) setupFunc();
+        if(this.options.autoRender && this.model) {
+          var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+          this.onChange(this.model, this.render.bind(this), field);
+        }
 
-          if(this.options.autoRender && this.model) {
-            var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-            this.onChange(this.model, this.render.bind(this), field);
-          }
-
-          if(this.options.renderOnSetup) {
-            this.render();
-          }
-
-        }.bind(this));
+        if(this.options.renderOnSetup) {
+          this.render();
+        }
 
       }.bind(this));
 
@@ -2641,6 +2632,13 @@ pie.emitter = pie.base.extend('emitter', {
     this.eventCallbacks = {};
   },
 
+  _on: function(event, fn, options, meth) {
+    options = options || {},
+
+    this.eventCallbacks[event] = this.eventCallbacks[event] || [];
+    this.eventCallbacks[event][meth](pie.object.merge({fn: fn}, options));
+  },
+
   has: function(event) {
     return !!~this.triggeredEvents.indexOf(event);
   },
@@ -2649,14 +2647,17 @@ pie.emitter = pie.base.extend('emitter', {
   // options:
   //  - onceOnly: if the callback should be called a single time then removed.
   on: function(event, fn, options) {
-    options = options || {},
-
-    this.eventCallbacks[event] = this.eventCallbacks[event] || [];
-    this.eventCallbacks[event].push(pie.object.merge({fn: fn}, options));
+    this._on(event, fn, options, 'push');
   },
 
-  once: function(event, fn, nowIfPrevious) {
-    if(nowIfPrevious && this.has(event)) {
+  prepend: function(event, fn, options) {
+    this._on(event, fn, options, 'unshift');
+  },
+
+  once: function(event, fn, options) {
+    options = options || {};
+
+    if(options.immediate && this.has(event)) {
       fn();
       return;
     }

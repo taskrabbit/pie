@@ -1772,7 +1772,6 @@ This mixin should be used with a pie view.</p>
   };
 
   <span class="hljs-keyword">var</span> initCallbacks = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(binding)</span> </span>{
-    <span class="hljs-keyword">var</span> ignore = <span class="hljs-literal">false</span>;
 
     <span class="hljs-keyword">if</span>(binding.toModel) {
       binding.toModel = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span> </span>{
@@ -3248,9 +3247,8 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
             
             <div class="content"><div class='highlight'><pre>  start: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>.emitter.around(<span class="hljs-string">'start'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-
       <span class="hljs-keyword">this</span>.navigator.start();
-
+      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'start'</span>);
     }.bind(<span class="hljs-keyword">this</span>));
   },</pre></div></div>
             
@@ -3755,10 +3753,7 @@ by default we simply append ourselves to the target.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(setupFn)</span></span>{
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.isSetup) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-    <span class="hljs-keyword">if</span>(setupFn) setupFn();
-    <span class="hljs-keyword">this</span>.isSetup = <span class="hljs-literal">true</span>;
+            <div class="content"><div class='highlight'><pre>  setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },</pre></div></div>
             
@@ -4029,27 +4024,23 @@ don’t use pie.dom.remove since we don’t want to remove the cache.</p>
   },
 
 
-  setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(setupFunc)</span> </span>{
-    <span class="hljs-keyword">var</span> sup = <span class="hljs-keyword">this</span>._super.bind(<span class="hljs-keyword">this</span>);
+  setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'setup'</span>, <span class="hljs-keyword">this</span>._super.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">this</span>.emitter.around(<span class="hljs-string">'setup'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
 
-      sup(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">this</span>.loadExternalResources(<span class="hljs-keyword">this</span>.options.resources, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
 
-        <span class="hljs-keyword">this</span>.loadExternalResources(<span class="hljs-keyword">this</span>.options.resources, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'setup'</span>);
 
-          <span class="hljs-keyword">if</span>(setupFunc) setupFunc();
+        <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.autoRender &amp;&amp; <span class="hljs-keyword">this</span>.model) {
+          <span class="hljs-keyword">var</span> field = pie.object.isString(<span class="hljs-keyword">this</span>.options.autoRender) ? <span class="hljs-keyword">this</span>.options.autoRender : <span class="hljs-string">'_version'</span>;
+          <span class="hljs-keyword">this</span>.onChange(<span class="hljs-keyword">this</span>.model, <span class="hljs-keyword">this</span>.render.bind(<span class="hljs-keyword">this</span>), field);
+        }
 
-          <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.autoRender &amp;&amp; <span class="hljs-keyword">this</span>.model) {
-            <span class="hljs-keyword">var</span> field = pie.object.isString(<span class="hljs-keyword">this</span>.options.autoRender) ? <span class="hljs-keyword">this</span>.options.autoRender : <span class="hljs-string">'_version'</span>;
-            <span class="hljs-keyword">this</span>.onChange(<span class="hljs-keyword">this</span>.model, <span class="hljs-keyword">this</span>.render.bind(<span class="hljs-keyword">this</span>), field);
-          }
-
-          <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.renderOnSetup) {
-            <span class="hljs-keyword">this</span>.render();
-          }
-
-        }.bind(<span class="hljs-keyword">this</span>));
+        <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.renderOnSetup) {
+          <span class="hljs-keyword">this</span>.render();
+        }
 
       }.bind(<span class="hljs-keyword">this</span>));
 
@@ -4513,6 +4504,13 @@ pie.emitter = pie.base.extend(<span class="hljs-string">'emitter'</span>, {
     <span class="hljs-keyword">this</span>.eventCallbacks = {};
   },
 
+  _on: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, fn, options, meth)</span> </span>{
+    options = options || {},
+
+    <span class="hljs-keyword">this</span>.eventCallbacks[event] = <span class="hljs-keyword">this</span>.eventCallbacks[event] || [];
+    <span class="hljs-keyword">this</span>.eventCallbacks[event][meth](pie.object.merge({fn: fn}, options));
+  },
+
   has: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event)</span> </span>{
     <span class="hljs-keyword">return</span> !!~<span class="hljs-keyword">this</span>.triggeredEvents.indexOf(event);
   },</pre></div></div>
@@ -4535,14 +4533,17 @@ options:</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  on: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, fn, options)</span> </span>{
-    options = options || {},
-
-    <span class="hljs-keyword">this</span>.eventCallbacks[event] = <span class="hljs-keyword">this</span>.eventCallbacks[event] || [];
-    <span class="hljs-keyword">this</span>.eventCallbacks[event].push(pie.object.merge({fn: fn}, options));
+    <span class="hljs-keyword">this</span>._on(event, fn, options, <span class="hljs-string">'push'</span>);
   },
 
-  once: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, fn, nowIfPrevious)</span> </span>{
-    <span class="hljs-keyword">if</span>(nowIfPrevious &amp;&amp; <span class="hljs-keyword">this</span>.has(event)) {
+  prepend: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, fn, options)</span> </span>{
+    <span class="hljs-keyword">this</span>._on(event, fn, options, <span class="hljs-string">'unshift'</span>);
+  },
+
+  once: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, fn, options)</span> </span>{
+    options = options || {};
+
+    <span class="hljs-keyword">if</span>(options.immediate &amp;&amp; <span class="hljs-keyword">this</span>.has(event)) {
       fn();
       <span class="hljs-keyword">return</span>;
     }

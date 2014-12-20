@@ -68,14 +68,15 @@
 
       lib.views.listView.reopen(pie.mixins.bindings, {
         setup: function() {
-          this._super(function(){
-            this.bind({attr: 'foo'});
-            this.bind({
-              attr: 'baz',
-              sel: 'input[name="foo"]',
-              type: 'attribute'
-            });
-          }.bind(this));
+
+          this.bind({attr: 'foo'});
+          this.bind({
+            attr: 'baz',
+            sel: 'input[name="foo"]',
+            type: 'attribute'
+          });
+
+          this._super();
         }
       });
 

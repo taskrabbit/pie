@@ -43,27 +43,23 @@ pie.activeView.reopen({
   },
 
 
-  setup: function(setupFunc) {
-    var sup = this._super.bind(this);
+  setup: function() {
+    this.emitter.once('setup', this._super.bind(this));
 
     this.emitter.around('setup', function(){
 
-      sup(function() {
+      this.loadExternalResources(this.options.resources, function() {
 
-        this.loadExternalResources(this.options.resources, function() {
+        this.emitter.fire('setup');
 
-          if(setupFunc) setupFunc();
+        if(this.options.autoRender && this.model) {
+          var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+          this.onChange(this.model, this.render.bind(this), field);
+        }
 
-          if(this.options.autoRender && this.model) {
-            var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-            this.onChange(this.model, this.render.bind(this), field);
-          }
-
-          if(this.options.renderOnSetup) {
-            this.render();
-          }
-
-        }.bind(this));
+        if(this.options.renderOnSetup) {
+          this.render();
+        }
 
       }.bind(this));
 

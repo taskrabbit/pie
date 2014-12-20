@@ -201,7 +201,6 @@ pie.mixins.bindings = (function(){
   };
 
   var initCallbacks = function(binding) {
-    var ignore = false;
 
     if(binding.toModel) {
       binding.toModel = function(e) {

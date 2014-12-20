@@ -23,10 +23,7 @@ pie.view.reopen({
   },
 
   // placeholder for default functionality
-  setup: function(setupFn){
-    if(this.isSetup) return this;
-    if(setupFn) setupFn();
-    this.isSetup = true;
+  setup: function(){
     return this;
   },
 
