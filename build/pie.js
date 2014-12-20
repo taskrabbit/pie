@@ -1036,48 +1036,57 @@ pie.mixins.bindings = (function(){
 
     },
 
-    check: {
-
-      getValue: function(el, binding) {
-        var existing = binding.model.get(binding.attr), i;
-
-        if(Array.isArray(existing)) {
-          existing = pie.array.dup(existing);
-          i = existing.indexOf(el.value);
-          // if we are checked and we don't already have it, add it.
-          if(el.checked && i < 0) {
-            existing.push(el.value);
-          // if we are not checked but we do have it, then we add it.
-          } else if(!el.checked && i >= 0) {
-            existing.splice(i, 1);
-          } else {
-            return undefined;
-          }
-
-          return existing;
-        } else {
-          return el.checked ? el.value : undefined;
-        }
-      },
-
-      setValue: function(el, binding) {
-        var value = binding.model.get(binding.attr),
-        elValue = el.value;
-
-        if(Array.isArray(value)) {
-          return el.checked = !!~value.indexOf(elValue);
-        } else {
-          /* jslint eqeq:true */
-          return el.checked = elValue == value;
-        }
+    check: (function(){
+      var index = function(arr, value) {
+        value = String(value);
+        return pie.array.indexOf(arr, function(e){ return String(e) === value; });
       }
 
-    },
+
+      return {
+
+        getValue: function(el, binding) {
+          var existing = binding.model.get(binding.attr), i;
+
+          if(Array.isArray(existing)) {
+            existing = pie.array.dup(existing);
+            i = index(existing, el.value);
+            // if we are checked and we don't already have it, add it.
+            if(el.checked && i < 0) {
+              existing.push(el.value);
+            // if we are not checked but we do have it, then we add it.
+            } else if(!el.checked && i >= 0) {
+              existing.splice(i, 1);
+            } else {
+              return undefined;
+            }
+
+            return existing;
+          } else {
+            return el.checked ? el.value : null;
+          }
+        },
+
+        setValue: function(el, binding) {
+          var value = binding.model.get(binding.attr),
+          elValue = el.value;
+
+          if(Array.isArray(value)) {
+            var i = index(value, elValue);
+            return el.checked = !!~i;
+          } else {
+            /* jslint eqeq:true */
+            return el.checked = elValue == value;
+          }
+        }
+      };
+
+    })(),
 
     radio: {
 
       getValue: function(el, binding) {
-        return el.checked ? el.value : undefined;
+        return el.checked ? el.value : null;
       },
 
       setValue: function(el, binding) {

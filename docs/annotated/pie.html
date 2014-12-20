@@ -1597,14 +1597,21 @@ This mixin should be used with a pie view.</p>
 
     },
 
-    check: {
+    check: (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+      <span class="hljs-keyword">var</span> index = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr, value)</span> </span>{
+        value = <span class="hljs-built_in">String</span>(value);
+        <span class="hljs-keyword">return</span> pie.array.indexOf(arr, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span></span>{ <span class="hljs-keyword">return</span> <span class="hljs-built_in">String</span>(e) === value; });
+      }
 
-      getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
-        <span class="hljs-keyword">var</span> existing = binding.model.get(binding.attr), i;
 
-        <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(existing)) {
-          existing = pie.array.dup(existing);
-          i = existing.indexOf(el.value);</pre></div></div>
+      <span class="hljs-keyword">return</span> {
+
+        getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
+          <span class="hljs-keyword">var</span> existing = binding.model.get(binding.attr), i;
+
+          <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(existing)) {
+            existing = pie.array.dup(existing);
+            i = index(existing, el.value);</pre></div></div>
             
         </li>
         
@@ -1619,8 +1626,8 @@ This mixin should be used with a pie view.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">if</span>(el.checked &amp;&amp; i &lt; <span class="hljs-number">0</span>) {
-            existing.push(el.value);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span>(el.checked &amp;&amp; i &lt; <span class="hljs-number">0</span>) {
+              existing.push(el.value);</pre></div></div>
             
         </li>
         
@@ -1635,36 +1642,38 @@ This mixin should be used with a pie view.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>          } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(!el.checked &amp;&amp; i &gt;= <span class="hljs-number">0</span>) {
-            existing.splice(i, <span class="hljs-number">1</span>);
+            <div class="content"><div class='highlight'><pre>            } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(!el.checked &amp;&amp; i &gt;= <span class="hljs-number">0</span>) {
+              existing.splice(i, <span class="hljs-number">1</span>);
+            } <span class="hljs-keyword">else</span> {
+              <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>;
+            }
+
+            <span class="hljs-keyword">return</span> existing;
           } <span class="hljs-keyword">else</span> {
-            <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>;
+            <span class="hljs-keyword">return</span> el.checked ? el.value : <span class="hljs-literal">null</span>;
           }
+        },
 
-          <span class="hljs-keyword">return</span> existing;
-        } <span class="hljs-keyword">else</span> {
-          <span class="hljs-keyword">return</span> el.checked ? el.value : <span class="hljs-literal">undefined</span>;
+        setValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
+          <span class="hljs-keyword">var</span> value = binding.model.get(binding.attr),
+          elValue = el.value;
+
+          <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(value)) {
+            <span class="hljs-keyword">var</span> i = index(value, elValue);
+            <span class="hljs-keyword">return</span> el.checked = !!~i;
+          } <span class="hljs-keyword">else</span> {
+            <span class="hljs-comment">/* jslint eqeq:true */</span>
+            <span class="hljs-keyword">return</span> el.checked = elValue == value;
+          }
         }
-      },
+      };
 
-      setValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
-        <span class="hljs-keyword">var</span> value = binding.model.get(binding.attr),
-        elValue = el.value;
-
-        <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(value)) {
-          <span class="hljs-keyword">return</span> el.checked = !!~value.indexOf(elValue);
-        } <span class="hljs-keyword">else</span> {
-          <span class="hljs-comment">/* jslint eqeq:true */</span>
-          <span class="hljs-keyword">return</span> el.checked = elValue == value;
-        }
-      }
-
-    },
+    })(),
 
     radio: {
 
       getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
-        <span class="hljs-keyword">return</span> el.checked ? el.value : <span class="hljs-literal">undefined</span>;
+        <span class="hljs-keyword">return</span> el.checked ? el.value : <span class="hljs-literal">null</span>;
       },
 
       setValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
