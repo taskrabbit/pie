@@ -6,6 +6,12 @@ pie.mixins.changeSet = {
     });
   },
 
+  get: function(name) {
+    return pie.array.detectLast(this, function(change) {
+      return change.name === name;
+    });
+  },
+
   hasAny: function() {
     var known = this.names(),
     wanted = pie.array.from(arguments);

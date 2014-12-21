@@ -55,7 +55,7 @@ bindings.layout = pie.activeView.extend('layout', {
       type: 'radio'
     });
 
-    this.onChange(this.model, this.modelChanged.bind(this), '_version');
+    this.onChange(this.model, this.modelChanged.bind(this));
     this.on('click', 'button[name="update"]', this.updateModel.bind(this));
     this.emitter.once('afterSetup', this.modelChanged.bind(this));
   },
@@ -63,6 +63,8 @@ bindings.layout = pie.activeView.extend('layout', {
   modelChanged: function() {
     var str = JSON.stringify(this.model.data, null, '  ');
     this.qs('textarea[name="json"]').value = str;
+
+    this.qs('input[name="attr"]').value = this.model.get('attr');
   },
 
   updateModel: function() {
