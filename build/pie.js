@@ -3731,6 +3731,14 @@ pie.router = pie.base.extend('router', {
   },
 
 
+  findRoute: function(nameOrPath) {
+    var route = this.routeNames[nameOrPath];
+    route = route || pie.array.detect(this.routes, function(r){ return r.isDirectMatch(nameOrPath); });
+    route = route || pie.array.detect(this.routes, function(r){ return r.isMatch(nameOrPath); });
+    return route;
+  },
+
+
   // invoke to add routes to the routers routeset.
   // routes objects which contain a "name" key will be added as a name lookup.
   // you can pass a set of defaults which will be extended into each route object.
@@ -3760,7 +3768,7 @@ pie.router = pie.base.extend('router', {
   // you can optionally pass a data hash and it will build the path with query params or
   // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
   path: function(nameOrPath, data, interpolateOnly) {
-    var r = this.routeNames[nameOrPath] || new pie.route(nameOrPath),
+    var r = this.findRoute(nameOrPath) || new pie.route(nameOrPath),
     path = r.path(data, interpolateOnly);
 
     // apply the root.
@@ -3801,16 +3809,11 @@ pie.router = pie.base.extend('router', {
 
     query = pieces.join('&') || '';
 
-    // is there an explicit route for this path? it wins if so
-    match = pie.array.detect(this.routes, function(r){ return r.isDirectMatch(path); });
-
-    if(!match) {
-      match = pie.array.detect(this.routes, function(r){ return r.isMatch(path); });
-      interpolations = match && match.interpolations(path, parseQuery);
-    }
+    match = this.findRoute(path);
 
     query = pie.string.deserialize(query, parseQuery);
     fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
+    interpolations = match && match.interpolations(path, parseQuery);
 
     return pie.object.merge({
       path: path,

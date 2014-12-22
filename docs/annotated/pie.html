@@ -5960,6 +5960,14 @@ app.router.changedUrl({page: 3, q: ‘newQuery’});</p>
             <div class="content"><div class='highlight'><pre>  changedUrl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span> </span>{
     <span class="hljs-keyword">var</span> current = <span class="hljs-keyword">this</span>.app.parsedUrl;
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.path(current.route &amp;&amp; current.route.name || current.path, pie.object.merge({}, current.data, changes));
+  },
+
+
+  findRoute: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(nameOrPath)</span> </span>{
+    <span class="hljs-keyword">var</span> route = <span class="hljs-keyword">this</span>.routeNames[nameOrPath];
+    route = route || pie.array.detect(<span class="hljs-keyword">this</span>.routes, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(r)</span></span>{ <span class="hljs-keyword">return</span> r.isDirectMatch(nameOrPath); });
+    route = route || pie.array.detect(<span class="hljs-keyword">this</span>.routes, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(r)</span></span>{ <span class="hljs-keyword">return</span> r.isMatch(nameOrPath); });
+    <span class="hljs-keyword">return</span> route;
   },</pre></div></div>
             
         </li>
@@ -6015,7 +6023,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
             </div>
             
             <div class="content"><div class='highlight'><pre>  path: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(nameOrPath, data, interpolateOnly)</span> </span>{
-    <span class="hljs-keyword">var</span> r = <span class="hljs-keyword">this</span>.routeNames[nameOrPath] || <span class="hljs-keyword">new</span> pie.route(nameOrPath),
+    <span class="hljs-keyword">var</span> r = <span class="hljs-keyword">this</span>.findRoute(nameOrPath) || <span class="hljs-keyword">new</span> pie.route(nameOrPath),
     path = r.path(data, interpolateOnly);</pre></div></div>
             
         </li>
@@ -6090,30 +6098,13 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
     path = path.replace(<span class="hljs-keyword">this</span>.rootRegex, <span class="hljs-string">''</span>);
     path = pie.string.normalizeUrl(path);
 
-    query = pieces.join(<span class="hljs-string">'&amp;'</span>) || <span class="hljs-string">''</span>;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-192">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-192">&#182;</a>
-              </div>
-              <p>is there an explicit route for this path? it wins if so</p>
+    query = pieces.join(<span class="hljs-string">'&amp;'</span>) || <span class="hljs-string">''</span>;
 
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    match = pie.array.detect(<span class="hljs-keyword">this</span>.routes, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(r)</span></span>{ <span class="hljs-keyword">return</span> r.isDirectMatch(path); });
-
-    <span class="hljs-keyword">if</span>(!match) {
-      match = pie.array.detect(<span class="hljs-keyword">this</span>.routes, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(r)</span></span>{ <span class="hljs-keyword">return</span> r.isMatch(path); });
-      interpolations = match &amp;&amp; match.interpolations(path, parseQuery);
-    }
+    match = <span class="hljs-keyword">this</span>.findRoute(path);
 
     query = pie.string.deserialize(query, parseQuery);
     fullPath = pie.array.compact([path, pie.object.serialize(query)], <span class="hljs-literal">true</span>).join(<span class="hljs-string">'?'</span>);
+    interpolations = match &amp;&amp; match.interpolations(path, parseQuery);
 
     <span class="hljs-keyword">return</span> pie.object.merge({
       path: path,
@@ -6170,11 +6161,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-193">
+        <li id="section-192">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-193">&#182;</a>
+                <a class="pilcrow" href="#section-192">&#182;</a>
               </div>
               <p>don’t get rid of letters because we don’t want a mix of letters and numbers passing through</p>
 
@@ -6202,11 +6193,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-194">
+        <li id="section-193">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-194">&#182;</a>
+                <a class="pilcrow" href="#section-193">&#182;</a>
               </div>
               <p>a date should be in the ISO format yyyy-mm-dd</p>
 
@@ -6271,11 +6262,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-195">
+        <li id="section-194">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-195">&#182;</a>
+                <a class="pilcrow" href="#section-194">&#182;</a>
               </div>
               <p>must be an integer (2.0 is ok) (good for quantities)</p>
 
@@ -6291,11 +6282,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-196">
+        <li id="section-195">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-196">&#182;</a>
+                <a class="pilcrow" href="#section-195">&#182;</a>
               </div>
               <p>min/max length of the field</p>
 
@@ -6321,11 +6312,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-197">
+        <li id="section-196">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-197">&#182;</a>
+                <a class="pilcrow" href="#section-196">&#182;</a>
               </div>
               <p>must be some kind of number (good for money input)</p>
 
@@ -6339,11 +6330,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-198">
+        <li id="section-197">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-198">&#182;</a>
+                <a class="pilcrow" href="#section-197">&#182;</a>
               </div>
               <p>not using parseFloat because it accepts multiple decimals</p>
 
@@ -6361,11 +6352,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-199">
+        <li id="section-198">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-199">&#182;</a>
+                <a class="pilcrow" href="#section-198">&#182;</a>
               </div>
               <p>clean out all things that are not numbers and + and get a minimum of 10 digits.</p>
 
@@ -6383,11 +6374,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-200">
+        <li id="section-199">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-200">&#182;</a>
+                <a class="pilcrow" href="#section-199">&#182;</a>
               </div>
               <p>does the value have any non-whitespace characters</p>
 
@@ -6410,11 +6401,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-201">
+        <li id="section-200">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-201">&#182;</a>
+                <a class="pilcrow" href="#section-200">&#182;</a>
               </div>
               <p>small utility class to handle range options.</p>
 
@@ -6429,11 +6420,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-202">
+        <li id="section-201">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-202">&#182;</a>
+                <a class="pilcrow" href="#section-201">&#182;</a>
               </div>
               <p>for double casting new RangeOptions(new RangeOptions({}));</p>
 
