@@ -1,8 +1,7 @@
 /* global __dirname, process */
 
 var fs = require("fs");
-var host = "127.0.0.1";
-var port = process.env.PORT || 8081;
+var port = process.env.PORT || 5000;
 var express = require("express");
 
 var app = express();
@@ -20,5 +19,5 @@ app.get('*', function(req, res) {
 });
 
 
-app.listen(port, host);
-console.log("Serving pie on: " + host + ":" + port);
+app.listen(port);
+console.log("Serving pie on port " + port);
