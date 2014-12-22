@@ -204,7 +204,7 @@ pie.object.setPath = function(obj, path, value) {
   var p = path.split('.'), key;
   while(p.length) {
     key = p.shift();
-    if (!p.length) obj[key] = value;
+    if (!p.length) return obj[key] = value;
     else if (obj[key]) obj = obj[key];
     else obj = obj[key] = {};
   }

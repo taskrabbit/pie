@@ -47,6 +47,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>  array: {},
+  browser: {},
   date: {},
   dom: {},
   func: {},
@@ -89,7 +90,7 @@
 
   ns: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{
     <span class="hljs-keyword">if</span>(pie.object.hasPath(<span class="hljs-built_in">window</span>, path)) <span class="hljs-keyword">return</span>;
-    pie.object.setPath(<span class="hljs-built_in">window</span>, path, {});
+    <span class="hljs-keyword">return</span> pie.object.setPath(<span class="hljs-built_in">window</span>, path, {});
   },
 
   setUid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
@@ -456,6 +457,42 @@ pie.array.union = <span class="hljs-function"><span class="hljs-keyword">functio
             
             <div class="content"><div class='highlight'><pre>pie.array.unique = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr)</span> </span>{
   <span class="hljs-keyword">return</span> arr.filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e, i)</span></span>{ <span class="hljs-keyword">return</span> arr.indexOf(e) === i; });
+};
+
+pie.browser.getCookie = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, options)</span> </span>{
+  <span class="hljs-keyword">var</span> decode = options &amp;&amp; options.raw ? <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(s)</span> </span>{ <span class="hljs-keyword">return</span> s; } : <span class="hljs-built_in">decodeURIComponent</span>,
+  pairs = <span class="hljs-built_in">document</span>.cookie.split(<span class="hljs-string">'; '</span>),
+  pair;
+
+  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; pairs.length; i++) {
+    pair = pairs[i];
+    <span class="hljs-keyword">if</span>(!pair) <span class="hljs-keyword">continue</span>;
+
+    pair = pair.split(<span class="hljs-string">'='</span>);
+    <span class="hljs-keyword">if</span>(decode(pair[<span class="hljs-number">0</span>]) === key) <span class="hljs-keyword">return</span> decode(pair[<span class="hljs-number">1</span>] || <span class="hljs-string">''</span>);
+  }
+
+  <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
+};
+
+pie.browser.setCookie = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value, options)</span> </span>{
+  options = pie.object.merge({}, options);
+
+  <span class="hljs-comment">/* jslint eqnull:true */</span>
+  <span class="hljs-keyword">if</span>(value == <span class="hljs-literal">null</span>) options.expires = -<span class="hljs-number">1</span>;
+
+  value = <span class="hljs-built_in">String</span>(value);
+
+  <span class="hljs-keyword">var</span> cookieValue = [
+    <span class="hljs-built_in">encodeURIComponent</span>(key), <span class="hljs-string">'='</span>, options.raw ? value : <span class="hljs-built_in">encodeURIComponent</span>(value),
+    options.expires ? <span class="hljs-string">'; expires='</span> + options.expires.toUTCString() : <span class="hljs-string">''</span>, <span class="hljs-comment">// use expires attribute, max-age is not supported by IE</span>
+    options.path    ? <span class="hljs-string">'; path='</span> + options.path : <span class="hljs-string">''</span>,
+    options.domain  ? <span class="hljs-string">'; domain='</span> + options.domain : <span class="hljs-string">''</span>,
+    options.secure  ? <span class="hljs-string">'; secure'</span> : <span class="hljs-string">''</span>
+  ].join(<span class="hljs-string">''</span>);
+
+  <span class="hljs-built_in">document</span>.cookie = cookieValue;
+  <span class="hljs-keyword">return</span> cookieValue;
 };</pre></div></div>
             
         </li>
@@ -1182,7 +1219,7 @@ pie.object.setPath = <span class="hljs-function"><span class="hljs-keyword">func
   <span class="hljs-keyword">var</span> p = path.split(<span class="hljs-string">'.'</span>), key;
   <span class="hljs-keyword">while</span>(p.length) {
     key = p.shift();
-    <span class="hljs-keyword">if</span> (!p.length) obj[key] = value;
+    <span class="hljs-keyword">if</span> (!p.length) <span class="hljs-keyword">return</span> obj[key] = value;
     <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (obj[key]) obj = obj[key];
     <span class="hljs-keyword">else</span> obj = obj[key] = {};
   }
@@ -4797,11 +4834,11 @@ the xhr data diretly, or allow overriding by response code.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-167">&#182;</a>
               </div>
-              <p>clear all alerts when an error occurs.</p>
+              <p>clear all previous errors when an error occurs.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      n.clear();</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      n.clear(<span class="hljs-string">'error'</span>);</pre></div></div>
             
         </li>
         
@@ -4817,7 +4854,6 @@ the xhr data diretly, or allow overriding by response code.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>      setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-        n.clear(<span class="hljs-string">'error'</span>);
         n.notify(errors, <span class="hljs-string">'error'</span>, <span class="hljs-number">10000</span>);
       }, <span class="hljs-number">100</span>);
     }
@@ -5616,6 +5652,7 @@ pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
 
 
   start: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    pie.dom.on(<span class="hljs-built_in">window</span>, <span class="hljs-string">'popstate'</span>, <span class="hljs-keyword">this</span>.setDataFromLocation.bind(<span class="hljs-keyword">this</span>));
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.setDataFromLocation();
   },
 
@@ -5701,23 +5738,17 @@ You can provide a number in milliseconds as the autoClose value as well.</p>
 
     messages = pie.array.from(messages);
 
-    messages = messages.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(msg)</span> </span>{
-      msg = {
-        id: pie.unique(),
-        message: msg,
-        type: type
-      };
+    <span class="hljs-keyword">var</span> msg = {
+      id: pie.unique(),
+      messages: messages,
+      type: type
+    };
 
-      <span class="hljs-keyword">this</span>.notifications.push(msg);
-
-      <span class="hljs-keyword">return</span> msg;
-    }.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">this</span>.notifications.push(msg);
 
     <span class="hljs-keyword">if</span>(autoRemove) {
       setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-        messages.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(msg)</span></span>{
-          <span class="hljs-keyword">this</span>.remove(msg.id);
-        }.bind(<span class="hljs-keyword">this</span>));
+        <span class="hljs-keyword">this</span>.remove(msg.id);
       }.bind(<span class="hljs-keyword">this</span>), autoRemove);
     }
 

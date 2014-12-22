@@ -45,12 +45,11 @@ pie.errorHandler = pie.base.extend('errorHandler', {
     var n = this.app.notifier, errors = this.errorMessagesFromRequest(xhr);
 
     if(errors.length) {
-      // clear all alerts when an error occurs.
-      n.clear();
+      // clear all previous errors when an error occurs.
+      n.clear('error');
 
       // delay so UI will visibly change when the same content is shown.
       setTimeout(function(){
-        n.clear('error');
         n.notify(errors, 'error', 10000);
       }, 100);
     }

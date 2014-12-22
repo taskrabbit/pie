@@ -26,6 +26,7 @@ pie.navigator = pie.model.extend('navigator', {
 
 
   start: function() {
+    pie.dom.on(window, 'popstate', this.setDataFromLocation.bind(this));
     return this.setDataFromLocation();
   },
 

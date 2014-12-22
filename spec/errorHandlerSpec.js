@@ -148,12 +148,11 @@ describe('pie.errorHandler', function() {
 
       jasmine.clock().tick(99);
 
-      expect(app.notifier.clear).toHaveBeenCalledWith();
+      expect(app.notifier.clear).toHaveBeenCalledWith('error');
       expect(app.notifier.notify).not.toHaveBeenCalled();
 
       jasmine.clock().tick(1);
 
-      expect(app.notifier.clear).toHaveBeenCalledWith('error');
       expect(app.notifier.notify).toHaveBeenCalledWith(["One", "Two"], "error", 10000);
 
       jasmine.clock().uninstall();

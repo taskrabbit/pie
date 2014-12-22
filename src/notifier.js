@@ -29,23 +29,17 @@ pie.notifier = pie.base.extend('notifier', {
 
     messages = pie.array.from(messages);
 
-    messages = messages.map(function(msg) {
-      msg = {
-        id: pie.unique(),
-        message: msg,
-        type: type
-      };
+    var msg = {
+      id: pie.unique(),
+      messages: messages,
+      type: type
+    };
 
-      this.notifications.push(msg);
-
-      return msg;
-    }.bind(this));
+    this.notifications.push(msg);
 
     if(autoRemove) {
       setTimeout(function(){
-        messages.forEach(function(msg){
-          this.remove(msg.id);
-        }.bind(this));
+        this.remove(msg.id);
       }.bind(this), autoRemove);
     }
 

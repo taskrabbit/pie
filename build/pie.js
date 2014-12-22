@@ -3,6 +3,7 @@ window.pie = {
 
   // native extensions
   array: {},
+  browser: {},
   date: {},
   dom: {},
   func: {},
@@ -21,7 +22,7 @@ window.pie = {
 
   ns: function(path) {
     if(pie.object.hasPath(window, path)) return;
-    pie.object.setPath(window, path, {});
+    return pie.object.setPath(window, path, {});
   },
 
   setUid: function(obj) {
@@ -291,6 +292,41 @@ pie.array.unique = function(arr) {
   return arr.filter(function(e, i){ return arr.indexOf(e) === i; });
 };
 
+pie.browser.getCookie = function(key, options) {
+  var decode = options && options.raw ? function(s) { return s; } : decodeURIComponent,
+  pairs = document.cookie.split('; '),
+  pair;
+
+  for(var i = 0; i < pairs.length; i++) {
+    pair = pairs[i];
+    if(!pair) continue;
+
+    pair = pair.split('=');
+    if(decode(pair[0]) === key) return decode(pair[1] || '');
+  }
+
+  return null;
+};
+
+pie.browser.setCookie = function(key, value, options) {
+  options = pie.object.merge({}, options);
+
+  /* jslint eqnull:true */
+  if(value == null) options.expires = -1;
+
+  value = String(value);
+
+  var cookieValue = [
+    encodeURIComponent(key), '=', options.raw ? value : encodeURIComponent(value),
+    options.expires ? '; expires=' + options.expires.toUTCString() : '', // use expires attribute, max-age is not supported by IE
+    options.path    ? '; path=' + options.path : '',
+    options.domain  ? '; domain=' + options.domain : '',
+    options.secure  ? '; secure' : ''
+  ].join('');
+
+  document.cookie = cookieValue;
+  return cookieValue;
+};
 // takes a iso date string and converts to a local time representing 12:00am, on that date.
 pie.date.dateFromISO = function(isoDateString) {
   if(!isoDateString) return null;
@@ -774,7 +810,7 @@ pie.object.setPath = function(obj, path, value) {
   var p = path.split('.'), key;
   while(p.length) {
     key = p.shift();
-    if (!p.length) obj[key] = value;
+    if (!p.length) return obj[key] = value;
     else if (obj[key]) obj = obj[key];
     else obj = obj[key] = {};
   }
@@ -2795,12 +2831,11 @@ pie.errorHandler = pie.base.extend('errorHandler', {
     var n = this.app.notifier, errors = this.errorMessagesFromRequest(xhr);
 
     if(errors.length) {
-      // clear all alerts when an error occurs.
-      n.clear();
+      // clear all previous errors when an error occurs.
+      n.clear('error');
 
       // delay so UI will visibly change when the same content is shown.
       setTimeout(function(){
-        n.clear('error');
         n.notify(errors, 'error', 10000);
       }, 100);
     }
@@ -3469,6 +3504,7 @@ pie.navigator = pie.model.extend('navigator', {
 
 
   start: function() {
+    pie.dom.on(window, 'popstate', this.setDataFromLocation.bind(this));
     return this.setDataFromLocation();
   },
 
@@ -3517,23 +3553,17 @@ pie.notifier = pie.base.extend('notifier', {
 
     messages = pie.array.from(messages);
 
-    messages = messages.map(function(msg) {
-      msg = {
-        id: pie.unique(),
-        message: msg,
-        type: type
-      };
+    var msg = {
+      id: pie.unique(),
+      messages: messages,
+      type: type
+    };
 
-      this.notifications.push(msg);
-
-      return msg;
-    }.bind(this));
+    this.notifications.push(msg);
 
     if(autoRemove) {
       setTimeout(function(){
-        messages.forEach(function(msg){
-          this.remove(msg.id);
-        }.bind(this));
+        this.remove(msg.id);
       }.bind(this), autoRemove);
     }
 

@@ -14,7 +14,7 @@ describe("pie.notifier", function(){
 
     var msg = this.model.get(0);
 
-    expect(msg.message).toEqual('test message');
+    expect(msg.messages).toEqual(['test message']);
     expect(msg.id).toBeTruthy();
     expect(msg.type).toEqual('message');
   });
