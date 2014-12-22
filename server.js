@@ -1,7 +1,8 @@
-/* global __dirname */
+/* global __dirname, process */
+
 var fs = require("fs");
 var host = "127.0.0.1";
-var port = 8081;
+var port = process.env.PORT || 8081;
 var express = require("express");
 
 var app = express();
