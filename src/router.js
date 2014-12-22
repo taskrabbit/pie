@@ -45,6 +45,8 @@ pie.router = pie.base.extend('router', {
         config = {name: k};
       }
 
+      if(defaults) config = pie.object.merge({}, defaults, config);
+
       route = new pie.route(path, config);
       this.routes.push(route);
       if(route.name) this.routeNames[route.name] = route;

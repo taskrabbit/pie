@@ -5999,6 +5999,8 @@ you can pass a set of defaults which will be extended into each route object.</p
         config = {name: k};
       }
 
+      <span class="hljs-keyword">if</span>(defaults) config = pie.object.merge({}, defaults, config);
+
       route = <span class="hljs-keyword">new</span> pie.route(path, config);
       <span class="hljs-keyword">this</span>.routes.push(route);
       <span class="hljs-keyword">if</span>(route.name) <span class="hljs-keyword">this</span>.routeNames[route.name] = route;
