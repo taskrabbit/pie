@@ -45,7 +45,7 @@ describe("pie.view", function() {
   it("should remove it's el from the dom, but not call pie.dom.remove on it's el", function() {
     spyOn(pie.dom, 'remove');
     this.view.removedFromParent();
-    expect(pie.dom.remove).not.toHaveBeenCalledWith();
+    expect(pie.dom.remove).not.toHaveBeenCalled();
   });
 
   it("should observe events on it's el via this.on and remove the events", function() {
@@ -59,6 +59,23 @@ describe("pie.view", function() {
     expect(args[1]).toEqual('click.' + this.view.eventNamespace());
     expect(args[3]).toEqual('a');
     expect(pie.dom.off).toHaveBeenCalledWith(this.view.el, '*.' + this.view.eventNamespace());
+  });
+
+  it("should invoke navigationUpdated on all it's children when invoked on itself", function() {
+    var a = new pie.view(), b = new pie.view();
+
+    this.view.addChild('a', a);
+    this.view.addChild('b', b);
+
+    expect(this.view.children.length).toEqual(2);
+
+    spyOn(a, 'navigationUpdated');
+    spyOn(b, 'navigationUpdated');
+
+    this.view.navigationUpdated();
+
+    expect(a.navigationUpdated).toHaveBeenCalled();
+    expect(b.navigationUpdated).toHaveBeenCalled();
   });
 
 

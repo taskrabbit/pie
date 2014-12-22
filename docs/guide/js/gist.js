@@ -7,8 +7,8 @@
 
   proto.createdCallback = function() {
     // prefetch as much as possible.
-    app.resources.load('/css/highlight.css');
-    app.resources.load('/js/highlight.js');
+    app.resources.load(app.router.path('/css/highlight.css'));
+    app.resources.load(app.router.path('/js/highlight.js'));
   };
 
   proto.contentCallback = function(data) {
@@ -35,8 +35,8 @@
       }
     }
 
-    app.resources.load('/css/highlight.css', function() {
-      app.resources.load('/js/highlight.js', function(){
+    app.resources.load(app.router.path('/css/highlight.css'), function() {
+      app.resources.load(app.router.path('/js/highlight.js'), function(){
 
         this.innerHTML = "<code><pre>" + lines.join("\n") + "</pre></code>";
 

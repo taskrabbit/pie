@@ -1,9 +1,14 @@
 pie.router = pie.base.extend('router', {
+
   init: function(app) {
     this.app = app;
     this.routes = {};
     this.namedRoutes = {};
+    this.root = app.options.root || '/';
+    this.rootRegex = new RegExp('^' + this.root);
   },
+
+  httpTest: /\w+:\/\//,
 
   // get a url based on the current one but with the changes provided.
   // this will even catch interpolated values.
@@ -21,7 +26,7 @@ pie.router = pie.base.extend('router', {
   normalizePath: function(path) {
 
     // ensure there's a leading slash
-    if(!path.match(/\w+:\/\//) && path.charAt(0) !== '/') {
+    if(!this.httpTest.test(path) && path.charAt(0) !== '/') {
       path = '/' + path;
     }
 
@@ -100,6 +105,8 @@ pie.router = pie.base.extend('router', {
       s = pie.string.urlConcat(s, params);
     }
 
+    if(!this.httpTest.test(s) && !this.rootRegex.test(s)) s = this.root + s;
+
     return s;
 
   },
@@ -135,6 +142,7 @@ pie.router = pie.base.extend('router', {
     pieces = path.split('?');
 
     path = pieces.shift();
+    path = path.replace(this.rootRegex, '');
     path = this.normalizePath(path);
 
     query = pieces.join('&') || '';

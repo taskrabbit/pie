@@ -35,7 +35,7 @@ pie.view.reopen({
 
 
   navigationUpdated: function() {
-    this.children().forEach(function(c){
+    this.children.forEach(function(c){
       if('navigationUpdated' in c) c.navigationUpdated();
     });
   },

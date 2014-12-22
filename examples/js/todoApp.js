@@ -132,13 +132,15 @@ example.views.form.reopen({
     // don't really submit it...
     e.preventDefault();
 
-    this.list.validateAll(function() {
-      // insert the item at the beginning.
-      var newItem = new pie.model({title: this.list.get('nextItem'), completed: false});
-      this.list.push(newItem);
+    this.list.validateAll(function(bool) {
+      if(bool) {
+        // insert the item at the beginning.
+        var newItem = new pie.model({title: this.list.get('nextItem'), completed: false});
+        this.list.push(newItem);
 
-      // remove the nextItem attribute, updating the UI.
-      this.list.set('nextItem', '');
+        // remove the nextItem attribute, updating the UI.
+        this.list.set('nextItem', '');
+      }
     }.bind(this));
   },
 

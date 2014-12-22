@@ -1639,7 +1639,8 @@ pie.app = pie.base.extend('app', function(options) {
   this.options = pie.object.deepMerge({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
-    templateSelector: 'script[type="text/pie-template"]'
+    templateSelector: 'script[type="text/pie-template"]',
+    root: '/'
   }, options);
 
   var classOption = function(key, _default){
@@ -2194,7 +2195,7 @@ pie.view.reopen({
 
 
   navigationUpdated: function() {
-    this.children().forEach(function(c){
+    this.children.forEach(function(c){
       if('navigationUpdated' in c) c.navigationUpdated();
     });
   },
@@ -2434,6 +2435,7 @@ pie.ajax = pie.base.extend('ajax', {
 
     options = pie.object.compact(options);
     options = pie.object.merge({}, this._defaultAjaxOptions(), options);
+    options.verb = options.verb.toUpperCase();
 
     if(options.extraError) {
       var oldError = options.error;
@@ -2800,6 +2802,93 @@ pie.errorHandler = pie.base.extend('errorHandler', {
     this.app.debug(err);
   }
 });
+pie.formView = pie.activeView.extend('formView', {
+
+  init: function(options) {
+    options = this.normalizeFormOptions(options);
+    this._super(options);
+
+    this.model = this.model || new pie.model({});
+    if(!this.model.validates) pie.object.merge(this.model, pie.mixins.validatable);
+
+    this.emitter.once('setup', this.setupFormBindings.bind(this));
+  },
+
+  // the process of applying form data to the model.
+  applyFieldsToModel: function(form) {
+    var data = this.formData(form);
+    this.model.sets(data);
+  },
+
+  // the data coming from the UI that should be applied to the model before validation
+  formData: function(form) {
+    var args = pie.array.map(this.options.fields, 'name');
+
+    args.push(form);
+
+    return this.parseFields.apply(this, args);
+  },
+
+  handleErrors: function() {},
+
+  normalizeFormOptions: function(options) {
+    options = options || {};
+    options.fields = options.fields || [];
+    options.fields.forEach(function(field) {
+      field = pie.object.isString(field) ? {name: field} : field || {};
+      if(!field.name) throw new Error("A `name` property must be provided for all fields.");
+      field.binding = field.binding || {};
+      field.binding.attr = field.binding.attr || field.name;
+    });
+    return options;
+  },
+
+  setupFormBindings: function() {
+    var validation;
+    this.on('submit', this.options.formSel || 'form', this.validateAndSubmitForm.bind(this));
+    this.options.fields.forEach(function(field) {
+      this.bind(field.binding);
+      validation = field.validation;
+      if(validation) {
+        validation = {};
+        validation[field.name] = field.validation;
+        this.model.validates(validation);
+      }
+    }.bind(this));
+  },
+
+  // the data to be sent from the server.
+  // by default these are the defined fields extracted out of the model.
+  submissionData: function(form) {
+    var fieldNames = pie.array.map(this.options.fields, 'name');
+    return this.model.gets(fieldNames);
+  },
+
+  submitForm: function(form) {
+    var data = this.submissionData(form);
+
+    app.ajax.ajax(pie.object.merge({
+      url: form.getAttribute('action'),
+      verb: form.getAttribute('method') || 'post',
+      data: data,
+    }, this.options.ajax));
+  },
+
+  validateAndSubmitForm: function(e) {
+    e.preventDefault();
+
+    this.applyFieldsToModel(e.delegateTarget);
+
+    this.model.validateAll(function(bool) {
+      if(bool) {
+        this.submitForm(e.delegateTarget);
+      } else {
+        this.handleErrors();
+      }
+    }.bind(this), this.options.validateImmediately);
+  }
+
+}, pie.mixins.bindings);
 // made to be used as an instance so multiple translations could exist if we so choose.
 pie.i18n = pie.base.extend('i18n', {
   init: function(app) {
@@ -3529,11 +3618,16 @@ pie.resources = pie.base.extend('resources', {
   }
 });
 pie.router = pie.base.extend('router', {
+
   init: function(app) {
     this.app = app;
     this.routes = {};
     this.namedRoutes = {};
+    this.root = app.options.root || '/';
+    this.rootRegex = new RegExp('^' + this.root);
   },
+
+  httpTest: /\w+:\/\//,
 
   // get a url based on the current one but with the changes provided.
   // this will even catch interpolated values.
@@ -3551,7 +3645,7 @@ pie.router = pie.base.extend('router', {
   normalizePath: function(path) {
 
     // ensure there's a leading slash
-    if(!path.match(/\w+:\/\//) && path.charAt(0) !== '/') {
+    if(!this.httpTest.test(path) && path.charAt(0) !== '/') {
       path = '/' + path;
     }
 
@@ -3630,6 +3724,8 @@ pie.router = pie.base.extend('router', {
       s = pie.string.urlConcat(s, params);
     }
 
+    if(!this.httpTest.test(s) && !this.rootRegex.test(s)) s = this.root + s;
+
     return s;
 
   },
@@ -3665,6 +3761,7 @@ pie.router = pie.base.extend('router', {
     pieces = path.split('?');
 
     path = pieces.shift();
+    path = path.replace(this.rootRegex, '');
     path = this.normalizePath(path);
 
     query = pieces.join('&') || '';

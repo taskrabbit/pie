@@ -2,7 +2,6 @@
 
 pie.ns('lib.views');
 
-
 lib.views.nav = pie.view.extend('nav', function() {
   this._super({
     el: document.querySelector('.page-nav')
@@ -64,7 +63,7 @@ lib.views.page.reopen({
     }
 
     app.ajax.get({
-      url: app.router.path('/pages/:page.html', {page: name}),
+      url: app.router.path('pageApi', {page: name}),
       verb: app.ajax.GET,
       type: 'html',
       dataSuccess: function(html) {
@@ -80,7 +79,10 @@ lib.views.page.reopen({
 
 });
 
-window.app = new pie.app({ uiTarget: '.page' });
+window.app = new pie.app({
+  uiTarget: '.page',
+  root: '/docs/guide'
+});
 
 // get a "nav" view in there. this is "outside" of the normal routed application since it's always present.
 // alternatively, we could create a "layout" view to manage this and the current subview.
@@ -91,11 +93,10 @@ app.emitter.once('beforeStart', function() {
 
 
 // set up our page routes.
-
-
 app.router.route({
-  '/' : {view: 'page'},
-  '/:page' : {view: 'page', name: 'page'}
+  '/' : {view: 'page', name: 'root'},
+  '/:page' : {view: 'page', name: 'page'},
+  'pageApi' : '/pages/:page.html'
 });
 
 

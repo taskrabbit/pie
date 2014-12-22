@@ -6,7 +6,8 @@ pie.app = pie.base.extend('app', function(options) {
   this.options = pie.object.deepMerge({
     uiTarget: 'body',
     viewNamespace: 'lib.views',
-    templateSelector: 'script[type="text/pie-template"]'
+    templateSelector: 'script[type="text/pie-template"]',
+    root: '/'
   }, options);
 
   var classOption = function(key, _default){

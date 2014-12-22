@@ -31,6 +31,7 @@ pie.ajax = pie.base.extend('ajax', {
 
     options = pie.object.compact(options);
     options = pie.object.merge({}, this._defaultAjaxOptions(), options);
+    options.verb = options.verb.toUpperCase();
 
     if(options.extraError) {
       var oldError = options.error;
