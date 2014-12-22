@@ -13,12 +13,17 @@ describe("pie.router", function(){
 
       'apiRoute'          : '/api/a.json',
       'apiSpecificRoute'  : '/api/:id/a.json'
+    }, {
+      common: 'foo'
     });
   });
 
   it('should allow routes to be added', function(){
     // added in beforeEach();
     var r = this.router;
+
+    expect(r.routes[0].options.common).toEqual('foo');
+    expect(pie.array.last(r.routes).options.common).toEqual('foo');
 
     expect(r.routeNames.apiRoute.pathTemplate).toEqual('/api/a.json');
     expect(r.routeNames.aRoute.pathTemplate).toEqual('/t/a');

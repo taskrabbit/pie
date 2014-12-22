@@ -1,3 +1,4 @@
+
 describe("pie.model", function() {
 
   beforeEach(function() {
@@ -67,6 +68,16 @@ describe("pie.model", function() {
         'object' : this.model.data,
         'value' : 'bar'
       }]);
+    });
+
+    it("should not add a change record if the value is identical", function() {
+      var observer = jasmine.createSpy('observer');
+      this.model.observe(observer, 'foo');
+
+      this.model.data.foo = 'bar';
+      this.model.set('foo', 'bar');
+
+      expect(observer).not.toHaveBeenCalled();
     });
 
     it("should allow observation of all keys", function() {

@@ -165,6 +165,10 @@ pie.model = pie.base.extend('model', {
     if(pie.object.hasPath(this.data, key)) {
       change.type = 'update';
       change.oldValue = pie.object.getPath(this.data, key);
+
+      // if we haven't actually changed, don't bother.
+      if(value === change.oldValue) return this;
+
     } else {
       change.type = 'add';
     }
