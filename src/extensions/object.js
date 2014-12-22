@@ -48,6 +48,33 @@ pie.object.except = function(){
   return b;
 };
 
+// delete a path,
+pie.object.deletePath = function(obj, path, propagate) {
+
+  if(!~path.indexOf('.')) {
+    delete obj[path];
+  }
+
+  var split, attr, subObj;
+
+  while(true) {
+    split = path.split('.');
+    attr = split.pop();
+    path = split.join('.');
+    if(path) {
+      subObj = pie.object.getPath(obj, path);
+      if(!subObj) return;
+
+      delete subObj[attr];
+      if(!propagate || Object.keys(subObj).length) return;
+
+    } else {
+      delete obj[attr];
+      return;
+    }
+  }
+
+};
 
 pie.object.flatten = function(a, object, prefix) {
   var b = object || {};

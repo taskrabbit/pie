@@ -20,6 +20,12 @@ pie.browser.setCookie = function(key, value, options) {
   /* jslint eqnull:true */
   if(value == null) options.expires = -1;
 
+  if (pie.object.isNumber(options.expires)) {
+    var days = options.expires;
+    options.expires = new Date();
+    options.expires.setDate(options.expires.getDate() + days);
+  }
+
   value = String(value);
 
   var cookieValue = [

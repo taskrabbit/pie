@@ -162,6 +162,16 @@ pie.array.from = function(value) {
   return pie.array.compact([value], false);
 };
 
+pie.array.get = function(arr, startIdx, endIdx) {
+  if(startIdx < 0) startIdx += arr.length;
+
+  if(endIdx) {
+    if(endIdx < 0) endIdx += arr.length;
+    return arr.slice(startIdx, endIdx + 1);
+  }
+
+  return arr[startIdx];
+};
 
 pie.array.grep = function(arr, regex) {
   return arr.filter(function(a){ return regex.test(String(a)); });
@@ -313,6 +323,12 @@ pie.browser.setCookie = function(key, value, options) {
 
   /* jslint eqnull:true */
   if(value == null) options.expires = -1;
+
+  if (pie.object.isNumber(options.expires)) {
+    var days = options.expires;
+    options.expires = new Date();
+    options.expires.setDate(options.expires.getDate() + days);
+  }
 
   value = String(value);
 
@@ -654,6 +670,33 @@ pie.object.except = function(){
   return b;
 };
 
+// delete a path,
+pie.object.deletePath = function(obj, path, propagate) {
+
+  if(!~path.indexOf('.')) {
+    delete obj[path];
+  }
+
+  var split, attr, subObj;
+
+  while(true) {
+    split = path.split('.');
+    attr = split.pop();
+    path = split.join('.');
+    if(path) {
+      subObj = pie.object.getPath(obj, path);
+      if(!subObj) return;
+
+      delete subObj[attr];
+      if(!propagate || Object.keys(subObj).length) return;
+
+    } else {
+      delete obj[attr];
+      return;
+    }
+  }
+
+};
 
 pie.object.flatten = function(a, object, prefix) {
   var b = object || {};
@@ -2138,6 +2181,9 @@ pie.model = pie.base.extend('model', {
     return pie.object.compact(o);
   },
 
+  has: function(path) {
+    return !!pie.object.hasPath(this.data, path);
+  },
 
   // Register an observer and optionally filter by key.
   observe: function(/* fn[, key1, key2, key3] */) {
@@ -2165,7 +2211,7 @@ pie.model = pie.base.extend('model', {
   set: function(key, value, options) {
     var change = { name: key, object: this.data };
 
-    if(pie.object.hasPath(this.data, key)) {
+    if(this.has(key)) {
       change.type = 'update';
       change.oldValue = pie.object.getPath(this.data, key);
 
@@ -2177,7 +2223,12 @@ pie.model = pie.base.extend('model', {
     }
 
     change.value = value;
-    pie.object.setPath(this.data, key, value);
+
+    if(value === undefined) {
+      pie.object.deletePath(this.data, key, true);
+    } else {
+      pie.object.setPath(this.data, key, value);
+    }
 
     this.changeRecords.push(change);
 

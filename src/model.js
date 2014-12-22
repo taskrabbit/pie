@@ -135,6 +135,9 @@ pie.model = pie.base.extend('model', {
     return pie.object.compact(o);
   },
 
+  has: function(path) {
+    return !!pie.object.hasPath(this.data, path);
+  },
 
   // Register an observer and optionally filter by key.
   observe: function(/* fn[, key1, key2, key3] */) {
@@ -162,7 +165,7 @@ pie.model = pie.base.extend('model', {
   set: function(key, value, options) {
     var change = { name: key, object: this.data };
 
-    if(pie.object.hasPath(this.data, key)) {
+    if(this.has(key)) {
       change.type = 'update';
       change.oldValue = pie.object.getPath(this.data, key);
 
@@ -174,7 +177,12 @@ pie.model = pie.base.extend('model', {
     }
 
     change.value = value;
-    pie.object.setPath(this.data, key, value);
+
+    if(value === undefined) {
+      pie.object.deletePath(this.data, key, true);
+    } else {
+      pie.object.setPath(this.data, key, value);
+    }
 
     this.changeRecords.push(change);
 

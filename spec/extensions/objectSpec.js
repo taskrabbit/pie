@@ -128,4 +128,44 @@ describe("Object extension", function() {
 
   });
 
+  describe("#deletePath", function() {
+
+    it("should delete attributes from simple objects", function() {
+      var o = {foo: 'bar', baz: 'qux'};
+      pie.object.deletePath(o, 'foo', true);
+      expect(Object.keys(o)).toEqual(['baz']);
+    });
+
+    it("should delete nestd attributes", function() {
+      var o = {foo: 'bar', baz: {qux: 'dux', car: 'bar'}};
+      pie.object.deletePath(o, 'baz.car', true);
+      expect(o.foo).toEqual('bar');
+      expect(o.baz.qux).toEqual('dux');
+      expect(Object.keys(o.baz)).toEqual(['qux']);
+    });
+
+    it("should delete empty objects", function() {
+      var o = {baz: {qux: {foo: 'too'}}};
+      pie.object.deletePath(o, 'foo.bar.baz', true);
+      expect(o.baz.qux.foo).toEqual('too');
+      pie.object.deletePath(o, 'baz.qux.foo', true);
+      expect(Object.keys(o)).toEqual([]);
+    });
+
+    it("should delete empty objects", function() {
+      var o = {baz: {qux: {foo: 'too'}}};
+      pie.object.deletePath(o, 'foo.bar.baz', true);
+      expect(o.baz.qux.foo).toEqual('too');
+      pie.object.deletePath(o, 'baz.qux.foo', true);
+      expect(Object.keys(o)).toEqual([]);
+    });
+
+    it("should not propagate unless told to", function() {
+      var o = {baz: {qux: {foo: 'too'}}};
+      pie.object.deletePath(o, 'baz.qux.foo');
+      expect(Object.keys(o.baz.qux)).toEqual([]);
+    });
+
+  });
+
 });

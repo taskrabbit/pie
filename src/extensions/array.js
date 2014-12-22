@@ -99,6 +99,16 @@ pie.array.from = function(value) {
   return pie.array.compact([value], false);
 };
 
+pie.array.get = function(arr, startIdx, endIdx) {
+  if(startIdx < 0) startIdx += arr.length;
+
+  if(endIdx) {
+    if(endIdx < 0) endIdx += arr.length;
+    return arr.slice(startIdx, endIdx + 1);
+  }
+
+  return arr[startIdx];
+};
 
 pie.array.grep = function(arr, regex) {
   return arr.filter(function(a){ return regex.test(String(a)); });
