@@ -7,38 +7,38 @@
   </head>
   <body>
 
-    <div class="page-nav">
-      <div class="page-nav-inner">
-
-        <a href="#" class="nav-toggle">
-          <i class="fa fa-bars"></i>
-        </a>
-
-        <a href="/docs/guide" class="home">Pie.js</a>
-        <ul>
-          <li>
-            <a href="/docs/guide">Getting Started</a>
-          </li>
-          <li>
-            <a href="/docs/guide/object-model">Object Model</a>
-          </li>
-          <li>
-            <a href="/docs/guide/models">Models</a>
-          </li>
-          <li>
-            <a href="/docs/guide/views">Views</a>
-          </li>
-          <li>
-            <a href="/docs/guide/utils">Utils</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-
     <div class="page-container">
       <div class="page"></div>
     </div>
 
+    <script type="text/pie-template" id="nav">
+      <div class="page-nav">
+        <div class="page-nav-inner">
+          <a href="#" class="nav-toggle">
+            <i class="fa fa-bars"></i>
+          </a>
+
+          <a href="[%= app.router.path('root') %]" class="home">Pie.js</a>
+          <ul>
+            <li>
+              <a href="[%= app.router.path('root') %]">Getting Started</a>
+            </li>
+            <li>
+              <a href="[%= app.router.path('page', {page: 'object-model'}) %]">Object Model</a>
+            </li>
+            <li>
+              <a href="[%= app.router.path('page', {page: 'models'}) %]">Models</a>
+            </li>
+            <li>
+              <a href="[%= app.router.path('page', {page: 'views'}) %]">Views</a>
+            </li>
+            <li>
+              <a href="[%= app.router.path('page', {page: 'utils'}) %]">Utils</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </script>
 
     <script type="text/javascript" src="/build/pie.js"></script>
     <script type="text/javascript" src="/docs/guide/js/compiled.js"></script>

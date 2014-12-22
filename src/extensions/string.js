@@ -1,3 +1,5 @@
+pie.string.PROTOCOL_TEST = /\w+:\/\//;
+
 pie.string.capitalize = function(str) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
@@ -122,6 +124,32 @@ pie.string.modularize = function(str) {
   return str.replace(/([^_])_([^_])/g, function(match, a, b){ return a + b.toUpperCase(); });
 };
 
+pie.string.normalizeUrl =  function(path) {
+
+  // ensure there's a leading slash
+  if(!pie.string.PROTOCOL_TEST.test(path) && path.charAt(0) !== '/') {
+    path = '/' + path;
+  }
+
+  if(path.indexOf('?') > 0) {
+    var split = path.split('?');
+    path = pie.string.normalizeUrl(split.shift());
+    split.unshift(path);
+    path = split.join('?');
+  }
+
+  // remove trailing hashtags
+  if(path.charAt(path.length - 1) === '#') {
+    path = path.substr(0, path.length - 1);
+  }
+
+  // remove trailing slashes
+  if(path.length > 1 && path.charAt(path.length - 1) === '/') {
+    path = path.substr(0, path.length - 1);
+  }
+
+  return path;
+};
 
 pie.string.pluralize = function(str, count) {
   if(count === 1) return str;

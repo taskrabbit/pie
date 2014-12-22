@@ -79,11 +79,12 @@ pie.base._wrap = function(newF, oldF) {
   if(newF == null) return oldF;
   if(!pie.object.isFunction(newF)) return newF;
 
-  return function() {
+  return function superWrapper() {
     var ret, sup = this._super;
     this._super = oldF || function(){};
     ret = newF.apply(this, arguments);
-    this._super = sup;
+    if(!sup) delete this._super;
+    else this._super = sup;
     return ret;
   };
 

@@ -112,4 +112,24 @@ describe("String extensions", function() {
     });
 
   });
+
+  describe("#normalizeUrl", function() {
+
+    it('should normalize a path properly', function() {
+      var p;
+
+      p = pie.string.normalizeUrl('test/path/#');
+      expect(p).toEqual('/test/path');
+
+      p = pie.string.normalizeUrl('/test/path#');
+      expect(p).toEqual('/test/path');
+
+      p = pie.string.normalizeUrl('/test/path/');
+      expect(p).toEqual('/test/path');
+
+      p = pie.string.normalizeUrl('test/things/?q=1&z=2');
+      expect(p).toEqual('/test/things?q=1&z=2');
+
+    });
+  });
 });

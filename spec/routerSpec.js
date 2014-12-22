@@ -1,7 +1,7 @@
 describe("pie.router", function(){
 
   beforeEach(function(){
-    var r = new pie.router({parsedUrl: {}});
+    var r = new pie.router({options: {root: '/'}, parsedUrl: {}});
     this.router = r;
 
     this.router.route({
@@ -20,16 +20,12 @@ describe("pie.router", function(){
     // added in beforeEach();
     var r = this.router;
 
-    expect(r.namedRoutes.apiRoute).toEqual('/api/a.json');
-    expect(r.namedRoutes.aRoute).toEqual('/t/a');
-    expect(r.namedRoutes.apiSpecificRoute).toEqual('/api/:id/a.json');
-    expect(r.namedRoutes.aSpecificRoute).toEqual('/t/:id/a');
+    expect(r.routeNames.apiRoute.pathTemplate).toEqual('/api/a.json');
+    expect(r.routeNames.aRoute.pathTemplate).toEqual('/t/a');
+    expect(r.routeNames.apiSpecificRoute.pathTemplate).toEqual('/api/:id/a.json');
+    expect(r.routeNames.aSpecificRoute.pathTemplate).toEqual('/t/:id/a');
 
-    expect(r.routes.apiRoute).toEqual(undefined);
-    expect(r.routes.apiSpecificRoute).toEqual(undefined);
-
-    expect(r.routes['/t/a']).not.toBeFalsy();
-    expect(r.routes['/t/:id/a']).not.toBeFalsy();
+    expect(r.routes.length).toEqual(7);
   });
 
   it('should correctly build paths', function() {
@@ -52,43 +48,6 @@ describe("pie.router", function(){
     expect(p).toEqual('/t/17/a');
   });
 
-  it('should build, cache, and clear the _routeKeys variable', function() {
-    var r = this.router, keys = r.routeKeys();
-
-    // object id, ensure it's the same object later on
-    keys._testId = 1;
-
-    expect(keys[0]).toEqual('/t/unique/b');
-    expect(keys[1]).toEqual('/t/a');
-    expect(keys[2]).toEqual('/t/:id/a');
-    expect(keys[3]).toEqual('/t/:id/b');
-    expect(keys[4]).toEqual('/t/:parent_id/b/:id');
-
-    expect(r._routeKeys._testId).toEqual(keys._testId);
-    expect(r.routeKeys()._testId).toEqual(keys._testId);
-    r.route({'/new': {view: 'c'}});
-
-    expect(r._routeKeys).toEqual(undefined);
-    expect(r.routeKeys()).not.toEqual(undefined);
-  });
-
-  it('should normalize a path properly', function() {
-    var r = this.router, p;
-
-    p = r.normalizePath('test/path/#');
-    expect(p).toEqual('/test/path');
-
-    p = r.normalizePath('/test/path#');
-    expect(p).toEqual('/test/path');
-
-    p = r.normalizePath('/test/path/');
-    expect(p).toEqual('/test/path');
-
-    p = r.normalizePath('test/things/?q=1&z=2');
-    expect(p).toEqual('/test/things?q=1&z=2');
-
-  });
-
   it('should be able to properly determine routes', function(){
     var r = this.router, o;
 
@@ -108,7 +67,6 @@ describe("pie.router", function(){
     o = r.parseUrl('/t/30/a');
     expect(o.view).toEqual('a');
     expect(o.interpolations.id).toEqual('30');
-    expect(o[':id']).toEqual('30');
 
     o = r.parseUrl('/t/unique/b');
     expect(o.view).toEqual('b');
@@ -117,7 +75,6 @@ describe("pie.router", function(){
     o = r.parseUrl('/t/things/b');
     expect(o.view).toEqual('b');
     expect(o.name).toEqual('bSpecificRoute');
-    expect(o[':id']).toEqual('things');
     expect(o.interpolations.id).toEqual('things');
     expect(o.data.id).toEqual('things');
 

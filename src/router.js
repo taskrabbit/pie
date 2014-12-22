@@ -2,13 +2,11 @@ pie.router = pie.base.extend('router', {
 
   init: function(app) {
     this.app = app;
-    this.routes = {};
-    this.namedRoutes = {};
+    this.routes = [];
+    this.routeNames = {};
     this.root = app.options.root || '/';
     this.rootRegex = new RegExp('^' + this.root);
   },
-
-  httpTest: /\w+:\/\//,
 
   // get a url based on the current one but with the changes provided.
   // this will even catch interpolated values.
@@ -18,36 +16,7 @@ pie.router = pie.base.extend('router', {
   // # => /things/page/3.json?q=newQuery
   changedUrl: function(changes) {
     var current = this.app.parsedUrl;
-    return this.path(current.name || current.path, pie.object.merge({}, current.interpolations, current.query, changes));
-  },
-
-
-  // normalize a path to be evaluated by the router
-  normalizePath: function(path) {
-
-    // ensure there's a leading slash
-    if(!this.httpTest.test(path) && path.charAt(0) !== '/') {
-      path = '/' + path;
-    }
-
-    if(path.indexOf('?') > 0) {
-      var split = path.split('?');
-      path = this.normalizePath(split.shift());
-      split.unshift(path);
-      path = split.join('?');
-    }
-
-    // remove trailing hashtags
-    if(path.charAt(path.length - 1) === '#') {
-      path = path.substr(0, path.length - 1);
-    }
-
-    // remove trailing slashes
-    if(path.length > 1 && path.charAt(path.length - 1) === '/') {
-      path = path.substr(0, path.length - 1);
-    }
-
-    return path;
+    return this.path(current.route && current.route.name || current.path, pie.object.merge({}, current.data, changes));
   },
 
 
@@ -57,69 +26,49 @@ pie.router = pie.base.extend('router', {
   route: function(routes, defaults){
     defaults = defaults || {};
 
-    // remove the cache
-    delete this._routeKeys;
+    var path, config, route;
 
     pie.object.forEach(routes, function(k,r) {
-
       if(pie.object.isObject(r)) {
-
-        k = this.normalizePath(k);
-
-        this.routes[k] = pie.object.merge({}, defaults, r);
-
-        if(r.hasOwnProperty('name')) {
-          this.namedRoutes[r.name] = k;
-        }
+        path = k;
+        config = r;
       } else {
-        this.namedRoutes[k] = r;
+        path = r;
+        config = {name: k};
       }
+
+      route = new pie.route(path, config);
+      this.routes.push(route);
+      if(route.name) this.routeNames[route.name] = route;
     }.bind(this));
+
+    this.sortRoutes();
   },
 
   // will return the named path. if there is no path with that name it will return itself.
   // you can optionally pass a data hash and it will build the path with query params or
   // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
   path: function(nameOrPath, data, interpolateOnly) {
-    var o = this.namedRoutes[nameOrPath],
-    s = pie.object.isString(o) ? o : nameOrPath,
-    usedKeys = [],
-    params,
-    unusedData;
+    var r = this.routeNames[nameOrPath] || new pie.route(nameOrPath),
+    path = r.path(data, interpolateOnly);
 
-    data = data || {};
-    s = this.normalizePath(s);
-
-    s = s.replace(/\:([a-zA-Z0-9_]+)/g, function(match, key){
-      usedKeys.push(key);
-      if(data[key] === undefined || data[key] === null || data[key].toString().length === 0) {
-        throw new Error("[PIE] missing route interpolation: " + match);
-      }
-      return data[key];
-    });
-
-    unusedData = pie.object.except(data, usedKeys);
-    params = pie.object.serialize(pie.object.compact(unusedData, true));
-
-    if(!interpolateOnly && params.length) {
-      s = pie.string.urlConcat(s, params);
+    // apply the root.
+    if(!pie.string.PROTOCOL_TEST.test(path) && !this.rootRegex.test(path)) {
+      path = this.root + path;
+      path = pie.string.normalizeUrl(path);
     }
 
-    if(!this.httpTest.test(s) && !this.rootRegex.test(s)) s = this.root + s;
-
-    return s;
-
+    return path;
   },
 
-  // provides the keys of the routes in a sorted order relevant for matching most descriptive to least
-  routeKeys: function() {
-    if(this._routeKeys) return this._routeKeys;
-    this._routeKeys = Object.keys(this.routes);
-
+  // sorts the routes to be the most exact to the most generic
+  sortRoutes: function() {
     var ac, bc, c, d = [];
 
-    // sorts the route keys to be the most exact to the most generic
-    this._routeKeys.sort(function(a,b) {
+    this.routes.sort(function(a,b) {
+      a = a.pathTemplate;
+      b = b.pathTemplate;
+
       ac = (a.match(/:/g) || d).length;
       bc = (b.match(/:/g) || d).length;
       c = ac - bc;
@@ -127,74 +76,39 @@ pie.router = pie.base.extend('router', {
       c = c || (ac < bc ? 1 : (ac > bc ? -1 : 0));
       return c;
     });
-
-    return this._routeKeys;
   },
 
   // look at the path and determine the route which this matches.
   parseUrl: function(path, parseQuery) {
-
-    var keys = this.routeKeys(),
-      i = 0,
-      j, key, match, splitUrl, splitKey, query,
-      interpolations, fullPath, pieces;
+    var pieces, query, match, fullPath, interpolations;
 
     pieces = path.split('?');
 
     path = pieces.shift();
     path = path.replace(this.rootRegex, '');
-    path = this.normalizePath(path);
+    path = pie.string.normalizeUrl(path);
 
     query = pieces.join('&') || '';
 
-    // a trailing slash will bork stuff
-    if (path.length > 1 && path[path.length - 1] === '/') path = path.slice(0, -1);
-
     // is there an explicit route for this path? it wins if so
-    match = this.routes[path];
-    interpolations = {};
-    splitUrl = path.split('/');
+    match = pie.array.detect(this.routes, function(r){ return r.isDirectMatch(path); });
 
-    if(match) {
-      match = pie.object.merge({routeKey: path}, match);
-    } else {
-      while (i < keys.length && !match) {
-        key = keys[i];
-
-        if(!pie.object.isObject(this.routes[key])) {
-          i++;
-          continue;
-        }
-
-        this.routes[key].regex = this.routes[key].regex || new RegExp('^' + key.replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
-
-        if (this.routes[key].regex.test(path)) {
-          match = pie.object.merge({routeKey: key}, this.routes[key]);
-          splitKey = key.split('/');
-          for(j = 0; j < splitKey.length; j++){
-            if(/^:/.test(splitKey[j])) {
-              interpolations[splitKey[j].replace(/^:/, '')] = splitUrl[j];
-              match[splitKey[j]] = splitUrl[j];
-            }
-          }
-        }
-        i++;
-      }
+    if(!match) {
+      match = pie.array.detect(this.routes, function(r){ return r.isMatch(path); });
+      interpolations = match && match.interpolations(path, parseQuery);
     }
 
     query = pie.string.deserialize(query, parseQuery);
-
-    // if we are expected to parse the values of the query, lets do it for the interpolations as well.
-    if(parseQuery) interpolations = pie.string.deserialize(pie.object.serialize(interpolations), parseQuery);
-
     fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
 
     return pie.object.merge({
-      interpolations: interpolations,
+      path: path,
+      fullPath: fullPath,
+      interpolations: interpolations || {},
       query: query,
       data: pie.object.merge({}, interpolations, query),
-      path: path,
-      fullPath: fullPath
-    }, match);
+      route: match
+    }, match && match.options);
+
   }
 });

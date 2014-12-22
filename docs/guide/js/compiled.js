@@ -2,9 +2,10 @@
 
 pie.ns('lib.views');
 
-lib.views.nav = pie.view.extend('nav', function() {
+lib.views.nav = pie.activeView.extend('nav', function(el) {
   this._super({
-    el: document.querySelector('.page-nav')
+    renderOnSetup: true,
+    template: 'nav'
   });
 });
 
@@ -23,11 +24,11 @@ lib.views.nav.reopen({
     pie.dom.all(this.qsa('li.is-active'), 'classList.remove', 'is-active');
 
     if(target) target.parentNode.classList.add('is-active');
-    this.el.classList.remove('nav-active');
+    this.qs('.page-nav').classList.remove('nav-active');
   },
 
   toggleNav: function() {
-    this.el.classList.toggle('nav-active');
+    this.qs('.page-nav').classList.toggle('nav-active');
   }
 
 });
@@ -88,6 +89,7 @@ window.app = new pie.app({
 // alternatively, we could create a "layout" view to manage this and the current subview.
 app.emitter.once('beforeStart', function() {
   var nav = new lib.views.nav();
+  nav.setRenderTarget(document.body);
   app.addChild('nav', nav);
 });
 
