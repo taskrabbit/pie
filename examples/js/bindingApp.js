@@ -27,7 +27,7 @@ bindings.layout = pie.activeView.extend('layout', {
       text: 'theText',
       html: '<strong>theHtml</strong>',
       checks: [1, 2, 4],
-      radio: 'a'
+      radio: 1
     });
 
     this.bind({
@@ -49,10 +49,12 @@ bindings.layout = pie.activeView.extend('layout', {
       toModel: false
     }, {
       attr: 'checks',
-      type: 'check'
+      type: 'check',
+      dataType: 'integer'
     }, {
       attr: 'radio',
-      type: 'radio'
+      type: 'radio',
+      dataType: 'integer'
     });
 
     this.onChange(this.model, this.modelChanged.bind(this));

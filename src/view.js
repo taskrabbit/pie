@@ -76,6 +76,7 @@ pie.view.reopen({
     return this.el.querySelector(selector);
   },
 
+
   // shortcut for this.el.querySelectorAll
   qsa: function(selector) {
     return this.el.querySelectorAll(selector);

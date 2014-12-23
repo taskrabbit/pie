@@ -468,6 +468,36 @@ pie.browser.getCookie = <span class="hljs-function"><span class="hljs-keyword">f
   <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
 };
 
+
+pie.browser.isRetina = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-built_in">window</span>.devicePixelRatio &gt; <span class="hljs-number">1</span>;
+};
+
+
+pie.browser.isTouchDevice = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">return</span> (<span class="hljs-string">'ontouchstart'</span> <span class="hljs-keyword">in</span> <span class="hljs-built_in">window</span>) ||
+    (<span class="hljs-built_in">window</span>.DocumentTouch &amp;&amp; <span class="hljs-built_in">document</span> <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.DocumentTouch) ||
+    navigator.MaxTouchPoints &gt; <span class="hljs-number">0</span> ||
+    navigator.msMaxTouchPoints &gt; <span class="hljs-number">0</span>;
+};
+
+pie.browser.testMediaQuery = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(query)</span> </span>{
+  query = pie.browser.mediaQueries[query] || query;
+  <span class="hljs-keyword">var</span> matchMedia = <span class="hljs-built_in">window</span>.matchMedia || <span class="hljs-built_in">window</span>.msMatchMedia;
+  <span class="hljs-keyword">if</span>(matchMedia) <span class="hljs-keyword">return</span> matchMedia(query).matches;
+  <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>;
+};
+
+pie.browser.orientation = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">switch</span> (<span class="hljs-built_in">window</span>.orientation) {
+  <span class="hljs-keyword">case</span> <span class="hljs-number">90</span>:
+  <span class="hljs-keyword">case</span> -<span class="hljs-number">90</span>:
+    <span class="hljs-keyword">return</span> <span class="hljs-string">'landscape'</span>;
+  <span class="hljs-keyword">default</span>:
+    <span class="hljs-keyword">return</span> <span class="hljs-string">'portrait'</span>;
+  }
+};
+
 pie.browser.setCookie = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value, options)</span> </span>{
   options = pie.object.merge({}, options);
 
@@ -1858,6 +1888,33 @@ This mixin should be used with a pie view.</p>
 
   };
 
+  <span class="hljs-keyword">var</span> typeCasters = {
+
+    array: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(raw)</span> </span>{
+      <span class="hljs-keyword">return</span> pie.array.from(raw);
+    },
+
+    boolean: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(raw)</span> </span>{
+      <span class="hljs-keyword">return</span> !!raw;
+    },
+
+    number: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(raw)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">parseFloat</span>(raw, <span class="hljs-number">10</span>);
+    },
+
+    integer: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(raw)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">parseInt</span>(raw, <span class="hljs-number">10</span>);
+    },
+
+    string: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(raw)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">String</span>(raw);
+    },
+
+    <span class="hljs-string">"default"</span> : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(raw)</span> </span>{
+      <span class="hljs-keyword">return</span> raw;
+    }
+  };
+
   <span class="hljs-keyword">var</span> normalizeBindingOptions = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(given)</span> </span>{
     <span class="hljs-keyword">if</span>(!given.attr) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"An attr must be provided for data binding. "</span> + <span class="hljs-built_in">JSON</span>.stringify(given));
 
@@ -1866,6 +1923,7 @@ This mixin should be used with a pie view.</p>
     out.model = given.model || <span class="hljs-keyword">this</span>.model;
     out.sel = given.sel || <span class="hljs-string">'[name="'</span> + given.attr + <span class="hljs-string">'"]'</span>;
     out.type = given.type || <span class="hljs-string">'auto'</span>;
+    out.dataType = given.dataType || <span class="hljs-string">'default'</span>;
     out.trigger = given.trigger || <span class="hljs-string">'change keyup'</span>;
     out.triggerSel = given.triggerSel || out.sel;
     out.toModel = given.toModel || given.toModel === <span class="hljs-literal">undefined</span>;
@@ -1894,6 +1952,10 @@ This mixin should be used with a pie view.</p>
     <span class="hljs-keyword">return</span> integrations[binding.type];
   };
 
+  <span class="hljs-keyword">var</span> typeCasterForBinding = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(binding)</span> </span>{
+    <span class="hljs-keyword">return</span> typeCasters[binding.dataType] || typeCasters.default;
+  };
+
   <span class="hljs-keyword">var</span> applyValueToModel = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, binding)</span> </span>{
     <span class="hljs-keyword">if</span>(value === <span class="hljs-literal">undefined</span>) <span class="hljs-keyword">return</span>;
 
@@ -1916,7 +1978,12 @@ This mixin should be used with a pie view.</p>
   };
 
   <span class="hljs-keyword">var</span> getValueFromElement = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
-    <span class="hljs-keyword">return</span> integrationForBinding(el, binding).getValue(el, binding);
+    <span class="hljs-keyword">var</span> val = integrationForBinding(el, binding).getValue(el, binding),
+    fn = typeCasterForBinding(binding);
+    <span class="hljs-keyword">if</span>(binding.type === <span class="hljs-string">'array'</span>) <span class="hljs-keyword">return</span> fn(val);
+    <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(val)) val = val.map(fn);
+    <span class="hljs-keyword">else</span> val = fn(val);
+    <span class="hljs-keyword">return</span> val;
   };
 
   <span class="hljs-keyword">var</span> initCallbacks = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(binding)</span> </span>{

@@ -14,6 +14,36 @@ pie.browser.getCookie = function(key, options) {
   return null;
 };
 
+
+pie.browser.isRetina = function() {
+  return window.devicePixelRatio > 1;
+};
+
+
+pie.browser.isTouchDevice = function() {
+  return ('ontouchstart' in window) ||
+    (window.DocumentTouch && document instanceof window.DocumentTouch) ||
+    navigator.MaxTouchPoints > 0 ||
+    navigator.msMaxTouchPoints > 0;
+};
+
+pie.browser.testMediaQuery = function(query) {
+  query = pie.browser.mediaQueries[query] || query;
+  var matchMedia = window.matchMedia || window.msMatchMedia;
+  if(matchMedia) return matchMedia(query).matches;
+  return undefined;
+};
+
+pie.browser.orientation = function() {
+  switch (window.orientation) {
+  case 90:
+  case -90:
+    return 'landscape';
+  default:
+    return 'portrait';
+  }
+};
+
 pie.browser.setCookie = function(key, value, options) {
   options = pie.object.merge({}, options);
 

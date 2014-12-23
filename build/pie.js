@@ -313,6 +313,36 @@ pie.browser.getCookie = function(key, options) {
   return null;
 };
 
+
+pie.browser.isRetina = function() {
+  return window.devicePixelRatio > 1;
+};
+
+
+pie.browser.isTouchDevice = function() {
+  return ('ontouchstart' in window) ||
+    (window.DocumentTouch && document instanceof window.DocumentTouch) ||
+    navigator.MaxTouchPoints > 0 ||
+    navigator.msMaxTouchPoints > 0;
+};
+
+pie.browser.testMediaQuery = function(query) {
+  query = pie.browser.mediaQueries[query] || query;
+  var matchMedia = window.matchMedia || window.msMatchMedia;
+  if(matchMedia) return matchMedia(query).matches;
+  return undefined;
+};
+
+pie.browser.orientation = function() {
+  switch (window.orientation) {
+  case 90:
+  case -90:
+    return 'landscape';
+  default:
+    return 'portrait';
+  }
+};
+
 pie.browser.setCookie = function(key, value, options) {
   options = pie.object.merge({}, options);
 
@@ -1234,6 +1264,33 @@ pie.mixins.bindings = (function(){
 
   };
 
+  var typeCasters = {
+
+    array: function(raw) {
+      return pie.array.from(raw);
+    },
+
+    boolean: function(raw) {
+      return !!raw;
+    },
+
+    number: function(raw) {
+      return parseFloat(raw, 10);
+    },
+
+    integer: function(raw) {
+      return parseInt(raw, 10);
+    },
+
+    string: function(raw) {
+      return String(raw);
+    },
+
+    "default" : function(raw) {
+      return raw;
+    }
+  };
+
   var normalizeBindingOptions = function(given) {
     if(!given.attr) throw new Error("An attr must be provided for data binding. " + JSON.stringify(given));
 
@@ -1242,6 +1299,7 @@ pie.mixins.bindings = (function(){
     out.model = given.model || this.model;
     out.sel = given.sel || '[name="' + given.attr + '"]';
     out.type = given.type || 'auto';
+    out.dataType = given.dataType || 'default';
     out.trigger = given.trigger || 'change keyup';
     out.triggerSel = given.triggerSel || out.sel;
     out.toModel = given.toModel || given.toModel === undefined;
@@ -1270,6 +1328,10 @@ pie.mixins.bindings = (function(){
     return integrations[binding.type];
   };
 
+  var typeCasterForBinding = function(binding) {
+    return typeCasters[binding.dataType] || typeCasters.default;
+  };
+
   var applyValueToModel = function(value, binding) {
     if(value === undefined) return;
 
@@ -1292,7 +1354,12 @@ pie.mixins.bindings = (function(){
   };
 
   var getValueFromElement = function(el, binding) {
-    return integrationForBinding(el, binding).getValue(el, binding);
+    var val = integrationForBinding(el, binding).getValue(el, binding),
+    fn = typeCasterForBinding(binding);
+    if(binding.type === 'array') return fn(val);
+    if(Array.isArray(val)) val = val.map(fn);
+    else val = fn(val);
+    return val;
   };
 
   var initCallbacks = function(binding) {
@@ -2325,6 +2392,7 @@ pie.view.reopen({
   qs: function(selector) {
     return this.el.querySelector(selector);
   },
+
 
   // shortcut for this.el.querySelectorAll
   qsa: function(selector) {
