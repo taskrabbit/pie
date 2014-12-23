@@ -1,9 +1,12 @@
-pie.resources = pie.base.extend('resources', {
+pie.resources = pie.model.extend('resources', {
 
   init: function(app, srcMap) {
-    this.app = app;
-    this.loaded = {};
-    this.srcMap = srcMap || {};
+    this._super({
+      srcMap: srcMap || {},
+      loaded: {}
+    }, {
+      app: app
+    });
   },
 
   _appendNode: function(node) {
@@ -66,7 +69,7 @@ pie.resources = pie.base.extend('resources', {
 
   define: function(name, srcOrOptions) {
     var options = this._normalizeSrc(srcOrOptions);
-    this.srcMap[name] = options;
+    this.set('srcMap.' + name, options);
   },
 
   load: function(/* src1, src2, src3, onload */) {
@@ -77,27 +80,29 @@ pie.resources = pie.base.extend('resources', {
     sources = sources.map(this._normalizeSrc.bind(this));
 
     fns = sources.map(function(options){
-      options = this.srcMap[options.src] || options;
-      var src = options.src;
+      options = this.get('srcMap.' + options.src) || options;
+
+      var src = options.src,
+      loadedKey = 'loaded.' + src;
 
       return function(cb) {
-        if(this.loaded[src] === true) {
+        if(this.get(loadedKey) === true) {
           cb();
           return true;
         }
 
-        if(this.loaded[src]) {
-          this.loaded[src].push(cb);
+        if(this.get(loadedKey)) {
+          this.get(loadedKey).push(cb);
           return false;
         }
 
-        this.loaded[src] = [cb];
+        this.set(loadedKey, [cb]);
 
         var type = options.type || this._inferredResourceType(options.src),
         resourceOnload = function() {
 
-          this.loaded[src].forEach(function(fn) { if(fn) fn(); });
-          this.loaded[src] = true;
+          this.get(loadedKey).forEach(function(fn) { if(fn) fn(); });
+          this.set(loadedKey, true);
 
           if(options.callbackName) delete window[options.callbackName];
         }.bind(this);

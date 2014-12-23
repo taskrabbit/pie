@@ -22,15 +22,15 @@ describe("pie.router", function(){
     // added in beforeEach();
     var r = this.router;
 
-    expect(r.routes[0].options.common).toEqual('foo');
-    expect(pie.array.last(r.routes).options.common).toEqual('foo');
+    expect(r.get('routes.0.options.common')).toEqual('foo');
+    expect(pie.array.last(r.get('routes')).options.common).toEqual('foo');
 
-    expect(r.routeNames.apiRoute.pathTemplate).toEqual('/api/a.json');
-    expect(r.routeNames.aRoute.pathTemplate).toEqual('/t/a');
-    expect(r.routeNames.apiSpecificRoute.pathTemplate).toEqual('/api/:id/a.json');
-    expect(r.routeNames.aSpecificRoute.pathTemplate).toEqual('/t/:id/a');
+    expect(r.get('routeNames.apiRoute').get('pathTemplate')).toEqual('/api/a.json');
+    expect(r.get('routeNames.aRoute').get('pathTemplate')).toEqual('/t/a');
+    expect(r.get('routeNames.apiSpecificRoute').get('pathTemplate')).toEqual('/api/:id/a.json');
+    expect(r.get('routeNames.aSpecificRoute').get('pathTemplate')).toEqual('/t/:id/a');
 
-    expect(r.routes.length).toEqual(7);
+    expect(r.get('routes.length')).toEqual(7);
   });
 
   it('should correctly build paths', function() {

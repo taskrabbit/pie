@@ -1,11 +1,22 @@
-pie.route = pie.base.extend('route', {
+pie.route = pie.model.extend('route', {
 
   init: function(path, options) {
-    this.pathTemplate = pie.string.normalizeUrl(path);
-    this.splitPathTemplate = this.pathTemplate.split('/');
-    this.pathRegex = new RegExp('^' + this.pathTemplate.replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
-    this.options = options || {};
+    this._super({
+      pathTemplate: pie.string.normalizeUrl(path)
+    }, options);
+
     this.name = this.options.name;
+
+    this.compute('splitPathTemplate', 'pathTemplate');
+    this.compute('pathRegex', 'pathTemplate');
+  },
+
+  splitPathTemplate: function() {
+    return this.get('pathTemplate').split('/');
+  },
+
+  pathRegex: function() {
+    return new RegExp('^' + this.get('pathTemplate').replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
   },
 
   // assume path is already normalized and we've "matched" it.
@@ -14,8 +25,8 @@ pie.route = pie.base.extend('route', {
     interpolations = {};
 
     for(var i = 0; i < splitPath.length; i++){
-      if(/^:/.test(this.splitPathTemplate[i])) {
-        interpolations[this.splitPathTemplate[i].replace(/^:/, '')] = splitPath[i];
+      if(/^:/.test(this.get('splitPathTemplate.' + i))) {
+        interpolations[this.get('splitPathTemplate.' + i).replace(/^:/, '')] = splitPath[i];
       }
     }
 
@@ -25,16 +36,16 @@ pie.route = pie.base.extend('route', {
   },
 
   isDirectMatch: function(path) {
-    return path === this.pathTemplate;
+    return path === this.get('pathTemplate');
   },
 
   isMatch: function(path) {
-    return this.pathRegex.test(path);
+    return this.get('pathRegex').test(path);
   },
 
   path: function(data, interpolateOnly) {
     var usedKeys = [],
-    s = this.pathTemplate,
+    s = this.get('pathTemplate'),
     params,
     unusedData;
 

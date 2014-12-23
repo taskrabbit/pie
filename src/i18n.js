@@ -1,8 +1,9 @@
 // made to be used as an instance so multiple translations could exist if we so choose.
-pie.i18n = pie.base.extend('i18n', {
+pie.i18n = pie.model.extend('i18n', {
   init: function(app) {
-    this.translations = pie.object.merge({}, pie.i18n.defaultTranslations);
-    this.app = app;
+    this._super(pie.object.merge({}, pie.i18n.defaultTranslations), {
+      app: app
+    });
   },
 
   _ampm: function(num) {
@@ -102,7 +103,7 @@ pie.i18n = pie.base.extend('i18n', {
 
   load: function(data, shallow) {
     var f = shallow ? pie.object.merge : pie.object.deepMerge;
-    f.call(null, this.translations, data);
+    f.call(null, this.data, data);
   },
 
 
@@ -110,7 +111,7 @@ pie.i18n = pie.base.extend('i18n', {
     var changes = pie.array.from(arguments),
     path = changes.shift(),
     data = pie.object.isObject(changes[0]) ? changes.shift() : undefined,
-    translation = pie.object.getPath(this.translations, path),
+    translation = this.get(path),
     count;
 
     if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {

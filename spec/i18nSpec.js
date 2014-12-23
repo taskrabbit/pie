@@ -8,12 +8,12 @@ describe("pie.i18n", function() {
     this.i18n.load({ "a" : { "foo" : "bar", "biz" : "baz" }});
     this.i18n.load({ "a" : { "foo" : "buz" }});
 
-    expect(this.i18n.translations.a).toEqual({ "foo" : "buz", "biz" : "baz" });
+    expect(this.i18n.data.a).toEqual({ "foo" : "buz", "biz" : "baz" });
 
     this.i18n.load({ "a" : { "biz" : "baz" }}, true);
-    expect(this.i18n.translations.a).toEqual({ "biz" : "baz" });
+    expect(this.i18n.data.a).toEqual({ "biz" : "baz" });
 
-    delete this.i18n.translations.a;
+    delete this.i18n.data.a;
   });
 
   describe("with test translations loaded", function() {
@@ -44,7 +44,7 @@ describe("pie.i18n", function() {
     });
 
     afterEach(function() {
-      delete this.i18n.translations.test;
+      delete this.i18n.data.test;
     });
 
     it("should return the default if it's provided and the key is missing", function() {
@@ -335,7 +335,7 @@ describe("pie.i18n", function() {
       });
 
       afterEach(function() {
-        delete this.i18n.translations.app.time.formats.strftimetest;
+        delete this.i18n.data.app.time.formats.strftimetest;
       });
 
       var expectations = {

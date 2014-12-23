@@ -1,19 +1,20 @@
-pie.emitter = pie.base.extend('emitter', {
+pie.emitter = pie.model.extend('emitter', {
 
   init: function() {
-    this.triggeredEvents = [];
-    this.eventCallbacks = {};
+    this._super({
+      triggeredEvents: [],
+      eventCallbacks: {}
+    });
   },
 
   _on: function(event, fn, options, meth) {
     options = options || {},
 
-    this.eventCallbacks[event] = this.eventCallbacks[event] || [];
-    this.eventCallbacks[event][meth](pie.object.merge({fn: fn}, options));
+    this.getOrSet('eventCallbacks.' + event, [])[meth](pie.object.merge({fn: fn}, options));
   },
 
-  has: function(event) {
-    return !!~this.triggeredEvents.indexOf(event);
+  hasEvent: function(event) {
+    return !!~this.get('triggeredEvents').indexOf(event);
   },
 
   // invoke fn when the event is triggered.
@@ -30,7 +31,7 @@ pie.emitter = pie.base.extend('emitter', {
   once: function(event, fn, options) {
     options = options || {};
 
-    if(options.immediate && this.has(event)) {
+    if(options.immediate && this.hasEvent(event)) {
       fn();
       return;
     }
@@ -43,7 +44,7 @@ pie.emitter = pie.base.extend('emitter', {
   fire: function(/* event, arg1, arg2, */) {
     var args = pie.array.from(arguments),
     event = args.shift(),
-    callbacks = this.eventCallbacks[event],
+    callbacks = this.get('eventCallbacks.' + event),
     compactNeeded = false;
 
     if(callbacks) {
@@ -56,13 +57,12 @@ pie.emitter = pie.base.extend('emitter', {
       });
     }
 
-    if(compactNeeded) this.eventCallbacks[event] = pie.array.compact(this.eventCallbacks[event]);
-
-    if(!this.has(event)) this.triggeredEvents.push(event);
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
+    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
   },
 
   fireAround: function(event, onComplete) {
-    var callbacks = this.eventCallbacks[event] || [],
+    var callbacks = this.get('eventCallbacks.' + event) || [],
     compactNeeded = false,
     fns;
 
@@ -74,8 +74,8 @@ pie.emitter = pie.base.extend('emitter', {
       return cb.fn;
     });
 
-    if(compactNeeded) this.eventCallbacks[event] = pie.array.compact(this.eventCallbacks[event]);
-    if(!this.has(event)) this.triggeredEvents.push(event);
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
+    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
 
     pie.fn.async(fns, onComplete);
   },

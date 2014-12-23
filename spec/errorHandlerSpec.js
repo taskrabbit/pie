@@ -9,7 +9,7 @@ describe('pie.errorHandler', function() {
     it('should cache the data on the xhr', function() {
       var xhr = {status: '200', response: JSON.stringify({'foo' : 'bar'})}, d;
 
-      d = this.handler.data(xhr);
+      d = this.handler.xhrData(xhr);
       expect(d).toEqual({'foo' : 'bar'});
       expect(xhr.data).toEqual(d);
     });
@@ -17,7 +17,7 @@ describe('pie.errorHandler', function() {
     it('should return an empty object if there is no response code', function() {
       var xhr = {}, d;
 
-      d = this.handler.data(xhr);
+      d = this.handler.xhrData(xhr);
       expect(d).toEqual({});
       expect(xhr.data).toEqual(d);
     });
@@ -25,7 +25,7 @@ describe('pie.errorHandler', function() {
     it('should return cached content', function() {
       var xhr = {data: {'foo' : 'bar'}}, d;
 
-      d = this.handler.data(xhr);
+      d = this.handler.xhrData(xhr);
       expect(d).toEqual(xhr.data);
     });
 
@@ -61,7 +61,7 @@ describe('pie.errorHandler', function() {
 
   describe("#handleXhrError", function() {
 
-    var f = function(){ this.handler.responseCodeHandlers = {}; };
+    var f = function(){ this.handler.set('responseCodeHandlers', {}); };
 
     beforeEach(f);
     afterEach(f);

@@ -2066,10 +2066,11 @@ pie.app.reopen({
 
 
 pie.model = pie.base.extend('model', {
+
   init: function(d, options) {
     this.data = pie.object.merge({_version: 1}, d);
     this.options = options || {};
-    this.app = this.options.app || pie.appInstance;
+    this.app = this.app || this.options.app || pie.appInstance;
     this.observations = {};
     this.changeRecords = [];
     pie.setUid(this);
@@ -2120,6 +2121,14 @@ pie.model = pie.base.extend('model', {
   // Key can be multiple levels deep by providing a dot separated key.
   get: function(key) {
     return pie.object.getPath(this.data, key);
+  },
+
+  getOrSet: function(key, defaultValue) {
+    var val = this.get(key);
+    if(val != null) return val;
+
+    this.set(key, defaultValue);
+    return this.get(key);
   },
 
   // Retrieve multiple values at once.
@@ -2219,10 +2228,17 @@ pie.model = pie.base.extend('model', {
 
   // Register a computed property which is accessible via `name` and defined by `fn`.
   // Provide all properties which invalidate the definition.
-  compute: function(/* name, fn[, prop1, prop2 ] */) {
+  // if the definition of the property is defined by a function of the same name, the function can be ommitted.
+  // this.compute('fullName', 'first_name', 'last_name');
+  compute: function(/* name, fn?[, prop1, prop2 ] */) {
     var props = pie.array.from(arguments),
     name = props.shift(),
     fn = props.shift();
+
+    if(!pie.object.isFunction(fn)) {
+      props.unshift(fn);
+      fn = this[name].bind(this);
+    }
 
     this.observe(function(/* changes */){
       this.set(name, fn.call(this));
@@ -2438,7 +2454,7 @@ pie.activeView.reopen({
 
   setRenderTarget: function(target) {
     this.renderTarget = target;
-    if(this.emitter.has('afterRender')) this._appendToDom();
+    if(this.emitter.hasEvent('afterRender')) this._appendToDom();
   },
 
   templateName: function() {
@@ -2678,22 +2694,23 @@ pie.cache = pie.model.extend('cache', {
     return pie.date.now();
   }
 });
-pie.emitter = pie.base.extend('emitter', {
+pie.emitter = pie.model.extend('emitter', {
 
   init: function() {
-    this.triggeredEvents = [];
-    this.eventCallbacks = {};
+    this._super({
+      triggeredEvents: [],
+      eventCallbacks: {}
+    });
   },
 
   _on: function(event, fn, options, meth) {
     options = options || {},
 
-    this.eventCallbacks[event] = this.eventCallbacks[event] || [];
-    this.eventCallbacks[event][meth](pie.object.merge({fn: fn}, options));
+    this.getOrSet('eventCallbacks.' + event, [])[meth](pie.object.merge({fn: fn}, options));
   },
 
-  has: function(event) {
-    return !!~this.triggeredEvents.indexOf(event);
+  hasEvent: function(event) {
+    return !!~this.get('triggeredEvents').indexOf(event);
   },
 
   // invoke fn when the event is triggered.
@@ -2710,7 +2727,7 @@ pie.emitter = pie.base.extend('emitter', {
   once: function(event, fn, options) {
     options = options || {};
 
-    if(options.immediate && this.has(event)) {
+    if(options.immediate && this.hasEvent(event)) {
       fn();
       return;
     }
@@ -2723,7 +2740,7 @@ pie.emitter = pie.base.extend('emitter', {
   fire: function(/* event, arg1, arg2, */) {
     var args = pie.array.from(arguments),
     event = args.shift(),
-    callbacks = this.eventCallbacks[event],
+    callbacks = this.get('eventCallbacks.' + event),
     compactNeeded = false;
 
     if(callbacks) {
@@ -2736,13 +2753,12 @@ pie.emitter = pie.base.extend('emitter', {
       });
     }
 
-    if(compactNeeded) this.eventCallbacks[event] = pie.array.compact(this.eventCallbacks[event]);
-
-    if(!this.has(event)) this.triggeredEvents.push(event);
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
+    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
   },
 
   fireAround: function(event, onComplete) {
-    var callbacks = this.eventCallbacks[event] || [],
+    var callbacks = this.get('eventCallbacks.' + event) || [],
     compactNeeded = false,
     fns;
 
@@ -2754,8 +2770,8 @@ pie.emitter = pie.base.extend('emitter', {
       return cb.fn;
     });
 
-    if(compactNeeded) this.eventCallbacks[event] = pie.array.compact(this.eventCallbacks[event]);
-    if(!this.has(event)) this.triggeredEvents.push(event);
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
+    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
 
     pie.fn.async(fns, onComplete);
   },
@@ -2773,16 +2789,19 @@ pie.emitter = pie.base.extend('emitter', {
   }
 
 });
-pie.errorHandler = pie.base.extend('errorHandler', {
+pie.errorHandler = pie.model.extend('errorHandler', {
 
   init: function(app) {
-    this.app = app;
-    this.responseCodeHandlers = {};
+    this._super({
+      responseCodeHandlers: {}
+    }, {
+      app: app
+    });
   },
 
 
   // extract the "data" object out of an xhr
-  data: function(xhr) {
+  xhrData: function(xhr) {
     return xhr.data = xhr.data || (xhr.status ? JSON.parse(xhr.response) : {});
   },
 
@@ -2790,7 +2809,7 @@ pie.errorHandler = pie.base.extend('errorHandler', {
   // extract an error message from a response. Try to extract the error message from
   // the xhr data diretly, or allow overriding by response code.
   errorMessagesFromRequest: function(xhr) {
-    var d = this.data(xhr),
+    var d = this.xhrData(xhr),
     errors  = pie.array.map(d.errors || [], 'message'),
     clean;
 
@@ -2802,10 +2821,14 @@ pie.errorHandler = pie.base.extend('errorHandler', {
     return pie.array.from(clean);
   },
 
+  getResponseCodeHandler: function(status) {
+    return this.get('responseCodeHandlers.' + status);
+  },
+
   // find a handler for the xhr via response code or the app default.
   handleXhrError: function(xhr) {
 
-    var handler = this.responseCodeHandlers[xhr.status.toString()];
+    var handler = this.getResponseCodeHandler(xhr.status.toString());
 
     if(handler) {
       handler.call(xhr, xhr);
@@ -2834,7 +2857,7 @@ pie.errorHandler = pie.base.extend('errorHandler', {
   // register a response code handler
   // registerHandler('401', myRedirectCallback);
   registerHandler: function(responseCode, handler) {
-    this.responseCodeHandlers[responseCode.toString()] = handler;
+    this.set('responseCodeHandlers.' + responseCode.toString(), handler);
   },
 
 
@@ -2947,10 +2970,11 @@ pie.formView = pie.activeView.extend('formView', {
 
 }, pie.mixins.bindings);
 // made to be used as an instance so multiple translations could exist if we so choose.
-pie.i18n = pie.base.extend('i18n', {
+pie.i18n = pie.model.extend('i18n', {
   init: function(app) {
-    this.translations = pie.object.merge({}, pie.i18n.defaultTranslations);
-    this.app = app;
+    this._super(pie.object.merge({}, pie.i18n.defaultTranslations), {
+      app: app
+    });
   },
 
   _ampm: function(num) {
@@ -3050,7 +3074,7 @@ pie.i18n = pie.base.extend('i18n', {
 
   load: function(data, shallow) {
     var f = shallow ? pie.object.merge : pie.object.deepMerge;
-    f.call(null, this.translations, data);
+    f.call(null, this.data, data);
   },
 
 
@@ -3058,7 +3082,7 @@ pie.i18n = pie.base.extend('i18n', {
     var changes = pie.array.from(arguments),
     path = changes.shift(),
     data = pie.object.isObject(changes[0]) ? changes.shift() : undefined,
-    translation = pie.object.getPath(this.translations, path),
+    translation = this.get(path),
     count;
 
     if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {
@@ -3574,12 +3598,15 @@ pie.notifier = pie.base.extend('notifier', {
     }
   }
 });
-pie.resources = pie.base.extend('resources', {
+pie.resources = pie.model.extend('resources', {
 
   init: function(app, srcMap) {
-    this.app = app;
-    this.loaded = {};
-    this.srcMap = srcMap || {};
+    this._super({
+      srcMap: srcMap || {},
+      loaded: {}
+    }, {
+      app: app
+    });
   },
 
   _appendNode: function(node) {
@@ -3642,7 +3669,7 @@ pie.resources = pie.base.extend('resources', {
 
   define: function(name, srcOrOptions) {
     var options = this._normalizeSrc(srcOrOptions);
-    this.srcMap[name] = options;
+    this.set('srcMap.' + name, options);
   },
 
   load: function(/* src1, src2, src3, onload */) {
@@ -3653,27 +3680,29 @@ pie.resources = pie.base.extend('resources', {
     sources = sources.map(this._normalizeSrc.bind(this));
 
     fns = sources.map(function(options){
-      options = this.srcMap[options.src] || options;
-      var src = options.src;
+      options = this.get('srcMap.' + options.src) || options;
+
+      var src = options.src,
+      loadedKey = 'loaded.' + src;
 
       return function(cb) {
-        if(this.loaded[src] === true) {
+        if(this.get(loadedKey) === true) {
           cb();
           return true;
         }
 
-        if(this.loaded[src]) {
-          this.loaded[src].push(cb);
+        if(this.get(loadedKey)) {
+          this.get(loadedKey).push(cb);
           return false;
         }
 
-        this.loaded[src] = [cb];
+        this.set(loadedKey, [cb]);
 
         var type = options.type || this._inferredResourceType(options.src),
         resourceOnload = function() {
 
-          this.loaded[src].forEach(function(fn) { if(fn) fn(); });
-          this.loaded[src] = true;
+          this.get(loadedKey).forEach(function(fn) { if(fn) fn(); });
+          this.set(loadedKey, true);
 
           if(options.callbackName) delete window[options.callbackName];
         }.bind(this);
@@ -3692,14 +3721,25 @@ pie.resources = pie.base.extend('resources', {
     pie.fn.async(fns, onload);
   }
 });
-pie.route = pie.base.extend('route', {
+pie.route = pie.model.extend('route', {
 
   init: function(path, options) {
-    this.pathTemplate = pie.string.normalizeUrl(path);
-    this.splitPathTemplate = this.pathTemplate.split('/');
-    this.pathRegex = new RegExp('^' + this.pathTemplate.replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
-    this.options = options || {};
+    this._super({
+      pathTemplate: pie.string.normalizeUrl(path)
+    }, options);
+
     this.name = this.options.name;
+
+    this.compute('splitPathTemplate', 'pathTemplate');
+    this.compute('pathRegex', 'pathTemplate');
+  },
+
+  splitPathTemplate: function() {
+    return this.get('pathTemplate').split('/');
+  },
+
+  pathRegex: function() {
+    return new RegExp('^' + this.get('pathTemplate').replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
   },
 
   // assume path is already normalized and we've "matched" it.
@@ -3708,8 +3748,8 @@ pie.route = pie.base.extend('route', {
     interpolations = {};
 
     for(var i = 0; i < splitPath.length; i++){
-      if(/^:/.test(this.splitPathTemplate[i])) {
-        interpolations[this.splitPathTemplate[i].replace(/^:/, '')] = splitPath[i];
+      if(/^:/.test(this.get('splitPathTemplate.' + i))) {
+        interpolations[this.get('splitPathTemplate.' + i).replace(/^:/, '')] = splitPath[i];
       }
     }
 
@@ -3719,16 +3759,16 @@ pie.route = pie.base.extend('route', {
   },
 
   isDirectMatch: function(path) {
-    return path === this.pathTemplate;
+    return path === this.get('pathTemplate');
   },
 
   isMatch: function(path) {
-    return this.pathRegex.test(path);
+    return this.get('pathRegex').test(path);
   },
 
   path: function(data, interpolateOnly) {
     var usedKeys = [],
-    s = this.pathTemplate,
+    s = this.get('pathTemplate'),
     params,
     unusedData;
 
@@ -3755,14 +3795,23 @@ pie.route = pie.base.extend('route', {
   }
 
 });
-pie.router = pie.base.extend('router', {
+pie.router = pie.model.extend('router', {
 
   init: function(app) {
-    this.app = app;
-    this.routes = [];
-    this.routeNames = {};
-    this.root = app.options.root || '/';
-    this.rootRegex = new RegExp('^' + this.root);
+    this._super({
+      routes: [],
+      routeNames: {},
+      root: app.options.root || '/'
+    }, {
+      app: app
+    });
+
+
+    this.compute('rootRegex', 'root');
+  },
+
+  rootRegex: function() {
+    return new RegExp('^' + this.get('root'));
   },
 
   // get a url based on the current one but with the changes provided.
@@ -3778,9 +3827,9 @@ pie.router = pie.base.extend('router', {
 
 
   findRoute: function(nameOrPath) {
-    var route = this.routeNames[nameOrPath];
-    route = route || pie.array.detect(this.routes, function(r){ return r.isDirectMatch(nameOrPath); });
-    route = route || pie.array.detect(this.routes, function(r){ return r.isMatch(nameOrPath); });
+    var route = this.get('routeNames.' + nameOrPath);
+    route = route || pie.array.detect(this.get('routes'), function(r){ return r.isDirectMatch(nameOrPath); });
+    route = route || pie.array.detect(this.get('routes'), function(r){ return r.isMatch(nameOrPath); });
     return route;
   },
 
@@ -3805,8 +3854,8 @@ pie.router = pie.base.extend('router', {
       if(defaults) config = pie.object.merge({}, defaults, config);
 
       route = new pie.route(path, config);
-      this.routes.push(route);
-      if(route.name) this.routeNames[route.name] = route;
+      this.get('routes').push(route);
+      if(route.name) this.set('routeNames.' + route.name, route);
     }.bind(this));
 
     this.sortRoutes();
@@ -3820,8 +3869,8 @@ pie.router = pie.base.extend('router', {
     path = r.path(data, interpolateOnly);
 
     // apply the root.
-    if(!pie.string.PROTOCOL_TEST.test(path) && !this.rootRegex.test(path)) {
-      path = this.root + path;
+    if(!pie.string.PROTOCOL_TEST.test(path) && !this.get('rootRegex').test(path)) {
+      path = this.get('root') + path;
       path = pie.string.normalizeUrl(path);
     }
 
@@ -3832,9 +3881,9 @@ pie.router = pie.base.extend('router', {
   sortRoutes: function() {
     var ac, bc, c, d = [];
 
-    this.routes.sort(function(a,b) {
-      a = a.pathTemplate;
-      b = b.pathTemplate;
+    this.get('routes').sort(function(a,b) {
+      a = a.get('pathTemplate');
+      b = b.get('pathTemplate');
 
       ac = (a.match(/:/g) || d).length;
       bc = (b.match(/:/g) || d).length;
@@ -3852,7 +3901,7 @@ pie.router = pie.base.extend('router', {
     pieces = path.split('?');
 
     path = pieces.shift();
-    path = path.replace(this.rootRegex, '');
+    path = path.replace(this.get('rootRegex'), '');
     path = pie.string.normalizeUrl(path);
 
     query = pieces.join('&') || '';

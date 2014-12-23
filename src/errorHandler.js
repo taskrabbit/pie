@@ -1,13 +1,16 @@
-pie.errorHandler = pie.base.extend('errorHandler', {
+pie.errorHandler = pie.model.extend('errorHandler', {
 
   init: function(app) {
-    this.app = app;
-    this.responseCodeHandlers = {};
+    this._super({
+      responseCodeHandlers: {}
+    }, {
+      app: app
+    });
   },
 
 
   // extract the "data" object out of an xhr
-  data: function(xhr) {
+  xhrData: function(xhr) {
     return xhr.data = xhr.data || (xhr.status ? JSON.parse(xhr.response) : {});
   },
 
@@ -15,7 +18,7 @@ pie.errorHandler = pie.base.extend('errorHandler', {
   // extract an error message from a response. Try to extract the error message from
   // the xhr data diretly, or allow overriding by response code.
   errorMessagesFromRequest: function(xhr) {
-    var d = this.data(xhr),
+    var d = this.xhrData(xhr),
     errors  = pie.array.map(d.errors || [], 'message'),
     clean;
 
@@ -27,10 +30,14 @@ pie.errorHandler = pie.base.extend('errorHandler', {
     return pie.array.from(clean);
   },
 
+  getResponseCodeHandler: function(status) {
+    return this.get('responseCodeHandlers.' + status);
+  },
+
   // find a handler for the xhr via response code or the app default.
   handleXhrError: function(xhr) {
 
-    var handler = this.responseCodeHandlers[xhr.status.toString()];
+    var handler = this.getResponseCodeHandler(xhr.status.toString());
 
     if(handler) {
       handler.call(xhr, xhr);
@@ -59,7 +66,7 @@ pie.errorHandler = pie.base.extend('errorHandler', {
   // register a response code handler
   // registerHandler('401', myRedirectCallback);
   registerHandler: function(responseCode, handler) {
-    this.responseCodeHandlers[responseCode.toString()] = handler;
+    this.set('responseCodeHandlers.' + responseCode.toString(), handler);
   },
 
 

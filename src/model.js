@@ -66,10 +66,11 @@
 
 
 pie.model = pie.base.extend('model', {
+
   init: function(d, options) {
     this.data = pie.object.merge({_version: 1}, d);
     this.options = options || {};
-    this.app = this.options.app || pie.appInstance;
+    this.app = this.app || this.options.app || pie.appInstance;
     this.observations = {};
     this.changeRecords = [];
     pie.setUid(this);
@@ -120,6 +121,14 @@ pie.model = pie.base.extend('model', {
   // Key can be multiple levels deep by providing a dot separated key.
   get: function(key) {
     return pie.object.getPath(this.data, key);
+  },
+
+  getOrSet: function(key, defaultValue) {
+    var val = this.get(key);
+    if(val != null) return val;
+
+    this.set(key, defaultValue);
+    return this.get(key);
   },
 
   // Retrieve multiple values at once.
@@ -219,10 +228,17 @@ pie.model = pie.base.extend('model', {
 
   // Register a computed property which is accessible via `name` and defined by `fn`.
   // Provide all properties which invalidate the definition.
-  compute: function(/* name, fn[, prop1, prop2 ] */) {
+  // if the definition of the property is defined by a function of the same name, the function can be ommitted.
+  // this.compute('fullName', 'first_name', 'last_name');
+  compute: function(/* name, fn?[, prop1, prop2 ] */) {
     var props = pie.array.from(arguments),
     name = props.shift(),
     fn = props.shift();
+
+    if(!pie.object.isFunction(fn)) {
+      props.unshift(fn);
+      fn = this[name].bind(this);
+    }
 
     this.observe(function(/* changes */){
       this.set(name, fn.call(this));

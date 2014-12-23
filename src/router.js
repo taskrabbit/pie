@@ -1,11 +1,20 @@
-pie.router = pie.base.extend('router', {
+pie.router = pie.model.extend('router', {
 
   init: function(app) {
-    this.app = app;
-    this.routes = [];
-    this.routeNames = {};
-    this.root = app.options.root || '/';
-    this.rootRegex = new RegExp('^' + this.root);
+    this._super({
+      routes: [],
+      routeNames: {},
+      root: app.options.root || '/'
+    }, {
+      app: app
+    });
+
+
+    this.compute('rootRegex', 'root');
+  },
+
+  rootRegex: function() {
+    return new RegExp('^' + this.get('root'));
   },
 
   // get a url based on the current one but with the changes provided.
@@ -21,9 +30,9 @@ pie.router = pie.base.extend('router', {
 
 
   findRoute: function(nameOrPath) {
-    var route = this.routeNames[nameOrPath];
-    route = route || pie.array.detect(this.routes, function(r){ return r.isDirectMatch(nameOrPath); });
-    route = route || pie.array.detect(this.routes, function(r){ return r.isMatch(nameOrPath); });
+    var route = this.get('routeNames.' + nameOrPath);
+    route = route || pie.array.detect(this.get('routes'), function(r){ return r.isDirectMatch(nameOrPath); });
+    route = route || pie.array.detect(this.get('routes'), function(r){ return r.isMatch(nameOrPath); });
     return route;
   },
 
@@ -48,8 +57,8 @@ pie.router = pie.base.extend('router', {
       if(defaults) config = pie.object.merge({}, defaults, config);
 
       route = new pie.route(path, config);
-      this.routes.push(route);
-      if(route.name) this.routeNames[route.name] = route;
+      this.get('routes').push(route);
+      if(route.name) this.set('routeNames.' + route.name, route);
     }.bind(this));
 
     this.sortRoutes();
@@ -63,8 +72,8 @@ pie.router = pie.base.extend('router', {
     path = r.path(data, interpolateOnly);
 
     // apply the root.
-    if(!pie.string.PROTOCOL_TEST.test(path) && !this.rootRegex.test(path)) {
-      path = this.root + path;
+    if(!pie.string.PROTOCOL_TEST.test(path) && !this.get('rootRegex').test(path)) {
+      path = this.get('root') + path;
       path = pie.string.normalizeUrl(path);
     }
 
@@ -75,9 +84,9 @@ pie.router = pie.base.extend('router', {
   sortRoutes: function() {
     var ac, bc, c, d = [];
 
-    this.routes.sort(function(a,b) {
-      a = a.pathTemplate;
-      b = b.pathTemplate;
+    this.get('routes').sort(function(a,b) {
+      a = a.get('pathTemplate');
+      b = b.get('pathTemplate');
 
       ac = (a.match(/:/g) || d).length;
       bc = (b.match(/:/g) || d).length;
@@ -95,7 +104,7 @@ pie.router = pie.base.extend('router', {
     pieces = path.split('?');
 
     path = pieces.shift();
-    path = path.replace(this.rootRegex, '');
+    path = path.replace(this.get('rootRegex'), '');
     path = pie.string.normalizeUrl(path);
 
     query = pieces.join('&') || '';

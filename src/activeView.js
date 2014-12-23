@@ -91,7 +91,7 @@ pie.activeView.reopen({
 
   setRenderTarget: function(target) {
     this.renderTarget = target;
-    if(this.emitter.has('afterRender')) this._appendToDom();
+    if(this.emitter.hasEvent('afterRender')) this._appendToDom();
   },
 
   templateName: function() {

@@ -56,7 +56,7 @@
         'listApi' : '/api/pie/list.json'
       });
 
-      lib = { views: {} };
+      pie.ns('lib.views');
 
       lib.views.listView = pie.activeView.extend('listView', function() {
         this.model = this.items = new pie.model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
