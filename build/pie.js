@@ -2069,7 +2069,7 @@ pie.model = pie.base.extend('model', {
   init: function(d, options) {
     this.data = pie.object.merge({_version: 1}, d);
     this.options = options || {};
-    this.app = this.options.app || window.app;
+    this.app = this.options.app || pie.appInstance;
     this.observations = {};
     this.changeRecords = [];
     pie.setUid(this);
@@ -3874,12 +3874,12 @@ pie.router = pie.base.extend('router', {
 
   }
 });
-pie.templates = pie.base.extend({
+pie.templates = pie.model.extend('templates', {
 
   init: function(app) {
-    this.app = app;
-    this._templates = {};
-    this._super();
+    this._super({}, {
+      app: app
+    });
   },
 
   _node: function(name) {
@@ -3888,7 +3888,7 @@ pie.templates = pie.base.extend({
 
   _registerTemplate: function(name, content) {
     this.app.debug('Compiling and storing template: ' + name);
-    this._templates[name] = pie.string.template(content);
+    this.set(name, pie.string.template(content));
   },
 
   load: function(name, cb) {
@@ -3910,7 +3910,7 @@ pie.templates = pie.base.extend({
   },
 
   render: function(name, data) {
-    if(!this._templates[name]) {
+    if(!this.get(name)) {
 
       var node = this._node(name);
 
@@ -3921,11 +3921,11 @@ pie.templates = pie.base.extend({
       }
     }
 
-    return this._templates[name](data || {});
+    return this.get(name)(data || {});
   },
 
   renderAsync: function(name, data, cb) {
-    if(this._templates[name]) {
+    if(this.get(name)) {
       var content = this.render(name, data);
       cb(content);
       return;

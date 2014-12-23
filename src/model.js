@@ -69,7 +69,7 @@ pie.model = pie.base.extend('model', {
   init: function(d, options) {
     this.data = pie.object.merge({_version: 1}, d);
     this.options = options || {};
-    this.app = this.options.app || window.app;
+    this.app = this.options.app || pie.appInstance;
     this.observations = {};
     this.changeRecords = [];
     pie.setUid(this);

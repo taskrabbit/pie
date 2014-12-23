@@ -3478,7 +3478,7 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d, options)</span> </span>{
     <span class="hljs-keyword">this</span>.data = pie.object.merge({_version: <span class="hljs-number">1</span>}, d);
     <span class="hljs-keyword">this</span>.options = options || {};
-    <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.options.app || <span class="hljs-built_in">window</span>.app;
+    <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.options.app || pie.appInstance;
     <span class="hljs-keyword">this</span>.observations = {};
     <span class="hljs-keyword">this</span>.changeRecords = [];
     pie.setUid(<span class="hljs-keyword">this</span>);
@@ -6109,12 +6109,12 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
 
   }
 });
-pie.templates = pie.base.extend({
+pie.templates = pie.model.extend(<span class="hljs-string">'templates'</span>, {
 
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
-    <span class="hljs-keyword">this</span>.app = app;
-    <span class="hljs-keyword">this</span>._templates = {};
-    <span class="hljs-keyword">this</span>._super();
+    <span class="hljs-keyword">this</span>._super({}, {
+      app: app
+    });
   },
 
   _node: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
@@ -6123,7 +6123,7 @@ pie.templates = pie.base.extend({
 
   _registerTemplate: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, content)</span> </span>{
     <span class="hljs-keyword">this</span>.app.debug(<span class="hljs-string">'Compiling and storing template: '</span> + name);
-    <span class="hljs-keyword">this</span>._templates[name] = pie.string.template(content);
+    <span class="hljs-keyword">this</span>.set(name, pie.string.template(content));
   },
 
   load: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, cb)</span> </span>{
@@ -6145,7 +6145,7 @@ pie.templates = pie.base.extend({
   },
 
   render: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, data)</span> </span>{
-    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>._templates[name]) {
+    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.get(name)) {
 
       <span class="hljs-keyword">var</span> node = <span class="hljs-keyword">this</span>._node(name);
 
@@ -6156,11 +6156,11 @@ pie.templates = pie.base.extend({
       }
     }
 
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._templates[name](data || {});
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.get(name)(data || {});
   },
 
   renderAsync: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, data, cb)</span> </span>{
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._templates[name]) {
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.get(name)) {
       <span class="hljs-keyword">var</span> content = <span class="hljs-keyword">this</span>.render(name, data);
       cb(content);
       <span class="hljs-keyword">return</span>;
