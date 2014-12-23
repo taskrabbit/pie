@@ -122,7 +122,7 @@ pie.i18n = pie.base.extend('i18n', {
     if(!translation) {
 
       if(data && data.hasOwnProperty('default')) {
-        translation = pie.func.valueFrom(data.default);
+        translation = pie.fn.valueFrom(data.default);
       } else {
         this.app.debug("Translation not found: " + path);
         return "";

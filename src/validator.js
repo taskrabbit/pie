@@ -202,7 +202,7 @@ pie.validator.rangeOptions = pie.base.extend('rangeOptions', {
   },
 
   get: function(key) {
-    return pie.func.valueFrom(this.rangedata[key]);
+    return pie.fn.valueFrom(this.rangedata[key]);
   },
 
   has: function(key) {

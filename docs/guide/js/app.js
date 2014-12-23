@@ -66,7 +66,7 @@ lib.views.page.reopen({
     app.ajax.get({
       url: app.router.path('pageApi', {page: name}),
       verb: app.ajax.GET,
-      type: 'html',
+      contentType: 'html',
       dataSuccess: function(html) {
         app._templates[name] = pie.string.template(html);
         this.render();

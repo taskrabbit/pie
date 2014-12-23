@@ -12,12 +12,12 @@ pie.dom._all = function(originalArgs, returnValues) {
   nodes.forEach(function(e){
     for(i=0;i < meths.length-1;i++) {
       f = e[meths[i]];
-      e = pie.func.valueFrom(f);
+      e = pie.fn.valueFrom(f);
     }
     if(assign) v = e[meth] = args[0];
     else {
       f = e[meth];
-      v = pie.func.valueFrom(f, e, args);
+      v = pie.fn.valueFrom(f, e, args);
     }
 
     if(returnValues) r.push(v);

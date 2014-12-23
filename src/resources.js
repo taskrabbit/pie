@@ -13,12 +13,26 @@ pie.resources = pie.base.extend('resources', {
   },
 
   _inferredResourceType: function(src) {
-    return (/(\.|\/)js(\?|$)/).test(src) ? 'script' : 'link';
+    if((/(\.|\/)js(\?|$)/).test(src)) return 'script';
+    if((/(\.|\/)css(\?|$)/).test(src)) return 'link';
+    return 'ajax';
   },
 
   _normalizeSrc: function(srcOrOptions) {
     var options = typeof srcOrOptions === 'string' ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
     return options;
+  },
+
+  _loadajax: function(options, resourceOnload) {
+    var ajaxOptions = pie.object.merge({
+      verb: 'GET',
+      url: options.src,
+      contentType: pie.array.last(options.src.split('?')[0].split(/[\/\.]/))
+    }, options, {
+      success: resourceOnload
+    });
+
+    this.app.ajax.ajax(ajaxOptions);
   },
 
   _loadscript: function(options, resourceOnload) {
@@ -56,40 +70,50 @@ pie.resources = pie.base.extend('resources', {
     this.srcMap[name] = options;
   },
 
-  load: function(srcOrOptions, cb) {
-    var options = this._normalizeSrc(srcOrOptions), src;
-    options = this.srcMap[options.src] || options;
-    src = options.src;
+  load: function(/* src1, src2, src3, onload */) {
+    var sources = pie.array.from(arguments),
+    onload = sources.pop(),
+    fns;
 
-    // we've already taken care of this.
-    if(this.loaded[src] === true) {
-      if(cb) cb();
-      return true;
-    }
+    sources = sources.map(this._normalizeSrc.bind(this));
 
-    // we're already working on retrieving this src, just append our cb to the callbacks..
-    if(this.loaded[src]) {
-      this.loaded[src].push(cb);
-    } else {
-      this.loaded[src] = [cb];
+    fns = sources.map(function(options){
+      options = this.srcMap[options.src] || options;
+      var src = options.src;
 
-      var type = options.type || this._inferredResourceType(options.src),
-      resourceOnload = function() {
+      return function(cb) {
+        if(this.loaded[src] === true) {
+          cb();
+          return true;
+        }
 
-        this.loaded[src].forEach(function(fn) { if(fn) fn(); });
-        this.loaded[src] = true;
+        if(this.loaded[src]) {
+          this.loaded[src].push(cb);
+          return false;
+        }
 
-        if(options.callbackName) delete window[options.callbackName];
+        this.loaded[src] = [cb];
+
+        var type = options.type || this._inferredResourceType(options.src),
+        resourceOnload = function() {
+
+          this.loaded[src].forEach(function(fn) { if(fn) fn(); });
+          this.loaded[src] = true;
+
+          if(options.callbackName) delete window[options.callbackName];
+        }.bind(this);
+
+        if(options.callbackName) {
+          window[options.callbackName] = resourceOnload;
+        }
+
+
+        this['_load' + type](options, resourceOnload);
+
+        return false;
       }.bind(this);
+    }.bind(this));
 
-      if(options.callbackName) {
-        window[options.callbackName] = resourceOnload;
-      }
-
-
-      this['_load' + type](options, resourceOnload);
-    }
-
-    return false;
+    pie.fn.async(fns, onload);
   }
 });

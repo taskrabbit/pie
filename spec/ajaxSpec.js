@@ -127,7 +127,7 @@ describe("pie.ajax", function() {
     it("should allow alternate formats to be sent", function() {
       this.ajax.post({
         url: '/post-path-html',
-        type: 'html',
+        accept: 'text/html',
         data: "foo=bar&baz=qux",
         csrfToken: 'xyz',
         verb: 'POST'

@@ -47,10 +47,7 @@ example.views.layout = pie.activeView.extend('layout', function() {
     template: 'layoutContainer',
 
     // since we don't need to retrieve anything from a web service, we can render immediately.
-    renderOnSetup: true,
-
-    // lol, jk
-    // resources: ['//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js']
+    renderOnSetup: true
   });
 
   // this is our page "context". It represents a list of items.

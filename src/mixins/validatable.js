@@ -85,7 +85,7 @@ pie.mixins.validatable = {
       }.bind(this));
 
       // start all the validations
-      pie.func.async(fns, whenComplete, counterObserver);
+      pie.fn.async(fns, whenComplete, counterObserver);
 
       return void(0); // return undefined to ensure we make our point about asynchronous validation.
     }
@@ -136,7 +136,7 @@ pie.mixins.validatable = {
         };
       });
 
-      pie.func.async(fns, whenComplete, counterObserver);
+      pie.fn.async(fns, whenComplete, counterObserver);
 
       return void(0);
     }

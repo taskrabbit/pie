@@ -7,24 +7,12 @@ pie.activeView = pie.view.extend('activeView', function(options) {
   this.emitter.once('afterRender', this._appendToDom.bind(this));
 });
 
-pie.activeView.reopen(pie.mixins.externalResources);
 pie.activeView.reopen({
 
   _appendToDom: function() {
     if(!this.renderTarget) return;
     if(this.el.parentNode) return;
     this.renderTarget.appendChild(this.el);
-  },
-
-
-  // this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
-  _loadingStyle: function(bool) {
-    this.el.classList[bool ? 'add' : 'remove']('loading');
-
-    var buttons = this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable');
-
-    pie.dom.all(buttons, bool ? 'classList.add' : 'classList.remove', 'btn-loading');
-    pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
   },
 
   _removeFromDom: function() {
@@ -48,29 +36,19 @@ pie.activeView.reopen({
 
     this.emitter.around('setup', function(){
 
-      this.loadExternalResources(this.options.resources, function() {
+      this.emitter.fire('setup');
 
-        this.emitter.fire('setup');
+      if(this.options.autoRender && this.model) {
+        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+        this.onChange(this.model, this.render.bind(this), field);
+      }
 
-        if(this.options.autoRender && this.model) {
-          var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-          this.onChange(this.model, this.render.bind(this), field);
-        }
-
-        if(this.options.renderOnSetup) {
-          this.render();
-        }
-
-      }.bind(this));
+      if(this.options.renderOnSetup) {
+        this.render();
+      }
 
     }.bind(this));
 
-  },
-
-  // add or remove the default loading style.
-  loadingStyle: function(bool) {
-    if(bool === undefined) bool = true;
-    this._loadingStyle(bool);
   },
 
   // If the first option passed is a node, it will use that as the query scope.
@@ -97,13 +75,6 @@ pie.activeView.reopen({
     this._removeFromDom();
   },
 
-
-  // convenience method which is useful for ajax callbacks.
-  removeLoadingStyle: function(){
-    this._loadingStyle(false);
-  },
-
-
   renderData: function() {
     if(this.model) {
       return this.model.data;
@@ -117,7 +88,6 @@ pie.activeView.reopen({
       this.emitter.fire('render');
     }.bind(this));
   },
-
 
   setRenderTarget: function(target) {
     this.renderTarget = target;

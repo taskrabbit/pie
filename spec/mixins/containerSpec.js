@@ -58,4 +58,78 @@ describe("pie.mixins.container", function() {
 
   });
 
+  describe("#removeChild", function() {
+
+    beforeEach(function() {
+      this.container.init();
+
+      this.child1 = {};
+      this.child2 = {};
+      this.container.addChild('child1', this.child1);
+      this.container.addChild('child2', this.child2);
+    });
+
+    it("should remove a child from it's parent by it's name", function() {
+      expect(this.container.children.length).toEqual(2);
+      this.container.removeChild('child1');
+      expect(this.container.children).toEqual([this.child2]);
+    });
+
+    it("should remove a child from it's parent by it's index", function() {
+      expect(this.container.children.length).toEqual(2);
+      this.container.removeChild(0);
+      expect(this.container.children).toEqual([this.child2]);
+    });
+
+    it("should remove a child from it's parent by itself", function() {
+      expect(this.container.children.length).toEqual(2);
+      this.container.removeChild(this.child1);
+      expect(this.container.children).toEqual([this.child2]);
+    });
+
+    it("should not blow up if there is no matching child", function() {
+      expect(this.container.children.length).toEqual(2);
+      this.container.removeChild('other');
+      expect(this.container.children).toEqual([this.child1, this.child2]);
+    });
+
+    it("should invoke removedFromParent on the child", function() {
+      this.child1.removedFromParent = jasmine.createSpy('removedFromParent');
+      this.container.removeChild('child1');
+      expect(this.child1.removedFromParent).toHaveBeenCalled();
+    });
+
+  });
+
+  describe('#bubble', function() {
+
+    beforeEach(function() {
+      this.container.foo = jasmine.createSpy('containerFoo');
+      this.container.bar = jasmine.createSpy('containerBar');
+      this.container.init();
+
+      this.child = pie.object.merge({}, pie.mixins.container);
+      this.child.foo = jasmine.createSpy('childFoo');
+      this.child.init();
+
+      this.grandchild = pie.object.merge({}, pie.mixins.container);
+      this.grandchild.init();
+
+      this.container.addChild('child', this.child);
+      this.child.addChild('child', this.grandchild);
+    });
+
+    it("should find the nearest instance with a matching function", function(){
+      this.grandchild.bubble('foo', 'biz', 'baz');
+      expect(this.child.foo).toHaveBeenCalledWith('biz', 'baz');
+      expect(this.container.foo).not.toHaveBeenCalled();
+    });
+
+    it("should travel multiple levels if necessary", function(){
+      this.grandchild.bubble('bar', 'biz', 'baz');
+      expect(this.container.bar).toHaveBeenCalledWith('biz', 'baz');
+    });
+
+  });
+
 });

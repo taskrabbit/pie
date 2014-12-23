@@ -6,16 +6,13 @@ window.pie = {
   browser: {},
   date: {},
   dom: {},
-  func: {},
+  fn: {},
   math: {},
   object: {},
   string: {},
 
   // extensions to be used within pie apps.
   mixins: {},
-
-  // service objects
-  services: {},
 
   pieId: 1,
 
@@ -38,24 +35,22 @@ window.pie = {
   // window._ = pie.util();
   // _.a.detect(/* .. */);
   // _.o.merge(a, b);
-  // _.inherit(child, parent);
   // _.unique(); //=> '95'
   util: function() {
     var o = {};
 
-    o.a = pie.array;
-    o.d = pie.date;
-    o.$ = pie.dom;
-    o.f = pie.func;
-    o.m = pie.math;
-    o.o = pie.object;
-    o.s = pie.string;
-    o.x = pie.mixins;
+    o.a   = pie.array;
+    o.b   = pie.browser;
+    o.d   = pie.date;
+    o.$   = pie.dom;
+    o.fn  = pie.fn;
+    o.m   = pie.math;
+    o.o   = pie.object;
+    o.s   = pie.string;
+    o.x   = pie.mixins;
 
     o.unique  = pie.unique;
     o.setUid  = pie.setUid;
-    o.inherit = pie.inherit;
-    o.extend  = pie.extend;
 
     return o;
   }
@@ -418,12 +413,12 @@ pie.dom._all = function(originalArgs, returnValues) {
   nodes.forEach(function(e){
     for(i=0;i < meths.length-1;i++) {
       f = e[meths[i]];
-      e = pie.func.valueFrom(f);
+      e = pie.fn.valueFrom(f);
     }
     if(assign) v = e[meth] = args[0];
     else {
       f = e[meth];
-      v = pie.func.valueFrom(f, e, args);
+      v = pie.fn.valueFrom(f, e, args);
     }
 
     if(returnValues) r.push(v);
@@ -556,7 +551,7 @@ pie.dom.trigger = function(el, e) {
 // N milliseconds. If `immediate` is passed, trigger the function on the
 // leading edge, instead of the trailing.
 // Lifted from underscore.js
-pie.func.debounce = function(func, wait, immediate) {
+pie.fn.debounce = function(func, wait, immediate) {
   var timeout, args, context, timestamp, result;
 
   var later = function() {
@@ -588,14 +583,14 @@ pie.func.debounce = function(func, wait, immediate) {
   };
 };
 
-pie.func.valueFrom = function(f, binding, args) {
+pie.fn.valueFrom = function(f, binding, args) {
   if(pie.object.isFunction(f)) return f.apply(binding, args) ;
   return f;
 };
 
 
 
-pie.func.async = function(fns, cb, counterObserver) {
+pie.fn.async = function(fns, cb, counterObserver) {
 
   if(!fns.length) {
     cb();
@@ -816,7 +811,7 @@ pie.object.serialize = function(obj, removeEmpty) {
   var s = [], append, appendEmpty, build, rbracket = /\[\]$/;
 
   append = function(k,v){
-    v = pie.func.valueFrom(v);
+    v = pie.fn.valueFrom(v);
     if(removeEmpty && !rbracket.test(k) && (v == null || !v.toString().length)) return;
     s.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(v)));
   };
@@ -1484,26 +1479,6 @@ pie.mixins.container = {
     return this;
   }
 };
-pie.mixins.externalResources = {
-
-  loadExternalResources: function(/* res1, res2, res3, cb */) {
-    var resources = pie.array.from(arguments),
-    cb = resources.pop(),
-    fns;
-
-    resources = pie.array.change(resources, 'flatten', 'compact');
-
-    fns = resources.map(function(r){
-      return function(asyncCb){
-        this.app.resources.load(r, asyncCb);
-      }.bind(this);
-    }.bind(this));
-
-    pie.func.async(fns, cb);
-    return void(0);
-  }
-
-};
 pie.mixins.validatable = {
 
   // default to a model implementation
@@ -1591,7 +1566,7 @@ pie.mixins.validatable = {
       }.bind(this));
 
       // start all the validations
-      pie.func.async(fns, whenComplete, counterObserver);
+      pie.fn.async(fns, whenComplete, counterObserver);
 
       return void(0); // return undefined to ensure we make our point about asynchronous validation.
     }
@@ -1642,7 +1617,7 @@ pie.mixins.validatable = {
         };
       });
 
-      pie.func.async(fns, whenComplete, counterObserver);
+      pie.fn.async(fns, whenComplete, counterObserver);
 
       return void(0);
     }
@@ -1805,7 +1780,7 @@ pie.app = pie.base.extend('app', function(options) {
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
 
   // set a global instance which can be used as a backup within the pie library.
-  window.pieInstance = window.pieInstance || this;
+  pie.appInstance = pie.appInstance || this;
 });
 
 
@@ -2400,24 +2375,12 @@ pie.activeView = pie.view.extend('activeView', function(options) {
   this.emitter.once('afterRender', this._appendToDom.bind(this));
 });
 
-pie.activeView.reopen(pie.mixins.externalResources);
 pie.activeView.reopen({
 
   _appendToDom: function() {
     if(!this.renderTarget) return;
     if(this.el.parentNode) return;
     this.renderTarget.appendChild(this.el);
-  },
-
-
-  // this.el receives a loading class, specific buttons are disabled and provided with the btn-loading class.
-  _loadingStyle: function(bool) {
-    this.el.classList[bool ? 'add' : 'remove']('loading');
-
-    var buttons = this.qsa('.submit-container button.btn-primary, .btn-loading, .btn-loadable');
-
-    pie.dom.all(buttons, bool ? 'classList.add' : 'classList.remove', 'btn-loading');
-    pie.dom.all(buttons, bool ? 'setAttribute' : 'removeAttribute', 'disabled', 'disabled');
   },
 
   _removeFromDom: function() {
@@ -2441,29 +2404,19 @@ pie.activeView.reopen({
 
     this.emitter.around('setup', function(){
 
-      this.loadExternalResources(this.options.resources, function() {
+      this.emitter.fire('setup');
 
-        this.emitter.fire('setup');
+      if(this.options.autoRender && this.model) {
+        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+        this.onChange(this.model, this.render.bind(this), field);
+      }
 
-        if(this.options.autoRender && this.model) {
-          var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-          this.onChange(this.model, this.render.bind(this), field);
-        }
-
-        if(this.options.renderOnSetup) {
-          this.render();
-        }
-
-      }.bind(this));
+      if(this.options.renderOnSetup) {
+        this.render();
+      }
 
     }.bind(this));
 
-  },
-
-  // add or remove the default loading style.
-  loadingStyle: function(bool) {
-    if(bool === undefined) bool = true;
-    this._loadingStyle(bool);
   },
 
   // If the first option passed is a node, it will use that as the query scope.
@@ -2490,13 +2443,6 @@ pie.activeView.reopen({
     this._removeFromDom();
   },
 
-
-  // convenience method which is useful for ajax callbacks.
-  removeLoadingStyle: function(){
-    this._loadingStyle(false);
-  },
-
-
   renderData: function() {
     if(this.model) {
       return this.model.data;
@@ -2510,7 +2456,6 @@ pie.activeView.reopen({
       this.emitter.fire('render');
     }.bind(this));
   },
-
 
   setRenderTarget: function(target) {
     this.renderTarget = target;
@@ -2537,7 +2482,7 @@ pie.ajax = pie.base.extend('ajax', {
   // default ajax options. override this method to
   _defaultAjaxOptions: function() {
     return pie.object.merge({}, this.defaultAjaxOptions, {
-      type: 'json',
+      accept: 'application/json',
       verb: this.GET,
       error: this.app.errorHandler.handleXhrError.bind(this.app.errorHandler)
     });
@@ -2582,6 +2527,7 @@ pie.ajax = pie.base.extend('ajax', {
     xhr.open(options.verb, url, true);
 
     this._applyHeaders(xhr, options);
+    if(options.setup) options.setup(xhr, options);
 
     xhr.onload = function() {
       if(options.tracker) options.tracker(this);
@@ -2627,7 +2573,7 @@ pie.ajax = pie.base.extend('ajax', {
   },
 
   _applyCsrfToken: function(xhr, options) {
-    var token = pie.func.valueFrom(options.csrfToken),
+    var token = pie.fn.valueFrom(options.csrfToken),
     tokenEl;
 
     if(!token) {
@@ -2641,48 +2587,39 @@ pie.ajax = pie.base.extend('ajax', {
   },
 
   _applyHeaders: function(xhr, options) {
-    var meth = pie.string.modularize('_apply_' + options.type + '_headers');
-    (this[meth] || this._applyDefaultHeaders)(xhr, options);
 
     this._applyCsrfToken(xhr, options);
 
-    if(pie.object.isString(options.data)) {
-      xhr.setRequestHeader('Content-Type', options.contentType || 'application/x-www-form-urlencoded');
+    if(options.accept) xhr.setRequestHeader('Accept', options.accept);
+
+    if(options.contentType) {
+      xhr.setRequestHeader('Content-Type', options.contentType);
+    } else if(pie.object.isString(options.data)) {
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     // if we aren't already sending a string, we will encode to json.
     } else {
       xhr.setRequestHeader('Content-Type', 'application/json');
     }
   },
 
-  _applyDefaultHeaders: function(xhr, options) {},
-
-  _applyJsonHeaders: function(xhr, options) {
-    xhr.setRequestHeader('Accept', 'application/json');
-  },
-
-  _applyHtmlHeaders: function(xhr, options) {
-    xhr.setRequestHeader('Accept', 'text/html');
-  },
-
-  _applyTextHeaders: function(xhr, options) {
-    xhr.setRequestHeader('Accept', 'text/plain');
-  },
-
   _parseResponse: function(xhr, options) {
-    var meth = pie.string.modularize('_parse_' + options.type + '_response');
-    (this[meth] || this._parseDefaultResponse)(xhr, options);
+    var parser = options.accept && this.responseParsers[options.accept] || this.responseParsers.default;
+    xhr.data = parser(xhr, options);
   },
 
-  _parseDefaultResponse: function(xhr, options) {
-    xhr.data = xhr.responseText;
-  },
+  responseParsers: {
 
-  _parseJsonResponse: function(xhr, options) {
-    try{
-      xhr.data = xhr.responseText.trim().length ? JSON.parse(xhr.responseText) : {};
-    } catch(err) {
-      this.app.debug("could not parse JSON response: " + err);
-      xhr.data = {};
+    "application/json" : function(xhr, options) {
+      try{
+        return xhr.responseText.trim().length ? JSON.parse(xhr.responseText) : {};
+      } catch(err) {
+        this.app.debug("could not parse JSON response: " + err);
+        return {};
+      }
+    },
+
+    "default" : function(xhr, options) {
+      return xhr.responseText;
     }
   }
 });
@@ -3132,7 +3069,7 @@ pie.i18n = pie.base.extend('i18n', {
     if(!translation) {
 
       if(data && data.hasOwnProperty('default')) {
-        translation = pie.func.valueFrom(data.default);
+        translation = pie.fn.valueFrom(data.default);
       } else {
         this.app.debug("Translation not found: " + path);
         return "";
@@ -3651,12 +3588,26 @@ pie.resources = pie.base.extend('resources', {
   },
 
   _inferredResourceType: function(src) {
-    return (/(\.|\/)js(\?|$)/).test(src) ? 'script' : 'link';
+    if((/(\.|\/)js(\?|$)/).test(src)) return 'script';
+    if((/(\.|\/)css(\?|$)/).test(src)) return 'link';
+    return 'ajax';
   },
 
   _normalizeSrc: function(srcOrOptions) {
     var options = typeof srcOrOptions === 'string' ? {src: srcOrOptions} : pie.object.merge({}, srcOrOptions);
     return options;
+  },
+
+  _loadajax: function(options, resourceOnload) {
+    var ajaxOptions = pie.object.merge({
+      verb: 'GET',
+      url: options.src,
+      contentType: pie.array.last(options.src.split('?')[0].split(/[\/\.]/))
+    }, options, {
+      success: resourceOnload
+    });
+
+    this.app.ajax.ajax(ajaxOptions);
   },
 
   _loadscript: function(options, resourceOnload) {
@@ -3694,41 +3645,51 @@ pie.resources = pie.base.extend('resources', {
     this.srcMap[name] = options;
   },
 
-  load: function(srcOrOptions, cb) {
-    var options = this._normalizeSrc(srcOrOptions), src;
-    options = this.srcMap[options.src] || options;
-    src = options.src;
+  load: function(/* src1, src2, src3, onload */) {
+    var sources = pie.array.from(arguments),
+    onload = sources.pop(),
+    fns;
 
-    // we've already taken care of this.
-    if(this.loaded[src] === true) {
-      if(cb) cb();
-      return true;
-    }
+    sources = sources.map(this._normalizeSrc.bind(this));
 
-    // we're already working on retrieving this src, just append our cb to the callbacks..
-    if(this.loaded[src]) {
-      this.loaded[src].push(cb);
-    } else {
-      this.loaded[src] = [cb];
+    fns = sources.map(function(options){
+      options = this.srcMap[options.src] || options;
+      var src = options.src;
 
-      var type = options.type || this._inferredResourceType(options.src),
-      resourceOnload = function() {
+      return function(cb) {
+        if(this.loaded[src] === true) {
+          cb();
+          return true;
+        }
 
-        this.loaded[src].forEach(function(fn) { if(fn) fn(); });
-        this.loaded[src] = true;
+        if(this.loaded[src]) {
+          this.loaded[src].push(cb);
+          return false;
+        }
 
-        if(options.callbackName) delete window[options.callbackName];
+        this.loaded[src] = [cb];
+
+        var type = options.type || this._inferredResourceType(options.src),
+        resourceOnload = function() {
+
+          this.loaded[src].forEach(function(fn) { if(fn) fn(); });
+          this.loaded[src] = true;
+
+          if(options.callbackName) delete window[options.callbackName];
+        }.bind(this);
+
+        if(options.callbackName) {
+          window[options.callbackName] = resourceOnload;
+        }
+
+
+        this['_load' + type](options, resourceOnload);
+
+        return false;
       }.bind(this);
+    }.bind(this));
 
-      if(options.callbackName) {
-        window[options.callbackName] = resourceOnload;
-      }
-
-
-      this['_load' + type](options, resourceOnload);
-    }
-
-    return false;
+    pie.fn.async(fns, onload);
   }
 });
 pie.route = pie.base.extend('route', {
@@ -4117,7 +4078,7 @@ pie.validator.rangeOptions = pie.base.extend('rangeOptions', {
   },
 
   get: function(key) {
-    return pie.func.valueFrom(this.rangedata[key]);
+    return pie.fn.valueFrom(this.rangedata[key]);
   },
 
   has: function(key) {

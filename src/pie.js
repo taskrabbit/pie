@@ -6,16 +6,13 @@ window.pie = {
   browser: {},
   date: {},
   dom: {},
-  func: {},
+  fn: {},
   math: {},
   object: {},
   string: {},
 
   // extensions to be used within pie apps.
   mixins: {},
-
-  // service objects
-  services: {},
 
   pieId: 1,
 
@@ -38,24 +35,22 @@ window.pie = {
   // window._ = pie.util();
   // _.a.detect(/* .. */);
   // _.o.merge(a, b);
-  // _.inherit(child, parent);
   // _.unique(); //=> '95'
   util: function() {
     var o = {};
 
-    o.a = pie.array;
-    o.d = pie.date;
-    o.$ = pie.dom;
-    o.f = pie.func;
-    o.m = pie.math;
-    o.o = pie.object;
-    o.s = pie.string;
-    o.x = pie.mixins;
+    o.a   = pie.array;
+    o.b   = pie.browser;
+    o.d   = pie.date;
+    o.$   = pie.dom;
+    o.fn  = pie.fn;
+    o.m   = pie.math;
+    o.o   = pie.object;
+    o.s   = pie.string;
+    o.x   = pie.mixins;
 
     o.unique  = pie.unique;
     o.setUid  = pie.setUid;
-    o.inherit = pie.inherit;
-    o.extend  = pie.extend;
 
     return o;
   }

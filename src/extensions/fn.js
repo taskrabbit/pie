@@ -3,7 +3,7 @@
 // N milliseconds. If `immediate` is passed, trigger the function on the
 // leading edge, instead of the trailing.
 // Lifted from underscore.js
-pie.func.debounce = function(func, wait, immediate) {
+pie.fn.debounce = function(func, wait, immediate) {
   var timeout, args, context, timestamp, result;
 
   var later = function() {
@@ -35,14 +35,14 @@ pie.func.debounce = function(func, wait, immediate) {
   };
 };
 
-pie.func.valueFrom = function(f, binding, args) {
+pie.fn.valueFrom = function(f, binding, args) {
   if(pie.object.isFunction(f)) return f.apply(binding, args) ;
   return f;
 };
 
 
 
-pie.func.async = function(fns, cb, counterObserver) {
+pie.fn.async = function(fns, cb, counterObserver) {
 
   if(!fns.length) {
     cb();

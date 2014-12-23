@@ -64,7 +64,7 @@ pie.app = pie.base.extend('app', function(options) {
   document.addEventListener('DOMContentLoaded', this.start.bind(this));
 
   // set a global instance which can be used as a backup within the pie library.
-  window.pieInstance = window.pieInstance || this;
+  pie.appInstance = pie.appInstance || this;
 });
 
 

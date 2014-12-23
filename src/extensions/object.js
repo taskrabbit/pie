@@ -194,7 +194,7 @@ pie.object.serialize = function(obj, removeEmpty) {
   var s = [], append, appendEmpty, build, rbracket = /\[\]$/;
 
   append = function(k,v){
-    v = pie.func.valueFrom(v);
+    v = pie.fn.valueFrom(v);
     if(removeEmpty && !rbracket.test(k) && (v == null || !v.toString().length)) return;
     s.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(v)));
   };
