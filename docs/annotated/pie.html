@@ -2687,11 +2687,11 @@ pie.base._wrap = <span class="hljs-function"><span class="hljs-keyword">function
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-77">&#182;</a>
               </div>
-              <p>the only navigator which should exist in this app.</p>
+              <p>app.templates is used to manage application templates.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.navigator = classOption(<span class="hljs-string">'navigator'</span>, pie.navigator);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.templates = classOption(<span class="hljs-string">'templates'</span>, pie.templates);</pre></div></div>
             
         </li>
         
@@ -2702,11 +2702,11 @@ pie.base._wrap = <span class="hljs-function"><span class="hljs-keyword">function
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-78">&#182;</a>
               </div>
-              <p>the validator which should be used in the context of the app</p>
+              <p>the only navigator which should exist in this app.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.validator = classOption(<span class="hljs-string">'validator'</span>, pie.validator);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.navigator = classOption(<span class="hljs-string">'navigator'</span>, pie.navigator);</pre></div></div>
             
         </li>
         
@@ -2717,14 +2717,11 @@ pie.base._wrap = <span class="hljs-function"><span class="hljs-keyword">function
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-79">&#182;</a>
               </div>
-              <p>app.models is globally available. app.models is solely for page context.
-this is not a singleton container or anything like that. it’s just for passing
-models from one view to the next. the rendered layout may inject values here to initialize the page.
-after each navigation change, this.models is reset.</p>
+              <p>the validator which should be used in the context of the app</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.models = {};</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.validator = classOption(<span class="hljs-string">'validator'</span>, pie.validator);</pre></div></div>
             
         </li>
         
@@ -2735,11 +2732,14 @@ after each navigation change, this.models is reset.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-80">&#182;</a>
               </div>
-              <p>app._templates should not be used. app.template() should be the public interface.</p>
+              <p>app.models is globally available. app.models is solely for page context.
+this is not a singleton container or anything like that. it’s just for passing
+models from one view to the next. the rendered layout may inject values here to initialize the page.
+after each navigation change, this.models is reset.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>._templates = {};</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.models = {};</pre></div></div>
             
         </li>
         
@@ -3407,7 +3407,8 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
     }<span class="hljs-keyword">catch</span>(err){
       <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {prefix: <span class="hljs-string">"[caught] app#store:"</span>});
     }
-  },</pre></div></div>
+  }
+});</pre></div></div>
             
         </li>
         
@@ -3417,40 +3418,6 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-117">&#182;</a>
-              </div>
-              <p>compile templates on demand and evaluate them with <code>data</code>.
-Templates are assumed to be script tags with type=”text/pie-template”.
-Once compiled, the templates are cached in this._templates for later use.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  template: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, data)</span> </span>{
-    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>._templates[name]) {
-
-      <span class="hljs-keyword">var</span> node = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-keyword">this</span>.options.templateSelector + <span class="hljs-string">'[id="'</span> + name + <span class="hljs-string">'"]'</span>);
-
-      <span class="hljs-keyword">if</span>(node) {
-        <span class="hljs-keyword">this</span>.debug(<span class="hljs-string">'Compiling and storing template: '</span> + name);
-        <span class="hljs-keyword">this</span>._templates[name] = pie.string.template(node.content || node.textContent);
-      } <span class="hljs-keyword">else</span> {
-        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"[PIE] Unknown template error: "</span> + name);
-      }
-    }
-
-    data = data || {};
-
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._templates[name](data);
-  }
-});</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-118">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-118">&#182;</a>
               </div>
               <p>   <strong>Setters and Getters</strong>
    pie.model provides a basic interface for object management and observation.</p>
@@ -3527,11 +3494,11 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
         </li>
         
         
-        <li id="section-119">
+        <li id="section-118">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-119">&#182;</a>
+                <a class="pilcrow" href="#section-118">&#182;</a>
               </div>
               <p>After updates have been made we deliver our change records to our observers.</p>
 
@@ -3545,11 +3512,11 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
         </li>
         
         
-        <li id="section-120">
+        <li id="section-119">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-120">&#182;</a>
+                <a class="pilcrow" href="#section-119">&#182;</a>
               </div>
               <p>grab each change record</p>
 
@@ -3560,11 +3527,11 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
         </li>
         
         
-        <li id="section-121">
+        <li id="section-120">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-121">&#182;</a>
+                <a class="pilcrow" href="#section-120">&#182;</a>
               </div>
               <p>grab all the observers for the attribute specified by change.name</p>
 
@@ -3575,11 +3542,11 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
         </li>
         
         
-        <li id="section-122">
+        <li id="section-121">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-122">&#182;</a>
+                <a class="pilcrow" href="#section-121">&#182;</a>
               </div>
               <p>then for each observer, build or concatenate to the array of changes.</p>
 
@@ -3600,11 +3567,11 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
         </li>
         
         
-        <li id="section-123">
+        <li id="section-122">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-123">&#182;</a>
+                <a class="pilcrow" href="#section-122">&#182;</a>
               </div>
               <p>Iterate each observer, calling it with the changes which it was subscribed for.</p>
 
@@ -3620,11 +3587,11 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
         </li>
         
         
-        <li id="section-124">
+        <li id="section-123">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-124">&#182;</a>
+                <a class="pilcrow" href="#section-123">&#182;</a>
               </div>
               <p>Access the value stored at data[key]
 Key can be multiple levels deep by providing a dot separated key.</p>
@@ -3638,11 +3605,11 @@ Key can be multiple levels deep by providing a dot separated key.</p>
         </li>
         
         
-        <li id="section-125">
+        <li id="section-124">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-125">&#182;</a>
+                <a class="pilcrow" href="#section-124">&#182;</a>
               </div>
               <p>Retrieve multiple values at once.</p>
 
@@ -3667,11 +3634,11 @@ Key can be multiple levels deep by providing a dot separated key.</p>
         </li>
         
         
-        <li id="section-126">
+        <li id="section-125">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-126">&#182;</a>
+                <a class="pilcrow" href="#section-125">&#182;</a>
               </div>
               <p>Register an observer and optionally filter by key.</p>
 
@@ -3684,11 +3651,11 @@ Key can be multiple levels deep by providing a dot separated key.</p>
         </li>
         
         
-        <li id="section-127">
+        <li id="section-126">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-127">&#182;</a>
+                <a class="pilcrow" href="#section-126">&#182;</a>
               </div>
               <p>uid is needed later for ensuring unique change record delivery.</p>
 
@@ -3711,11 +3678,11 @@ Key can be multiple levels deep by providing a dot separated key.</p>
         </li>
         
         
-        <li id="section-128">
+        <li id="section-127">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-128">&#182;</a>
+                <a class="pilcrow" href="#section-127">&#182;</a>
               </div>
               <p>Set a value and trigger observers.
 Optionally provide false as the third argument to skip observation.
@@ -3733,11 +3700,11 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
         </li>
         
         
-        <li id="section-129">
+        <li id="section-128">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-129">&#182;</a>
+                <a class="pilcrow" href="#section-128">&#182;</a>
               </div>
               <p>if we haven’t actually changed, don’t bother.</p>
 
@@ -3766,11 +3733,11 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
         </li>
         
         
-        <li id="section-130">
+        <li id="section-129">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-130">&#182;</a>
+                <a class="pilcrow" href="#section-129">&#182;</a>
               </div>
               <p>Set a bunch of stuff at once.</p>
 
@@ -3788,11 +3755,11 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
         </li>
         
         
-        <li id="section-131">
+        <li id="section-130">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-131">&#182;</a>
+                <a class="pilcrow" href="#section-130">&#182;</a>
               </div>
               <p>Unregister an observer. Optionally for specific keys.</p>
 
@@ -3816,11 +3783,11 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
         </li>
         
         
-        <li id="section-132">
+        <li id="section-131">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-132">&#182;</a>
+                <a class="pilcrow" href="#section-131">&#182;</a>
               </div>
               <p>Register a computed property which is accessible via <code>name</code> and defined by <code>fn</code>.
 Provide all properties which invalidate the definition.</p>
@@ -3839,11 +3806,11 @@ Provide all properties which invalidate the definition.</p>
         </li>
         
         
-        <li id="section-133">
+        <li id="section-132">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-133">&#182;</a>
+                <a class="pilcrow" href="#section-132">&#182;</a>
               </div>
               <p>initialize it</p>
 
@@ -3856,11 +3823,11 @@ Provide all properties which invalidate the definition.</p>
         </li>
         
         
-        <li id="section-134">
+        <li id="section-133">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-134">&#182;</a>
+                <a class="pilcrow" href="#section-133">&#182;</a>
               </div>
               <p>pie.view manages events delegation, provides some convenience methods, and some <form> standards.</p>
 
@@ -3885,11 +3852,11 @@ pie.view.reopen({
         </li>
         
         
-        <li id="section-135">
+        <li id="section-134">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-135">&#182;</a>
+                <a class="pilcrow" href="#section-134">&#182;</a>
               </div>
               <p>we extract the functionality of setting our render target so we can override this as we see fit.
 for example, other implementation could store the target, then show a loader until render() is called.
@@ -3904,11 +3871,11 @@ by default we simply append ourselves to the target.</p>
         </li>
         
         
-        <li id="section-136">
+        <li id="section-135">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-136">&#182;</a>
+                <a class="pilcrow" href="#section-135">&#182;</a>
               </div>
               <p>placeholder for default functionality</p>
 
@@ -3921,11 +3888,11 @@ by default we simply append ourselves to the target.</p>
         </li>
         
         
-        <li id="section-137">
+        <li id="section-136">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-137">&#182;</a>
+                <a class="pilcrow" href="#section-136">&#182;</a>
               </div>
               <p>all events observed using view.on() will use the unique namespace for this instance.</p>
 
@@ -3945,11 +3912,11 @@ by default we simply append ourselves to the target.</p>
         </li>
         
         
-        <li id="section-138">
+        <li id="section-137">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-138">&#182;</a>
+                <a class="pilcrow" href="#section-137">&#182;</a>
               </div>
               <p>Events should be observed via this .on() method. Using .on() ensures the events will be
 unobserved when the view is removed.</p>
@@ -3975,11 +3942,11 @@ unobserved when the view is removed.</p>
         </li>
         
         
-        <li id="section-139">
+        <li id="section-138">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-139">&#182;</a>
+                <a class="pilcrow" href="#section-138">&#182;</a>
               </div>
               <p>Observe changes to an observable, unobserving them when the view is removed.
 If the object is not observable, an error will be thrown.</p>
@@ -3997,11 +3964,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-140">
+        <li id="section-139">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-140">&#182;</a>
+                <a class="pilcrow" href="#section-139">&#182;</a>
               </div>
               <p>shortcut for this.el.querySelector</p>
 
@@ -4014,11 +3981,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-141">
+        <li id="section-140">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-141">&#182;</a>
+                <a class="pilcrow" href="#section-140">&#182;</a>
               </div>
               <p>shortcut for this.el.querySelectorAll</p>
 
@@ -4031,11 +3998,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-142">
+        <li id="section-141">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-142">&#182;</a>
+                <a class="pilcrow" href="#section-141">&#182;</a>
               </div>
               <p>clean up.</p>
 
@@ -4048,11 +4015,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-143">
+        <li id="section-142">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-143">&#182;</a>
+                <a class="pilcrow" href="#section-142">&#182;</a>
               </div>
               <p>views remove their children upon removal to ensure all irrelevant observations are cleaned up.</p>
 
@@ -4066,11 +4033,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-144">
+        <li id="section-143">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-144">&#182;</a>
+                <a class="pilcrow" href="#section-143">&#182;</a>
               </div>
               <p>release all observed events.</p>
 
@@ -4084,11 +4051,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-145">
+        <li id="section-144">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-145">&#182;</a>
+                <a class="pilcrow" href="#section-144">&#182;</a>
               </div>
               <p>release all change callbacks.</p>
 
@@ -4107,11 +4074,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-146">
+        <li id="section-145">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-146">&#182;</a>
+                <a class="pilcrow" href="#section-145">&#182;</a>
               </div>
               <p>a view class which handles some basic functionality</p>
 
@@ -4138,11 +4105,11 @@ pie.activeView.reopen({
         </li>
         
         
-        <li id="section-147">
+        <li id="section-146">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-147">&#182;</a>
+                <a class="pilcrow" href="#section-146">&#182;</a>
               </div>
               <p>remove our el if we still have a parent node.
 don’t use pie.dom.remove since we don’t want to remove the cache.</p>
@@ -4156,7 +4123,7 @@ don’t use pie.dom.remove since we don’t want to remove the cache.</p>
     <span class="hljs-keyword">var</span> templateName = <span class="hljs-keyword">this</span>.templateName();
 
     <span class="hljs-keyword">if</span>(templateName) {
-      <span class="hljs-keyword">var</span> content = <span class="hljs-keyword">this</span>.app.template(templateName, <span class="hljs-keyword">this</span>.renderData());
+      <span class="hljs-keyword">var</span> content = <span class="hljs-keyword">this</span>.app.templates.render(templateName, <span class="hljs-keyword">this</span>.renderData());
       <span class="hljs-keyword">this</span>.el.innerHTML = content;
     }
   },
@@ -4185,11 +4152,11 @@ don’t use pie.dom.remove since we don’t want to remove the cache.</p>
         </li>
         
         
-        <li id="section-148">
+        <li id="section-147">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-148">&#182;</a>
+                <a class="pilcrow" href="#section-147">&#182;</a>
               </div>
               <p>If the first option passed is a node, it will use that as the query scope.
 Return an object representing the values of fields within this.el.</p>
@@ -4257,11 +4224,11 @@ pie.ajax = pie.base.extend(<span class="hljs-string">'ajax'</span>, {
         </li>
         
         
-        <li id="section-149">
+        <li id="section-148">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-149">&#182;</a>
+                <a class="pilcrow" href="#section-148">&#182;</a>
               </div>
               <p>default ajax options. override this method to</p>
 
@@ -4278,11 +4245,11 @@ pie.ajax = pie.base.extend(<span class="hljs-string">'ajax'</span>, {
         </li>
         
         
-        <li id="section-150">
+        <li id="section-149">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-150">&#182;</a>
+                <a class="pilcrow" href="#section-149">&#182;</a>
               </div>
               <p>interface for conducting ajax requests.
 app.ajax.post({
@@ -4398,11 +4365,11 @@ app.ajax.post({
         </li>
         
         
-        <li id="section-151">
+        <li id="section-150">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-151">&#182;</a>
+                <a class="pilcrow" href="#section-150">&#182;</a>
               </div>
               <p>if we aren’t already sending a string, we will encode to json.</p>
 
@@ -4486,11 +4453,11 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
         </li>
         
         
-        <li id="section-152">
+        <li id="section-151">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-152">&#182;</a>
+                <a class="pilcrow" href="#section-151">&#182;</a>
               </div>
               <p>it could come in on a couple different keys.</p>
 
@@ -4503,11 +4470,11 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
         </li>
         
         
-        <li id="section-153">
+        <li id="section-152">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-153">&#182;</a>
+                <a class="pilcrow" href="#section-152">&#182;</a>
               </div>
               <p>make sure we don’t have a date.</p>
 
@@ -4518,11 +4485,11 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
         </li>
         
         
-        <li id="section-154">
+        <li id="section-153">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-154">&#182;</a>
+                <a class="pilcrow" href="#section-153">&#182;</a>
               </div>
               <p>or a string</p>
 
@@ -4533,11 +4500,11 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
         </li>
         
         
-        <li id="section-155">
+        <li id="section-154">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-155">&#182;</a>
+                <a class="pilcrow" href="#section-154">&#182;</a>
               </div>
               <p>check for a numeric</p>
 
@@ -4548,11 +4515,11 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
         </li>
         
         
-        <li id="section-156">
+        <li id="section-155">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-156">&#182;</a>
+                <a class="pilcrow" href="#section-155">&#182;</a>
               </div>
               <p>otherwise assume ISO</p>
 
@@ -4564,11 +4531,11 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
         </li>
         
         
-        <li id="section-157">
+        <li id="section-156">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-157">&#182;</a>
+                <a class="pilcrow" href="#section-156">&#182;</a>
               </div>
               <p>we’re dealing with something smaller than a current milli epoch, assume we’re dealing with a ttl.</p>
 
@@ -4608,11 +4575,11 @@ pie.emitter = pie.base.extend(<span class="hljs-string">'emitter'</span>, {
         </li>
         
         
-        <li id="section-158">
+        <li id="section-157">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-158">&#182;</a>
+                <a class="pilcrow" href="#section-157">&#182;</a>
               </div>
               <p>invoke fn when the event is triggered.
 options:</p>
@@ -4644,11 +4611,11 @@ options:</p>
         </li>
         
         
-        <li id="section-159">
+        <li id="section-158">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-159">&#182;</a>
+                <a class="pilcrow" href="#section-158">&#182;</a>
               </div>
               <p>trigger an event (string) on the app.
 any callbacks associated with that event will be invoked with the extra arguments</p>
@@ -4676,13 +4643,35 @@ any callbacks associated with that event will be invoked with the extra argument
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.has(event)) <span class="hljs-keyword">this</span>.triggeredEvents.push(event);
   },
 
+  fireAround: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, onComplete)</span> </span>{
+    <span class="hljs-keyword">var</span> callbacks = <span class="hljs-keyword">this</span>.eventCallbacks[event] || [],
+    compactNeeded = <span class="hljs-literal">false</span>,
+    fns;
+
+    fns = callbacks.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb, i)</span> </span>{
+      <span class="hljs-keyword">if</span>(cb.onceOnly) {
+        compactNeeded = <span class="hljs-literal">true</span>;
+        cb[i] = <span class="hljs-literal">undefined</span>;
+      }
+      <span class="hljs-keyword">return</span> cb.fn;
+    });
+
+    <span class="hljs-keyword">if</span>(compactNeeded) <span class="hljs-keyword">this</span>.eventCallbacks[event] = pie.array.compact(<span class="hljs-keyword">this</span>.eventCallbacks[event]);
+    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.has(event)) <span class="hljs-keyword">this</span>.triggeredEvents.push(event);
+
+    pie.fn.async(fns, onComplete);
+  },
+
   around: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, fn)</span> </span>{
     <span class="hljs-keyword">var</span> before = pie.string.modularize(<span class="hljs-string">"before_"</span> + event),
-    after = pie.string.modularize(<span class="hljs-string">"after_"</span> + event);
+    after = pie.string.modularize(<span class="hljs-string">"after_"</span> + event),
+    around = pie.string.modularize(<span class="hljs-string">'around_'</span> + event);
 
     <span class="hljs-keyword">this</span>.fire(before);
-    fn();
-    <span class="hljs-keyword">this</span>.fire(after);
+    <span class="hljs-keyword">this</span>.fireAround(around, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      fn();
+      <span class="hljs-keyword">this</span>.fire(after);
+    }.bind(<span class="hljs-keyword">this</span>));
   }
 
 });
@@ -4696,11 +4685,11 @@ pie.errorHandler = pie.base.extend(<span class="hljs-string">'errorHandler'</spa
         </li>
         
         
-        <li id="section-160">
+        <li id="section-159">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-160">&#182;</a>
+                <a class="pilcrow" href="#section-159">&#182;</a>
               </div>
               <p>extract the “data” object out of an xhr</p>
 
@@ -4713,11 +4702,11 @@ pie.errorHandler = pie.base.extend(<span class="hljs-string">'errorHandler'</spa
         </li>
         
         
-        <li id="section-161">
+        <li id="section-160">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-161">&#182;</a>
+                <a class="pilcrow" href="#section-160">&#182;</a>
               </div>
               <p>extract an error message from a response. Try to extract the error message from
 the xhr data diretly, or allow overriding by response code.</p>
@@ -4740,11 +4729,11 @@ the xhr data diretly, or allow overriding by response code.</p>
         </li>
         
         
-        <li id="section-162">
+        <li id="section-161">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-162">&#182;</a>
+                <a class="pilcrow" href="#section-161">&#182;</a>
               </div>
               <p>find a handler for the xhr via response code or the app default.</p>
 
@@ -4765,11 +4754,11 @@ the xhr data diretly, or allow overriding by response code.</p>
         </li>
         
         
-        <li id="section-163">
+        <li id="section-162">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-163">&#182;</a>
+                <a class="pilcrow" href="#section-162">&#182;</a>
               </div>
               <p>build errors and send them to the notifier.</p>
 
@@ -4783,11 +4772,11 @@ the xhr data diretly, or allow overriding by response code.</p>
         </li>
         
         
-        <li id="section-164">
+        <li id="section-163">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-164">&#182;</a>
+                <a class="pilcrow" href="#section-163">&#182;</a>
               </div>
               <p>clear all previous errors when an error occurs.</p>
 
@@ -4798,11 +4787,11 @@ the xhr data diretly, or allow overriding by response code.</p>
         </li>
         
         
-        <li id="section-165">
+        <li id="section-164">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-165">&#182;</a>
+                <a class="pilcrow" href="#section-164">&#182;</a>
               </div>
               <p>delay so UI will visibly change when the same content is shown.</p>
 
@@ -4817,11 +4806,11 @@ the xhr data diretly, or allow overriding by response code.</p>
         </li>
         
         
-        <li id="section-166">
+        <li id="section-165">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-166">&#182;</a>
+                <a class="pilcrow" href="#section-165">&#182;</a>
               </div>
               <p>register a response code handler
 registerHandler(‘401’, myRedirectCallback);</p>
@@ -4835,11 +4824,11 @@ registerHandler(‘401’, myRedirectCallback);</p>
         </li>
         
         
-        <li id="section-167">
+        <li id="section-166">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-167">&#182;</a>
+                <a class="pilcrow" href="#section-166">&#182;</a>
               </div>
               <p>provide an interface for sending errors to a bug reporting service.</p>
 
@@ -4862,11 +4851,11 @@ registerHandler(‘401’, myRedirectCallback);</p>
         </li>
         
         
-        <li id="section-168">
+        <li id="section-167">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-168">&#182;</a>
+                <a class="pilcrow" href="#section-167">&#182;</a>
               </div>
               <p>hook in your own error reporting service. bugsnag, airbrake, etc.</p>
 
@@ -4891,11 +4880,11 @@ pie.formView = pie.activeView.extend(<span class="hljs-string">'formView'</span>
         </li>
         
         
-        <li id="section-169">
+        <li id="section-168">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-169">&#182;</a>
+                <a class="pilcrow" href="#section-168">&#182;</a>
               </div>
               <p>the process of applying form data to the model.</p>
 
@@ -4909,11 +4898,11 @@ pie.formView = pie.activeView.extend(<span class="hljs-string">'formView'</span>
         </li>
         
         
-        <li id="section-170">
+        <li id="section-169">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-170">&#182;</a>
+                <a class="pilcrow" href="#section-169">&#182;</a>
               </div>
               <p>the data coming from the UI that should be applied to the model before validation</p>
 
@@ -4958,11 +4947,11 @@ pie.formView = pie.activeView.extend(<span class="hljs-string">'formView'</span>
         </li>
         
         
-        <li id="section-171">
+        <li id="section-170">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-171">&#182;</a>
+                <a class="pilcrow" href="#section-170">&#182;</a>
               </div>
               <p>the data to be sent from the server.
 by default these are the defined fields extracted out of the model.</p>
@@ -5003,11 +4992,11 @@ by default these are the defined fields extracted out of the model.</p>
         </li>
         
         
-        <li id="section-172">
+        <li id="section-171">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-172">&#182;</a>
+                <a class="pilcrow" href="#section-171">&#182;</a>
               </div>
               <p>made to be used as an instance so multiple translations could exist if we so choose.</p>
 
@@ -5057,11 +5046,11 @@ by default these are the defined fields extracted out of the model.</p>
         </li>
         
         
-        <li id="section-173">
+        <li id="section-172">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-173">&#182;</a>
+                <a class="pilcrow" href="#section-172">&#182;</a>
               </div>
               <p>assumes that dates either come in as dates, iso strings, or epoch timestamps</p>
 
@@ -5079,11 +5068,11 @@ by default these are the defined fields extracted out of the model.</p>
         </li>
         
         
-        <li id="section-174">
+        <li id="section-173">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-174">&#182;</a>
+                <a class="pilcrow" href="#section-173">&#182;</a>
               </div>
               <p>let the system parse</p>
 
@@ -5216,11 +5205,11 @@ by default these are the defined fields extracted out of the model.</p>
         </li>
         
         
-        <li id="section-175">
+        <li id="section-174">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-175">&#182;</a>
+                <a class="pilcrow" href="#section-174">&#182;</a>
               </div>
               <p>pass in the date instance and the string ‘format’</p>
 
@@ -5232,11 +5221,11 @@ by default these are the defined fields extracted out of the model.</p>
         </li>
         
         
-        <li id="section-176">
+        <li id="section-175">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-176">&#182;</a>
+                <a class="pilcrow" href="#section-175">&#182;</a>
               </div>
               <p>named format from translations.time.</p>
 
@@ -5629,11 +5618,11 @@ pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
         </li>
         
         
-        <li id="section-177">
+        <li id="section-176">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-177">&#182;</a>
+                <a class="pilcrow" href="#section-176">&#182;</a>
               </div>
               <p>notifier is a class which provides an interface for rendering page-level notifications.</p>
 
@@ -5649,11 +5638,11 @@ pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
         </li>
         
         
-        <li id="section-178">
+        <li id="section-177">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-178">&#182;</a>
+                <a class="pilcrow" href="#section-177">&#182;</a>
               </div>
               <p>remove all alerts, potentially filtering by the type of alert.</p>
 
@@ -5674,11 +5663,11 @@ pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
         </li>
         
         
-        <li id="section-179">
+        <li id="section-178">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-179">&#182;</a>
+                <a class="pilcrow" href="#section-178">&#182;</a>
               </div>
               <p>Show a notification or notifications.
 Messages can be a string or an array of messages.
@@ -5753,8 +5742,7 @@ pie.resources = pie.base.extend(<span class="hljs-string">'resources'</span>, {
   _loadajax: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
     <span class="hljs-keyword">var</span> ajaxOptions = pie.object.merge({
       verb: <span class="hljs-string">'GET'</span>,
-      url: options.src,
-      contentType: pie.array.last(options.src.split(<span class="hljs-string">'?'</span>)[<span class="hljs-number">0</span>].split(<span class="hljs-regexp">/[\/\.]/</span>))
+      url: options.src
     }, options, {
       success: resourceOnload
     });
@@ -5790,11 +5778,11 @@ pie.resources = pie.base.extend(<span class="hljs-string">'resources'</span>, {
         </li>
         
         
-        <li id="section-180">
+        <li id="section-179">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-180">&#182;</a>
+                <a class="pilcrow" href="#section-179">&#182;</a>
               </div>
               <p>need to record that we added this thing.
 the resource may not actually be present yet.</p>
@@ -5869,11 +5857,11 @@ pie.route = pie.base.extend(<span class="hljs-string">'route'</span>, {
         </li>
         
         
-        <li id="section-181">
+        <li id="section-180">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-181">&#182;</a>
+                <a class="pilcrow" href="#section-180">&#182;</a>
               </div>
               <p>assume path is already normalized and we’ve “matched” it.</p>
 
@@ -5944,11 +5932,11 @@ pie.router = pie.base.extend(<span class="hljs-string">'router'</span>, {
         </li>
         
         
-        <li id="section-182">
+        <li id="section-181">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-182">&#182;</a>
+                <a class="pilcrow" href="#section-181">&#182;</a>
               </div>
               <p>get a url based on the current one but with the changes provided.
 this will even catch interpolated values.
@@ -5975,11 +5963,11 @@ app.router.changedUrl({page: 3, q: ‘newQuery’});</p>
         </li>
         
         
-        <li id="section-183">
+        <li id="section-182">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-183">&#182;</a>
+                <a class="pilcrow" href="#section-182">&#182;</a>
               </div>
               <p>invoke to add routes to the routers routeset.
 routes objects which contain a “name” key will be added as a name lookup.
@@ -6014,11 +6002,11 @@ you can pass a set of defaults which will be extended into each route object.</p
         </li>
         
         
-        <li id="section-184">
+        <li id="section-183">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-184">&#182;</a>
+                <a class="pilcrow" href="#section-183">&#182;</a>
               </div>
               <p>will return the named path. if there is no path with that name it will return itself.
 you can optionally pass a data hash and it will build the path with query params or
@@ -6033,11 +6021,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-185">
+        <li id="section-184">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-185">&#182;</a>
+                <a class="pilcrow" href="#section-184">&#182;</a>
               </div>
               <p>apply the root.</p>
 
@@ -6054,11 +6042,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-186">
+        <li id="section-185">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-186">&#182;</a>
+                <a class="pilcrow" href="#section-185">&#182;</a>
               </div>
               <p>sorts the routes to be the most exact to the most generic</p>
 
@@ -6083,11 +6071,11 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
         </li>
         
         
-        <li id="section-187">
+        <li id="section-186">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-187">&#182;</a>
+                <a class="pilcrow" href="#section-186">&#182;</a>
               </div>
               <p>look at the path and determine the route which this matches.</p>
 
@@ -6120,6 +6108,68 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
     }, match &amp;&amp; match.options);
 
   }
+});
+pie.templates = pie.base.extend({
+
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
+    <span class="hljs-keyword">this</span>.app = app;
+    <span class="hljs-keyword">this</span>._templates = {};
+    <span class="hljs-keyword">this</span>._super();
+  },
+
+  _node: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-keyword">this</span>.app.options.templateSelector + <span class="hljs-string">'[id="'</span> + name + <span class="hljs-string">'"]'</span>);
+  },
+
+  _registerTemplate: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, content)</span> </span>{
+    <span class="hljs-keyword">this</span>.app.debug(<span class="hljs-string">'Compiling and storing template: '</span> + name);
+    <span class="hljs-keyword">this</span>._templates[name] = pie.string.template(content);
+  },
+
+  load: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, cb)</span> </span>{
+    <span class="hljs-keyword">var</span> node = <span class="hljs-keyword">this</span>._node(name),
+    src = node &amp;&amp; node.getAttribute(<span class="hljs-string">'data-src'</span>) || name;
+
+    <span class="hljs-keyword">this</span>.app.resources.load({
+      type: <span class="hljs-string">'ajax'</span>,
+      accept: <span class="hljs-string">'text/html'</span>,
+      src: src,
+      dataSuccess: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(content)</span> </span>{
+        <span class="hljs-keyword">this</span>._registerTemplate(name, content);
+      }.bind(<span class="hljs-keyword">this</span>),
+      error: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"[PIE] Template fetch error: "</span> + name);
+      }
+    }, cb);
+
+  },
+
+  render: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, data)</span> </span>{
+    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>._templates[name]) {
+
+      <span class="hljs-keyword">var</span> node = <span class="hljs-keyword">this</span>._node(name);
+
+      <span class="hljs-keyword">if</span>(node) {
+        <span class="hljs-keyword">this</span>._registerTemplate(name, node.content || node.textContent);
+      } <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"[PIE] Unknown template error: "</span> + name);
+      }
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._templates[name](data || {});
+  },
+
+  renderAsync: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, data, cb)</span> </span>{
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._templates[name]) {
+      <span class="hljs-keyword">var</span> content = <span class="hljs-keyword">this</span>.render(name, data);
+      cb(content);
+      <span class="hljs-keyword">return</span>;
+    }
+
+    <span class="hljs-keyword">this</span>.load(name, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+      <span class="hljs-keyword">this</span>.renderAsync(name, data, cb);
+    }.bind(<span class="hljs-keyword">this</span>));
+  },
 });
 pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
 
@@ -6165,11 +6215,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-188">
+        <li id="section-187">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-188">&#182;</a>
+                <a class="pilcrow" href="#section-187">&#182;</a>
               </div>
               <p>don’t get rid of letters because we don’t want a mix of letters and numbers passing through</p>
 
@@ -6197,11 +6247,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-189">
+        <li id="section-188">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-189">&#182;</a>
+                <a class="pilcrow" href="#section-188">&#182;</a>
               </div>
               <p>a date should be in the ISO format yyyy-mm-dd</p>
 
@@ -6266,11 +6316,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-190">
+        <li id="section-189">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-190">&#182;</a>
+                <a class="pilcrow" href="#section-189">&#182;</a>
               </div>
               <p>must be an integer (2.0 is ok) (good for quantities)</p>
 
@@ -6286,11 +6336,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-191">
+        <li id="section-190">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-191">&#182;</a>
+                <a class="pilcrow" href="#section-190">&#182;</a>
               </div>
               <p>min/max length of the field</p>
 
@@ -6316,11 +6366,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-192">
+        <li id="section-191">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-192">&#182;</a>
+                <a class="pilcrow" href="#section-191">&#182;</a>
               </div>
               <p>must be some kind of number (good for money input)</p>
 
@@ -6334,11 +6384,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-193">
+        <li id="section-192">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-193">&#182;</a>
+                <a class="pilcrow" href="#section-192">&#182;</a>
               </div>
               <p>not using parseFloat because it accepts multiple decimals</p>
 
@@ -6356,11 +6406,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-194">
+        <li id="section-193">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-194">&#182;</a>
+                <a class="pilcrow" href="#section-193">&#182;</a>
               </div>
               <p>clean out all things that are not numbers and + and get a minimum of 10 digits.</p>
 
@@ -6378,11 +6428,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-195">
+        <li id="section-194">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-195">&#182;</a>
+                <a class="pilcrow" href="#section-194">&#182;</a>
               </div>
               <p>does the value have any non-whitespace characters</p>
 
@@ -6405,11 +6455,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-196">
+        <li id="section-195">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-196">&#182;</a>
+                <a class="pilcrow" href="#section-195">&#182;</a>
               </div>
               <p>small utility class to handle range options.</p>
 
@@ -6424,11 +6474,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-197">
+        <li id="section-196">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-197">&#182;</a>
+                <a class="pilcrow" href="#section-196">&#182;</a>
               </div>
               <p>for double casting new RangeOptions(new RangeOptions({}));</p>
 

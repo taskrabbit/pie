@@ -26,8 +26,7 @@ pie.resources = pie.base.extend('resources', {
   _loadajax: function(options, resourceOnload) {
     var ajaxOptions = pie.object.merge({
       verb: 'GET',
-      url: options.src,
-      contentType: pie.array.last(options.src.split('?')[0].split(/[\/\.]/))
+      url: options.src
     }, options, {
       success: resourceOnload
     });

@@ -55,27 +55,13 @@ lib.views.page.reopen({
   },
 
   retrieveTemplateAndRender: function() {
-    var name = this.pageName(),
-    tmpl = app._templates[name];
-
-    if(tmpl) {
+    app.templates.load(this.templateName(), function() {
       this.render();
-      return;
-    }
-
-    app.ajax.get({
-      url: app.router.path('pageApi', {page: name}),
-      verb: app.ajax.GET,
-      accept: 'html',
-      dataSuccess: function(html) {
-        app._templates[name] = pie.string.template(html);
-        this.render();
-      }.bind(this)
-    });
+    }.bind(this));
   },
 
   templateName: function() {
-    return this.pageName();
+    return app.router.path('pageApi', {page: this.pageName()});
   }
 
 });
@@ -111,6 +97,7 @@ app.i18n.load({
 (function() {
   'use strict';
 
+  var gistCache = {};
   var proto = Object.create(HTMLElement.prototype);
 
   proto.externalResources = function(){
@@ -162,13 +149,15 @@ app.i18n.load({
 
     this.classList.add('gist-loading');
 
-    app.ajax.get({
-      url: path,
-      dataSuccess: this.contentCallback.bind(this),
-      success: function(){
-        this.classList.remove('gist-loading');
-      }.bind(this)
-    });
+    app.resources.load({
+      src: path,
+      dataSuccess: function(content){
+        gistCache[gistId] = content;
+      }
+    }, function() {
+      this.contentCallback(gistCache[gistId]);
+      this.classList.remove('gist-loading');
+    }.bind(this));
 
   };
 

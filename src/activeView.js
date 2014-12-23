@@ -25,7 +25,7 @@ pie.activeView.reopen({
     var templateName = this.templateName();
 
     if(templateName) {
-      var content = this.app.template(templateName, this.renderData());
+      var content = this.app.templates.render(templateName, this.renderData());
       this.el.innerHTML = content;
     }
   },

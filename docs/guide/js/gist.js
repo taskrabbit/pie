@@ -3,6 +3,7 @@
 (function() {
   'use strict';
 
+  var gistCache = {};
   var proto = Object.create(HTMLElement.prototype);
 
   proto.externalResources = function(){
@@ -54,13 +55,15 @@
 
     this.classList.add('gist-loading');
 
-    app.ajax.get({
-      url: path,
-      dataSuccess: this.contentCallback.bind(this),
-      success: function(){
-        this.classList.remove('gist-loading');
-      }.bind(this)
-    });
+    app.resources.load({
+      src: path,
+      dataSuccess: function(content){
+        gistCache[gistId] = content;
+      }
+    }, function() {
+      this.contentCallback(gistCache[gistId]);
+      this.classList.remove('gist-loading');
+    }.bind(this));
 
   };
 

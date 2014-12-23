@@ -1752,6 +1752,9 @@ pie.app = pie.base.extend('app', function(options) {
   // app.resources is used for managing the loading of external resources.
   this.resources = classOption('resources', pie.resources);
 
+  // app.templates is used to manage application templates.
+  this.templates = classOption('templates', pie.templates);
+
   // the only navigator which should exist in this app.
   this.navigator = classOption('navigator', pie.navigator);
 
@@ -1763,9 +1766,6 @@ pie.app = pie.base.extend('app', function(options) {
   // models from one view to the next. the rendered layout may inject values here to initialize the page.
   // after each navigation change, this.models is reset.
   this.models = {};
-
-  // app._templates should not be used. app.template() should be the public interface.
-  this._templates = {};
 
   // after a navigation change, app.parsedUrl is the new parsed route
   this.parsedUrl = {};
@@ -1996,27 +1996,6 @@ pie.app.reopen({
     }catch(err){
       this.errorHandler.reportError(err, {prefix: "[caught] app#store:"});
     }
-  },
-
-  // compile templates on demand and evaluate them with `data`.
-  // Templates are assumed to be script tags with type="text/pie-template".
-  // Once compiled, the templates are cached in this._templates for later use.
-  template: function(name, data) {
-    if(!this._templates[name]) {
-
-      var node = document.querySelector(this.options.templateSelector + '[id="' + name + '"]');
-
-      if(node) {
-        this.debug('Compiling and storing template: ' + name);
-        this._templates[name] = pie.string.template(node.content || node.textContent);
-      } else {
-        throw new Error("[PIE] Unknown template error: " + name);
-      }
-    }
-
-    data = data || {};
-
-    return this._templates[name](data);
   }
 });
 
@@ -2393,7 +2372,7 @@ pie.activeView.reopen({
     var templateName = this.templateName();
 
     if(templateName) {
-      var content = this.app.template(templateName, this.renderData());
+      var content = this.app.templates.render(templateName, this.renderData());
       this.el.innerHTML = content;
     }
   },
@@ -2762,13 +2741,35 @@ pie.emitter = pie.base.extend('emitter', {
     if(!this.has(event)) this.triggeredEvents.push(event);
   },
 
+  fireAround: function(event, onComplete) {
+    var callbacks = this.eventCallbacks[event] || [],
+    compactNeeded = false,
+    fns;
+
+    fns = callbacks.map(function(cb, i) {
+      if(cb.onceOnly) {
+        compactNeeded = true;
+        cb[i] = undefined;
+      }
+      return cb.fn;
+    });
+
+    if(compactNeeded) this.eventCallbacks[event] = pie.array.compact(this.eventCallbacks[event]);
+    if(!this.has(event)) this.triggeredEvents.push(event);
+
+    pie.fn.async(fns, onComplete);
+  },
+
   around: function(event, fn) {
     var before = pie.string.modularize("before_" + event),
-    after = pie.string.modularize("after_" + event);
+    after = pie.string.modularize("after_" + event),
+    around = pie.string.modularize('around_' + event);
 
     this.fire(before);
-    fn();
-    this.fire(after);
+    this.fireAround(around, function() {
+      fn();
+      this.fire(after);
+    }.bind(this));
   }
 
 });
@@ -3601,8 +3602,7 @@ pie.resources = pie.base.extend('resources', {
   _loadajax: function(options, resourceOnload) {
     var ajaxOptions = pie.object.merge({
       verb: 'GET',
-      url: options.src,
-      contentType: pie.array.last(options.src.split('?')[0].split(/[\/\.]/))
+      url: options.src
     }, options, {
       success: resourceOnload
     });
@@ -3873,6 +3873,68 @@ pie.router = pie.base.extend('router', {
     }, match && match.options);
 
   }
+});
+pie.templates = pie.base.extend({
+
+  init: function(app) {
+    this.app = app;
+    this._templates = {};
+    this._super();
+  },
+
+  _node: function(name) {
+    return document.querySelector(this.app.options.templateSelector + '[id="' + name + '"]');
+  },
+
+  _registerTemplate: function(name, content) {
+    this.app.debug('Compiling and storing template: ' + name);
+    this._templates[name] = pie.string.template(content);
+  },
+
+  load: function(name, cb) {
+    var node = this._node(name),
+    src = node && node.getAttribute('data-src') || name;
+
+    this.app.resources.load({
+      type: 'ajax',
+      accept: 'text/html',
+      src: src,
+      dataSuccess: function(content) {
+        this._registerTemplate(name, content);
+      }.bind(this),
+      error: function() {
+        throw new Error("[PIE] Template fetch error: " + name);
+      }
+    }, cb);
+
+  },
+
+  render: function(name, data) {
+    if(!this._templates[name]) {
+
+      var node = this._node(name);
+
+      if(node) {
+        this._registerTemplate(name, node.content || node.textContent);
+      } else {
+        throw new Error("[PIE] Unknown template error: " + name);
+      }
+    }
+
+    return this._templates[name](data || {});
+  },
+
+  renderAsync: function(name, data, cb) {
+    if(this._templates[name]) {
+      var content = this.render(name, data);
+      cb(content);
+      return;
+    }
+
+    this.load(name, function(){
+      this.renderAsync(name, data, cb);
+    }.bind(this));
+  },
 });
 pie.validator = pie.base.extend('validator', {
 

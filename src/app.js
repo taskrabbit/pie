@@ -36,6 +36,9 @@ pie.app = pie.base.extend('app', function(options) {
   // app.resources is used for managing the loading of external resources.
   this.resources = classOption('resources', pie.resources);
 
+  // app.templates is used to manage application templates.
+  this.templates = classOption('templates', pie.templates);
+
   // the only navigator which should exist in this app.
   this.navigator = classOption('navigator', pie.navigator);
 
@@ -47,9 +50,6 @@ pie.app = pie.base.extend('app', function(options) {
   // models from one view to the next. the rendered layout may inject values here to initialize the page.
   // after each navigation change, this.models is reset.
   this.models = {};
-
-  // app._templates should not be used. app.template() should be the public interface.
-  this._templates = {};
 
   // after a navigation change, app.parsedUrl is the new parsed route
   this.parsedUrl = {};
@@ -280,26 +280,5 @@ pie.app.reopen({
     }catch(err){
       this.errorHandler.reportError(err, {prefix: "[caught] app#store:"});
     }
-  },
-
-  // compile templates on demand and evaluate them with `data`.
-  // Templates are assumed to be script tags with type="text/pie-template".
-  // Once compiled, the templates are cached in this._templates for later use.
-  template: function(name, data) {
-    if(!this._templates[name]) {
-
-      var node = document.querySelector(this.options.templateSelector + '[id="' + name + '"]');
-
-      if(node) {
-        this.debug('Compiling and storing template: ' + name);
-        this._templates[name] = pie.string.template(node.content || node.textContent);
-      } else {
-        throw new Error("[PIE] Unknown template error: " + name);
-      }
-    }
-
-    data = data || {};
-
-    return this._templates[name](data);
   }
 });

@@ -61,13 +61,35 @@ pie.emitter = pie.base.extend('emitter', {
     if(!this.has(event)) this.triggeredEvents.push(event);
   },
 
+  fireAround: function(event, onComplete) {
+    var callbacks = this.eventCallbacks[event] || [],
+    compactNeeded = false,
+    fns;
+
+    fns = callbacks.map(function(cb, i) {
+      if(cb.onceOnly) {
+        compactNeeded = true;
+        cb[i] = undefined;
+      }
+      return cb.fn;
+    });
+
+    if(compactNeeded) this.eventCallbacks[event] = pie.array.compact(this.eventCallbacks[event]);
+    if(!this.has(event)) this.triggeredEvents.push(event);
+
+    pie.fn.async(fns, onComplete);
+  },
+
   around: function(event, fn) {
     var before = pie.string.modularize("before_" + event),
-    after = pie.string.modularize("after_" + event);
+    after = pie.string.modularize("after_" + event),
+    around = pie.string.modularize('around_' + event);
 
     this.fire(before);
-    fn();
-    this.fire(after);
+    this.fireAround(around, function() {
+      fn();
+      this.fire(after);
+    }.bind(this));
   }
 
 });

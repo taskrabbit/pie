@@ -55,27 +55,13 @@ lib.views.page.reopen({
   },
 
   retrieveTemplateAndRender: function() {
-    var name = this.pageName(),
-    tmpl = app._templates[name];
-
-    if(tmpl) {
+    app.templates.load(this.templateName(), function() {
       this.render();
-      return;
-    }
-
-    app.ajax.get({
-      url: app.router.path('pageApi', {page: name}),
-      verb: app.ajax.GET,
-      accept: 'html',
-      dataSuccess: function(html) {
-        app._templates[name] = pie.string.template(html);
-        this.render();
-      }.bind(this)
-    });
+    }.bind(this));
   },
 
   templateName: function() {
-    return this.pageName();
+    return app.router.path('pageApi', {page: this.pageName()});
   }
 
 });
