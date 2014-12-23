@@ -1300,6 +1300,7 @@ pie.mixins.bindings = (function(){
     out.sel = given.sel || '[name="' + given.attr + '"]';
     out.type = given.type || 'auto';
     out.dataType = given.dataType || 'default';
+    out.eachType = given.eachType || undefined;
     out.trigger = given.trigger || 'change keyup';
     out.triggerSel = given.triggerSel || out.sel;
     out.toModel = given.toModel || given.toModel === undefined;
@@ -1328,8 +1329,8 @@ pie.mixins.bindings = (function(){
     return integrations[binding.type];
   };
 
-  var typeCasterForBinding = function(binding) {
-    return typeCasters[binding.dataType] || typeCasters.default;
+  var typeCasterForBinding = function(dataType) {
+    return typeCasters[dataType] || typeCasters.default;
   };
 
   var applyValueToModel = function(value, binding) {
@@ -1355,10 +1356,12 @@ pie.mixins.bindings = (function(){
 
   var getValueFromElement = function(el, binding) {
     var val = integrationForBinding(el, binding).getValue(el, binding),
-    fn = typeCasterForBinding(binding);
-    if(binding.type === 'array') return fn(val);
-    if(Array.isArray(val)) val = val.map(fn);
-    else val = fn(val);
+    fn = typeCasterForBinding(binding.dataType);
+    val = fn(val);
+    if(Array.isArray(val) && binding.eachType) {
+      var eachFn = typeCasterForBinding(binding.eachType);
+      val = val.map(eachFn);
+    }
     return val;
   };
 

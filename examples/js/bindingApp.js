@@ -50,7 +50,8 @@ bindings.layout = pie.activeView.extend('layout', {
     }, {
       attr: 'checks',
       type: 'check',
-      dataType: 'integer'
+      dataType: 'array',
+      eachType: 'integer'
     }, {
       attr: 'radio',
       type: 'radio',

@@ -1924,6 +1924,7 @@ This mixin should be used with a pie view.</p>
     out.sel = given.sel || <span class="hljs-string">'[name="'</span> + given.attr + <span class="hljs-string">'"]'</span>;
     out.type = given.type || <span class="hljs-string">'auto'</span>;
     out.dataType = given.dataType || <span class="hljs-string">'default'</span>;
+    out.eachType = given.eachType || <span class="hljs-literal">undefined</span>;
     out.trigger = given.trigger || <span class="hljs-string">'change keyup'</span>;
     out.triggerSel = given.triggerSel || out.sel;
     out.toModel = given.toModel || given.toModel === <span class="hljs-literal">undefined</span>;
@@ -1952,8 +1953,8 @@ This mixin should be used with a pie view.</p>
     <span class="hljs-keyword">return</span> integrations[binding.type];
   };
 
-  <span class="hljs-keyword">var</span> typeCasterForBinding = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(binding)</span> </span>{
-    <span class="hljs-keyword">return</span> typeCasters[binding.dataType] || typeCasters.default;
+  <span class="hljs-keyword">var</span> typeCasterForBinding = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(dataType)</span> </span>{
+    <span class="hljs-keyword">return</span> typeCasters[dataType] || typeCasters.default;
   };
 
   <span class="hljs-keyword">var</span> applyValueToModel = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, binding)</span> </span>{
@@ -1979,10 +1980,12 @@ This mixin should be used with a pie view.</p>
 
   <span class="hljs-keyword">var</span> getValueFromElement = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
     <span class="hljs-keyword">var</span> val = integrationForBinding(el, binding).getValue(el, binding),
-    fn = typeCasterForBinding(binding);
-    <span class="hljs-keyword">if</span>(binding.type === <span class="hljs-string">'array'</span>) <span class="hljs-keyword">return</span> fn(val);
-    <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(val)) val = val.map(fn);
-    <span class="hljs-keyword">else</span> val = fn(val);
+    fn = typeCasterForBinding(binding.dataType);
+    val = fn(val);
+    <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(val) &amp;&amp; binding.eachType) {
+      <span class="hljs-keyword">var</span> eachFn = typeCasterForBinding(binding.eachType);
+      val = val.map(eachFn);
+    }
     <span class="hljs-keyword">return</span> val;
   };
 
