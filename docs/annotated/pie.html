@@ -5810,8 +5810,8 @@ the resource may not actually be present yet.</p>
   },
 
   load: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* src1, src2, src3, onload */</span>)</span> </span>{
-    <span class="hljs-keyword">var</span> sources = pie.array.from(<span class="hljs-built_in">arguments</span>),
-    onload = sources.pop(),
+    <span class="hljs-keyword">var</span> sources = pie.array.change(pie.array.from(<span class="hljs-built_in">arguments</span>), <span class="hljs-string">'flatten'</span>, <span class="hljs-string">'compact'</span>),
+    onload = pie.object.isFunction(pie.array.last(sources)) ? sources.pop() : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{},
     fns;
 
     sources = sources.map(<span class="hljs-keyword">this</span>._normalizeSrc.bind(<span class="hljs-keyword">this</span>));

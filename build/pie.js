@@ -3646,8 +3646,8 @@ pie.resources = pie.base.extend('resources', {
   },
 
   load: function(/* src1, src2, src3, onload */) {
-    var sources = pie.array.from(arguments),
-    onload = sources.pop(),
+    var sources = pie.array.change(pie.array.from(arguments), 'flatten', 'compact'),
+    onload = pie.object.isFunction(pie.array.last(sources)) ? sources.pop() : function(){},
     fns;
 
     sources = sources.map(this._normalizeSrc.bind(this));

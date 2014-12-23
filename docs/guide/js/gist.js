@@ -5,10 +5,13 @@
 
   var proto = Object.create(HTMLElement.prototype);
 
+  proto.externalResources = function(){
+    return [app.router.path('/css/highlight.css'), app.router.path('/js/highlight.js')];
+  },
+
   proto.createdCallback = function() {
     // prefetch as much as possible.
-    app.resources.load(app.router.path('/css/highlight.css'));
-    app.resources.load(app.router.path('/js/highlight.js'));
+    app.resources.load(this.externalResources());
   };
 
   proto.contentCallback = function(data) {
@@ -35,15 +38,13 @@
       }
     }
 
-    app.resources.load(app.router.path('/css/highlight.css'), function() {
-      app.resources.load(app.router.path('/js/highlight.js'), function(){
+    app.resources.load(this.externalResources(), function() {
 
-        this.innerHTML = "<code><pre>" + lines.join("\n") + "</pre></code>";
+      this.innerHTML = "<code><pre>" + lines.join("\n") + "</pre></code>";
 
-        hljs.configure({useBr: true, language: file.language || ['javascript', 'json']});
-        hljs.highlightBlock(this.querySelector('pre'));
+      hljs.configure({useBr: true, language: file.language || ['javascript', 'json']});
+      hljs.highlightBlock(this.querySelector('pre'));
 
-      }.bind(this));
     }.bind(this));
   };
 
