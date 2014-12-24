@@ -179,9 +179,16 @@ pie.app.reopen({
       this.emitter.fire('urlChanged');
     }
 
-    // not necessary for a view to exist on each page.
+    // Not necessary for a view to exist on each page.
     // Maybe the entry point is server generated.
     if(!this.parsedUrl.view) {
+
+      if(!this.parsedUrl.redirect) return;
+
+      var redirectTo = this.parsedUrl.redirect;
+      redirectTo = app.router.path(redirectTo, this.parsedUrl.data);
+
+      this.go(redirectTo);
       return;
     }
 

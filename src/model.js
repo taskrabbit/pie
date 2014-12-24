@@ -172,7 +172,10 @@ pie.model = pie.base.extend('model', {
   // Optionally provide false as the third argument to skip observation.
   // Note: skipping observation does not stop changeRecords from accruing.
   set: function(key, value, options) {
-    var change = { name: key, object: this.data };
+    var steps = ~key.indexOf('.') ? pie.string.pathSteps(key) : null,
+    o, oldKeys, type, change;
+
+    change = { name: key, object: this.data };
 
     if(this.has(key)) {
       change.type = 'update';
@@ -181,19 +184,52 @@ pie.model = pie.base.extend('model', {
       // if we haven't actually changed, don't bother.
       if(value === change.oldValue) return this;
 
-    } else {
-      change.type = 'add';
+    }
+
+    if(steps) {
+      steps.shift();
+      steps = steps.map(function(step) {
+        o = this.get(step);
+        return [step, o && Object.keys(o)];
+      }.bind(this));
     }
 
     change.value = value;
 
     if(value === undefined) {
       pie.object.deletePath(this.data, key, true);
+      change.type = 'delete';
     } else {
       pie.object.setPath(this.data, key, value);
+      change.type = change.type || 'add';
     }
 
     this.changeRecords.push(change);
+
+    if(steps) {
+      steps.forEach(function(step) {
+        oldKeys = step[1];
+        step = step[0];
+
+        o = this.get(step);
+
+        if(change.type === 'delete') {
+          type = o ? 'update' : 'delete';
+        } else if(!oldKeys) {
+          type = 'add';
+        } else {
+          type = 'update';
+        }
+
+        this.changeRecords.push({
+          type: type,
+          oldValue: oldKeys,
+          value: o ? Object.keys(o) : undefined,
+          name: step,
+          object: this.data
+        });
+      }.bind(this));
+    }
 
     if(options && options.skipObservers) return this;
     return this.deliverChangeRecords();

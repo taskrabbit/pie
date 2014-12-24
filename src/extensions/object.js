@@ -55,23 +55,14 @@ pie.object.deletePath = function(obj, path, propagate) {
     delete obj[path];
   }
 
-  var split, attr, subObj;
+  var steps = pie.string.pathSteps(path), attr, subObj;
 
-  while(true) {
-    split = path.split('.');
-    attr = split.pop();
-    path = split.join('.');
-    if(path) {
-      subObj = pie.object.getPath(obj, path);
-      if(!subObj) return;
-
-      delete subObj[attr];
-      if(!propagate || Object.keys(subObj).length) return;
-
-    } else {
-      delete obj[attr];
-      return;
-    }
+  while(steps.length) {
+    attr = pie.array.last(steps.shift().split('.'));
+    subObj = pie.object.getPath(obj, steps[0]);
+    if(!subObj) return;
+    delete subObj[attr];
+    if(!propagate || Object.keys(subObj).length) return;
   }
 
 };
@@ -142,6 +133,7 @@ pie.object.forEach = function(o, f) {
 
 
 pie.object.getPath = function(obj, path) {
+  if(!path) return obj;
   if(!~path.indexOf('.')) return obj[path];
 
   var p = path.split('.'), key;

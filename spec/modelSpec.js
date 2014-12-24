@@ -148,6 +148,46 @@ describe("pie.model", function() {
       this.model.set('too', 'bar');
     });
 
+    it("should allow for path observation", function() {
+      var observer = jasmine.createSpy('observer');
+      this.model.observe(observer, 'foo.bar');
+
+      this.model.set('foo', {});
+      expect(observer).not.toHaveBeenCalled();
+
+      this.model.set('foo.baz', 1);
+      expect(observer).not.toHaveBeenCalled();
+
+      this.model.set('foo.bar', 1);
+      expect(observer).toHaveBeenCalled();
+    });
+
+    it("should allow trigger changes on subpaths as well", function(done) {
+
+      var observer1 = function(changes) {
+        var change = changes[0];
+        expect(change.type).toEqual('add');
+        expect(change.name).toEqual('foo.bar');
+        expect(change.oldValue).toEqual(undefined);
+        expect(change.value).toEqual(1);
+      };
+
+      var observer2 = function(changes){
+        var change = changes[0];
+        expect(change.type).toEqual('add');
+        expect(change.name).toEqual('foo');
+        expect(change.oldValue).toEqual(undefined);
+        expect(change.value).toEqual(['bar']);
+        done();
+      };
+
+
+      this.model.observe(observer1, 'foo.bar');
+      this.model.observe(observer2, 'foo');
+
+      this.model.set('foo.bar', 1);
+    });
+
   });
 
   describe("inheritance", function() {

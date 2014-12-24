@@ -702,23 +702,14 @@ pie.object.deletePath = function(obj, path, propagate) {
     delete obj[path];
   }
 
-  var split, attr, subObj;
+  var steps = pie.string.pathSteps(path), attr, subObj;
 
-  while(true) {
-    split = path.split('.');
-    attr = split.pop();
-    path = split.join('.');
-    if(path) {
-      subObj = pie.object.getPath(obj, path);
-      if(!subObj) return;
-
-      delete subObj[attr];
-      if(!propagate || Object.keys(subObj).length) return;
-
-    } else {
-      delete obj[attr];
-      return;
-    }
+  while(steps.length) {
+    attr = pie.array.last(steps.shift().split('.'));
+    subObj = pie.object.getPath(obj, steps[0]);
+    if(!subObj) return;
+    delete subObj[attr];
+    if(!propagate || Object.keys(subObj).length) return;
   }
 
 };
@@ -789,6 +780,7 @@ pie.object.forEach = function(o, f) {
 
 
 pie.object.getPath = function(obj, path) {
+  if(!path) return obj;
   if(!~path.indexOf('.')) return obj[path];
 
   var p = path.split('.'), key;
@@ -1086,6 +1078,17 @@ pie.string.titleize = function(str) {
   return str.replace(/(^| )([a-z])/g, function(match, a, b){ return a + b.toUpperCase(); });
 };
 
+pie.string.pathSteps = function(path) {
+  var split = path.split('.'),
+  steps = [];
+
+  while(split.length) {
+    steps.push(split.join('.'));
+    split.pop();
+  }
+
+  return steps;
+};
 
 pie.string.underscore = function(str) {
   return str.replace(/([a-z])([A-Z])/g, function(match, a, b){ return a + '_' + b.toLowerCase(); }).toLowerCase();
@@ -1965,9 +1968,16 @@ pie.app.reopen({
       this.emitter.fire('urlChanged');
     }
 
-    // not necessary for a view to exist on each page.
+    // Not necessary for a view to exist on each page.
     // Maybe the entry point is server generated.
     if(!this.parsedUrl.view) {
+
+      if(!this.parsedUrl.redirect) return;
+
+      var redirectTo = this.parsedUrl.redirect;
+      redirectTo = app.router.path(redirectTo, this.parsedUrl.data);
+
+      this.go(redirectTo);
       return;
     }
 
@@ -2242,7 +2252,10 @@ pie.model = pie.base.extend('model', {
   // Optionally provide false as the third argument to skip observation.
   // Note: skipping observation does not stop changeRecords from accruing.
   set: function(key, value, options) {
-    var change = { name: key, object: this.data };
+    var steps = ~key.indexOf('.') ? pie.string.pathSteps(key) : null,
+    o, oldKeys, type, change;
+
+    change = { name: key, object: this.data };
 
     if(this.has(key)) {
       change.type = 'update';
@@ -2251,19 +2264,52 @@ pie.model = pie.base.extend('model', {
       // if we haven't actually changed, don't bother.
       if(value === change.oldValue) return this;
 
-    } else {
-      change.type = 'add';
+    }
+
+    if(steps) {
+      steps.shift();
+      steps = steps.map(function(step) {
+        o = this.get(step);
+        return [step, o && Object.keys(o)];
+      }.bind(this));
     }
 
     change.value = value;
 
     if(value === undefined) {
       pie.object.deletePath(this.data, key, true);
+      change.type = 'delete';
     } else {
       pie.object.setPath(this.data, key, value);
+      change.type = change.type || 'add';
     }
 
     this.changeRecords.push(change);
+
+    if(steps) {
+      steps.forEach(function(step) {
+        oldKeys = step[1];
+        step = step[0];
+
+        o = this.get(step);
+
+        if(change.type === 'delete') {
+          type = o ? 'update' : 'delete';
+        } else if(!oldKeys) {
+          type = 'add';
+        } else {
+          type = 'update';
+        }
+
+        this.changeRecords.push({
+          type: type,
+          oldValue: oldKeys,
+          value: o ? Object.keys(o) : undefined,
+          name: step,
+          object: this.data
+        });
+      }.bind(this));
+    }
 
     if(options && options.skipObservers) return this;
     return this.deliverChangeRecords();

@@ -180,6 +180,17 @@ pie.string.titleize = function(str) {
   return str.replace(/(^| )([a-z])/g, function(match, a, b){ return a + b.toUpperCase(); });
 };
 
+pie.string.pathSteps = function(path) {
+  var split = path.split('.'),
+  steps = [];
+
+  while(split.length) {
+    steps.push(split.join('.'));
+    split.pop();
+  }
+
+  return steps;
+};
 
 pie.string.underscore = function(str) {
   return str.replace(/([a-z])([A-Z])/g, function(match, a, b){ return a + '_' + b.toLowerCase(); }).toLowerCase();

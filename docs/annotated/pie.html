@@ -1041,23 +1041,14 @@ pie.object.except({foo: ‘bar’, biz: ‘baz’}, ‘biz’) =&gt; {‘foo’:
     <span class="hljs-keyword">delete</span> obj[path];
   }
 
-  <span class="hljs-keyword">var</span> split, attr, subObj;
+  <span class="hljs-keyword">var</span> steps = pie.string.pathSteps(path), attr, subObj;
 
-  <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>) {
-    split = path.split(<span class="hljs-string">'.'</span>);
-    attr = split.pop();
-    path = split.join(<span class="hljs-string">'.'</span>);
-    <span class="hljs-keyword">if</span>(path) {
-      subObj = pie.object.getPath(obj, path);
-      <span class="hljs-keyword">if</span>(!subObj) <span class="hljs-keyword">return</span>;
-
-      <span class="hljs-keyword">delete</span> subObj[attr];
-      <span class="hljs-keyword">if</span>(!propagate || <span class="hljs-built_in">Object</span>.keys(subObj).length) <span class="hljs-keyword">return</span>;
-
-    } <span class="hljs-keyword">else</span> {
-      <span class="hljs-keyword">delete</span> obj[attr];
-      <span class="hljs-keyword">return</span>;
-    }
+  <span class="hljs-keyword">while</span>(steps.length) {
+    attr = pie.array.last(steps.shift().split(<span class="hljs-string">'.'</span>));
+    subObj = pie.object.getPath(obj, steps[<span class="hljs-number">0</span>]);
+    <span class="hljs-keyword">if</span>(!subObj) <span class="hljs-keyword">return</span>;
+    <span class="hljs-keyword">delete</span> subObj[attr];
+    <span class="hljs-keyword">if</span>(!propagate || <span class="hljs-built_in">Object</span>.keys(subObj).length) <span class="hljs-keyword">return</span>;
   }
 
 };
@@ -1174,6 +1165,7 @@ pie.object.forEach({‘foo’ : ‘bar’}, function(k,v){ console.log(k, v); })
 
 
 pie.object.getPath = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj, path)</span> </span>{
+  <span class="hljs-keyword">if</span>(!path) <span class="hljs-keyword">return</span> obj;
   <span class="hljs-keyword">if</span>(!~path.indexOf(<span class="hljs-string">'.'</span>)) <span class="hljs-keyword">return</span> obj[path];
 
   <span class="hljs-keyword">var</span> p = path.split(<span class="hljs-string">'.'</span>), key;
@@ -1637,6 +1629,17 @@ pie.string.titleize = <span class="hljs-function"><span class="hljs-keyword">fun
   <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/(^| )([a-z])/g</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, a, b)</span></span>{ <span class="hljs-keyword">return</span> a + b.toUpperCase(); });
 };
 
+pie.string.pathSteps = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{
+  <span class="hljs-keyword">var</span> split = path.split(<span class="hljs-string">'.'</span>),
+  steps = [];
+
+  <span class="hljs-keyword">while</span>(split.length) {
+    steps.push(split.join(<span class="hljs-string">'.'</span>));
+    split.pop();
+  }
+
+  <span class="hljs-keyword">return</span> steps;
+};
 
 pie.string.underscore = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
   <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/([a-z])([A-Z])/g</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, a, b)</span></span>{ <span class="hljs-keyword">return</span> a + <span class="hljs-string">'_'</span> + b.toLowerCase(); }).toLowerCase();
@@ -3205,12 +3208,19 @@ context’s in removedFromParent before the constructor of the next view is invo
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-102">&#182;</a>
               </div>
-              <p>not necessary for a view to exist on each page.
+              <p>Not necessary for a view to exist on each page.
 Maybe the entry point is server generated.</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.parsedUrl.view) {
+
+      <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.parsedUrl.redirect) <span class="hljs-keyword">return</span>;
+
+      <span class="hljs-keyword">var</span> redirectTo = <span class="hljs-keyword">this</span>.parsedUrl.redirect;
+      redirectTo = app.router.path(redirectTo, <span class="hljs-keyword">this</span>.parsedUrl.data);
+
+      <span class="hljs-keyword">this</span>.go(redirectTo);
       <span class="hljs-keyword">return</span>;
     }</pre></div></div>
             
@@ -3770,7 +3780,10 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  set: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value, options)</span> </span>{
-    <span class="hljs-keyword">var</span> change = { name: key, object: <span class="hljs-keyword">this</span>.data };
+    <span class="hljs-keyword">var</span> steps = ~key.indexOf(<span class="hljs-string">'.'</span>) ? pie.string.pathSteps(key) : <span class="hljs-literal">null</span>,
+    o, oldKeys, type, change;
+
+    change = { name: key, object: <span class="hljs-keyword">this</span>.data };
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.has(key)) {
       change.type = <span class="hljs-string">'update'</span>;
@@ -3791,19 +3804,52 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
             
             <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(value === change.oldValue) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
 
-    } <span class="hljs-keyword">else</span> {
-      change.type = <span class="hljs-string">'add'</span>;
+    }
+
+    <span class="hljs-keyword">if</span>(steps) {
+      steps.shift();
+      steps = steps.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(step)</span> </span>{
+        o = <span class="hljs-keyword">this</span>.get(step);
+        <span class="hljs-keyword">return</span> [step, o &amp;&amp; <span class="hljs-built_in">Object</span>.keys(o)];
+      }.bind(<span class="hljs-keyword">this</span>));
     }
 
     change.value = value;
 
     <span class="hljs-keyword">if</span>(value === <span class="hljs-literal">undefined</span>) {
       pie.object.deletePath(<span class="hljs-keyword">this</span>.data, key, <span class="hljs-literal">true</span>);
+      change.type = <span class="hljs-string">'delete'</span>;
     } <span class="hljs-keyword">else</span> {
       pie.object.setPath(<span class="hljs-keyword">this</span>.data, key, value);
+      change.type = change.type || <span class="hljs-string">'add'</span>;
     }
 
     <span class="hljs-keyword">this</span>.changeRecords.push(change);
+
+    <span class="hljs-keyword">if</span>(steps) {
+      steps.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(step)</span> </span>{
+        oldKeys = step[<span class="hljs-number">1</span>];
+        step = step[<span class="hljs-number">0</span>];
+
+        o = <span class="hljs-keyword">this</span>.get(step);
+
+        <span class="hljs-keyword">if</span>(change.type === <span class="hljs-string">'delete'</span>) {
+          type = o ? <span class="hljs-string">'update'</span> : <span class="hljs-string">'delete'</span>;
+        } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(!oldKeys) {
+          type = <span class="hljs-string">'add'</span>;
+        } <span class="hljs-keyword">else</span> {
+          type = <span class="hljs-string">'update'</span>;
+        }
+
+        <span class="hljs-keyword">this</span>.changeRecords.push({
+          type: type,
+          oldValue: oldKeys,
+          value: o ? <span class="hljs-built_in">Object</span>.keys(o) : <span class="hljs-literal">undefined</span>,
+          name: step,
+          object: <span class="hljs-keyword">this</span>.data
+        });
+      }.bind(<span class="hljs-keyword">this</span>));
+    }
 
     <span class="hljs-keyword">if</span>(options &amp;&amp; options.skipObservers) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.deliverChangeRecords();
