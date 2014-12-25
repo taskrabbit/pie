@@ -1,193 +1,219 @@
-pie.validator = pie.base.extend('validator', {
+pie.validator = pie.base.extend('validator', (function(){
 
-  init: function(app) {
-    this.app = app || window.app;
-    this.i18n = app.i18n;
-  },
+  // http://rosettacode.org/wiki/Luhn_test_of_credit_card_numbers#JavaScript
+  var luhnCheck = function(a,b,c,d,e) {
+    for(d = +a[b = a.length-1], e=0; b--;)
+      c = +a[b], d += ++e % 2 ? 2 * c % 10 + (c > 4) : c;
+    return !(d%10);
+  };
+
+  return {
+
+    init: function(app) {
+      this.app = app || window.app;
+      this.i18n = app.i18n;
+    },
 
 
-  errorMessage: function(validationType, validationOptions) {
-    if(validationOptions.message) return validationOptions.message;
+    errorMessage: function(validationType, validationOptions) {
+      if(validationOptions.message) return validationOptions.message;
 
-    var base = this.i18n.t('app.validations.' + validationType),
-    rangeOptions = new pie.validator.rangeOptions(this.app, validationOptions),
-    range = rangeOptions.message();
-
-    if(!range && validationType === 'length') {
-      rangeOptions = new pie.validator.rangeOptions(this.app, {gt: 0});
+      var base = this.i18n.t('app.validations.' + validationType),
+      rangeOptions = new pie.validator.rangeOptions(this.app, validationOptions),
       range = rangeOptions.message();
-    }
 
-    return (base + ' ' + range).trim();
-  },
-
-
-  withStandardChecks: function(value, options, f){
-    options = options || {};
-
-    if(options.allowBlank && !this.presence(value))
-      return true;
-    else if(options.unless && options.unless.call())
-      return true;
-    else if(options['if'] && !options['if'].call())
-      return true;
-    else
-      return f.call();
-  },
-
-
-  cc: function(value, options){
-    return this.withStandardChecks(value, options, function(){
-
-      // don't get rid of letters because we don't want a mix of letters and numbers passing through
-      var sanitized = String(value).replace(/[^a-zA-Z0-9]/g, '');
-      return this.number(sanitized) &&
-             this.length(sanitized, {gte: 15, lte: 16});
-    }.bind(this));
-  },
-
-
-  chosen: function(value, options){
-    return this.presence(value, options);
-  },
-
-
-  cvv: function(value, options) {
-    return this.withStandardChecks(value, options, function() {
-      return this.number(value) &&
-              this.length(value, {gte: 3, lte: 4});
-    }.bind(this));
-  },
-
-
-  // a date should be in the ISO format yyyy-mm-dd
-  date: function(value, options) {
-    options = options || {};
-    return this.withStandardChecks(value, options, function() {
-      var split = value.split('-'), y = split[0], m = split[1], d = split[2], iso;
-
-      if(!y || !m || !d) return false;
-      if(!this.length(y, {eq: 4}) && this.length(m, {eq: 2}) && this.length(d, {eq: 2})) return false;
-
-      if(!options.sanitized) {
-        Object.keys(options).forEach(function(k){
-          iso = options[k];
-          iso = this.app.i18n.l(iso, 'isoDate');
-          options[k] = iso;
-        });
-        options.sanitized = true;
+      if(!range && validationType === 'length') {
+        rangeOptions = new pie.validator.rangeOptions(this.app, {gt: 0});
+        range = rangeOptions.message();
       }
 
-      var ro = new pie.validator.rangeOptions(this.app, options);
-      return ro.matches(value);
-
-    }.bind(this));
-  },
+      return (base + ' ' + range).trim();
+    },
 
 
-  email: function email(value, options) {
-    options = pie.object.merge({allowBlank: false}, options || {});
-    return this.withStandardChecks(value, options, function(){
-      return (/^.+@.+\..+$/).test(value);
-    });
-  },
+    withStandardChecks: function(value, options, f){
+      options = options || {};
+
+      if(options.allowBlank && !this.presence(value))
+        return true;
+      else if(options.unless && options.unless.call())
+        return true;
+      else if(options['if'] && !options['if'].call())
+        return true;
+      else
+        return f.call();
+    },
 
 
-  fn: function(value, options, cb) {
-    return this.withStandardChecks(value, options, function(){
-      return options.fn.call(null, value, options, cb);
-    });
-  },
+    ccNumber: function(value, options){
+      return this.withStandardChecks(value, options, function(){
+
+        // don't get rid of letters because we don't want a mix of letters and numbers passing through
+        var sanitized = String(value).replace(/[^a-zA-Z0-9]/g, '');
+        return this.number(sanitized) &&
+               this.length(sanitized, {gte: 10, lte: 16}) &&
+               luhnCheck(sanitized);
+      }.bind(this));
+    },
 
 
-  format: function(value, options) {
-    options = options || {};
-    return this.withStandardChecks(value, options, function() {
-      var fmt = options.format || options['with'];
+    ccExpirationMonth: function(value, options) {
+      return this.withStandardChecks(value, options, function() {
+        return this.integer(value, {gte: 1, lte: 12});
+      }.bind(this));
+    },
 
-      if(fmt === 'isoDate'){
-        fmt = /^\d{4}\-\d{2}\-\d{2}$/;
-      } else if(fmt === 'epochs'){
-        fmt = /^\d{10}$/;
-      } else if(fmt === 'epochms'){
-        fmt = /^\d{13}$/;
+
+    ccExpirationYear: function(value, options) {
+      return this.withStandardChecks(value, options, function() {
+        var now = new Date();
+        return this.integer(value, {gte: now.getFullYear(), lte: now.getFullYear() + 20});
+      }.bind(this));
+    },
+
+
+    ccSecurity: function(value, options) {
+      return this.withStandardChecks(value, options, function() {
+        return this.number(value) &&
+                this.length(value, {gte: 3, lte: 4});
+      }.bind(this));
+    },
+
+
+    chosen: function(value, options){
+      return this.presence(value, options);
+    },
+
+
+    // a date should be in the ISO format yyyy-mm-dd
+    date: function(value, options) {
+      options = options || {};
+      return this.withStandardChecks(value, options, function() {
+        var split = value.split('-'), y = split[0], m = split[1], d = split[2], iso;
+
+        if(!y || !m || !d) return false;
+        if(!this.length(y, {eq: 4}) && this.length(m, {eq: 2}) && this.length(d, {eq: 2})) return false;
+
+        if(!options.sanitized) {
+          Object.keys(options).forEach(function(k){
+            iso = options[k];
+            iso = this.app.i18n.l(iso, 'isoDate');
+            options[k] = iso;
+          });
+          options.sanitized = true;
+        }
+
+        var ro = new pie.validator.rangeOptions(this.app, options);
+        return ro.matches(value);
+
+      }.bind(this));
+    },
+
+
+    email: function email(value, options) {
+      options = pie.object.merge({allowBlank: false}, options || {});
+      return this.withStandardChecks(value, options, function(){
+        return (/^.+@.+\..+$/).test(value);
+      });
+    },
+
+
+    fn: function(value, options, cb) {
+      return this.withStandardChecks(value, options, function(){
+        return options.fn.call(null, value, options, cb);
+      });
+    },
+
+
+    format: function(value, options) {
+      options = options || {};
+      return this.withStandardChecks(value, options, function() {
+        var fmt = options.format || options['with'];
+
+        if(fmt === 'isoDate'){
+          fmt = /^\d{4}\-\d{2}\-\d{2}$/;
+        } else if(fmt === 'epochs'){
+          fmt = /^\d{10}$/;
+        } else if(fmt === 'epochms'){
+          fmt = /^\d{13}$/;
+        }
+
+        return !!fmt.test(String(value));
+      });
+    },
+
+
+    // must be an integer (2.0 is ok) (good for quantities)
+    integer: function(value, options){
+      return  this.withStandardChecks(value, options, function(){
+        return  this.number(value, options) &&
+                parseInt(value, 10) === parseFloat(value, 10);
+      }.bind(this));
+    },
+
+
+    // min/max length of the field
+    length: function length(value, options){
+      options = pie.object.merge({allowBlank: false}, options);
+
+      if(!('gt'  in options)  &&
+         !('gte' in options)  &&
+         !('lt'  in options)  &&
+         !('lte' in options)  &&
+         !('eq'  in options) ){
+        options.gt = 0;
       }
 
-      return !!fmt.test(String(value));
-    });
-  },
+      return this.withStandardChecks(value, options, function(){
+        var length = String(value).trim().length;
+        return this.number(length, options);
+      }.bind(this));
+    },
 
 
-  // must be an integer (2.0 is ok) (good for quantities)
-  integer: function(value, options){
-    return  this.withStandardChecks(value, options, function(){
-      return  this.number(value, options) &&
-              parseInt(value, 10) === parseFloat(value, 10);
-    }.bind(this));
-  },
+    // must be some kind of number (good for money input)
+    number: function number(value, options){
+      options = options || {};
+
+      return this.withStandardChecks(value, options, function(){
+
+        // not using parseFloat because it accepts multiple decimals
+        if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
+
+        var number = parseFloat(value),
+        ro = new pie.validator.rangeOptions(this.app, options);
+
+        return ro.matches(number);
+      });
+    },
 
 
-  // min/max length of the field
-  length: function length(value, options){
-    options = pie.object.merge({allowBlank: false}, options);
+    // clean out all things that are not numbers and + and get a minimum of 10 digits.
+    phone: function phone(value, options) {
+      options = pie.object.merge({allowBlank: false}, options || {});
 
-    if(!('gt'  in options)  &&
-       !('gte' in options)  &&
-       !('lt'  in options)  &&
-       !('lte' in options)  &&
-       !('eq'  in options) ){
-      options.gt = 0;
+      return this.withStandardChecks(value, options, function(){
+        var clean = String(value).replace(/[^\+\d]+/g, '');
+        return this.length(clean, {gte: 10});
+      }.bind(this));
+    },
+
+
+    // does the value have any non-whitespace characters
+    presence: function presence(value, options){
+      return this.withStandardChecks(value, pie.object.merge({}, options, {allowBlank: false}), function(){
+        return !!(value && (/[^ ]/).test(String(value)));
+      });
+    },
+
+
+    url: function(value, options) {
+      return this.withStandardChecks(value, options, function() {
+        return (/^.+\..+$/).test(value);
+      });
     }
-
-    return this.withStandardChecks(value, options, function(){
-      var length = String(value).trim().length;
-      return this.number(length, options);
-    }.bind(this));
-  },
-
-
-  // must be some kind of number (good for money input)
-  number: function number(value, options){
-    options = options || {};
-
-    return this.withStandardChecks(value, options, function(){
-
-      // not using parseFloat because it accepts multiple decimals
-      if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
-
-      var number = parseFloat(value),
-      ro = new pie.validator.rangeOptions(this.app, options);
-
-      return ro.matches(number);
-    });
-  },
-
-
-  // clean out all things that are not numbers and + and get a minimum of 10 digits.
-  phone: function phone(value, options) {
-    options = pie.object.merge({allowBlank: false}, options || {});
-
-    return this.withStandardChecks(value, options, function(){
-      var clean = String(value).replace(/[^\+\d]+/g, '');
-      return this.length(clean, {gte: 10});
-    }.bind(this));
-  },
-
-
-  // does the value have any non-whitespace characters
-  presence: function presence(value, options){
-    return this.withStandardChecks(value, pie.object.merge({}, options, {allowBlank: false}), function(){
-      return !!(value && (/[^ ]/).test(String(value)));
-    });
-  },
-
-
-  url: function(value, options) {
-    return this.withStandardChecks(value, options, function() {
-      return (/^.+\..+$/).test(value);
-    });
-  }
-});
+  };
+})());
 
 
 

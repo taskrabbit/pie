@@ -6336,46 +6336,7 @@ pie.templates = pie.model.extend(<span class="hljs-string">'templates'</span>, {
     }.bind(<span class="hljs-keyword">this</span>));
   },
 });
-pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
-
-  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
-    <span class="hljs-keyword">this</span>.app = app || <span class="hljs-built_in">window</span>.app;
-    <span class="hljs-keyword">this</span>.i18n = app.i18n;
-  },
-
-
-  errorMessage: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(validationType, validationOptions)</span> </span>{
-    <span class="hljs-keyword">if</span>(validationOptions.message) <span class="hljs-keyword">return</span> validationOptions.message;
-
-    <span class="hljs-keyword">var</span> base = <span class="hljs-keyword">this</span>.i18n.t(<span class="hljs-string">'app.validations.'</span> + validationType),
-    rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, validationOptions),
-    range = rangeOptions.message();
-
-    <span class="hljs-keyword">if</span>(!range &amp;&amp; validationType === <span class="hljs-string">'length'</span>) {
-      rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, {gt: <span class="hljs-number">0</span>});
-      range = rangeOptions.message();
-    }
-
-    <span class="hljs-keyword">return</span> (base + <span class="hljs-string">' '</span> + range).trim();
-  },
-
-
-  withStandardChecks: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options, f)</span></span>{
-    options = options || {};
-
-    <span class="hljs-keyword">if</span>(options.allowBlank &amp;&amp; !<span class="hljs-keyword">this</span>.presence(value))
-      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
-    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(options.unless &amp;&amp; options.unless.call())
-      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
-    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(options[<span class="hljs-string">'if'</span>] &amp;&amp; !options[<span class="hljs-string">'if'</span>].call())
-      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
-    <span class="hljs-keyword">else</span>
-      <span class="hljs-keyword">return</span> f.call();
-  },
-
-
-  cc: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{</pre></div></div>
+pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{</pre></div></div>
             
         </li>
         
@@ -6386,28 +6347,56 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-187">&#182;</a>
               </div>
-              <p>don’t get rid of letters because we don’t want a mix of letters and numbers passing through</p>
+              <p><a href="http://rosettacode.org/wiki/Luhn_test_of_credit_card_numbers#JavaScript">http://rosettacode.org/wiki/Luhn_test_of_credit_card_numbers#JavaScript</a></p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">var</span> sanitized = <span class="hljs-built_in">String</span>(value).replace(<span class="hljs-regexp">/[^a-zA-Z0-9]/g</span>, <span class="hljs-string">''</span>);
-      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.number(sanitized) &amp;&amp;
-             <span class="hljs-keyword">this</span>.length(sanitized, {gte: <span class="hljs-number">15</span>, lte: <span class="hljs-number">16</span>});
-    }.bind(<span class="hljs-keyword">this</span>));
-  },
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> luhnCheck = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a,b,c,d,e)</span> </span>{
+    <span class="hljs-keyword">for</span>(d = +a[b = a.length-<span class="hljs-number">1</span>], e=<span class="hljs-number">0</span>; b--;)
+      c = +a[b], d += ++e % <span class="hljs-number">2</span> ? <span class="hljs-number">2</span> * c % <span class="hljs-number">10</span> + (c &gt; <span class="hljs-number">4</span>) : c;
+    <span class="hljs-keyword">return</span> !(d%<span class="hljs-number">10</span>);
+  };
+
+  <span class="hljs-keyword">return</span> {
+
+    init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
+      <span class="hljs-keyword">this</span>.app = app || <span class="hljs-built_in">window</span>.app;
+      <span class="hljs-keyword">this</span>.i18n = app.i18n;
+    },
 
 
-  chosen: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.presence(value, options);
-  },
+    errorMessage: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(validationType, validationOptions)</span> </span>{
+      <span class="hljs-keyword">if</span>(validationOptions.message) <span class="hljs-keyword">return</span> validationOptions.message;
+
+      <span class="hljs-keyword">var</span> base = <span class="hljs-keyword">this</span>.i18n.t(<span class="hljs-string">'app.validations.'</span> + validationType),
+      rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, validationOptions),
+      range = rangeOptions.message();
+
+      <span class="hljs-keyword">if</span>(!range &amp;&amp; validationType === <span class="hljs-string">'length'</span>) {
+        rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, {gt: <span class="hljs-number">0</span>});
+        range = rangeOptions.message();
+      }
+
+      <span class="hljs-keyword">return</span> (base + <span class="hljs-string">' '</span> + range).trim();
+    },
 
 
-  cvv: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.number(value) &amp;&amp;
-              <span class="hljs-keyword">this</span>.length(value, {gte: <span class="hljs-number">3</span>, lte: <span class="hljs-number">4</span>});
-    }.bind(<span class="hljs-keyword">this</span>));
-  },</pre></div></div>
+    withStandardChecks: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options, f)</span></span>{
+      options = options || {};
+
+      <span class="hljs-keyword">if</span>(options.allowBlank &amp;&amp; !<span class="hljs-keyword">this</span>.presence(value))
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+      <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(options.unless &amp;&amp; options.unless.call())
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+      <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(options[<span class="hljs-string">'if'</span>] &amp;&amp; !options[<span class="hljs-string">'if'</span>].call())
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+      <span class="hljs-keyword">else</span>
+        <span class="hljs-keyword">return</span> f.call();
+    },
+
+
+    ccNumber: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{</pre></div></div>
             
         </li>
         
@@ -6418,65 +6407,44 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-188">&#182;</a>
               </div>
-              <p>a date should be in the ISO format yyyy-mm-dd</p>
+              <p>don’t get rid of letters because we don’t want a mix of letters and numbers passing through</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  date: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
-    options = options || {};
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">var</span> split = value.split(<span class="hljs-string">'-'</span>), y = split[<span class="hljs-number">0</span>], m = split[<span class="hljs-number">1</span>], d = split[<span class="hljs-number">2</span>], iso;
-
-      <span class="hljs-keyword">if</span>(!y || !m || !d) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
-      <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.length(y, {eq: <span class="hljs-number">4</span>}) &amp;&amp; <span class="hljs-keyword">this</span>.length(m, {eq: <span class="hljs-number">2</span>}) &amp;&amp; <span class="hljs-keyword">this</span>.length(d, {eq: <span class="hljs-number">2</span>})) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
-
-      <span class="hljs-keyword">if</span>(!options.sanitized) {
-        <span class="hljs-built_in">Object</span>.keys(options).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k)</span></span>{
-          iso = options[k];
-          iso = <span class="hljs-keyword">this</span>.app.i18n.l(iso, <span class="hljs-string">'isoDate'</span>);
-          options[k] = iso;
-        });
-        options.sanitized = <span class="hljs-literal">true</span>;
-      }
-
-      <span class="hljs-keyword">var</span> ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, options);
-      <span class="hljs-keyword">return</span> ro.matches(value);
-
-    }.bind(<span class="hljs-keyword">this</span>));
-  },
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">var</span> sanitized = <span class="hljs-built_in">String</span>(value).replace(<span class="hljs-regexp">/[^a-zA-Z0-9]/g</span>, <span class="hljs-string">''</span>);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.number(sanitized) &amp;&amp;
+               <span class="hljs-keyword">this</span>.length(sanitized, {gte: <span class="hljs-number">10</span>, lte: <span class="hljs-number">16</span>}) &amp;&amp;
+               luhnCheck(sanitized);
+      }.bind(<span class="hljs-keyword">this</span>));
+    },
 
 
-  email: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">email</span><span class="hljs-params">(value, options)</span> </span>{
-    options = pie.object.merge({allowBlank: <span class="hljs-literal">false</span>}, options || {});
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      <span class="hljs-keyword">return</span> (<span class="hljs-regexp">/^.+@.+\..+$/</span>).test(value);
-    });
-  },
+    ccExpirationMonth: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.integer(value, {gte: <span class="hljs-number">1</span>, lte: <span class="hljs-number">12</span>});
+      }.bind(<span class="hljs-keyword">this</span>));
+    },
 
 
-  fn: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options, cb)</span> </span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      <span class="hljs-keyword">return</span> options.fn.call(<span class="hljs-literal">null</span>, value, options, cb);
-    });
-  },
+    ccExpirationYear: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">var</span> now = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>();
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.integer(value, {gte: now.getFullYear(), lte: now.getFullYear() + <span class="hljs-number">20</span>});
+      }.bind(<span class="hljs-keyword">this</span>));
+    },
 
 
-  format: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
-    options = options || {};
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">var</span> fmt = options.format || options[<span class="hljs-string">'with'</span>];
+    ccSecurity: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.number(value) &amp;&amp;
+                <span class="hljs-keyword">this</span>.length(value, {gte: <span class="hljs-number">3</span>, lte: <span class="hljs-number">4</span>});
+      }.bind(<span class="hljs-keyword">this</span>));
+    },
 
-      <span class="hljs-keyword">if</span>(fmt === <span class="hljs-string">'isoDate'</span>){
-        fmt = <span class="hljs-regexp">/^\d{4}\-\d{2}\-\d{2}$/</span>;
-      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(fmt === <span class="hljs-string">'epochs'</span>){
-        fmt = <span class="hljs-regexp">/^\d{10}$/</span>;
-      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(fmt === <span class="hljs-string">'epochms'</span>){
-        fmt = <span class="hljs-regexp">/^\d{13}$/</span>;
-      }
 
-      <span class="hljs-keyword">return</span> !!fmt.test(<span class="hljs-built_in">String</span>(value));
-    });
-  },</pre></div></div>
+    chosen: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.presence(value, options);
+    },</pre></div></div>
             
         </li>
         
@@ -6487,16 +6455,65 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-189">&#182;</a>
               </div>
-              <p>must be an integer (2.0 is ok) (good for quantities)</p>
+              <p>a date should be in the ISO format yyyy-mm-dd</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  integer: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
-    <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.number(value, options) &amp;&amp;
-              <span class="hljs-built_in">parseInt</span>(value, <span class="hljs-number">10</span>) === <span class="hljs-built_in">parseFloat</span>(value, <span class="hljs-number">10</span>);
-    }.bind(<span class="hljs-keyword">this</span>));
-  },</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    date: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
+      options = options || {};
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">var</span> split = value.split(<span class="hljs-string">'-'</span>), y = split[<span class="hljs-number">0</span>], m = split[<span class="hljs-number">1</span>], d = split[<span class="hljs-number">2</span>], iso;
+
+        <span class="hljs-keyword">if</span>(!y || !m || !d) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+        <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.length(y, {eq: <span class="hljs-number">4</span>}) &amp;&amp; <span class="hljs-keyword">this</span>.length(m, {eq: <span class="hljs-number">2</span>}) &amp;&amp; <span class="hljs-keyword">this</span>.length(d, {eq: <span class="hljs-number">2</span>})) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+
+        <span class="hljs-keyword">if</span>(!options.sanitized) {
+          <span class="hljs-built_in">Object</span>.keys(options).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k)</span></span>{
+            iso = options[k];
+            iso = <span class="hljs-keyword">this</span>.app.i18n.l(iso, <span class="hljs-string">'isoDate'</span>);
+            options[k] = iso;
+          });
+          options.sanitized = <span class="hljs-literal">true</span>;
+        }
+
+        <span class="hljs-keyword">var</span> ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, options);
+        <span class="hljs-keyword">return</span> ro.matches(value);
+
+      }.bind(<span class="hljs-keyword">this</span>));
+    },
+
+
+    email: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">email</span><span class="hljs-params">(value, options)</span> </span>{
+      options = pie.object.merge({allowBlank: <span class="hljs-literal">false</span>}, options || {});
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">return</span> (<span class="hljs-regexp">/^.+@.+\..+$/</span>).test(value);
+      });
+    },
+
+
+    fn: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options, cb)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">return</span> options.fn.call(<span class="hljs-literal">null</span>, value, options, cb);
+      });
+    },
+
+
+    format: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
+      options = options || {};
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">var</span> fmt = options.format || options[<span class="hljs-string">'with'</span>];
+
+        <span class="hljs-keyword">if</span>(fmt === <span class="hljs-string">'isoDate'</span>){
+          fmt = <span class="hljs-regexp">/^\d{4}\-\d{2}\-\d{2}$/</span>;
+        } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(fmt === <span class="hljs-string">'epochs'</span>){
+          fmt = <span class="hljs-regexp">/^\d{10}$/</span>;
+        } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(fmt === <span class="hljs-string">'epochms'</span>){
+          fmt = <span class="hljs-regexp">/^\d{13}$/</span>;
+        }
+
+        <span class="hljs-keyword">return</span> !!fmt.test(<span class="hljs-built_in">String</span>(value));
+      });
+    },</pre></div></div>
             
         </li>
         
@@ -6507,26 +6524,16 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-190">&#182;</a>
               </div>
-              <p>min/max length of the field</p>
+              <p>must be an integer (2.0 is ok) (good for quantities)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  length: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">length</span><span class="hljs-params">(value, options)</span></span>{
-    options = pie.object.merge({allowBlank: <span class="hljs-literal">false</span>}, options);
-
-    <span class="hljs-keyword">if</span>(!(<span class="hljs-string">'gt'</span>  <span class="hljs-keyword">in</span> options)  &amp;&amp;
-       !(<span class="hljs-string">'gte'</span> <span class="hljs-keyword">in</span> options)  &amp;&amp;
-       !(<span class="hljs-string">'lt'</span>  <span class="hljs-keyword">in</span> options)  &amp;&amp;
-       !(<span class="hljs-string">'lte'</span> <span class="hljs-keyword">in</span> options)  &amp;&amp;
-       !(<span class="hljs-string">'eq'</span>  <span class="hljs-keyword">in</span> options) ){
-      options.gt = <span class="hljs-number">0</span>;
-    }
-
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      <span class="hljs-keyword">var</span> length = <span class="hljs-built_in">String</span>(value).trim().length;
-      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.number(length, options);
-    }.bind(<span class="hljs-keyword">this</span>));
-  },</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    integer: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
+      <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.number(value, options) &amp;&amp;
+                <span class="hljs-built_in">parseInt</span>(value, <span class="hljs-number">10</span>) === <span class="hljs-built_in">parseFloat</span>(value, <span class="hljs-number">10</span>);
+      }.bind(<span class="hljs-keyword">this</span>));
+    },</pre></div></div>
             
         </li>
         
@@ -6537,14 +6544,26 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-191">&#182;</a>
               </div>
-              <p>must be some kind of number (good for money input)</p>
+              <p>min/max length of the field</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  number: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">number</span><span class="hljs-params">(value, options)</span></span>{
-    options = options || {};
+            <div class="content"><div class='highlight'><pre>    length: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">length</span><span class="hljs-params">(value, options)</span></span>{
+      options = pie.object.merge({allowBlank: <span class="hljs-literal">false</span>}, options);
 
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{</pre></div></div>
+      <span class="hljs-keyword">if</span>(!(<span class="hljs-string">'gt'</span>  <span class="hljs-keyword">in</span> options)  &amp;&amp;
+         !(<span class="hljs-string">'gte'</span> <span class="hljs-keyword">in</span> options)  &amp;&amp;
+         !(<span class="hljs-string">'lt'</span>  <span class="hljs-keyword">in</span> options)  &amp;&amp;
+         !(<span class="hljs-string">'lte'</span> <span class="hljs-keyword">in</span> options)  &amp;&amp;
+         !(<span class="hljs-string">'eq'</span>  <span class="hljs-keyword">in</span> options) ){
+        options.gt = <span class="hljs-number">0</span>;
+      }
+
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">var</span> length = <span class="hljs-built_in">String</span>(value).trim().length;
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.number(length, options);
+      }.bind(<span class="hljs-keyword">this</span>));
+    },</pre></div></div>
             
         </li>
         
@@ -6555,18 +6574,14 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-192">&#182;</a>
               </div>
-              <p>not using parseFloat because it accepts multiple decimals</p>
+              <p>must be some kind of number (good for money input)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(!<span class="hljs-regexp">/^([\-])?([\d]+)?\.?[\d]+$/</span>.test(<span class="hljs-built_in">String</span>(value))) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+            <div class="content"><div class='highlight'><pre>    number: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">number</span><span class="hljs-params">(value, options)</span></span>{
+      options = options || {};
 
-      <span class="hljs-keyword">var</span> number = <span class="hljs-built_in">parseFloat</span>(value),
-      ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, options);
-
-      <span class="hljs-keyword">return</span> ro.matches(number);
-    });
-  },</pre></div></div>
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{</pre></div></div>
             
         </li>
         
@@ -6577,18 +6592,18 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-193">&#182;</a>
               </div>
-              <p>clean out all things that are not numbers and + and get a minimum of 10 digits.</p>
+              <p>not using parseFloat because it accepts multiple decimals</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  phone: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">phone</span><span class="hljs-params">(value, options)</span> </span>{
-    options = pie.object.merge({allowBlank: <span class="hljs-literal">false</span>}, options || {});
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span>(!<span class="hljs-regexp">/^([\-])?([\d]+)?\.?[\d]+$/</span>.test(<span class="hljs-built_in">String</span>(value))) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
 
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      <span class="hljs-keyword">var</span> clean = <span class="hljs-built_in">String</span>(value).replace(<span class="hljs-regexp">/[^\+\d]+/g</span>, <span class="hljs-string">''</span>);
-      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.length(clean, {gte: <span class="hljs-number">10</span>});
-    }.bind(<span class="hljs-keyword">this</span>));
-  },</pre></div></div>
+        <span class="hljs-keyword">var</span> number = <span class="hljs-built_in">parseFloat</span>(value),
+        ro = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, options);
+
+        <span class="hljs-keyword">return</span> ro.matches(number);
+      });
+    },</pre></div></div>
             
         </li>
         
@@ -6599,23 +6614,18 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-194">&#182;</a>
               </div>
-              <p>does the value have any non-whitespace characters</p>
+              <p>clean out all things that are not numbers and + and get a minimum of 10 digits.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  presence: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">presence</span><span class="hljs-params">(value, options)</span></span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, pie.object.merge({}, options, {allowBlank: <span class="hljs-literal">false</span>}), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      <span class="hljs-keyword">return</span> !!(value &amp;&amp; (<span class="hljs-regexp">/[^ ]/</span>).test(<span class="hljs-built_in">String</span>(value)));
-    });
-  },
+            <div class="content"><div class='highlight'><pre>    phone: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">phone</span><span class="hljs-params">(value, options)</span> </span>{
+      options = pie.object.merge({allowBlank: <span class="hljs-literal">false</span>}, options || {});
 
-
-  url: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">return</span> (<span class="hljs-regexp">/^.+\..+$/</span>).test(value);
-    });
-  }
-});</pre></div></div>
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">var</span> clean = <span class="hljs-built_in">String</span>(value).replace(<span class="hljs-regexp">/[^\+\d]+/g</span>, <span class="hljs-string">''</span>);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.length(clean, {gte: <span class="hljs-number">10</span>});
+      }.bind(<span class="hljs-keyword">this</span>));
+    },</pre></div></div>
             
         </li>
         
@@ -6625,6 +6635,34 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-195">&#182;</a>
+              </div>
+              <p>does the value have any non-whitespace characters</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    presence: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">presence</span><span class="hljs-params">(value, options)</span></span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, pie.object.merge({}, options, {allowBlank: <span class="hljs-literal">false</span>}), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">return</span> !!(value &amp;&amp; (<span class="hljs-regexp">/[^ ]/</span>).test(<span class="hljs-built_in">String</span>(value)));
+      });
+    },
+
+
+    url: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">return</span> (<span class="hljs-regexp">/^.+\..+$/</span>).test(value);
+      });
+    }
+  };
+})());</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-196">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-196">&#182;</a>
               </div>
               <p>small utility class to handle range options.</p>
 
@@ -6639,11 +6677,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, {
         </li>
         
         
-        <li id="section-196">
+        <li id="section-197">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-196">&#182;</a>
+                <a class="pilcrow" href="#section-197">&#182;</a>
               </div>
               <p>for double casting new RangeOptions(new RangeOptions({}));</p>
 

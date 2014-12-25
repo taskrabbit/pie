@@ -55,21 +55,21 @@ describe("pie.validator", function() {
 
   });
 
-  describe("#cc", function() {
+  describe("#ccNumber", function() {
 
-    //           16 digit numbers                                                   15 digit numbers
-    var valids = ['0000 0000 0000 0000', '1111-1111-1111-1111', '1111111111111111', '012345678901234'],
-    invalids = ['0000 0000 0000 00', '0000 0000 0000 0000 0', '0000 0000 0000 000a', 'a000 0000 0000 0000', '0000a0000a0000a0000'];
+    //           16 digit numbers
+    var valids = ['0000 0000 0000 0000', '4111-1111-1111-1111', '4111111111111111', '49927398716'],
+    invalids = ['49927398717', '1234567812345678', '0000 0000 0000 000a', 'a000 0000 0000 0000', '0000a0000a0000a0000'];
 
     valids.forEach(function(valid) {
       it("should determine that " + valid + " is valid", function() {
-        expect(this.validator.cc(valid)).toEqual(true);
+        expect(this.validator.ccNumber(valid)).toEqual(true);
       });
     });
 
     invalids.forEach(function(invalid) {
       it("should determine that " + invalid + " is not valid", function() {
-        expect(this.validator.cc(invalid)).toEqual(false);
+        expect(this.validator.ccNumber(invalid)).toEqual(false);
       });
     });
 
