@@ -68,12 +68,12 @@ pie.i18n = pie.model.extend('i18n', {
   },
 
 
-  _pad: function(num, cnt, pad) {
+  _pad: function(num, cnt, pad, prefix) {
     var s = '',
         p = cnt - num.toString().length;
     if(pad === undefined) pad = ' ';
     while(p>0){
-      s += pad;
+      s += prefix ? pad + s : s + pad;
       p -= 1;
     }
     return s + num.toString();
@@ -337,9 +337,11 @@ pie.i18n.defaultTranslations = {
 
     validations: {
 
-      cc:       "does not look like a credit card number",
+      ccNumber: "does not look like a credit card number",
+      ccSecurity: "is not a valid security code",
+      ccExpirationMonth: "is not a valid expiration month",
+      ccExpirationYear: "is not a valid expiration year",
       chosen:   "must be chosen",
-      cvv:      "is not a valid security code",
       date:     "is not a valid date",
       email:    "must be a valid email",
       format:   "is invalid",

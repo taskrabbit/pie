@@ -36,6 +36,9 @@ pie.app = pie.base.extend('app', function(options) {
   // app.resources is used for managing the loading of external resources.
   this.resources = classOption('resources', pie.resources);
 
+  // template helper methods, they are evaluated to the local variable "h" in templates.
+  this.helpers = classOption('helpers', pie.helpers);
+
   // app.templates is used to manage application templates.
   this.templates = classOption('templates', pie.templates);
 
@@ -65,6 +68,7 @@ pie.app = pie.base.extend('app', function(options) {
 
   // set a global instance which can be used as a backup within the pie library.
   pie.appInstance = pie.appInstance || this;
+  pie.apps[this.pieId] = this;
 });
 
 

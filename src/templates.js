@@ -12,7 +12,11 @@ pie.templates = pie.model.extend('templates', {
 
   _registerTemplate: function(name, content) {
     this.app.debug('Compiling and storing template: ' + name);
-    this.set(name, pie.string.template(content));
+    var vars = "var h = pie.apps[" + this.app.pieId + "].helpers.provide();";
+    Object.keys(this.app.helpers.provide()).forEach(function(k){
+      vars += "var " + k + " = h." + k + ";";
+    });
+    this.set(name, pie.string.template(content, vars));
   },
 
   load: function(name, cb) {

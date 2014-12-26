@@ -1,6 +1,8 @@
 // pie namespace;
 window.pie = {
 
+  apps: {},
+
   // native extensions
   array: {},
   browser: {},
@@ -30,6 +32,14 @@ window.pie = {
     return String(pie.pieId++);
   },
 
+  guid: function() {
+    var r, v;
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      r = Math.random()*16|0,
+      v = c === 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+  },
 
   // provide a util object for your app which utilizes pie's features.
   // window._ = pie.util();

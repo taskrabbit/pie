@@ -1,6 +1,8 @@
 // pie namespace;
 window.pie = {
 
+  apps: {},
+
   // native extensions
   array: {},
   browser: {},
@@ -30,6 +32,14 @@ window.pie = {
     return String(pie.pieId++);
   },
 
+  guid: function() {
+    var r, v;
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      r = Math.random()*16|0,
+      v = c === 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+  },
 
   // provide a util object for your app which utilizes pie's features.
   // window._ = pie.util();
@@ -272,14 +282,23 @@ pie.array.sortBy = function(arr, sortF){
 };
 
 
-pie.array.toSentence = function(arr, i18n) {
+pie.array.toSentence = function(arr, options) {
   if(!arr.length) return '';
 
-  var delim = i18n && i18n.t('sentence.delimeter', {default: ''}) || ', ',
-  and = i18n && i18n.t('sentence.and', {default: ''}) || ' and ';
+  options = pie.object.merge({
+    i18n: pie.object.getPath(pie, 'appInstance.i18n')
+  }, options);
 
-  if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(delim), arr.slice(arr.length-1)];
-  return arr.join(and);
+  options.delimeter = options.delimeter || options.i18n && options.i18n.t('sentence.delimeter', {default: ', '});
+  options.and = options.and || options.i18n && options.i18n.t('sentence.and', {default: ' and '});
+  options.punctuate = options.punctuate === true ? '.' : options.punctuate;
+
+  if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(options.delimeter), arr.slice(arr.length-1)];
+
+  var sentence = arr.join(options.and);
+  if(options.punctuate) sentence += options.punctuate;
+
+  return sentence;
 };
 
 
@@ -993,11 +1012,22 @@ pie.string.downcase = function(str) {
 };
 
 // Escapes a string for HTML interpolation
-pie.string.escape = function(str) {
-  /* jslint eqnull: true */
-  if(str == null) return str;
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g,'&#x2F;');
-};
+pie.string.escape = (function(){
+  var encReg = /[<>&"'\x00]/g;
+  var encMap = {
+    "<"   : "&lt;",
+    ">"   : "&gt;",
+    "&"   : "&amp;",
+    "\""  : "&quot;",
+    "'"   : "&#39;"
+  };
+
+  return function(str) {
+    /* jslint eqnull: true */
+    if(str == null) return str;
+    return ("" + str).replace(encReg, function(c) { return encMap[c] || ""; });
+  };
+})();
 
 
 // designed to be used with the "%{expression}" placeholders
@@ -1059,9 +1089,9 @@ pie.string.pluralize = function(str, count) {
 
 
 // string templating via John Resig
-pie.string.template = function(str) {
+pie.string.template = function(str, varString) {
   return new Function("data",
-    "var p=[]; with(data){p.push('" +
+    "var p=[];" + (varString || "") + ";with(data){p.push('" +
     str.replace(/[\r\t\n]/g, " ")
        .replace(/'(?=[^%]*%\])/g,"\t")
        .split("'").join("\\'")
@@ -1825,6 +1855,9 @@ pie.app = pie.base.extend('app', function(options) {
   // app.resources is used for managing the loading of external resources.
   this.resources = classOption('resources', pie.resources);
 
+  // template helper methods, they are evaluated to the local variable "h" in templates.
+  this.helpers = classOption('helpers', pie.helpers);
+
   // app.templates is used to manage application templates.
   this.templates = classOption('templates', pie.templates);
 
@@ -1854,6 +1887,7 @@ pie.app = pie.base.extend('app', function(options) {
 
   // set a global instance which can be used as a backup within the pie library.
   pie.appInstance = pie.appInstance || this;
+  pie.apps[this.pieId] = this;
 });
 
 
@@ -3086,6 +3120,31 @@ pie.formView = pie.activeView.extend('formView', {
   }
 
 }, pie.mixins.bindings);
+pie.helpers = pie.model.extend('helpers', {
+
+  init: function(app) {
+    this._super({}, {
+      app: app
+    });
+
+    var i18n = this.app.i18n;
+
+    this.register('t', i18n.t.bind(i18n));
+    this.register('l', i18n.l.bind(i18n));
+    this.register('timeago', i18n.timeago.bind(i18n));
+    this.register('path', this.app.router.path.bind(this.app.router));
+    this.register('get', pie.object.getPath);
+  },
+
+  register: function(name, fn) {
+    this.set(name, fn);
+  },
+
+  provide: function() {
+    return this.data;
+  }
+
+});
 // made to be used as an instance so multiple translations could exist if we so choose.
 pie.i18n = pie.model.extend('i18n', {
   init: function(app) {
@@ -3156,12 +3215,12 @@ pie.i18n = pie.model.extend('i18n', {
   },
 
 
-  _pad: function(num, cnt, pad) {
+  _pad: function(num, cnt, pad, prefix) {
     var s = '',
         p = cnt - num.toString().length;
     if(pad === undefined) pad = ' ';
     while(p>0){
-      s += pad;
+      s += prefix ? pad + s : s + pad;
       p -= 1;
     }
     return s + num.toString();
@@ -3425,9 +3484,11 @@ pie.i18n.defaultTranslations = {
 
     validations: {
 
-      cc:       "does not look like a credit card number",
+      ccNumber: "does not look like a credit card number",
+      ccSecurity: "is not a valid security code",
+      ccExpirationMonth: "is not a valid expiration month",
+      ccExpirationYear: "is not a valid expiration year",
       chosen:   "must be chosen",
-      cvv:      "is not a valid security code",
       date:     "is not a valid date",
       email:    "must be a valid email",
       format:   "is invalid",
@@ -4054,7 +4115,11 @@ pie.templates = pie.model.extend('templates', {
 
   _registerTemplate: function(name, content) {
     this.app.debug('Compiling and storing template: ' + name);
-    this.set(name, pie.string.template(content));
+    var vars = "var h = pie.apps[" + this.app.pieId + "].helpers.provide();";
+    Object.keys(this.app.helpers.provide()).forEach(function(k){
+      vars += "var " + k + " = h." + k + ";";
+    });
+    this.set(name, pie.string.template(content, vars));
   },
 
   load: function(name, cb) {
@@ -4214,7 +4279,7 @@ pie.validator = pie.base.extend('validator', (function(){
     },
 
 
-    email: function email(value, options) {
+    email: function(value, options) {
       options = pie.object.merge({allowBlank: false}, options || {});
       return this.withStandardChecks(value, options, function(){
         return (/^.+@.+\..+$/).test(value);
@@ -4257,7 +4322,7 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     // min/max length of the field
-    length: function length(value, options){
+    length: function(value, options){
       options = pie.object.merge({allowBlank: false}, options);
 
       if(!('gt'  in options)  &&
@@ -4276,7 +4341,7 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     // must be some kind of number (good for money input)
-    number: function number(value, options){
+    number: function(value, options){
       options = options || {};
 
       return this.withStandardChecks(value, options, function(){
@@ -4293,7 +4358,7 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     // clean out all things that are not numbers and + and get a minimum of 10 digits.
-    phone: function phone(value, options) {
+    phone: function(value, options) {
       options = pie.object.merge({allowBlank: false}, options || {});
 
       return this.withStandardChecks(value, options, function(){
@@ -4304,7 +4369,7 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     // does the value have any non-whitespace characters
-    presence: function presence(value, options){
+    presence: function(value, options){
       return this.withStandardChecks(value, pie.object.merge({}, options, {allowBlank: false}), function(){
         return !!(value && (/[^ ]/).test(String(value)));
       });

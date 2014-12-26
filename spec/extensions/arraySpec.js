@@ -358,7 +358,7 @@ describe("Array extensions", function() {
         }
       });
 
-      expect(pie.array.toSentence([3, 4, 5, 6], i18n)).toEqual('3; 4; 5, yet, 6');
+      expect(pie.array.toSentence([3, 4, 5, 6], {i18n: i18n})).toEqual('3; 4; 5, yet, 6');
     });
 
   });

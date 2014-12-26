@@ -95,11 +95,22 @@ pie.string.downcase = function(str) {
 };
 
 // Escapes a string for HTML interpolation
-pie.string.escape = function(str) {
-  /* jslint eqnull: true */
-  if(str == null) return str;
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g,'&#x2F;');
-};
+pie.string.escape = (function(){
+  var encReg = /[<>&"'\x00]/g;
+  var encMap = {
+    "<"   : "&lt;",
+    ">"   : "&gt;",
+    "&"   : "&amp;",
+    "\""  : "&quot;",
+    "'"   : "&#39;"
+  };
+
+  return function(str) {
+    /* jslint eqnull: true */
+    if(str == null) return str;
+    return ("" + str).replace(encReg, function(c) { return encMap[c] || ""; });
+  };
+})();
 
 
 // designed to be used with the "%{expression}" placeholders
@@ -161,9 +172,9 @@ pie.string.pluralize = function(str, count) {
 
 
 // string templating via John Resig
-pie.string.template = function(str) {
+pie.string.template = function(str, varString) {
   return new Function("data",
-    "var p=[]; with(data){p.push('" +
+    "var p=[];" + (varString || "") + ";with(data){p.push('" +
     str.replace(/[\r\t\n]/g, " ")
        .replace(/'(?=[^%]*%\])/g,"\t")
        .split("'").join("\\'")

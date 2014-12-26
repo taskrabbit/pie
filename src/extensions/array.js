@@ -214,14 +214,23 @@ pie.array.sortBy = function(arr, sortF){
 };
 
 
-pie.array.toSentence = function(arr, i18n) {
+pie.array.toSentence = function(arr, options) {
   if(!arr.length) return '';
 
-  var delim = i18n && i18n.t('sentence.delimeter', {default: ''}) || ', ',
-  and = i18n && i18n.t('sentence.and', {default: ''}) || ' and ';
+  options = pie.object.merge({
+    i18n: pie.object.getPath(pie, 'appInstance.i18n')
+  }, options);
 
-  if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(delim), arr.slice(arr.length-1)];
-  return arr.join(and);
+  options.delimeter = options.delimeter || options.i18n && options.i18n.t('sentence.delimeter', {default: ', '});
+  options.and = options.and || options.i18n && options.i18n.t('sentence.and', {default: ' and '});
+  options.punctuate = options.punctuate === true ? '.' : options.punctuate;
+
+  if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(options.delimeter), arr.slice(arr.length-1)];
+
+  var sentence = arr.join(options.and);
+  if(options.punctuate) sentence += options.punctuate;
+
+  return sentence;
 };
 
 

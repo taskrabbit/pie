@@ -110,7 +110,7 @@ pie.validator = pie.base.extend('validator', (function(){
     },
 
 
-    email: function email(value, options) {
+    email: function(value, options) {
       options = pie.object.merge({allowBlank: false}, options || {});
       return this.withStandardChecks(value, options, function(){
         return (/^.+@.+\..+$/).test(value);
@@ -153,7 +153,7 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     // min/max length of the field
-    length: function length(value, options){
+    length: function(value, options){
       options = pie.object.merge({allowBlank: false}, options);
 
       if(!('gt'  in options)  &&
@@ -172,7 +172,7 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     // must be some kind of number (good for money input)
-    number: function number(value, options){
+    number: function(value, options){
       options = options || {};
 
       return this.withStandardChecks(value, options, function(){
@@ -189,7 +189,7 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     // clean out all things that are not numbers and + and get a minimum of 10 digits.
-    phone: function phone(value, options) {
+    phone: function(value, options) {
       options = pie.object.merge({allowBlank: false}, options || {});
 
       return this.withStandardChecks(value, options, function(){
@@ -200,7 +200,7 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     // does the value have any non-whitespace characters
-    presence: function presence(value, options){
+    presence: function(value, options){
       return this.withStandardChecks(value, pie.object.merge({}, options, {allowBlank: false}), function(){
         return !!(value && (/[^ ]/).test(String(value)));
       });
