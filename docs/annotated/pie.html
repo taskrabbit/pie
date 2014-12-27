@@ -2231,7 +2231,7 @@ pie.mixins.container = {
 
     <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span> </span>{
       str += <span class="hljs-string">"\n"</span> + pad(<span class="hljs-string">'|'</span>, indent + <span class="hljs-number">1</span>);
-      str += child.tree(indent + <span class="hljs-number">1</span>);
+      str += child.__tree(indent + <span class="hljs-number">1</span>);
     });
 
     <span class="hljs-keyword">if</span>(!indent) str += <span class="hljs-string">"\n"</span>;

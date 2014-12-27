@@ -1594,7 +1594,7 @@ pie.mixins.container = {
 
     this.children.forEach(function(child) {
       str += "\n" + pad('|', indent + 1);
-      str += child.tree(indent + 1);
+      str += child.__tree(indent + 1);
     });
 
     if(!indent) str += "\n";
