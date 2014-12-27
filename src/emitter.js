@@ -7,14 +7,30 @@ pie.emitter = pie.model.extend('emitter', {
     });
   },
 
+
+  hasEvent: function(event) {
+    return !!~this.get('triggeredEvents').indexOf(event);
+  },
+
+
+  // Event Observation
+
   _on: function(event, fn, options, meth) {
     options = options || {},
 
     this.getOrSet('eventCallbacks.' + event, [])[meth](pie.object.merge({fn: fn}, options));
   },
 
-  hasEvent: function(event) {
-    return !!~this.get('triggeredEvents').indexOf(event);
+
+  _once: function(event, fn, options, meth) {
+    options = options || {};
+
+    if(options.immediate && this.hasEvent(event)) {
+      fn();
+      return;
+    }
+
+    this._on(event, fn, {onceOnly: true}, meth);
   },
 
   // invoke fn when the event is triggered.
@@ -29,14 +45,33 @@ pie.emitter = pie.model.extend('emitter', {
   },
 
   once: function(event, fn, options) {
-    options = options || {};
+    this._once(event, fn, options, 'push');
+  },
 
-    if(options.immediate && this.hasEvent(event)) {
-      fn();
-      return;
-    }
+  prependOnce: function(event, fn, options) {
+    this._once(event, fn, options, 'unshift');
+  },
 
-    this.on(event, fn, {onceOnly: true});
+
+  // Event Triggering
+
+  _fireAround: function(event, onComplete) {
+    var callbacks = this.get('eventCallbacks.' + event) || [],
+    compactNeeded = false,
+    fns;
+
+    fns = callbacks.map(function(cb, i) {
+      if(cb.onceOnly) {
+        compactNeeded = true;
+        cb[i] = undefined;
+      }
+      return cb.fn;
+    });
+
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
+    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+
+    pie.fn.async(fns, onComplete);
   },
 
   // trigger an event (string) on the app.
@@ -61,32 +96,20 @@ pie.emitter = pie.model.extend('emitter', {
     if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
   },
 
-  fireAround: function(event, onComplete) {
-    var callbacks = this.get('eventCallbacks.' + event) || [],
-    compactNeeded = false,
-    fns;
-
-    fns = callbacks.map(function(cb, i) {
-      if(cb.onceOnly) {
-        compactNeeded = true;
-        cb[i] = undefined;
-      }
-      return cb.fn;
-    });
-
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
-    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
-
-    pie.fn.async(fns, onComplete);
+  fireSequence: function(event, fn) {
+    this.fireAround(event, function() {
+      if(fn) fn();
+      this.fire(event);
+    }.bind(this));
   },
 
-  around: function(event, fn) {
+  fireAround: function(event, fn) {
     var before = pie.string.modularize("before_" + event),
     after = pie.string.modularize("after_" + event),
     around = pie.string.modularize('around_' + event);
 
     this.fire(before);
-    this.fireAround(around, function() {
+    this._fireAround(around, function() {
       fn();
       this.fire(after);
     }.bind(this));

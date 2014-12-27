@@ -41,6 +41,7 @@ pie.base._extend = function(/* parentProto, name?, initFn[, extension1, extensio
   )();
 
   child.prototype = Object.create(parentProto);
+  child.prototype.className = name;
 
   if(init) child.prototype.init = pie.base._wrap(init, child.prototype.init);
 

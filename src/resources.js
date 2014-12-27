@@ -58,7 +58,7 @@ pie.resources = pie.model.extend('resources', {
     link.href = options.src;
     link.media = options.media || 'screen';
     link.rel = options.rel || 'stylesheet';
-    link.type = options.type || 'text/css';
+    link.type = options.contentType || 'text/css';
 
     this._appendNode(link);
 

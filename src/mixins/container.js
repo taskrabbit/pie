@@ -82,5 +82,25 @@ pie.mixins.container = {
     }
 
     return this;
+  },
+
+  __tree: function(indent) {
+    indent = indent || 0;
+    var pad = function(s, i){
+      if(!i) return s;
+      while(i-- > 0) s = " " + s;
+      return s;
+    };
+    var str = "\n";
+    str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this.className || this.pieId), indent);
+
+    this.children.forEach(function(child) {
+      str += "\n" + pad('|', indent + 1);
+      str += child.tree(indent + 1);
+    });
+
+    if(!indent) str += "\n";
+
+    return str;
   }
 };

@@ -2,7 +2,7 @@
 pie.activeView = pie.view.extend('activeView', function(options) {
   this._super(options);
 
-  this.emitter = new pie.emitter();
+  this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
   this.emitter.on('render', this._renderTemplateToDom.bind(this));
   this.emitter.once('afterRender', this._appendToDom.bind(this));
 });
@@ -12,6 +12,7 @@ pie.activeView.reopen({
   _appendToDom: function() {
     if(!this.renderTarget) return;
     if(this.el.parentNode) return;
+    if(!this.parent) return;
     this.renderTarget.appendChild(this.el);
   },
 
@@ -30,25 +31,17 @@ pie.activeView.reopen({
     }
   },
 
+  _activeViewSetup: function(cb) {
+    if(this.options.autoRender && this.model) {
+      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+      this.onChange(this.model, this.render.bind(this), field);
+    }
 
-  setup: function() {
-    this.emitter.once('setup', this._super.bind(this));
+    if(this.options.renderOnSetup) {
+      this.emitter.prependOnce('afterSetup', this.render.bind(this), {immediate: true});
+    }
 
-    this.emitter.around('setup', function(){
-
-      this.emitter.fire('setup');
-
-      if(this.options.autoRender && this.model) {
-        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-        this.onChange(this.model, this.render.bind(this), field);
-      }
-
-      if(this.options.renderOnSetup) {
-        this.render();
-      }
-
-    }.bind(this));
-
+    cb();
   },
 
   // If the first option passed is a node, it will use that as the query scope.
@@ -84,9 +77,7 @@ pie.activeView.reopen({
   },
 
   render: function() {
-    this.emitter.around('render', function(){
-      this.emitter.fire('render');
-    }.bind(this));
+    this.emitter.fireSequence('render');
   },
 
   setRenderTarget: function(target) {

@@ -1580,19 +1580,48 @@ pie.mixins.container = {
     }
 
     return this;
+  },
+
+  __tree: function(indent) {
+    indent = indent || 0;
+    var pad = function(s, i){
+      if(!i) return s;
+      while(i-- > 0) s = " " + s;
+      return s;
+    };
+    var str = "\n";
+    str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this.className || this.pieId), indent);
+
+    this.children.forEach(function(child) {
+      str += "\n" + pad('|', indent + 1);
+      str += child.tree(indent + 1);
+    });
+
+    if(!indent) str += "\n";
+
+    return str;
   }
 };
 pie.mixins.validatable = {
 
+  init: function() {
+    this.validations = [];
+    this.validationStrategy = 'dirty';
+
+    if(this._super) this._super.apply(this, arguments);
+
+    if(!this.data.validationErrors) this.data.validationErrors = {};
+  },
+
   // default to a model implementation
   reportValidationError: function(key, errors) {
-    this.set('validationErrors.' + key, errors);
+    this.set('validationErrors.' + key, errors || []);
   },
 
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
   // validates({name: ['presence', {format: /[a]/}]})
-  validates: function(obj, observeChanges) {
+  validates: function(obj, validationStrategy) {
     var configs, resultConfigs;
 
     this.validations = this.validations || {};
@@ -1636,10 +1665,11 @@ pie.mixins.validatable = {
       this.validations[k] = this.validations[k] || [];
       this.validations[k] = this.validations[k].concat(resultConfigs);
 
-      if(observeChanges) {
-        this.observe(function(){ this.validate(k); }.bind(this), k);
-      }
+      this.observe(this.validationChangeObserver.bind(this), k);
+
     }.bind(this));
+
+    if(validationStrategy !== undefined) this.validationStrategy = validationStrategy;
   },
 
   // Invoke validateAll with a set of optional callbacks for the success case and the failure case.
@@ -1675,6 +1705,18 @@ pie.mixins.validatable = {
     }
   },
 
+
+  validationChangeObserver: function(changes) {
+    var change = changes[0];
+    if(this.validationStrategy === 'validate') {
+      this.validate(change.name);
+    } else if(this.validationStrategy === 'dirty') {
+      // for speed.
+      if(this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
+        this.reportValidationError(change.name, false);
+      }
+    }
+  },
 
   // validate a specific key and optionally invoke a callback.
   validate: function(k, cb) {
@@ -1769,6 +1811,7 @@ pie.base._extend = function(/* parentProto, name?, initFn[, extension1, extensio
   )();
 
   child.prototype = Object.create(parentProto);
+  child.prototype.className = name;
 
   if(init) child.prototype.init = pie.base._wrap(init, child.prototype.init);
 
@@ -2097,10 +2140,7 @@ pie.app.reopen({
 
   // start the app, apply fake navigation to the current url to get our navigation observation underway.
   start: function() {
-    this.emitter.around('start', function() {
-      this.navigator.start();
-      this.emitter.fire('start');
-    }.bind(this));
+    this.emitter.fireSequence('start', this.navigator.start.bind(this.navigator));
   },
 
   // safely access localStorage, passing along any errors for reporting.
@@ -2404,6 +2444,9 @@ pie.view = pie.base.extend('view', function(options) {
   this.app = this.options.app || window.app;
   this.el = this.options.el || pie.dom.createElement('<div />');
   this.changeCallbacks = [];
+
+  this.emitter = new pie.emitter();
+
   if(this.options.setup) this.setup();
 });
 
@@ -2412,7 +2455,7 @@ pie.view.reopen(pie.mixins.container);
 pie.view.reopen({
 
   addedToParent: function() {
-    this.setup();
+    if(!this.emitter.hasEvent('beforeSetup')) this.setup();
   },
 
   // we extract the functionality of setting our render target so we can override this as we see fit.
@@ -2424,6 +2467,7 @@ pie.view.reopen({
 
   // placeholder for default functionality
   setup: function(){
+    this.emitter.fireSequence('setup');
     return this;
   },
 
@@ -2516,7 +2560,7 @@ pie.view.reopen({
 pie.activeView = pie.view.extend('activeView', function(options) {
   this._super(options);
 
-  this.emitter = new pie.emitter();
+  this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
   this.emitter.on('render', this._renderTemplateToDom.bind(this));
   this.emitter.once('afterRender', this._appendToDom.bind(this));
 });
@@ -2526,6 +2570,7 @@ pie.activeView.reopen({
   _appendToDom: function() {
     if(!this.renderTarget) return;
     if(this.el.parentNode) return;
+    if(!this.parent) return;
     this.renderTarget.appendChild(this.el);
   },
 
@@ -2544,25 +2589,17 @@ pie.activeView.reopen({
     }
   },
 
+  _activeViewSetup: function(cb) {
+    if(this.options.autoRender && this.model) {
+      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+      this.onChange(this.model, this.render.bind(this), field);
+    }
 
-  setup: function() {
-    this.emitter.once('setup', this._super.bind(this));
+    if(this.options.renderOnSetup) {
+      this.emitter.prependOnce('afterSetup', this.render.bind(this), {immediate: true});
+    }
 
-    this.emitter.around('setup', function(){
-
-      this.emitter.fire('setup');
-
-      if(this.options.autoRender && this.model) {
-        var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-        this.onChange(this.model, this.render.bind(this), field);
-      }
-
-      if(this.options.renderOnSetup) {
-        this.render();
-      }
-
-    }.bind(this));
-
+    cb();
   },
 
   // If the first option passed is a node, it will use that as the query scope.
@@ -2598,9 +2635,7 @@ pie.activeView.reopen({
   },
 
   render: function() {
-    this.emitter.around('render', function(){
-      this.emitter.fire('render');
-    }.bind(this));
+    this.emitter.fireSequence('render');
   },
 
   setRenderTarget: function(target) {
@@ -2854,14 +2889,30 @@ pie.emitter = pie.model.extend('emitter', {
     });
   },
 
+
+  hasEvent: function(event) {
+    return !!~this.get('triggeredEvents').indexOf(event);
+  },
+
+
+  // Event Observation
+
   _on: function(event, fn, options, meth) {
     options = options || {},
 
     this.getOrSet('eventCallbacks.' + event, [])[meth](pie.object.merge({fn: fn}, options));
   },
 
-  hasEvent: function(event) {
-    return !!~this.get('triggeredEvents').indexOf(event);
+
+  _once: function(event, fn, options, meth) {
+    options = options || {};
+
+    if(options.immediate && this.hasEvent(event)) {
+      fn();
+      return;
+    }
+
+    this._on(event, fn, {onceOnly: true}, meth);
   },
 
   // invoke fn when the event is triggered.
@@ -2876,14 +2927,33 @@ pie.emitter = pie.model.extend('emitter', {
   },
 
   once: function(event, fn, options) {
-    options = options || {};
+    this._once(event, fn, options, 'push');
+  },
 
-    if(options.immediate && this.hasEvent(event)) {
-      fn();
-      return;
-    }
+  prependOnce: function(event, fn, options) {
+    this._once(event, fn, options, 'unshift');
+  },
 
-    this.on(event, fn, {onceOnly: true});
+
+  // Event Triggering
+
+  _fireAround: function(event, onComplete) {
+    var callbacks = this.get('eventCallbacks.' + event) || [],
+    compactNeeded = false,
+    fns;
+
+    fns = callbacks.map(function(cb, i) {
+      if(cb.onceOnly) {
+        compactNeeded = true;
+        cb[i] = undefined;
+      }
+      return cb.fn;
+    });
+
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
+    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+
+    pie.fn.async(fns, onComplete);
   },
 
   // trigger an event (string) on the app.
@@ -2908,32 +2978,20 @@ pie.emitter = pie.model.extend('emitter', {
     if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
   },
 
-  fireAround: function(event, onComplete) {
-    var callbacks = this.get('eventCallbacks.' + event) || [],
-    compactNeeded = false,
-    fns;
-
-    fns = callbacks.map(function(cb, i) {
-      if(cb.onceOnly) {
-        compactNeeded = true;
-        cb[i] = undefined;
-      }
-      return cb.fn;
-    });
-
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
-    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
-
-    pie.fn.async(fns, onComplete);
+  fireSequence: function(event, fn) {
+    this.fireAround(event, function() {
+      if(fn) fn();
+      this.fire(event);
+    }.bind(this));
   },
 
-  around: function(event, fn) {
+  fireAround: function(event, fn) {
     var before = pie.string.modularize("before_" + event),
     after = pie.string.modularize("after_" + event),
     around = pie.string.modularize('around_' + event);
 
     this.fire(before);
-    this.fireAround(around, function() {
+    this._fireAround(around, function() {
       fn();
       this.fire(after);
     }.bind(this));
@@ -3836,7 +3894,7 @@ pie.resources = pie.model.extend('resources', {
     link.href = options.src;
     link.media = options.media || 'screen';
     link.rel = options.rel || 'stylesheet';
-    link.type = options.type || 'text/css';
+    link.type = options.contentType || 'text/css';
 
     this._appendNode(link);
 

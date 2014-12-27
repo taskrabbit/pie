@@ -4,6 +4,9 @@ pie.view = pie.base.extend('view', function(options) {
   this.app = this.options.app || window.app;
   this.el = this.options.el || pie.dom.createElement('<div />');
   this.changeCallbacks = [];
+
+  this.emitter = new pie.emitter();
+
   if(this.options.setup) this.setup();
 });
 
@@ -12,7 +15,7 @@ pie.view.reopen(pie.mixins.container);
 pie.view.reopen({
 
   addedToParent: function() {
-    this.setup();
+    if(!this.emitter.hasEvent('beforeSetup')) this.setup();
   },
 
   // we extract the functionality of setting our render target so we can override this as we see fit.
@@ -24,6 +27,7 @@ pie.view.reopen({
 
   // placeholder for default functionality
   setup: function(){
+    this.emitter.fireSequence('setup');
     return this;
   },
 

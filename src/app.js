@@ -278,10 +278,7 @@ pie.app.reopen({
 
   // start the app, apply fake navigation to the current url to get our navigation observation underway.
   start: function() {
-    this.emitter.around('start', function() {
-      this.navigator.start();
-      this.emitter.fire('start');
-    }.bind(this));
+    this.emitter.fireSequence('start', this.navigator.start.bind(this.navigator));
   },
 
   // safely access localStorage, passing along any errors for reporting.

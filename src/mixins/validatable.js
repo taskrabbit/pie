@@ -1,14 +1,23 @@
 pie.mixins.validatable = {
 
+  init: function() {
+    this.validations = [];
+    this.validationStrategy = 'dirty';
+
+    if(this._super) this._super.apply(this, arguments);
+
+    if(!this.data.validationErrors) this.data.validationErrors = {};
+  },
+
   // default to a model implementation
   reportValidationError: function(key, errors) {
-    this.set('validationErrors.' + key, errors);
+    this.set('validationErrors.' + key, errors || []);
   },
 
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
   // validates({name: ['presence', {format: /[a]/}]})
-  validates: function(obj, observeChanges) {
+  validates: function(obj, validationStrategy) {
     var configs, resultConfigs;
 
     this.validations = this.validations || {};
@@ -52,10 +61,11 @@ pie.mixins.validatable = {
       this.validations[k] = this.validations[k] || [];
       this.validations[k] = this.validations[k].concat(resultConfigs);
 
-      if(observeChanges) {
-        this.observe(function(){ this.validate(k); }.bind(this), k);
-      }
+      this.observe(this.validationChangeObserver.bind(this), k);
+
     }.bind(this));
+
+    if(validationStrategy !== undefined) this.validationStrategy = validationStrategy;
   },
 
   // Invoke validateAll with a set of optional callbacks for the success case and the failure case.
@@ -91,6 +101,18 @@ pie.mixins.validatable = {
     }
   },
 
+
+  validationChangeObserver: function(changes) {
+    var change = changes[0];
+    if(this.validationStrategy === 'validate') {
+      this.validate(change.name);
+    } else if(this.validationStrategy === 'dirty') {
+      // for speed.
+      if(this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
+        this.reportValidationError(change.name, false);
+      }
+    }
+  },
 
   // validate a specific key and optionally invoke a callback.
   validate: function(k, cb) {
