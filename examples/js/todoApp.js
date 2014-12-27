@@ -191,7 +191,7 @@ example.views.list.reopen({
     e.preventDefault();
 
     this.list.forEach(function(item){
-      item.set('completed', true);
+      item.set('completed', 1);
     });
   },
 
