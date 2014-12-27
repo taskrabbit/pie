@@ -1589,12 +1589,12 @@ pie.mixins.container = {
       while(i-- > 0) s = " " + s;
       return s;
     };
-    var str = "\n";
-    str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this.className || this.pieId), indent);
+    var str = "\n", nextIndent = indent + (indent ? 4 : 1);
+    str += pad((indent ? '|- ' : '') + this.className + ' (' + (this._nameWithinParent || this.pieId) + ')', indent);
 
     this.children.forEach(function(child) {
-      str += "\n" + pad('|', indent + 1);
-      str += child.__tree(indent + 1);
+      str += "\n" + pad('|', nextIndent);
+      str += child.__tree(nextIndent);
     });
 
     if(!indent) str += "\n";

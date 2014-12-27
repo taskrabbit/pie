@@ -2226,12 +2226,12 @@ pie.mixins.container = {
       <span class="hljs-keyword">while</span>(i-- &gt; <span class="hljs-number">0</span>) s = <span class="hljs-string">" "</span> + s;
       <span class="hljs-keyword">return</span> s;
     };
-    <span class="hljs-keyword">var</span> str = <span class="hljs-string">"\n"</span>;
-    str += pad((indent ? <span class="hljs-string">'|- '</span> : <span class="hljs-string">''</span>) + (<span class="hljs-keyword">this</span>._nameWithinParent || <span class="hljs-keyword">this</span>.className || <span class="hljs-keyword">this</span>.pieId), indent);
+    <span class="hljs-keyword">var</span> str = <span class="hljs-string">"\n"</span>, nextIndent = indent + (indent ? <span class="hljs-number">4</span> : <span class="hljs-number">1</span>);
+    str += pad((indent ? <span class="hljs-string">'|- '</span> : <span class="hljs-string">''</span>) + <span class="hljs-keyword">this</span>.className + <span class="hljs-string">' ('</span> + (<span class="hljs-keyword">this</span>._nameWithinParent || <span class="hljs-keyword">this</span>.pieId) + <span class="hljs-string">')'</span>, indent);
 
     <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span> </span>{
-      str += <span class="hljs-string">"\n"</span> + pad(<span class="hljs-string">'|'</span>, indent + <span class="hljs-number">1</span>);
-      str += child.__tree(indent + <span class="hljs-number">1</span>);
+      str += <span class="hljs-string">"\n"</span> + pad(<span class="hljs-string">'|'</span>, nextIndent);
+      str += child.__tree(nextIndent);
     });
 
     <span class="hljs-keyword">if</span>(!indent) str += <span class="hljs-string">"\n"</span>;
