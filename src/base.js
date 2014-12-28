@@ -6,31 +6,29 @@ pie.base.prototype.init = function(){};
 
 
 pie.base.extend = function() {
-  var args = pie.array.from(arguments);
-  args.unshift(pie.base.prototype);
-  return pie.base._extend.apply(null, args);
+  return pie.base._extend(pie.base.prototype, arguments);
 };
 
 pie.base.reopen = function() {
-  var args = pie.array.from(arguments);
-  args.unshift(pie.base.prototype);
-  return pie.base._reopen.apply(null, args);
+  return pie.base._reopen(pie.base.prototype, arguments);
 };
 
-pie.base._extend = function(/* parentProto, name?, initFn[, extension1, extension2 */) {
-  var args = pie.array.from(arguments),
-  parentProto = args.shift(),
-  name = pie.object.isString(args[0]) ? args.shift() : "",
-  init, child;
+pie.base._extend = function(parentProto, extensions) {
+  extensions = pie.array.change(extensions, 'from', 'flatten', 'compact');
 
-  if(pie.object.isFunction(args[0])) {
-    init = args.shift();
-  } else if (pie.object.isObject(args[0]) && args[0].init) {
-    init = args[0].init;
-    args[0] = pie.object.except(args[0], 'init');
+  var name = "", child;
+
+  if(pie.object.isString(extensions[0])) {
+    name = extensions.shift();
   }
 
-  if(!name && init && init.name) name = init.name;
+  if(pie.object.isFunction(extensions[0])) {
+    extensions.unshift({init: extensions.shift()});
+  }
+
+  if(!name) {
+    name = pie.object.getPath(extensions[0], 'init.name') || '';
+  }
 
   child = new Function(
     "return function " + name + "(){\n" +
@@ -43,31 +41,21 @@ pie.base._extend = function(/* parentProto, name?, initFn[, extension1, extensio
   child.prototype = Object.create(parentProto);
   child.prototype.className = name;
 
-  if(init) child.prototype.init = pie.base._wrap(init, child.prototype.init);
-
   child.extend = function() {
-    var extendArgs = pie.array.from(arguments);
-    extendArgs.unshift(child.prototype);
-    return pie.base._extend.apply(null, extendArgs);
+    return pie.base._extend(child.prototype, arguments);
   };
 
   child.reopen = function() {
-    var reopenArgs = pie.array.from(arguments);
-    reopenArgs.unshift(child.prototype);
-    return pie.base._reopen.apply(null, reopenArgs);
+    return pie.base._reopen(child.prototype, arguments);
   };
 
-  if(args.length) child.reopen.apply(null, args);
+  if(extensions.length) child.reopen(extensions);
 
   return child;
 };
 
-pie.base._reopen = function(/* proto, extensions[, extension2] */) {
-  var extensions = pie.array.from(arguments),
-  proto = extensions.shift();
-
-  extensions = pie.array.compact(pie.array.flatten(extensions), true);
-
+pie.base._reopen = function(proto, extensions) {
+  extensions = pie.array.change(extensions, 'from', 'flatten', 'compact');
   extensions.forEach(function(ext) {
     pie.object.forEach(ext, function(k,v) {
       proto[k] = pie.base._wrap(v, proto[k]);
@@ -75,19 +63,32 @@ pie.base._reopen = function(/* proto, extensions[, extension2] */) {
   });
 };
 
-pie.base._wrap = function(newF, oldF) {
-  /* jslint eqnull:true */
-  if(newF == null) return oldF;
-  if(oldF == null) return newF;
-  if(!pie.object.isFunction(newF)) return newF;
+pie.base._wrap = (function() {
 
-  return function superWrapper() {
-    var ret, sup = this._super;
-    this._super = oldF || function(){};
-    ret = newF.apply(this, arguments);
-    if(!sup) delete this._super;
-    else this._super = sup;
-    return ret;
+  var fnTest = /xyz/.test(function(){ "xyz"; });
+  fnTest = fnTest ? /\b_super\b/ : /.*/;
+
+  return function(newF, oldF) {
+    /* jslint eqnull:true */
+
+    // if we're not defining anything new, return the old definition.
+    if(newF == null) return oldF;
+    // if there is no old definition
+    if(oldF == null) return newF;
+    // if we're not overriding with a function
+    if(!pie.object.isFunction(newF)) return newF;
+    // if we're not overriding a function
+    if(!pie.object.isFunction(oldF)) return newF;
+    // if it doesn't call _super, don't bother wrapping.
+    if(!fnTest.test(newF)) return newF;
+
+    return function superWrapper() {
+      var ret, sup = this._super;
+      this._super = oldF;
+      ret = newF.apply(this, arguments);
+      if(!sup) delete this._super;
+      else this._super = sup;
+      return ret;
+    };
   };
-
-};
+})();

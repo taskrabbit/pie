@@ -71,7 +71,7 @@ pie.object.flatten = function(a, object, prefix) {
   var b = object || {};
   prefix = prefix || '';
 
-  Object.forEach(a, function(k,v) {
+  pie.object.forEach(a, function(k,v) {
     if(pie.object.isObject(v)) {
       pie.object.flatten(v, b, k + '.');
     } else {

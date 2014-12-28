@@ -1,3 +1,27 @@
+
+pie.fn.async = function(fns, cb, counterObserver) {
+
+  if(!fns.length) {
+    cb();
+    return;
+  }
+
+  var completeCount = fns.length,
+  completed = 0,
+  counter = function() {
+    completed++;
+    if(counterObserver) counterObserver.apply(null, arguments);
+    if(completed === completeCount) {
+      cb();
+    }
+  };
+
+  fns.forEach(function(fn) {
+    fn(counter);
+  });
+
+};
+
 // Returns a function, that, as long as it continues to be invoked, will not
 // be triggered. The function will be called after it stops being called for
 // N milliseconds. If `immediate` is passed, trigger the function on the
@@ -38,29 +62,4 @@ pie.fn.debounce = function(func, wait, immediate) {
 pie.fn.valueFrom = function(f, binding, args) {
   if(pie.object.isFunction(f)) return f.apply(binding, args) ;
   return f;
-};
-
-
-
-pie.fn.async = function(fns, cb, counterObserver) {
-
-  if(!fns.length) {
-    cb();
-    return;
-  }
-
-  var completeCount = fns.length,
-  completed = 0,
-  counter = function() {
-    completed++;
-    if(counterObserver) counterObserver.apply(null, arguments);
-    if(completed === completeCount) {
-      cb();
-    }
-  };
-
-  fns.forEach(function(fn) {
-    fn(counter);
-  });
-
 };
