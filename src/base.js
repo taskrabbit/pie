@@ -25,7 +25,7 @@ pie.base._extend = function(/* parentProto, name?, initFn[, extension1, extensio
 
   if(pie.object.isFunction(args[0])) {
     init = args.shift();
-  } else if (pie.object.isObject(args[0])) {
+  } else if (pie.object.isObject(args[0]) && args[0].init) {
     init = args[0].init;
     args[0] = pie.object.except(args[0], 'init');
   }
@@ -78,6 +78,7 @@ pie.base._reopen = function(/* proto, extensions[, extension2] */) {
 pie.base._wrap = function(newF, oldF) {
   /* jslint eqnull:true */
   if(newF == null) return oldF;
+  if(oldF == null) return newF;
   if(!pie.object.isFunction(newF)) return newF;
 
   return function superWrapper() {

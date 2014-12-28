@@ -13,6 +13,7 @@ pie.templates = pie.model.extend('templates', {
   _registerTemplate: function(name, content) {
     this.app.debug('Compiling and storing template: ' + name);
     var vars = "var h = pie.apps[" + this.app.pieId + "].helpers.provide();";
+    vars += "var get = function(p){ return pie.object.getPath(data, p); };";
     Object.keys(this.app.helpers.provide()).forEach(function(k){
       vars += "var " + k + " = h." + k + ";";
     });

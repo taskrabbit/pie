@@ -2628,7 +2628,7 @@ pie.base._extend = <span class="hljs-function"><span class="hljs-keyword">functi
 
   <span class="hljs-keyword">if</span>(pie.object.isFunction(args[<span class="hljs-number">0</span>])) {
     init = args.shift();
-  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pie.object.isObject(args[<span class="hljs-number">0</span>])) {
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pie.object.isObject(args[<span class="hljs-number">0</span>]) &amp;&amp; args[<span class="hljs-number">0</span>].init) {
     init = args[<span class="hljs-number">0</span>].init;
     args[<span class="hljs-number">0</span>] = pie.object.except(args[<span class="hljs-number">0</span>], <span class="hljs-string">'init'</span>);
   }
@@ -2681,6 +2681,7 @@ pie.base._reopen = <span class="hljs-function"><span class="hljs-keyword">functi
 pie.base._wrap = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(newF, oldF)</span> </span>{
   <span class="hljs-comment">/* jslint eqnull:true */</span>
   <span class="hljs-keyword">if</span>(newF == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span> oldF;
+  <span class="hljs-keyword">if</span>(oldF == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span> newF;
   <span class="hljs-keyword">if</span>(!pie.object.isFunction(newF)) <span class="hljs-keyword">return</span> newF;
 
   <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">superWrapper</span><span class="hljs-params">()</span> </span>{
@@ -6457,6 +6458,7 @@ pie.templates = pie.model.extend(<span class="hljs-string">'templates'</span>, {
   _registerTemplate: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name, content)</span> </span>{
     <span class="hljs-keyword">this</span>.app.debug(<span class="hljs-string">'Compiling and storing template: '</span> + name);
     <span class="hljs-keyword">var</span> vars = <span class="hljs-string">"var h = pie.apps["</span> + <span class="hljs-keyword">this</span>.app.pieId + <span class="hljs-string">"].helpers.provide();"</span>;
+    vars += <span class="hljs-string">"var get = function(p){ return pie.object.getPath(data, p); };"</span>;
     <span class="hljs-built_in">Object</span>.keys(<span class="hljs-keyword">this</span>.app.helpers.provide()).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k)</span></span>{
       vars += <span class="hljs-string">"var "</span> + k + <span class="hljs-string">" = h."</span> + k + <span class="hljs-string">";"</span>;
     });
