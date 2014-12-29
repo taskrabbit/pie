@@ -9,17 +9,11 @@ pie.fn.async = function(fns, cb, counterObserver) {
   var completeCount = fns.length,
   completed = 0,
   counter = function() {
-    completed++;
     if(counterObserver) counterObserver.apply(null, arguments);
-    if(completed === completeCount) {
-      cb();
-    }
+    if(++completed === completeCount) cb();
   };
 
-  fns.forEach(function(fn) {
-    fn(counter);
-  });
-
+  fns.forEach(function(fn) { fn(counter); });
 };
 
 // Returns a function, that, as long as it continues to be invoked, will not

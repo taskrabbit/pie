@@ -82,7 +82,7 @@ pie.router = pie.model.extend('router', {
 
   // sorts the routes to be the most exact to the most generic
   sortRoutes: function() {
-    var ac, bc, c, d = [];
+    var ac, bc, c, d = Array(0);
 
     this.get('routes').sort(function(a,b) {
       a = a.get('pathTemplate');

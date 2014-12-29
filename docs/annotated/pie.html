@@ -874,17 +874,11 @@ pie.fn.async = <span class="hljs-function"><span class="hljs-keyword">function</
   <span class="hljs-keyword">var</span> completeCount = fns.length,
   completed = <span class="hljs-number">0</span>,
   counter = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    completed++;
     <span class="hljs-keyword">if</span>(counterObserver) counterObserver.apply(<span class="hljs-literal">null</span>, <span class="hljs-built_in">arguments</span>);
-    <span class="hljs-keyword">if</span>(completed === completeCount) {
-      cb();
-    }
+    <span class="hljs-keyword">if</span>(++completed === completeCount) cb();
   };
 
-  fns.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{
-    fn(counter);
-  });
-
+  fns.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{ fn(counter); });
 };</pre></div></div>
             
         </li>
@@ -6450,7 +6444,7 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
             </div>
             
             <div class="content"><div class='highlight'><pre>  sortRoutes: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> ac, bc, c, d = [];
+    <span class="hljs-keyword">var</span> ac, bc, c, d = <span class="hljs-built_in">Array</span>(<span class="hljs-number">0</span>);
 
     <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'routes'</span>).sort(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a,b)</span> </span>{
       a = a.get(<span class="hljs-string">'pathTemplate'</span>);
@@ -6953,7 +6947,7 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.has(<span class="hljs-string">'eq'</span>)) {
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'eq'</span>, {count: <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'eq'</span>)});
     } <span class="hljs-keyword">else</span> {
-      <span class="hljs-keyword">var</span> s = [<span class="hljs-string">""</span>, <span class="hljs-string">""</span>];
+      <span class="hljs-keyword">var</span> s = [<span class="hljs-string">''</span>,<span class="hljs-string">''</span>];
 
       <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.has(<span class="hljs-string">'gt'</span>)) s[<span class="hljs-number">0</span>] += <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'gt'</span>, {count: <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'gt'</span>)});
       <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.has(<span class="hljs-string">'gte'</span>)) s[<span class="hljs-number">0</span>] += <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'gte'</span>, {count: <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'gte'</span>)});

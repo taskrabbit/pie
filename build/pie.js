@@ -606,17 +606,11 @@ pie.fn.async = function(fns, cb, counterObserver) {
   var completeCount = fns.length,
   completed = 0,
   counter = function() {
-    completed++;
     if(counterObserver) counterObserver.apply(null, arguments);
-    if(completed === completeCount) {
-      cb();
-    }
+    if(++completed === completeCount) cb();
   };
 
-  fns.forEach(function(fn) {
-    fn(counter);
-  });
-
+  fns.forEach(function(fn) { fn(counter); });
 };
 
 // Returns a function, that, as long as it continues to be invoked, will not
@@ -4116,7 +4110,7 @@ pie.router = pie.model.extend('router', {
 
   // sorts the routes to be the most exact to the most generic
   sortRoutes: function() {
-    var ac, bc, c, d = [];
+    var ac, bc, c, d = Array(0);
 
     this.get('routes').sort(function(a,b) {
       a = a.get('pathTemplate');
@@ -4482,7 +4476,7 @@ pie.validator.rangeOptions = pie.base.extend('rangeOptions', {
     if(this.has('eq')) {
       return this.t('eq', {count: this.get('eq')});
     } else {
-      var s = ["", ""];
+      var s = ['',''];
 
       if(this.has('gt')) s[0] += this.t('gt', {count: this.get('gt')});
       else if(this.has('gte')) s[0] += this.t('gte', {count: this.get('gte')});

@@ -253,7 +253,7 @@ pie.validator.rangeOptions = pie.base.extend('rangeOptions', {
     if(this.has('eq')) {
       return this.t('eq', {count: this.get('eq')});
     } else {
-      var s = ["", ""];
+      var s = ['',''];
 
       if(this.has('gt')) s[0] += this.t('gt', {count: this.get('gt')});
       else if(this.has('gte')) s[0] += this.t('gte', {count: this.get('gte')});
