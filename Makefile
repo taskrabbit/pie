@@ -16,9 +16,9 @@ all: clean $(debug) $(guide) $(deploy) $(guide_debug) document
 $(deploy): $(debug)
 	uglifyjs -cmo $(deploy) $(debug)
 
-$(debug):
+$(debug): $(source_files)
 	mkdir -p build
-	cat $(source_files) > $(debug)
+	cat src/amd/begin.txt $(source_files) src/amd/end.txt > $(debug)
 
 $(guide_pie): $(debug)
 	cp $(debug) $(guide_pie)

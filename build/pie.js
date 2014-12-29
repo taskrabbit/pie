@@ -1,5 +1,6 @@
+(function(window) {
 // pie namespace;
-window.pie = {
+var pie = window.pie = {
 
   apps: {},
 
@@ -500,7 +501,7 @@ pie.dom.getAll = function() {
 pie.dom.createElement = function(str) {
   var wrap = document.createElement('div');
   wrap.innerHTML = str;
-  return wrap.removeChild(wrap.firstElementChild);
+  return wrap.removeChild(wrap.childNodes[0]);
 };
 
 pie.dom.cache = function() {
@@ -4488,3 +4489,12 @@ pie.validator.rangeOptions = pie.base.extend('rangeOptions', {
     }
   },
 });
+  if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    define(function () {
+      return pie;
+    });
+  } else {
+    window.pie = pie;
+  }
+})(this);

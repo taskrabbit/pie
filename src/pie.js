@@ -1,5 +1,5 @@
 // pie namespace;
-window.pie = {
+var pie = window.pie = {
 
   apps: {},
 
