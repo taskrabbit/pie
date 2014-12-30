@@ -22,10 +22,10 @@ describe("pie.view", function() {
     expect(el.querySelectorAll).toHaveBeenCalledWith('.test-all');
   });
 
-  it("should remove all events from it's el when it's removed from it's parent", function() {
+  it("should not remove events from it's el if this.on() is never called", function() {
     spyOn(pie.dom, 'off');
     this.view.removedFromParent();
-    expect(pie.dom.off).toHaveBeenCalledWith(this.view.el, '*.' + this.view.eventNamespace());
+    expect(pie.dom.off).not.toHaveBeenCalledWith();
   });
 
   it("should remove all observers when removed from it's parent", function() {

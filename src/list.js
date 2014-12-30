@@ -1,4 +1,5 @@
 pie.list = pie.model.extend('list', {
+
   init: function(array, options) {
     array = array || [];
     this._super({items: array}, options);

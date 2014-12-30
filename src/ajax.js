@@ -44,10 +44,11 @@ pie.ajax = pie.base.extend('ajax', {
     d;
 
     if(options.verb === this.GET && options.data) {
-      url = this.app.router.path(url, options.data);
-    } else {
-      url = this.app.router.path(url);
+      url = pie.string.urlConcat(url, pie.object.serialize(options.data));
     }
+
+    url = pie.string.normalizeUrl(url);
+
 
     if(options.progress) {
       xhr.addEventListener('progress', options.progress, false);

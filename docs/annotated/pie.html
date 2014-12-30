@@ -90,8 +90,7 @@
 
 
   ns: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{
-    <span class="hljs-keyword">if</span>(pie.object.hasPath(<span class="hljs-built_in">window</span>, path)) <span class="hljs-keyword">return</span>;
-    <span class="hljs-keyword">return</span> pie.object.setPath(<span class="hljs-built_in">window</span>, path, {});
+    <span class="hljs-keyword">return</span> pie.object.getPath(<span class="hljs-built_in">window</span>, path) || pie.object.setPath(<span class="hljs-built_in">window</span>, path, {});
   },
 
   setUid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
@@ -770,7 +769,7 @@ Example usage:</p>
             <div class="content"><div class='highlight'><pre>pie.dom.createElement = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
   <span class="hljs-keyword">var</span> wrap = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'div'</span>);
   wrap.innerHTML = str;
-  <span class="hljs-keyword">return</span> wrap.removeChild(wrap.childNodes[<span class="hljs-number">0</span>]);
+  <span class="hljs-keyword">return</span> wrap.removeChild(wrap.firstElementChild);
 };
 
 pie.dom.cache = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -1723,6 +1722,7 @@ pie.string.urlConcat = <span class="hljs-function"><span class="hljs-keyword">fu
             </div>
             
             <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span>(query.indexOf(<span class="hljs-string">'?'</span>) === <span class="hljs-number">0</span>) query = query.replace(<span class="hljs-string">'?'</span>, <span class="hljs-string">'&amp;'</span>);
+  <span class="hljs-keyword">else</span> query = <span class="hljs-string">'&amp;'</span> + query;
 
   base += query;
   base = base.replace(<span class="hljs-string">'?&amp;'</span>, <span class="hljs-string">'?'</span>).replace(<span class="hljs-string">'&amp;&amp;'</span>, <span class="hljs-string">'&amp;'</span>).replace(<span class="hljs-string">'??'</span>, <span class="hljs-string">'?'</span>);
@@ -2779,7 +2779,8 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.app = pie.base.extend(<span class="hljs-string">'app'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{</pre></div></div>
+            <div class="content"><div class='highlight'><pre>pie.app = pie.base.extend(<span class="hljs-string">'app'</span>, {
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{</pre></div></div>
             
         </li>
         
@@ -2794,17 +2795,17 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.options = pie.object.deepMerge({
-    uiTarget: <span class="hljs-string">'body'</span>,
-    viewNamespace: <span class="hljs-string">'lib.views'</span>,
-    templateSelector: <span class="hljs-string">'script[type="text/pie-template"]'</span>,
-    root: <span class="hljs-string">'/'</span>
-  }, options);
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.options = pie.object.deepMerge({
+      uiTarget: <span class="hljs-string">'body'</span>,
+      viewNamespace: <span class="hljs-string">'lib.views'</span>,
+      templateSelector: <span class="hljs-string">'script[type="text/pie-template"]'</span>,
+      root: <span class="hljs-string">'/'</span>
+    }, options);
 
-  <span class="hljs-keyword">var</span> classOption = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, _default)</span></span>{
-    <span class="hljs-keyword">var</span> k = <span class="hljs-keyword">this</span>.options[key] || _default;
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> k(<span class="hljs-keyword">this</span>);
-  }.bind(<span class="hljs-keyword">this</span>);</pre></div></div>
+    <span class="hljs-keyword">var</span> classOption = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, _default)</span></span>{
+      <span class="hljs-keyword">var</span> k = <span class="hljs-keyword">this</span>.options[key] || _default;
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> k(<span class="hljs-keyword">this</span>);
+    }.bind(<span class="hljs-keyword">this</span>);</pre></div></div>
             
         </li>
         
@@ -2819,7 +2820,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.emitter = classOption(<span class="hljs-string">'emitter'</span>, pie.emitter);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.emitter = classOption(<span class="hljs-string">'emitter'</span>, pie.emitter);</pre></div></div>
             
         </li>
         
@@ -2834,7 +2835,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.i18n = classOption(<span class="hljs-string">'i18n'</span>, pie.i18n);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.i18n = classOption(<span class="hljs-string">'i18n'</span>, pie.i18n);</pre></div></div>
             
         </li>
         
@@ -2849,7 +2850,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.ajax = classOption(<span class="hljs-string">'ajax'</span>, pie.ajax);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.ajax = classOption(<span class="hljs-string">'ajax'</span>, pie.ajax);</pre></div></div>
             
         </li>
         
@@ -2864,7 +2865,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.notifier = classOption(<span class="hljs-string">'notifier'</span>, pie.notifier);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.notifier = classOption(<span class="hljs-string">'notifier'</span>, pie.notifier);</pre></div></div>
             
         </li>
         
@@ -2879,7 +2880,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.errorHandler = classOption(<span class="hljs-string">'errorHandler'</span>, pie.errorHandler);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.errorHandler = classOption(<span class="hljs-string">'errorHandler'</span>, pie.errorHandler);</pre></div></div>
             
         </li>
         
@@ -2894,7 +2895,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.router = classOption(<span class="hljs-string">'router'</span>, pie.router);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.router = classOption(<span class="hljs-string">'router'</span>, pie.router);</pre></div></div>
             
         </li>
         
@@ -2909,7 +2910,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.resources = classOption(<span class="hljs-string">'resources'</span>, pie.resources);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.resources = classOption(<span class="hljs-string">'resources'</span>, pie.resources);</pre></div></div>
             
         </li>
         
@@ -2924,7 +2925,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.helpers = classOption(<span class="hljs-string">'helpers'</span>, pie.helpers);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.helpers = classOption(<span class="hljs-string">'helpers'</span>, pie.helpers);</pre></div></div>
             
         </li>
         
@@ -2939,7 +2940,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.templates = classOption(<span class="hljs-string">'templates'</span>, pie.templates);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.templates = classOption(<span class="hljs-string">'templates'</span>, pie.templates);</pre></div></div>
             
         </li>
         
@@ -2954,7 +2955,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.navigator = classOption(<span class="hljs-string">'navigator'</span>, pie.navigator);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.navigator = classOption(<span class="hljs-string">'navigator'</span>, pie.navigator);</pre></div></div>
             
         </li>
         
@@ -2969,7 +2970,7 @@ pie.base._wrap = (<span class="hljs-function"><span class="hljs-keyword">functio
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.validator = classOption(<span class="hljs-string">'validator'</span>, pie.validator);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.validator = classOption(<span class="hljs-string">'validator'</span>, pie.validator);</pre></div></div>
             
         </li>
         
@@ -2987,7 +2988,7 @@ after each navigation change, this.models is reset.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.models = {};</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.models = {};</pre></div></div>
             
         </li>
         
@@ -3002,7 +3003,7 @@ after each navigation change, this.models is reset.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.parsedUrl = {};</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.parsedUrl = {};</pre></div></div>
             
         </li>
         
@@ -3017,10 +3018,10 @@ after each navigation change, this.models is reset.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>.navigator.observe(<span class="hljs-keyword">this</span>.navigationChanged.bind(<span class="hljs-keyword">this</span>), <span class="hljs-string">'url'</span>);
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.navigator.observe(<span class="hljs-keyword">this</span>.navigationChanged.bind(<span class="hljs-keyword">this</span>), <span class="hljs-string">'url'</span>);
 
-  <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'beforeStart'</span>, <span class="hljs-keyword">this</span>.setupSinglePageLinks.bind(<span class="hljs-keyword">this</span>));
-  <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'afterStart'</span>, <span class="hljs-keyword">this</span>.showStoredNotifications.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+    <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'beforeStart'</span>, <span class="hljs-keyword">this</span>.setupSinglePageLinks.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'afterStart'</span>, <span class="hljs-keyword">this</span>.showStoredNotifications.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
             
         </li>
         
@@ -3035,7 +3036,7 @@ after each navigation change, this.models is reset.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.start.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.start.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
             
         </li>
         
@@ -3050,14 +3051,9 @@ after each navigation change, this.models is reset.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  pie.appInstance = pie.appInstance || <span class="hljs-keyword">this</span>;
-  pie.apps[<span class="hljs-keyword">this</span>.pieId] = <span class="hljs-keyword">this</span>;
-});
-
-
-pie.app.reopen(pie.mixins.container, pie.mixins.events);
-
-pie.app.reopen({</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    pie.appInstance = pie.appInstance || <span class="hljs-keyword">this</span>;
+    pie.apps[<span class="hljs-keyword">this</span>.pieId] = <span class="hljs-keyword">this</span>;
+  },</pre></div></div>
             
         </li>
         
@@ -3661,7 +3657,7 @@ alters the current view’s _pieName to appear as invalid for the route.</p>
       <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {prefix: <span class="hljs-string">"[caught] app#store:"</span>});
     }
   }
-});</pre></div></div>
+}, pie.mixins.container, pie.mixins.events);</pre></div></div>
             
         </li>
         
@@ -4138,20 +4134,18 @@ this.compute(‘fullName’, ‘first_name’, ‘last_name’);</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.view = pie.base.extend(<span class="hljs-string">'view'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
-  <span class="hljs-keyword">this</span>.options = options || {},
-  <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.options.app || <span class="hljs-built_in">window</span>.app;
-  <span class="hljs-keyword">this</span>.el = <span class="hljs-keyword">this</span>.options.el || pie.dom.createElement(<span class="hljs-string">'&lt;div /&gt;'</span>);
-  <span class="hljs-keyword">this</span>.changeCallbacks = [];
+            <div class="content"><div class='highlight'><pre>pie.view = pie.base.extend(<span class="hljs-string">'view'</span>, {
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+    <span class="hljs-keyword">this</span>.options = options || {},
+    <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.options.app || <span class="hljs-built_in">window</span>.app;
+    <span class="hljs-keyword">this</span>.el = <span class="hljs-keyword">this</span>.options.el || pie.dom.createElement(<span class="hljs-string">'&lt;div /&gt;'</span>);
+    <span class="hljs-keyword">this</span>.eventedEls = [];
+    <span class="hljs-keyword">this</span>.changeCallbacks = [];
 
-  <span class="hljs-keyword">this</span>.emitter = <span class="hljs-keyword">new</span> pie.emitter();
+    <span class="hljs-keyword">this</span>.emitter = <span class="hljs-keyword">new</span> pie.emitter();
 
-  <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.setup) <span class="hljs-keyword">this</span>.setup();
-});
-
-pie.view.reopen(pie.mixins.container);
-
-pie.view.reopen({
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.setup) <span class="hljs-keyword">this</span>.setup();
+  },
 
   addedToParent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.emitter.hasEvent(<span class="hljs-string">'beforeSetup'</span>)) <span class="hljs-keyword">this</span>.setup();
@@ -4232,7 +4226,10 @@ unobserved when the view is removed.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  on: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e, sel, f)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  on: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e, sel, f, el)</span> </span>{
+    el = el || <span class="hljs-keyword">this</span>.el;
+    <span class="hljs-keyword">if</span>(!~<span class="hljs-keyword">this</span>.eventedEls.indexOf(el)) <span class="hljs-keyword">this</span>.eventedEls.push(el);
+
     <span class="hljs-keyword">var</span> ns = <span class="hljs-keyword">this</span>.eventNamespace(),
         f2 = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span></span>{
           <span class="hljs-keyword">if</span>(e.namespace === ns) {
@@ -4242,7 +4239,7 @@ unobserved when the view is removed.</p>
 
     e.split(<span class="hljs-string">' '</span>).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(ev)</span> </span>{
       ev += <span class="hljs-string">"."</span> + ns;
-      pie.dom.on(<span class="hljs-keyword">this</span>.el, ev, f2, sel);
+      pie.dom.on(el, ev, f2, sel);
     }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
@@ -4353,8 +4350,10 @@ If the object is not observable, an error will be thrown.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  _unobserveEvents: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    pie.dom.off(<span class="hljs-keyword">this</span>.el, <span class="hljs-string">'*.'</span> + <span class="hljs-keyword">this</span>.eventNamespace());
-    pie.dom.off(<span class="hljs-built_in">document</span>.body, <span class="hljs-string">'*.'</span> + <span class="hljs-keyword">this</span>.eventNamespace());
+    <span class="hljs-keyword">var</span> key = <span class="hljs-string">'*.'</span> + <span class="hljs-keyword">this</span>.eventNamespace();
+    <span class="hljs-keyword">this</span>.eventedEls.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
+      pie.dom.off(el, key);
+    });
   },</pre></div></div>
             
         </li>
@@ -4378,7 +4377,7 @@ If the object is not observable, an error will be thrown.</p>
     }
   }
 
-});</pre></div></div>
+}, pie.mixins.container);</pre></div></div>
             
         </li>
         
@@ -4393,15 +4392,14 @@ If the object is not observable, an error will be thrown.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
-  <span class="hljs-keyword">this</span>._super(options);
+            <div class="content"><div class='highlight'><pre>pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, {
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+    <span class="hljs-keyword">this</span>._super(options);
 
-  <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'aroundSetup'</span>, <span class="hljs-keyword">this</span>._activeViewSetup.bind(<span class="hljs-keyword">this</span>));
-  <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'render'</span>, <span class="hljs-keyword">this</span>._renderTemplateToDom.bind(<span class="hljs-keyword">this</span>));
-  <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>._appendToDom.bind(<span class="hljs-keyword">this</span>));
-});
-
-pie.activeView.reopen({
+    <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'aroundSetup'</span>, <span class="hljs-keyword">this</span>._activeViewSetup.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'render'</span>, <span class="hljs-keyword">this</span>._renderTemplateToDom.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>._appendToDom.bind(<span class="hljs-keyword">this</span>));
+  },
 
   _appendToDom: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.renderTarget) <span class="hljs-keyword">return</span>;
@@ -4578,10 +4576,11 @@ app.ajax.post({
     d;
 
     <span class="hljs-keyword">if</span>(options.verb === <span class="hljs-keyword">this</span>.GET &amp;&amp; options.data) {
-      url = <span class="hljs-keyword">this</span>.app.router.path(url, options.data);
-    } <span class="hljs-keyword">else</span> {
-      url = <span class="hljs-keyword">this</span>.app.router.path(url);
+      url = pie.string.urlConcat(url, pie.object.serialize(options.data));
     }
+
+    url = pie.string.normalizeUrl(url);
+
 
     <span class="hljs-keyword">if</span>(options.progress) {
       xhr.addEventListener(<span class="hljs-string">'progress'</span>, options.progress, <span class="hljs-literal">false</span>);
@@ -5380,6 +5379,7 @@ pie.helpers = pie.model.extend(<span class="hljs-string">'helpers'</span>, {
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.i18n = pie.model.extend(<span class="hljs-string">'i18n'</span>, {
+
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span> </span>{
     <span class="hljs-keyword">this</span>._super(pie.object.merge({}, pie.i18n.defaultTranslations), {
       app: app
@@ -5791,6 +5791,7 @@ pie.i18n.defaultTranslations = {
   }
 };
 pie.list = pie.model.extend(<span class="hljs-string">'list'</span>, {
+
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(array, options)</span> </span>{
     array = array || [];
     <span class="hljs-keyword">this</span>._super({items: array}, options);
@@ -6009,6 +6010,7 @@ pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.notifier = pie.base.extend(<span class="hljs-string">'notifier'</span>, {
+
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, options)</span> </span>{
     <span class="hljs-keyword">this</span>.options = options || {};
     <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.options.app || <span class="hljs-built_in">window</span>.app;

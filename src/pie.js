@@ -20,8 +20,7 @@ var pie = window.pie = {
 
 
   ns: function(path) {
-    if(pie.object.hasPath(window, path)) return;
-    return pie.object.setPath(window, path, {});
+    return pie.object.getPath(window, path) || pie.object.setPath(window, path, {});
   },
 
   setUid: function(obj) {

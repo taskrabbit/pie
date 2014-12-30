@@ -50,7 +50,7 @@ pie.dom.getAll = function() {
 pie.dom.createElement = function(str) {
   var wrap = document.createElement('div');
   wrap.innerHTML = str;
-  return wrap.removeChild(wrap.childNodes[0]);
+  return wrap.removeChild(wrap.firstElementChild);
 };
 
 pie.dom.cache = function() {

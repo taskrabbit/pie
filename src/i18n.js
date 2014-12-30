@@ -1,5 +1,6 @@
 // made to be used as an instance so multiple translations could exist if we so choose.
 pie.i18n = pie.model.extend('i18n', {
+
   init: function(app) {
     this._super(pie.object.merge({}, pie.i18n.defaultTranslations), {
       app: app

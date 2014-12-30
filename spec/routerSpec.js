@@ -97,5 +97,4 @@ describe("pie.router", function(){
     expect(o.path).toEqual('/unrecognized/path');
     expect(o.fullPath).toEqual('/unrecognized/path');
   });
-
 });

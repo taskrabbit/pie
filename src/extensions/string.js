@@ -224,6 +224,7 @@ pie.string.urlConcat = function() {
 
   // we replace all question marks in the query with &
   if(query.indexOf('?') === 0) query = query.replace('?', '&');
+  else query = '&' + query;
 
   base += query;
   base = base.replace('?&', '?').replace('&&', '&').replace('??', '?');

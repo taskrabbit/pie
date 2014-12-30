@@ -21,8 +21,7 @@ var pie = window.pie = {
 
 
   ns: function(path) {
-    if(pie.object.hasPath(window, path)) return;
-    return pie.object.setPath(window, path, {});
+    return pie.object.getPath(window, path) || pie.object.setPath(window, path, {});
   },
 
   setUid: function(obj) {
@@ -501,7 +500,7 @@ pie.dom.getAll = function() {
 pie.dom.createElement = function(str) {
   var wrap = document.createElement('div');
   wrap.innerHTML = str;
-  return wrap.removeChild(wrap.childNodes[0]);
+  return wrap.removeChild(wrap.firstElementChild);
 };
 
 pie.dom.cache = function() {
@@ -1135,6 +1134,7 @@ pie.string.urlConcat = function() {
 
   // we replace all question marks in the query with &
   if(query.indexOf('?') === 0) query = query.replace('?', '&');
+  else query = '&' + query;
 
   base += query;
   base = base.replace('?&', '?').replace('&&', '&').replace('??', '?');
@@ -1858,81 +1858,78 @@ pie.base._wrap = (function() {
 })();
 
 // operator of the site. contains a router, navigator, etc with the intention of holding page context.
-pie.app = pie.base.extend('app', function(options) {
+pie.app = pie.base.extend('app', {
+  init: function(options) {
 
-  // general app options
-  this.options = pie.object.deepMerge({
-    uiTarget: 'body',
-    viewNamespace: 'lib.views',
-    templateSelector: 'script[type="text/pie-template"]',
-    root: '/'
-  }, options);
+    // general app options
+    this.options = pie.object.deepMerge({
+      uiTarget: 'body',
+      viewNamespace: 'lib.views',
+      templateSelector: 'script[type="text/pie-template"]',
+      root: '/'
+    }, options);
 
-  var classOption = function(key, _default){
-    var k = this.options[key] || _default;
-    return new k(this);
-  }.bind(this);
+    var classOption = function(key, _default){
+      var k = this.options[key] || _default;
+      return new k(this);
+    }.bind(this);
 
-  // app.emitter is an interface for subscribing and observing app events
-  this.emitter = classOption('emitter', pie.emitter);
+    // app.emitter is an interface for subscribing and observing app events
+    this.emitter = classOption('emitter', pie.emitter);
 
-  // app.i18n is the translation functionality
-  this.i18n = classOption('i18n', pie.i18n);
+    // app.i18n is the translation functionality
+    this.i18n = classOption('i18n', pie.i18n);
 
-  // app.ajax is ajax interface + app specific functionality.
-  this.ajax = classOption('ajax', pie.ajax);
+    // app.ajax is ajax interface + app specific functionality.
+    this.ajax = classOption('ajax', pie.ajax);
 
-  // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
-  this.notifier = classOption('notifier', pie.notifier);
+    // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
+    this.notifier = classOption('notifier', pie.notifier);
 
-  // app.errorHandler is the object responsible for
-  this.errorHandler = classOption('errorHandler', pie.errorHandler);
+    // app.errorHandler is the object responsible for
+    this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
-  // app.router is used to determine which view should be rendered based on the url
-  this.router = classOption('router', pie.router);
+    // app.router is used to determine which view should be rendered based on the url
+    this.router = classOption('router', pie.router);
 
-  // app.resources is used for managing the loading of external resources.
-  this.resources = classOption('resources', pie.resources);
+    // app.resources is used for managing the loading of external resources.
+    this.resources = classOption('resources', pie.resources);
 
-  // template helper methods, they are evaluated to the local variable "h" in templates.
-  this.helpers = classOption('helpers', pie.helpers);
+    // template helper methods, they are evaluated to the local variable "h" in templates.
+    this.helpers = classOption('helpers', pie.helpers);
 
-  // app.templates is used to manage application templates.
-  this.templates = classOption('templates', pie.templates);
+    // app.templates is used to manage application templates.
+    this.templates = classOption('templates', pie.templates);
 
-  // the only navigator which should exist in this app.
-  this.navigator = classOption('navigator', pie.navigator);
+    // the only navigator which should exist in this app.
+    this.navigator = classOption('navigator', pie.navigator);
 
-  // the validator which should be used in the context of the app
-  this.validator = classOption('validator', pie.validator);
+    // the validator which should be used in the context of the app
+    this.validator = classOption('validator', pie.validator);
 
-  // app.models is globally available. app.models is solely for page context.
-  // this is not a singleton container or anything like that. it's just for passing
-  // models from one view to the next. the rendered layout may inject values here to initialize the page.
-  // after each navigation change, this.models is reset.
-  this.models = {};
+    // app.models is globally available. app.models is solely for page context.
+    // this is not a singleton container or anything like that. it's just for passing
+    // models from one view to the next. the rendered layout may inject values here to initialize the page.
+    // after each navigation change, this.models is reset.
+    this.models = {};
 
-  // after a navigation change, app.parsedUrl is the new parsed route
-  this.parsedUrl = {};
+    // after a navigation change, app.parsedUrl is the new parsed route
+    this.parsedUrl = {};
 
-  // we observe the navigator and handle changing the context of the page
-  this.navigator.observe(this.navigationChanged.bind(this), 'url');
+    // we observe the navigator and handle changing the context of the page
+    this.navigator.observe(this.navigationChanged.bind(this), 'url');
 
-  this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
-  this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
+    this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
+    this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
 
-  // once the dom is loaded
-  document.addEventListener('DOMContentLoaded', this.start.bind(this));
+    // once the dom is loaded
+    document.addEventListener('DOMContentLoaded', this.start.bind(this));
 
-  // set a global instance which can be used as a backup within the pie library.
-  pie.appInstance = pie.appInstance || this;
-  pie.apps[this.pieId] = this;
-});
+    // set a global instance which can be used as a backup within the pie library.
+    pie.appInstance = pie.appInstance || this;
+    pie.apps[this.pieId] = this;
+  },
 
-
-pie.app.reopen(pie.mixins.container, pie.mixins.events);
-
-pie.app.reopen({
   // just in case the client wants to override the standard confirmation dialog.
   // eventually this could create a confirmation view and provide options to it.
   // the view could have more options but would always end up invoking success or failure.
@@ -2147,7 +2144,7 @@ pie.app.reopen({
       this.errorHandler.reportError(err, {prefix: "[caught] app#store:"});
     }
   }
-});
+}, pie.mixins.container, pie.mixins.events);
 
 //    **Setters and Getters**
 //    pie.model provides a basic interface for object management and observation.
@@ -2435,20 +2432,18 @@ pie.model = pie.base.extend('model', {
   }
 });
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
-pie.view = pie.base.extend('view', function(options) {
-  this.options = options || {},
-  this.app = this.options.app || window.app;
-  this.el = this.options.el || pie.dom.createElement('<div />');
-  this.changeCallbacks = [];
+pie.view = pie.base.extend('view', {
+  init: function(options) {
+    this.options = options || {},
+    this.app = this.options.app || window.app;
+    this.el = this.options.el || pie.dom.createElement('<div />');
+    this.eventedEls = [];
+    this.changeCallbacks = [];
 
-  this.emitter = new pie.emitter();
+    this.emitter = new pie.emitter();
 
-  if(this.options.setup) this.setup();
-});
-
-pie.view.reopen(pie.mixins.container);
-
-pie.view.reopen({
+    if(this.options.setup) this.setup();
+  },
 
   addedToParent: function() {
     if(!this.emitter.hasEvent('beforeSetup')) this.setup();
@@ -2483,7 +2478,10 @@ pie.view.reopen({
 
   // Events should be observed via this .on() method. Using .on() ensures the events will be
   // unobserved when the view is removed.
-  on: function(e, sel, f) {
+  on: function(e, sel, f, el) {
+    el = el || this.el;
+    if(!~this.eventedEls.indexOf(el)) this.eventedEls.push(el);
+
     var ns = this.eventNamespace(),
         f2 = function(e){
           if(e.namespace === ns) {
@@ -2493,7 +2491,7 @@ pie.view.reopen({
 
     e.split(' ').forEach(function(ev) {
       ev += "." + ns;
-      pie.dom.on(this.el, ev, f2, sel);
+      pie.dom.on(el, ev, f2, sel);
     }.bind(this));
 
     return this;
@@ -2537,8 +2535,10 @@ pie.view.reopen({
 
   // release all observed events.
   _unobserveEvents: function() {
-    pie.dom.off(this.el, '*.' + this.eventNamespace());
-    pie.dom.off(document.body, '*.' + this.eventNamespace());
+    var key = '*.' + this.eventNamespace();
+    this.eventedEls.forEach(function(el) {
+      pie.dom.off(el, key);
+    });
   },
 
 
@@ -2551,17 +2551,16 @@ pie.view.reopen({
     }
   }
 
-});
+}, pie.mixins.container);
 // a view class which handles some basic functionality
-pie.activeView = pie.view.extend('activeView', function(options) {
-  this._super(options);
+pie.activeView = pie.view.extend('activeView', {
+  init: function(options) {
+    this._super(options);
 
-  this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
-  this.emitter.on('render', this._renderTemplateToDom.bind(this));
-  this.emitter.once('afterRender', this._appendToDom.bind(this));
-});
-
-pie.activeView.reopen({
+    this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
+    this.emitter.on('render', this._renderTemplateToDom.bind(this));
+    this.emitter.once('afterRender', this._appendToDom.bind(this));
+  },
 
   _appendToDom: function() {
     if(!this.renderTarget) return;
@@ -2690,10 +2689,11 @@ pie.ajax = pie.base.extend('ajax', {
     d;
 
     if(options.verb === this.GET && options.data) {
-      url = this.app.router.path(url, options.data);
-    } else {
-      url = this.app.router.path(url);
+      url = pie.string.urlConcat(url, pie.object.serialize(options.data));
     }
+
+    url = pie.string.normalizeUrl(url);
+
 
     if(options.progress) {
       xhr.addEventListener('progress', options.progress, false);
@@ -3201,6 +3201,7 @@ pie.helpers = pie.model.extend('helpers', {
 });
 // made to be used as an instance so multiple translations could exist if we so choose.
 pie.i18n = pie.model.extend('i18n', {
+
   init: function(app) {
     this._super(pie.object.merge({}, pie.i18n.defaultTranslations), {
       app: app
@@ -3564,6 +3565,7 @@ pie.i18n.defaultTranslations = {
   }
 };
 pie.list = pie.model.extend('list', {
+
   init: function(array, options) {
     array = array || [];
     this._super({items: array}, options);
@@ -3769,6 +3771,7 @@ pie.navigator = pie.model.extend('navigator', {
 });
 // notifier is a class which provides an interface for rendering page-level notifications.
 pie.notifier = pie.base.extend('notifier', {
+
   init: function(app, options) {
     this.options = options || {};
     this.app = this.options.app || window.app;

@@ -1,13 +1,12 @@
 // a view class which handles some basic functionality
-pie.activeView = pie.view.extend('activeView', function(options) {
-  this._super(options);
+pie.activeView = pie.view.extend('activeView', {
+  init: function(options) {
+    this._super(options);
 
-  this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
-  this.emitter.on('render', this._renderTemplateToDom.bind(this));
-  this.emitter.once('afterRender', this._appendToDom.bind(this));
-});
-
-pie.activeView.reopen({
+    this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
+    this.emitter.on('render', this._renderTemplateToDom.bind(this));
+    this.emitter.once('afterRender', this._appendToDom.bind(this));
+  },
 
   _appendToDom: function() {
     if(!this.renderTarget) return;

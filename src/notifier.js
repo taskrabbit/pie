@@ -1,5 +1,6 @@
 // notifier is a class which provides an interface for rendering page-level notifications.
 pie.notifier = pie.base.extend('notifier', {
+
   init: function(app, options) {
     this.options = options || {};
     this.app = this.options.app || window.app;

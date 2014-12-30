@@ -1,80 +1,77 @@
 
 // operator of the site. contains a router, navigator, etc with the intention of holding page context.
-pie.app = pie.base.extend('app', function(options) {
+pie.app = pie.base.extend('app', {
+  init: function(options) {
 
-  // general app options
-  this.options = pie.object.deepMerge({
-    uiTarget: 'body',
-    viewNamespace: 'lib.views',
-    templateSelector: 'script[type="text/pie-template"]',
-    root: '/'
-  }, options);
+    // general app options
+    this.options = pie.object.deepMerge({
+      uiTarget: 'body',
+      viewNamespace: 'lib.views',
+      templateSelector: 'script[type="text/pie-template"]',
+      root: '/'
+    }, options);
 
-  var classOption = function(key, _default){
-    var k = this.options[key] || _default;
-    return new k(this);
-  }.bind(this);
+    var classOption = function(key, _default){
+      var k = this.options[key] || _default;
+      return new k(this);
+    }.bind(this);
 
-  // app.emitter is an interface for subscribing and observing app events
-  this.emitter = classOption('emitter', pie.emitter);
+    // app.emitter is an interface for subscribing and observing app events
+    this.emitter = classOption('emitter', pie.emitter);
 
-  // app.i18n is the translation functionality
-  this.i18n = classOption('i18n', pie.i18n);
+    // app.i18n is the translation functionality
+    this.i18n = classOption('i18n', pie.i18n);
 
-  // app.ajax is ajax interface + app specific functionality.
-  this.ajax = classOption('ajax', pie.ajax);
+    // app.ajax is ajax interface + app specific functionality.
+    this.ajax = classOption('ajax', pie.ajax);
 
-  // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
-  this.notifier = classOption('notifier', pie.notifier);
+    // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
+    this.notifier = classOption('notifier', pie.notifier);
 
-  // app.errorHandler is the object responsible for
-  this.errorHandler = classOption('errorHandler', pie.errorHandler);
+    // app.errorHandler is the object responsible for
+    this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
-  // app.router is used to determine which view should be rendered based on the url
-  this.router = classOption('router', pie.router);
+    // app.router is used to determine which view should be rendered based on the url
+    this.router = classOption('router', pie.router);
 
-  // app.resources is used for managing the loading of external resources.
-  this.resources = classOption('resources', pie.resources);
+    // app.resources is used for managing the loading of external resources.
+    this.resources = classOption('resources', pie.resources);
 
-  // template helper methods, they are evaluated to the local variable "h" in templates.
-  this.helpers = classOption('helpers', pie.helpers);
+    // template helper methods, they are evaluated to the local variable "h" in templates.
+    this.helpers = classOption('helpers', pie.helpers);
 
-  // app.templates is used to manage application templates.
-  this.templates = classOption('templates', pie.templates);
+    // app.templates is used to manage application templates.
+    this.templates = classOption('templates', pie.templates);
 
-  // the only navigator which should exist in this app.
-  this.navigator = classOption('navigator', pie.navigator);
+    // the only navigator which should exist in this app.
+    this.navigator = classOption('navigator', pie.navigator);
 
-  // the validator which should be used in the context of the app
-  this.validator = classOption('validator', pie.validator);
+    // the validator which should be used in the context of the app
+    this.validator = classOption('validator', pie.validator);
 
-  // app.models is globally available. app.models is solely for page context.
-  // this is not a singleton container or anything like that. it's just for passing
-  // models from one view to the next. the rendered layout may inject values here to initialize the page.
-  // after each navigation change, this.models is reset.
-  this.models = {};
+    // app.models is globally available. app.models is solely for page context.
+    // this is not a singleton container or anything like that. it's just for passing
+    // models from one view to the next. the rendered layout may inject values here to initialize the page.
+    // after each navigation change, this.models is reset.
+    this.models = {};
 
-  // after a navigation change, app.parsedUrl is the new parsed route
-  this.parsedUrl = {};
+    // after a navigation change, app.parsedUrl is the new parsed route
+    this.parsedUrl = {};
 
-  // we observe the navigator and handle changing the context of the page
-  this.navigator.observe(this.navigationChanged.bind(this), 'url');
+    // we observe the navigator and handle changing the context of the page
+    this.navigator.observe(this.navigationChanged.bind(this), 'url');
 
-  this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
-  this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
+    this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
+    this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
 
-  // once the dom is loaded
-  document.addEventListener('DOMContentLoaded', this.start.bind(this));
+    // once the dom is loaded
+    document.addEventListener('DOMContentLoaded', this.start.bind(this));
 
-  // set a global instance which can be used as a backup within the pie library.
-  pie.appInstance = pie.appInstance || this;
-  pie.apps[this.pieId] = this;
-});
+    // set a global instance which can be used as a backup within the pie library.
+    pie.appInstance = pie.appInstance || this;
+    pie.apps[this.pieId] = this;
+  },
 
-
-pie.app.reopen(pie.mixins.container, pie.mixins.events);
-
-pie.app.reopen({
   // just in case the client wants to override the standard confirmation dialog.
   // eventually this could create a confirmation view and provide options to it.
   // the view could have more options but would always end up invoking success or failure.
@@ -289,4 +286,4 @@ pie.app.reopen({
       this.errorHandler.reportError(err, {prefix: "[caught] app#store:"});
     }
   }
-});
+}, pie.mixins.container, pie.mixins.events);
