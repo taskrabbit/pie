@@ -4135,6 +4135,7 @@ this.compute(‘fullName’, ‘first_name’, ‘last_name’);</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.view = pie.base.extend(<span class="hljs-string">'view'</span>, {
+
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
     <span class="hljs-keyword">this</span>.options = options || {},
     <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.options.app || <span class="hljs-built_in">window</span>.app;
@@ -4149,6 +4150,15 @@ this.compute(‘fullName’, ‘first_name’, ‘last_name’);</p>
 
   addedToParent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.emitter.hasEvent(<span class="hljs-string">'beforeSetup'</span>)) <span class="hljs-keyword">this</span>.setup();
+  },
+
+
+  consumeEvent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e, immediate)</span> </span>{
+    <span class="hljs-keyword">if</span>(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      <span class="hljs-keyword">if</span>(immediate) e.stopImmediatePropagation();
+    }
   },</pre></div></div>
             
         </li>
@@ -4159,43 +4169,6 @@ this.compute(‘fullName’, ‘first_name’, ‘last_name’);</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-142">&#182;</a>
-              </div>
-              <p>we extract the functionality of setting our render target so we can override this as we see fit.
-for example, other implementation could store the target, then show a loader until render() is called.
-by default we simply append ourselves to the target.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  setRenderTarget: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(target)</span> </span>{
-    target.appendChild(<span class="hljs-keyword">this</span>.el);
-  },</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-143">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-143">&#182;</a>
-              </div>
-              <p>placeholder for default functionality</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-    <span class="hljs-keyword">this</span>.emitter.fireSequence(<span class="hljs-string">'setup'</span>);
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-  },</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-144">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-144">&#182;</a>
               </div>
               <p>all events observed using view.on() will use the unique namespace for this instance.</p>
 
@@ -4215,11 +4188,11 @@ by default we simply append ourselves to the target.</p>
         </li>
         
         
-        <li id="section-145">
+        <li id="section-143">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-145">&#182;</a>
+                <a class="pilcrow" href="#section-143">&#182;</a>
               </div>
               <p>Events should be observed via this .on() method. Using .on() ensures the events will be
 unobserved when the view is removed.</p>
@@ -4248,11 +4221,11 @@ unobserved when the view is removed.</p>
         </li>
         
         
-        <li id="section-146">
+        <li id="section-144">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-146">&#182;</a>
+                <a class="pilcrow" href="#section-144">&#182;</a>
               </div>
               <p>Observe changes to an observable, unobserving them when the view is removed.
 If the object is not observable, an error will be thrown.</p>
@@ -4270,11 +4243,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-147">
+        <li id="section-145">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-147">&#182;</a>
+                <a class="pilcrow" href="#section-145">&#182;</a>
               </div>
               <p>shortcut for this.el.querySelector</p>
 
@@ -4287,11 +4260,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-148">
+        <li id="section-146">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-148">&#182;</a>
+                <a class="pilcrow" href="#section-146">&#182;</a>
               </div>
               <p>shortcut for this.el.querySelectorAll</p>
 
@@ -4304,11 +4277,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-149">
+        <li id="section-147">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-149">&#182;</a>
+                <a class="pilcrow" href="#section-147">&#182;</a>
               </div>
               <p>clean up.</p>
 
@@ -4321,11 +4294,11 @@ If the object is not observable, an error will be thrown.</p>
         </li>
         
         
-        <li id="section-150">
+        <li id="section-148">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-150">&#182;</a>
+                <a class="pilcrow" href="#section-148">&#182;</a>
               </div>
               <p>views remove their children upon removal to ensure all irrelevant observations are cleaned up.</p>
 
@@ -4333,6 +4306,43 @@ If the object is not observable, an error will be thrown.</p>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.removeChildren();
 
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-149">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-149">&#182;</a>
+              </div>
+              <p>we extract the functionality of setting our render target so we can override this as we see fit.
+for example, other implementation could store the target, then show a loader until render() is called.
+by default we simply append ourselves to the target.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  setRenderTarget: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(target)</span> </span>{
+    target.appendChild(<span class="hljs-keyword">this</span>.el);
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-150">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-150">&#182;</a>
+              </div>
+              <p>placeholder for default functionality</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+    <span class="hljs-keyword">this</span>.emitter.fireSequence(<span class="hljs-string">'setup'</span>);
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },</pre></div></div>
             

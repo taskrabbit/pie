@@ -2433,6 +2433,7 @@ pie.model = pie.base.extend('model', {
 });
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
 pie.view = pie.base.extend('view', {
+
   init: function(options) {
     this.options = options || {},
     this.app = this.options.app || window.app;
@@ -2449,17 +2450,13 @@ pie.view = pie.base.extend('view', {
     if(!this.emitter.hasEvent('beforeSetup')) this.setup();
   },
 
-  // we extract the functionality of setting our render target so we can override this as we see fit.
-  // for example, other implementation could store the target, then show a loader until render() is called.
-  // by default we simply append ourselves to the target.
-  setRenderTarget: function(target) {
-    target.appendChild(this.el);
-  },
 
-  // placeholder for default functionality
-  setup: function(){
-    this.emitter.fireSequence('setup');
-    return this;
+  consumeEvent: function(e, immediate) {
+    if(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if(immediate) e.stopImmediatePropagation();
+    }
   },
 
 
@@ -2532,6 +2529,18 @@ pie.view = pie.base.extend('view', {
     return this;
   },
 
+  // we extract the functionality of setting our render target so we can override this as we see fit.
+  // for example, other implementation could store the target, then show a loader until render() is called.
+  // by default we simply append ourselves to the target.
+  setRenderTarget: function(target) {
+    target.appendChild(this.el);
+  },
+
+  // placeholder for default functionality
+  setup: function(){
+    this.emitter.fireSequence('setup');
+    return this;
+  },
 
   // release all observed events.
   _unobserveEvents: function() {
