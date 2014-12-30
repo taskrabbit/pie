@@ -49,6 +49,32 @@ describe("pie.model", function() {
 
   });
 
+  describe("#reset", function() {
+
+    it('should set all existing values to undefined, removing them from data', function() {
+      this.model.sets({foo: 'bar', baz: 'bash', qux: 'lux'});
+      var k = Object.keys(this.model.data).sort();
+      expect(k).toEqual(['_version', 'baz', 'foo', 'qux']);
+
+      this.model.reset();
+      k = Object.keys(this.model.data).sort();
+      expect(k).toEqual(['_version']);
+    });
+
+    it("should trigger an observer for the reset", function(done) {
+      this.model.sets({foo: 'bar', baz: 'bash'});
+
+      this.model.observe(function(changes){
+        expect(changes.length).toEqual(3);
+        expect(changes.hasAll('foo', 'baz', '_version')).toEqual(true);
+        done();
+      });
+
+      this.model.reset();
+    });
+
+  });
+
 
   describe("observation", function() {
 
@@ -78,6 +104,22 @@ describe("pie.model", function() {
       this.model.set('foo', 'bar');
 
       expect(observer).not.toHaveBeenCalled();
+    });
+
+    it("should add a change record even if the value is identical IF the force option is provided", function() {
+      var observer = jasmine.createSpy('observer');
+      this.model.observe(observer, 'foo');
+
+      this.model.data.foo = 'bar';
+      this.model.set('foo', 'bar', {force: true});
+
+      expect(observer).toHaveBeenCalledWith([{
+        'type' : 'update',
+        'name' : 'foo',
+        'object' : this.model.data,
+        'oldValue' : 'bar',
+        'value' : 'bar'
+      }]);
     });
 
     it("should allow observation of all keys", function() {

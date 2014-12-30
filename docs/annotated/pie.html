@@ -3931,6 +3931,17 @@ Key can be multiple levels deep by providing a dot separated key.</p>
     }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },
+
+  reset: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
+    <span class="hljs-keyword">var</span> keys = <span class="hljs-built_in">Object</span>.keys(<span class="hljs-keyword">this</span>.data), o = {};
+
+    keys.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k)</span></span>{
+      <span class="hljs-keyword">if</span>(k === <span class="hljs-string">'_version'</span>) <span class="hljs-keyword">return</span>;
+      o[k] = <span class="hljs-literal">undefined</span>;
+    });
+
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.sets(o, options);
   },</pre></div></div>
             
         </li>
@@ -3971,8 +3982,7 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(value === change.oldValue) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>((!options || !options.force) &amp;&amp; value === change.oldValue) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
     }
 
     <span class="hljs-keyword">if</span>(steps) {

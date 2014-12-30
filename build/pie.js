@@ -2315,6 +2315,17 @@ pie.model = pie.base.extend('model', {
     return this;
   },
 
+  reset: function(options) {
+    var keys = Object.keys(this.data), o = {};
+
+    keys.forEach(function(k){
+      if(k === '_version') return;
+      o[k] = undefined;
+    });
+
+    return this.sets(o, options);
+  },
+
   // Set a value and trigger observers.
   // Optionally provide false as the third argument to skip observation.
   // Note: skipping observation does not stop changeRecords from accruing.
@@ -2329,8 +2340,7 @@ pie.model = pie.base.extend('model', {
       change.oldValue = pie.object.getPath(this.data, key);
 
       // if we haven't actually changed, don't bother.
-      if(value === change.oldValue) return this;
-
+      if((!options || !options.force) && value === change.oldValue) return this;
     }
 
     if(steps) {
