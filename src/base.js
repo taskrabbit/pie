@@ -4,6 +4,15 @@ pie.base = function() {
 };
 pie.base.prototype.init = function(){};
 
+pie.base.prototype.reopen = function() {
+  var extensions = pie.array.change(arguments, 'from', 'flatten');
+  extensions.forEach(function(e) {
+    pie.object.merge(this, pie.object.except(e, 'init'));
+    if(e.init) e.init.call(this);
+  }.bind(this));
+  return this;
+};
+
 
 pie.base.extend = function() {
   return pie.base._extend(pie.base.prototype, arguments);

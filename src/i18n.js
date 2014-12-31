@@ -101,6 +101,13 @@ pie.i18n = pie.model.extend('i18n', {
     return t2;
   },
 
+  keyCheck: /^\.(.+)$/,
+
+  attempt: function(key) {
+    var m = key && key.match(this.keyCheck);
+    if(!m) return key;
+    return this.t(m[1], {default: key});
+  },
 
   load: function(data, shallow) {
     var f = shallow ? pie.object.merge : pie.object.deepMerge;

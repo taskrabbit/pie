@@ -56,4 +56,9 @@ describe("pie.notifier", function(){
     expect(this.model.length()).toEqual(0);
   });
 
+  it("should use the i18n value if it's an i18n key", function() {
+    this.notifier.notify('.app.errors.401');
+    expect(this.model.get(0).messages[0]).toEqual(app.i18n.t('app.errors.401'));
+  });
+
 });

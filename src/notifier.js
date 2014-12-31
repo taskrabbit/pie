@@ -3,7 +3,7 @@ pie.notifier = pie.base.extend('notifier', {
 
   init: function(app, options) {
     this.options = options || {};
-    this.app = this.options.app || window.app;
+    this.app = app || this.options.app || pie.appInstance;
     this.notifications = new pie.list([]);
   },
 
@@ -29,6 +29,7 @@ pie.notifier = pie.base.extend('notifier', {
     autoRemove = this.getAutoRemoveTimeout(autoRemove);
 
     messages = pie.array.from(messages);
+    messages = messages.map(this.app.i18n.attempt.bind(this.app.i18n));
 
     var msg = {
       id: pie.unique(),

@@ -101,13 +101,9 @@ pie.app = pie.base.extend('app', {
 
     path = args.shift();
 
-    // arguments => '/test-url', '?query=string'
-    if(typeof args[0] === 'string' && args[0].indexOf('?') === 0) {
-      path = this.router.path(path);
-      query = args.shift();
-      path = pie.string.urlConcat(this.router.path(path), query);
+
     // arguments => '/test-url', {query: 'object'}
-    } else if(typeof args[0] === 'object') {
+    if(typeof args[0] === 'object') {
       path = this.router.path(path, args.shift());
 
     // arguments => '/test-url'
@@ -117,7 +113,7 @@ pie.app = pie.base.extend('app', {
     }
 
     // if the next argument is a boolean, we care about replaceState
-    if(args[0] === true || args[0] === false) {
+    if(pie.object.isBoolean(args[0])) {
       replaceState = args.shift();
     }
 

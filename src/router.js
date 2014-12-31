@@ -4,7 +4,8 @@ pie.router = pie.model.extend('router', {
     this._super({
       routes: [],
       routeNames: {},
-      root: app.options.root || '/'
+      root: app.options.root || '/',
+      cache: {}
     }, {
       app: app
     });
@@ -62,6 +63,7 @@ pie.router = pie.model.extend('router', {
     }.bind(this));
 
     this.sortRoutes();
+    this.set('cache', {});
   },
 
   // will return the named path. if there is no path with that name it will return itself.
@@ -99,6 +101,9 @@ pie.router = pie.model.extend('router', {
 
   // look at the path and determine the route which this matches.
   parseUrl: function(path, parseQuery) {
+    var result = this.get('cache')[path];
+    if(result) return result;
+
     var pieces, query, match, fullPath, interpolations;
 
     pieces = path.split('?');
@@ -115,7 +120,7 @@ pie.router = pie.model.extend('router', {
     fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
     interpolations = match && match.interpolations(path, parseQuery);
 
-    return pie.object.merge({
+    result = pie.object.merge({
       path: path,
       fullPath: fullPath,
       interpolations: interpolations || {},
@@ -123,6 +128,9 @@ pie.router = pie.model.extend('router', {
       data: pie.object.merge({}, interpolations, query),
       route: match
     }, match && match.options);
+
+    this.get('cache')[path] = result;
+    return result;
 
   }
 });

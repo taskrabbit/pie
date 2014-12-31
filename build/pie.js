@@ -1768,6 +1768,15 @@ pie.base = function() {
 };
 pie.base.prototype.init = function(){};
 
+pie.base.prototype.reopen = function() {
+  var extensions = pie.array.change(arguments, 'from', 'flatten');
+  extensions.forEach(function(e) {
+    pie.object.merge(this, pie.object.except(e, 'init'));
+    if(e.init) e.init.call(this);
+  }.bind(this));
+  return this;
+};
+
 
 pie.base.extend = function() {
   return pie.base._extend(pie.base.prototype, arguments);
@@ -1959,13 +1968,9 @@ pie.app = pie.base.extend('app', {
 
     path = args.shift();
 
-    // arguments => '/test-url', '?query=string'
-    if(typeof args[0] === 'string' && args[0].indexOf('?') === 0) {
-      path = this.router.path(path);
-      query = args.shift();
-      path = pie.string.urlConcat(this.router.path(path), query);
+
     // arguments => '/test-url', {query: 'object'}
-    } else if(typeof args[0] === 'object') {
+    if(typeof args[0] === 'object') {
       path = this.router.path(path, args.shift());
 
     // arguments => '/test-url'
@@ -1975,7 +1980,7 @@ pie.app = pie.base.extend('app', {
     }
 
     // if the next argument is a boolean, we care about replaceState
-    if(args[0] === true || args[0] === false) {
+    if(pie.object.isBoolean(args[0])) {
       replaceState = args.shift();
     }
 
@@ -2446,8 +2451,8 @@ pie.view = pie.base.extend('view', {
 
   init: function(options) {
     this.options = options || {},
-    this.app = this.options.app || window.app;
-    this.el = this.options.el || pie.dom.createElement('<div />');
+    this.app = this.options.app || pie.appInstance;
+    this.el = this.options.el || pie.dom.createElement('<div></div>');
     this.eventedEls = [];
     this.changeCallbacks = [];
 
@@ -3113,7 +3118,8 @@ pie.formView = pie.activeView.extend('formView', {
     this._super(options);
 
     this.model = this.model || new pie.model({});
-    if(!this.model.validates) pie.object.merge(this.model, pie.mixins.validatable);
+
+    if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
 
     this.emitter.once('setup', this.setupFormBindings.bind(this));
   },
@@ -3322,6 +3328,13 @@ pie.i18n = pie.model.extend('i18n', {
     return t2;
   },
 
+  keyCheck: /^\.(.+)$/,
+
+  attempt: function(key) {
+    var m = key && key.match(this.keyCheck);
+    if(!m) return key;
+    return this.t(m[1], {default: key});
+  },
 
   load: function(data, shallow) {
     var f = shallow ? pie.object.merge : pie.object.deepMerge;
@@ -3794,7 +3807,7 @@ pie.notifier = pie.base.extend('notifier', {
 
   init: function(app, options) {
     this.options = options || {};
-    this.app = this.options.app || window.app;
+    this.app = app || this.options.app || pie.appInstance;
     this.notifications = new pie.list([]);
   },
 
@@ -3820,6 +3833,7 @@ pie.notifier = pie.base.extend('notifier', {
     autoRemove = this.getAutoRemoveTimeout(autoRemove);
 
     messages = pie.array.from(messages);
+    messages = messages.map(this.app.i18n.attempt.bind(this.app.i18n));
 
     var msg = {
       id: pie.unique(),
@@ -4056,7 +4070,8 @@ pie.router = pie.model.extend('router', {
     this._super({
       routes: [],
       routeNames: {},
-      root: app.options.root || '/'
+      root: app.options.root || '/',
+      cache: {}
     }, {
       app: app
     });
@@ -4114,6 +4129,7 @@ pie.router = pie.model.extend('router', {
     }.bind(this));
 
     this.sortRoutes();
+    this.set('cache', {});
   },
 
   // will return the named path. if there is no path with that name it will return itself.
@@ -4151,6 +4167,9 @@ pie.router = pie.model.extend('router', {
 
   // look at the path and determine the route which this matches.
   parseUrl: function(path, parseQuery) {
+    var result = this.get('cache')[path];
+    if(result) return result;
+
     var pieces, query, match, fullPath, interpolations;
 
     pieces = path.split('?');
@@ -4167,7 +4186,7 @@ pie.router = pie.model.extend('router', {
     fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
     interpolations = match && match.interpolations(path, parseQuery);
 
-    return pie.object.merge({
+    result = pie.object.merge({
       path: path,
       fullPath: fullPath,
       interpolations: interpolations || {},
@@ -4175,6 +4194,9 @@ pie.router = pie.model.extend('router', {
       data: pie.object.merge({}, interpolations, query),
       route: match
     }, match && match.options);
+
+    this.get('cache')[path] = result;
+    return result;
 
   }
 });
@@ -4257,13 +4279,13 @@ pie.validator = pie.base.extend('validator', (function(){
   return {
 
     init: function(app) {
-      this.app = app || window.app;
+      this.app = app || pie.appInstance;
       this.i18n = app.i18n;
     },
 
 
     errorMessage: function(validationType, validationOptions) {
-      if(validationOptions.message) return validationOptions.message;
+      if(validationOptions.message) return this.app.i18n.attempt(validationOptions.message);
 
       var base = this.i18n.t('app.validations.' + validationType),
       rangeOptions = new pie.validator.rangeOptions(this.app, validationOptions),

@@ -3,8 +3,8 @@ pie.view = pie.base.extend('view', {
 
   init: function(options) {
     this.options = options || {},
-    this.app = this.options.app || window.app;
-    this.el = this.options.el || pie.dom.createElement('<div />');
+    this.app = this.options.app || pie.appInstance;
+    this.el = this.options.el || pie.dom.createElement('<div></div>');
     this.eventedEls = [];
     this.changeCallbacks = [];
 

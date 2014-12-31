@@ -10,13 +10,13 @@ pie.validator = pie.base.extend('validator', (function(){
   return {
 
     init: function(app) {
-      this.app = app || window.app;
+      this.app = app || pie.appInstance;
       this.i18n = app.i18n;
     },
 
 
     errorMessage: function(validationType, validationOptions) {
-      if(validationOptions.message) return validationOptions.message;
+      if(validationOptions.message) return this.app.i18n.attempt(validationOptions.message);
 
       var base = this.i18n.t('app.validations.' + validationType),
       rangeOptions = new pie.validator.rangeOptions(this.app, validationOptions),
