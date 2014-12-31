@@ -15,7 +15,8 @@ pie.helpers = pie.model.extend('helpers', {
   },
 
   register: function(name, fn) {
-    this.set(name, fn);
+    if(!this[name]) this[name] = fn;
+    return this.set(name, fn);
   },
 
   provide: function() {
