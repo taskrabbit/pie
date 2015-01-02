@@ -29,6 +29,10 @@ pie.mixins.changeSet = {
     });
   },
 
+  last: function() {
+    return pie.array.last(this);
+  },
+
   names: function() {
     return pie.array.unique(pie.array.map(this, 'name'));
   }

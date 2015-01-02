@@ -74,12 +74,12 @@ pie.app = pie.base.extend('app', {
 
   // just in case the client wants to override the standard confirmation dialog.
   // eventually this could create a confirmation view and provide options to it.
-  // the view could have more options but would always end up invoking success or failure.
+  // the view could have more options but would always end up invoking onConfirm or onDeny.
   confirm: function(options) {
     if(window.confirm(options.text)) {
-      if(options.success) options.success();
+      if(options.onConfirm) options.onConfirm();
     } else {
-      if(options.failure) options.failure();
+      if(options.onDeny) options.onDeny();
     }
   },
 

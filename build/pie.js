@@ -590,7 +590,10 @@ pie.dom.on = function(el, event, fn, selector, capture) {
 };
 
 
-pie.dom.trigger = function(el, e) {
+pie.dom.trigger = function(el, e, forceEvent) {
+  // if a function is defined, a.click() as an example, invoke that instead.
+  if(!forceEvent && pie.object.isFunction(el[e])) return el[e]();
+
   var event = document.createEvent('Event');
   event.initEvent(e, true, true);
   return el.dispatchEvent(event);
@@ -1485,6 +1488,10 @@ pie.mixins.changeSet = {
     });
   },
 
+  last: function() {
+    return pie.array.last(this);
+  },
+
   names: function() {
     return pie.array.unique(pie.array.map(this, 'name'));
   }
@@ -1941,12 +1948,12 @@ pie.app = pie.base.extend('app', {
 
   // just in case the client wants to override the standard confirmation dialog.
   // eventually this could create a confirmation view and provide options to it.
-  // the view could have more options but would always end up invoking success or failure.
+  // the view could have more options but would always end up invoking onConfirm or onDeny.
   confirm: function(options) {
     if(window.confirm(options.text)) {
-      if(options.success) options.success();
+      if(options.onConfirm) options.onConfirm();
     } else {
-      if(options.failure) options.failure();
+      if(options.onDeny) options.onDeny();
     }
   },
 

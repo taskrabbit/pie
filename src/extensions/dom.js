@@ -140,7 +140,10 @@ pie.dom.on = function(el, event, fn, selector, capture) {
 };
 
 
-pie.dom.trigger = function(el, e) {
+pie.dom.trigger = function(el, e, forceEvent) {
+  // if a function is defined, a.click() as an example, invoke that instead.
+  if(!forceEvent && pie.object.isFunction(el[e])) return el[e]();
+
   var event = document.createEvent('Event');
   event.initEvent(e, true, true);
   return el.dispatchEvent(event);
