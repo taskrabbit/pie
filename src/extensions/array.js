@@ -228,7 +228,7 @@ pie.array.toSentence = function(arr, options) {
   if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(options.delimeter), arr.slice(arr.length-1)];
 
   var sentence = arr.join(options.and);
-  if(options.punctuate) sentence += options.punctuate;
+  if(options.punctuate && !pie.string.endsWith(sentence, options.punctuate)) sentence += options.punctuate;
 
   return sentence;
 };

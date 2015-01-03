@@ -1,7 +1,7 @@
 pie.string.PROTOCOL_TEST = /\w+:\/\//;
 
 pie.string.capitalize = function(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 
@@ -112,6 +112,9 @@ pie.string.escape = (function(){
   };
 })();
 
+pie.string.endsWith = function(str, suffix) {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+};
 
 // designed to be used with the "%{expression}" placeholders
 pie.string.expand = function(str, data) {

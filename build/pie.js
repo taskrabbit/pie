@@ -296,7 +296,7 @@ pie.array.toSentence = function(arr, options) {
   if(arr.length > 2) arr = [arr.slice(0,arr.length-1).join(options.delimeter), arr.slice(arr.length-1)];
 
   var sentence = arr.join(options.and);
-  if(options.punctuate) sentence += options.punctuate;
+  if(options.punctuate && !pie.string.endsWith(sentence, options.punctuate)) sentence += options.punctuate;
 
   return sentence;
 };
@@ -914,7 +914,7 @@ pie.object.values = function(a) {
 pie.string.PROTOCOL_TEST = /\w+:\/\//;
 
 pie.string.capitalize = function(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 
@@ -1025,6 +1025,9 @@ pie.string.escape = (function(){
   };
 })();
 
+pie.string.endsWith = function(str, suffix) {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+};
 
 // designed to be used with the "%{expression}" placeholders
 pie.string.expand = function(str, data) {

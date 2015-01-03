@@ -454,7 +454,7 @@ pie.array.toSentence = <span class="hljs-function"><span class="hljs-keyword">fu
   <span class="hljs-keyword">if</span>(arr.length &gt; <span class="hljs-number">2</span>) arr = [arr.slice(<span class="hljs-number">0</span>,arr.length-<span class="hljs-number">1</span>).join(options.delimeter), arr.slice(arr.length-<span class="hljs-number">1</span>)];
 
   <span class="hljs-keyword">var</span> sentence = arr.join(options.and);
-  <span class="hljs-keyword">if</span>(options.punctuate) sentence += options.punctuate;
+  <span class="hljs-keyword">if</span>(options.punctuate &amp;&amp; !pie.string.endsWith(sentence, options.punctuate)) sentence += options.punctuate;
 
   <span class="hljs-keyword">return</span> sentence;
 };
@@ -1359,7 +1359,7 @@ pie.object.slice({foo: ‘bar’, biz: ‘baz’}, ‘biz’) =&gt; {‘biz’: 
 pie.string.PROTOCOL_TEST = <span class="hljs-regexp">/\w+:\/\//</span>;
 
 pie.string.capitalize = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
-  <span class="hljs-keyword">return</span> str.charAt(<span class="hljs-number">0</span>).toUpperCase() + str.slice(<span class="hljs-number">1</span>).toLowerCase();
+  <span class="hljs-keyword">return</span> str.charAt(<span class="hljs-number">0</span>).toUpperCase() + str.slice(<span class="hljs-number">1</span>);
 };
 
 
@@ -1529,7 +1529,11 @@ pie.string.downcase = <span class="hljs-function"><span class="hljs-keyword">fun
     <span class="hljs-keyword">if</span>(str == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span> str;
     <span class="hljs-keyword">return</span> (<span class="hljs-string">""</span> + str).replace(encReg, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span> </span>{ <span class="hljs-keyword">return</span> encMap[c] || <span class="hljs-string">""</span>; });
   };
-})();</pre></div></div>
+})();
+
+pie.string.endsWith = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, suffix)</span> </span>{
+  <span class="hljs-keyword">return</span> str.indexOf(suffix, str.length - suffix.length) !== -<span class="hljs-number">1</span>;
+};</pre></div></div>
             
         </li>
         
