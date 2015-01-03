@@ -44,7 +44,7 @@ pie.mixins.bindings = (function(){
       },
 
       setValue: function(el, binding) {
-        var value = binding.model.get(binding.attr);;
+        var value = binding.model.get(binding.attr);
         /* jslint eqnull:true */
         if(value == null) value = '';
         return el.value = value;
@@ -53,11 +53,11 @@ pie.mixins.bindings = (function(){
     },
 
     check: (function(){
+
       var index = function(arr, value) {
         value = String(value);
         return pie.array.indexOf(arr, function(e){ return String(e) === value; });
-      }
-
+      };
 
       return {
 
@@ -173,9 +173,11 @@ pie.mixins.bindings = (function(){
     "default" : function(raw) {
       return raw;
     }
+
   };
 
   var normalizeBindingOptions = function(given) {
+
     if(!given.attr) throw new Error("An attr must be provided for data binding. " + JSON.stringify(given));
 
     var out = {};
@@ -202,7 +204,7 @@ pie.mixins.bindings = (function(){
     if(el.hasAttribute && el.hasAttribute('data-' + binding.attr)) mod = 'attribute';
     else if(el.nodeName === 'INPUT' && el.getAttribute('type') === 'checkbox') mod = 'check';
     else if(el.nodeName === 'INPUT' && el.getAttribute('type') === 'radio') mod = 'radio';
-    else if(el.hasOwnProperty('value')) mod = 'value';
+    else if(el.nodeName === 'INPUT' || el.nodeName === 'SELECT') mod = 'value';
     else mod = 'text';
 
     return integrations[mod];
@@ -258,7 +260,7 @@ pie.mixins.bindings = (function(){
         applyValueToModel(value, binding);
       };
 
-      if(binding.debounce) binding.toModel = Function.debounce(binding.toModel, binding.debounce);
+      if(binding.debounce) binding.toModel = pie.fn.debounce(binding.toModel, binding.debounce);
 
       initViewCallback.call(this, binding);
     }
