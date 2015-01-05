@@ -9,10 +9,10 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     this.oldChild   = options.oldChild;
     this.newChild   = options.newChild;
     this.childName  = options.childName || this.oldChild && this.oldChild._nameWithinParent;
-    this.targetEl   = options.targetEl || this.oldChild && this.oldChild.el.parentNode;
+    this.targetEl   = options.targetEl  || this.oldChild && this.oldChild.el.parentNode;
 
     if(!this.childName) throw new Error("No child name provided for view transition");
-    if(!this.targetEl) throw new Error("No target element provided for view transition");
+    if(!this.targetEl)  throw new Error("No target element provided for view transition");
 
     this.options = options;
   },
@@ -20,23 +20,23 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
   // fire a sequence which looks like
   //
   // beforeTransition
-  //  | transition
-  //  | beforeRemoveOldChild
-  //  |  | removeOldChild
-  //  | afterRemoveOldChild
-  //  | beforeAddNewChild
-  //  |  | addNewChild
-  //  | afterAddNewChild
-  // afterTransition
+  // transition
+  //   beforeRemoveOldChild
+  //   removeOldChild
+  //   afterRemoveOldChild
+  //     beforeAddNewChild
+  //     addNewChild
+  //     afterAddNewChild
+  // - afterTransition
   //
   transition: function() {
     this.emitter.prependOnce('transition', function() {
       this.emitter.fireSequence('removeOldChild');
-    });
+    }.bind(this));
 
     this.emitter.prependOnce('afterRemoveOldChild', function() {
       this.emitter.fireSequence('addNewChild');
-    });
+    }.bind(this));
 
     this.emitter.fireSequence('transition');
   }
@@ -54,19 +54,23 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
     this.emitter.on('addNewChild', this.addNewChild.bind(this));
   },
 
-  removeOldChild: function() {
-    if(this.oldChild) {
-      this.parent.removeChild(this.oldChild);
-      if(this.oldChild.el.parentNode) this.oldChild.el.parentNode.removeChild(this.oldChild.el);
+  addNewChild: function() {
+    if(this.newChild) {
+      this.parent.addChild(this.childName, this.newChild);
+      this.newChild.emitter.once('afterSetup', function(){
+        this.newChild.appendToDom(this.targetEl);
+      }.bind(this));
+      this.newChild.setup();
     }
   },
 
-  addNewChild: function() {
-    if(this.newChild) {
-      this.parent.addChild(name, this.newChild);
-      this.targetEl.appendChild(this.newChild.el);
+  removeOldChild: function() {
+    if(this.oldChild) {
+      this.parent.removeChild(this.oldChild);
+      this.oldChild.teardown();
     }
   }
+
 });
 
 
@@ -75,71 +79,197 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   init: function() {
     this._super.apply(this, arguments);
 
-    this.options.inClass        = this.options.inClass || 'view-in';
-    this.options.outClass       = this.options.outClass || 'view-out';
-    this.options.backupDuration = 250;
-    this.async                  = !!this.options.async;
+    this.options = pie.object.merge({
+      inClass: 'view-in',
+      outClass: 'view-out',
+      backupDuration: 250,
+      async: false
+    });
 
-    this.emitter.on('transition', this.beginTransition.bind(this));
-  },
+    this.emitter.on('beforeTransition', this.manageChildren.bind(this));
 
-  beginTransition: function() {
     if(this.oldChild) {
-      this.beginTransitionFromOldChild();
+      this.emitter.on('beforeTransitionOldChild', this.refresh.bind(this));
+      this.emitter.on('aroundTransitionOldChild', this.transitionOldChild.bind(this));
+      this.emitter.on('removeOldChild',           this.removeOldChild.bind(this));
+      this.emitter.on('afterRemoveOldChild',      this.teardownOldChild.bind(this));
+    }
+
+    if(this.newChild) {
+      this.emitter.on('transition',               this.setupNewChild.bind(this));
+      this.emitter.on('addNewChild',              this.addNewChild.bind(this));
+      this.emitter.on('beforeTransitionNewChild', this.refresh.bind(this));
+      this.emitter.on('aroundTransitionNewChild', this.transitionNewChild.bind(this));
+    }
+
+  },
+
+  applyClass: function(el, isIn) {
+    var add = isIn ? this.options.inClass : this.options.outClass,
+        remove = isIn ? this.options.outClass : this.options.inClass;
+
+    if(add) el.classList.add(add);
+    if(remove) el.classList.remove(remove);
+  },
+
+  // fire a sequence which looks like.
+  // beforeTransition
+  // transition
+  //  beforeOldChildTransition
+  //  oldChildTransition
+  //  afterOldChildTransition
+  //    beforeRemoveOldChild
+  //    removeOldChild
+  //    afterRemoveOldChild
+  //    beforeNewChildTransition
+  //      beforeAddNewChild
+  //      addNewChild
+  //      afterAddNewChild
+  //       newChildTransition
+  //       afterNewChildTransition
+  // afterTransition
+
+  transition: function() {
+    this.emitter.on('transition', function() {
+      this.emitter.fireSequence('removeOldChild');
+    }.bind(this));
+
+    this.emitter.on('aroundRemoveOldChild', function(cb) {
+      this.emitter.once('afterTransitionOldChild', cb);
+      this.emitter.fireSequence('transitionOldChild');
+    }.bind(this));
+
+    this.emitter.on('afterAddNewChild', function() {
+      this.emitter.fireSequence('transitionNewChild');
+    }.bind(this));
+
+    if(this.options.async) {
+      this.emitter.on('transition', function() {
+        this.emitter.fireSequence('addNewChild');
+      }.bind(this));
     } else {
-      this.beginTransitionToNewChild();
+      this.emitter.on('afterRemoveOldChild', function() {
+        this.emitter.fireSequence('addNewChild');
+      }.bind(this));
+    }
+
+    this.emitter.fireSequence('transition');
+  },
+
+  setupNewChild: function() {
+    if(!this.newChild.emitter.hasEvent('beforeSetup')) {
+      this.newChild.setup();
     }
   },
 
-  beginTransitionFromOldChild: function() {
-    var el = this.oldChild.el,
-    trans = this.transitionEndEvent(el);
+  teardownOldChild: function() {
+    if(!this.oldChild.emitter.hasEvent('beforeTeardown')) {
+      this.oldChild.teardown();
+    }
+  },
 
-    this.parent.removeChild(this.oldChild);
+  addNewChild: function() {
+    this.applyClass(this.newChild.el, false);
+    this.newChild.appendToDom(this.targetEl);
+  },
 
-    if(!this.async) {
+  removeOldChild: function() {
+    this.oldChild.removeFromDom();
+  },
 
-      if(trans) {
-        var onTransitionEnd;
-        onTransitionEnd = function(){
+  // make sure we're rendered, then invoke then begin the ui transition.
+  // when complete, invoke the callback.
+  transitionNewChild: function(cb) {
+    this.newChild.emitter.once('afterRender', function() {
+      this.observeTransitionEnd(this.newChild.el, true, cb);
+    }.bind(this), {immediate: true});
+  },
+
+  transitionOldChild: function(cb) {
+    this.observeTransitionEnd(this.oldChild.el, false, cb);
+  },
+
+  observeTransitionEnd: function(el, isIn, cb) {
+    var trans = this.transitionEndEvent(),
+    onTransitionEnd, backupDuration;
+
+    if(trans) {
+      onTransitionEnd = (function() {
+        var called = false;
+        return function() {
+          if(called) return;
+          called = true;
           pie.dom.off(el, trans, onTransitionEnd);
-          if(el.parentNode) el.parentNode.removeChild(el);
-          this.beginTransitionToNewChild();
+          cb();
         };
+      })();
 
-        pie.dom.on(el, trans, onTransitionEnd);
-
-      } else {
-        setTimeout(function(){
-          if(el.parentNode) el.parentNode.removeChild(el);
-          this.beginTransitionToNewChild();
-        }, this.options.backupDuration);
-      }
-
-    }
-
-    el.classList.add(this.options.outClass);
-    if(this.async) this.beginTransitionToNewChild();
-  },
-
-  beginTransitionToNewChild: function() {
-    this.parent.addChild(this.childName, this.newChild);
-    this.targetEl.appendChild(this.newChild.el);
-    this.newChild.el.classList.add(this.options.inClass);
-  },
-
-  transitionEndEvent: function(el) {
-    if('ontransitionend' in window) {
-      return 'transitionend';
-    } else if('onwebkittransitionend' in window) {
-      return 'webkitTransitionEnd';
-    } else if('msTransitionEnd' in window) {
-      return 'msTransitionEnd';
-    } else if('onotransitionend' in el || navigator.appName === 'Opera') {
-      return 'oTransitionEnd';
+      pie.dom.on(el, trans, onTransitionEnd);
     } else {
-      return false;
+      setTimeout(cb, this.options.backupDuration);
     }
+
+    this.applyClass(el, isIn);
+
+    if(trans) {
+
+      backupDuration = this.determineBackupDuration(el);
+      if(!isNaN(backupDuration)) {
+        setTimeout(onTransitionEnd, backupDuration * 1.1);
+      }
+    }
+  },
+
+  manageChildren: function() {
+    if(this.oldChild) this.parent.removeChild(this.oldChild);
+    if(this.newChild) this.parent.addChild(this.childName, this.newChild);
+  },
+
+  transitionEndEvent: function(){
+
+    if(this._transitionEndEvent === undefined) {
+      if('ontransitionend' in window) {
+        this._transitionEndEvent = 'transitionend';
+      } else if('onwebkittransitionend' in window) {
+        this._transitionEndEvent = 'webkitTransitionEnd';
+      } else if('msTransitionEnd' in window) {
+        this._transitionEndEvent = 'msTransitionEnd';
+      } else if('onotransitionend' in document.body || navigator.appName === 'Opera') {
+        this._transitionEndEvent = 'oTransitionEnd';
+      } else {
+        this._transitionEndEvent = false;
+      }
+    }
+
+    return this._transitionEndEvent;
+  },
+
+  transitionProperty: function(prop) {
+    var trans = this.transitionEndEvent();
+    return trans && trans.replace(/end/i, pie.string.capitalize(prop));
+  },
+
+  refresh: function(cb) {
+    if(this.oldChild) this.oldChild.el.getBoundingClientRect();
+    if(this.newChild) this.newChild.el.getBoundingClientRect();
+    if(cb) cb();
+  },
+
+  determineBackupDuration: function(el) {
+    var durProp = this.transitionProperty('duration'),
+      delayProp = this.transitionProperty('delay'),
+      style = window.getComputedStyle(el),
+      dur, delay;
+
+    dur = parseInt(style[durProp].toLowerCase(), 10);
+    delay = parseInt(style[delayProp].toLowerCase(), 10);
+
+    if(durProp.indexOf('ms') < 0) {
+      dur = dur * 1000;
+      delay = delay * 1000;
+    }
+
+    return dur + delay;
   }
 
 });

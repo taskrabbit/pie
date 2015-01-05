@@ -2,14 +2,16 @@
 
 pie.ns('lib.views');
 
-lib.views.nav = pie.activeView.extend('nav', function(el) {
-  this._super({
-    renderOnSetup: true,
-    template: 'nav'
-  });
-});
+lib.views.nav = pie.activeView.extend('nav', {
 
-lib.views.nav.reopen({
+  init: function(el) {
+    this._super({
+      renderOnSetup: true,
+      template: 'nav',
+      setup: true,
+      uiTarget: document.body
+    });
+  },
 
   setup: function() {
     this.onChange(app.navigator, this.navigationChanged.bind(this), 'path');
@@ -35,11 +37,7 @@ lib.views.nav.reopen({
 
 
 
-lib.views.page = pie.activeView.extend('page', function() {
-  this._super();
-});
-
-lib.views.page.reopen({
+lib.views.page = pie.activeView.extend('page', {
 
   setup: function(){
     this._super();
@@ -66,16 +64,23 @@ lib.views.page.reopen({
 
 });
 
+lib.views.about = pie.activeView.extend('about', function() {
+  this._super({
+    template: 'about',
+    renderOnSetup: true
+  });
+});
+
 window.app = new pie.app({
   uiTarget: '.page',
-  root: '/docs/guide'
+  root: '/docs/guide',
+  viewTransitionClass: pie.inOutViewTransition
 });
 
 // get a "nav" view in there. this is "outside" of the normal routed application since it's always present.
 // alternatively, we could create a "layout" view to manage this and the current subview.
 app.emitter.once('beforeStart', function() {
   var nav = new lib.views.nav();
-  nav.setRenderTarget(document.body);
   app.addChild('nav', nav);
 });
 
@@ -83,6 +88,7 @@ app.emitter.once('beforeStart', function() {
 // set up our page routes.
 app.router.route({
   '/' : {view: 'page', name: 'root'},
+  '/about' : {view: 'about', name: 'about'},
   '/:page' : {view: 'page', name: 'page'},
   'pageApi' : '/pages/:page.html'
 });

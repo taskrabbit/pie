@@ -1,27 +1,13 @@
 // a view class which handles some basic functionality
 pie.activeView = pie.view.extend('activeView', {
-  init: function(options) {
-    this._super(options);
 
+  setup: function() {
     this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
-    this.emitter.on('render', this._renderTemplateToDom.bind(this));
-    this.emitter.once('afterRender', this._appendToDom.bind(this));
+    this.emitter.on('render', this._renderTemplateToEl.bind(this));
+    this._super();
   },
 
-  _appendToDom: function() {
-    if(!this.renderTarget) return;
-    if(this.el.parentNode) return;
-    if(!this.parent) return;
-    this.renderTarget.appendChild(this.el);
-  },
-
-  _removeFromDom: function() {
-    // remove our el if we still have a parent node.
-    // don't use pie.dom.remove since we don't want to remove the cache.
-    if(this.el.parentNode) this.el.parentNode.removeChild(this.el);
-  },
-
-  _renderTemplateToDom: function() {
+  _renderTemplateToEl: function() {
     var templateName = this.templateName();
 
     if(templateName) {
@@ -37,10 +23,12 @@ pie.activeView = pie.view.extend('activeView', {
     }
 
     if(this.options.renderOnSetup) {
-      this.emitter.prependOnce('afterSetup', this.render.bind(this), {immediate: true});
+      this.emitter.once('afterRender', cb);
+      this.render();
+    } else {
+      cb();
     }
 
-    cb();
   },
 
   // If the first option passed is a node, it will use that as the query scope.
@@ -62,11 +50,6 @@ pie.activeView = pie.view.extend('activeView', {
     return o;
   },
 
-  removedFromParent: function(parent) {
-    pie.view.prototype.removedFromParent.call(this, parent);
-    this._removeFromDom();
-  },
-
   renderData: function() {
     if(this.model) {
       return this.model.data;
@@ -77,11 +60,6 @@ pie.activeView = pie.view.extend('activeView', {
 
   render: function() {
     this.emitter.fireSequence('render');
-  },
-
-  setRenderTarget: function(target) {
-    this.renderTarget = target;
-    if(this.emitter.hasEvent('afterRender')) this._appendToDom();
   },
 
   templateName: function() {

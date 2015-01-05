@@ -47,7 +47,9 @@ example.views.layout = pie.activeView.extend('layout', function() {
     template: 'layoutContainer',
 
     // since we don't need to retrieve anything from a web service, we can render immediately.
-    renderOnSetup: true
+    renderOnSetup: true,
+
+    setup: true
   });
 
   // this is our page "context". It represents a list of items.
@@ -72,15 +74,17 @@ example.views.layout.reopen({
     // add our form view which will handle the addition of data.
     // addChild sets up the child view and relates it to this view (the parent).
     child = new example.views.form(this.list);
-    // we still haven't added it to the dom yet, though. So we choose where to put it.
-    child.setRenderTarget(this.qs('.form-container'));
+
     // when the child finishes rendering, it will add itself to the dom
     this.addChild('form', child);
 
+    // we still haven't added it to the dom yet, though. So we choose where to put it.
+    child.appendToDom(this.qs('.form-container'));
+
     // add our list view.
     child = new example.views.list(this.list);
-    child.setRenderTarget(this.qs('.list-container'));
     this.addChild('list', child);
+    child.appendToDom(this.qs('.list-container'));
   }
 });
 

@@ -3,19 +3,14 @@ describe("View Binding Integration", function() {
 
   beforeEach(function() {
     var v = new lib.views.listView();
-    v.setRenderTarget(document.body);
-    app.addChild('integrationTest', v);
-
     this.view = v;
     this.model = this.view.model;
   });
 
-  afterEach(function() {
-    app.removeChild('integrationTest');
-  });
-
   it("should allow binding of model attributes to form fields", function() {
     var el = this.view.qs('input[name="foo"]');
+
+    debugger;
 
     expect(el).not.toBeFalsy();
     expect(el.value).toEqual('');
