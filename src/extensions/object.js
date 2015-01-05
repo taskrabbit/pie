@@ -126,6 +126,8 @@ pie.object.merge = function() {
 //
 // => foo, bar
 pie.object.forEach = function(o, f) {
+  if(!o) return;
+
   Object.keys(o).forEach(function(k) {
     f(k, o[k]);
   });

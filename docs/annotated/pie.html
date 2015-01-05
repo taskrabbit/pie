@@ -1186,6 +1186,8 @@ pie.object.forEach({‘foo’ : ‘bar’}, function(k,v){ console.log(k, v); })
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.object.forEach = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(o, f)</span> </span>{
+  <span class="hljs-keyword">if</span>(!o) <span class="hljs-keyword">return</span>;
+
   <span class="hljs-built_in">Object</span>.keys(o).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k)</span> </span>{
     f(k, o[k]);
   });
