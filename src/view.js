@@ -17,11 +17,17 @@ pie.view = pie.base.extend('view', {
     if(this.options.setup) this.setup();
   },
 
+  addedToParent: function() {
+    this.emitter.fire('addedToParent');
+  },
+
   appendToDom: function(target) {
     target = target || this.options.uiTarget;
-    this.emitter.fireSequence('attach', function(){
-      target.appendChild(this.el);
-    }.bind(this));
+    if(target !== this.el.parentNode) {
+      this.emitter.fireSequence('attach', function(){
+        target.appendChild(this.el);
+      }.bind(this));
+    }
   },
 
   consumeEvent: function(e, immediate) {
@@ -96,6 +102,10 @@ pie.view = pie.base.extend('view', {
     }
   },
 
+  removedFromParent: function() {
+    this.emitter.fire('removedFromParent');
+  },
+
   // placeholder for default functionality
   setup: function(){
     this.emitter.fireSequence('setup');
@@ -111,16 +121,19 @@ pie.view = pie.base.extend('view', {
       this._unobserveEvents();
       this._unobserveChangeCallbacks();
 
-      this.children.forEach(function(child) {
-        child.teardown();
-      });
-
+      this.teardownChildren();
       // views remove their children upon removal to ensure all irrelevant observations are cleaned up.
       this.removeChildren();
 
     }.bind(this));
 
     return this;
+  },
+
+  teardownChildren: function() {
+    this.children.forEach(function(child) {
+      child.teardown();
+    });
   },
 
   // release all observed events.

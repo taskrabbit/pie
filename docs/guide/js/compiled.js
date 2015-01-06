@@ -64,17 +64,10 @@ lib.views.page = pie.activeView.extend('page', {
 
 });
 
-lib.views.about = pie.activeView.extend('about', function() {
-  this._super({
-    template: 'about',
-    renderOnSetup: true
-  });
-});
 
 window.app = new pie.app({
   uiTarget: '.page',
-  root: '/docs/guide',
-  viewTransitionClass: pie.inOutViewTransition
+  root: '/docs/guide'
 });
 
 // get a "nav" view in there. this is "outside" of the normal routed application since it's always present.

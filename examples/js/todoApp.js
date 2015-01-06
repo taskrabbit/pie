@@ -39,34 +39,38 @@ window.example = {
 
 // the page level view.
 // this view handles managing it's children, initializes page context via the pie.list.
-example.views.layout = pie.activeView.extend('layout', function() {
+example.views.layout = pie.activeView.extend('layout', {
 
-  this._super({
+  init: function() {
 
-    // this is the template this view renders.
-    template: 'layoutContainer',
+    // this is our page "context". It represents a list of items.
+    this.list = new pie.list([]);
 
-    // since we don't need to retrieve anything from a web service, we can render immediately.
-    renderOnSetup: true,
+    pie.object.merge(this.list, pie.mixins.validatable);
 
-    setup: true
-  });
+    this.list.validates({
+      nextItem: {presence: {message: "You can't submit a blank item!"}}
+    });
 
-  // this is our page "context". It represents a list of items.
-  this.list = new pie.list([]);
 
-  pie.object.merge(this.list, pie.mixins.validatable);
+    this._super({
 
-  this.list.validates({
-    nextItem: {presence: {message: "You can't submit a blank item!"}}
-  });
+      // this is the template this view renders.
+      template: 'layoutContainer',
 
-  this.emitter.on('render', this.renderChildren.bind(this));
-});
+      // since we don't need to retrieve anything from a web service, we can render immediately.
+      renderOnSetup: true
+    });
+  },
 
-example.views.layout.reopen({
+  setup: function() {
+    this.emitter.on('afterRender', this.renderChildren.bind(this));
+    this._super();
+  },
+
   renderChildren: function() {
     // ensure we don't have any children (rerender)
+    this.teardownChildren();
     this.removeChildren();
 
     var child;
@@ -77,32 +81,31 @@ example.views.layout.reopen({
 
     // when the child finishes rendering, it will add itself to the dom
     this.addChild('form', child);
-
+    child.setup();
     // we still haven't added it to the dom yet, though. So we choose where to put it.
     child.appendToDom(this.qs('.form-container'));
 
     // add our list view.
     child = new example.views.list(this.list);
     this.addChild('list', child);
+    child.setup();
     child.appendToDom(this.qs('.list-container'));
   }
 });
 
 // this view handles taking in user input to modify the list model.
 // notice the model is provided to the form explicity. This isn't necessary, but is generally a good idea.
-example.views.form = pie.activeView.extend(function(listModel) {
+example.views.form = pie.activeView.extend({
+  init: function(listModel) {
 
-  this._super({
-    template: 'formContainer',
-    renderOnSetup: true
-  });
+    // this.model is special in that the default renderData() implementation checks for this.
+    this.list = this.model = listModel;
 
-  // this.model is special in that the default renderData() implementation checks for this.
-  this.list = this.model = listModel;
-});
-
-example.views.form.reopen(pie.mixins.bindings);
-example.views.form.reopen({
+    this._super({
+      template: 'formContainer',
+      renderOnSetup: true
+    });
+  },
 
   // we override init to set up events.
   setup: function() {
@@ -161,33 +164,31 @@ example.views.form.reopen({
     this.list.validate('nextItem');
   }
 
-});
+}, pie.mixins.bindings);
 
 
 // this view handles rendering the list and dealing with removals.
-example.views.list = pie.activeView.extend(function(listModel) {
+example.views.list = pie.activeView.extend({
+  init: function(listModel) {
 
-  // this time we use autoRender to automatically render this view
-  // any time the "items" attribute of the model changes.
-  this._super({
-    template: 'listContainer',
-    renderOnSetup: true
-  });
+    // this.model is needed for autoRender
+    // if you didn't use autoRender you would have to add
+    // this.onChange(this.list, this.render.bind(this), 'items') in init.
+    this.list = this.model = listModel;
 
-  // this.model is needed for autoRender
-  // if you didn't use autoRender you would have to add
-  // this.onChange(this.list, this.render.bind(this), 'items') in init.
-  this.list = this.model = listModel;
-});
-
-
-example.views.list.reopen({
+    // this time we use autoRender to automatically render this view
+    // any time the "items" attribute of the model changes.
+    this._super({
+      template: 'listContainer',
+      renderOnSetup: true
+    });
+  },
 
   // set up our events, then invoke super.
   setup: function() {
     this.on('click', '.js-complete-all', this.completeAll.bind(this));
     this.onChange(this.list, this.listChanged.bind(this));
-    this.emitter.on('render', this.updateSummary.bind(this));
+    this.emitter.on('afterRender', this.updateSummary.bind(this));
     this._super();
   },
 
@@ -204,6 +205,7 @@ example.views.list.reopen({
     child = new example.views.item(this.list, change.value);
 
     this.addChild('view-' + change.value.pieId, child);
+    child.setup();
 
     if(sibling) {
       sibling.el.parentNode.insertBefore(child.el, sibling.el);
@@ -219,6 +221,7 @@ example.views.list.reopen({
   itemRemoved: function(change) {
     var child = this.getChild('view-' + change.oldValue.pieId);
     this.removeChild(child);
+    child.teardown();
   },
 
   listChanged: function(changes) {
@@ -248,22 +251,19 @@ example.views.list.reopen({
 });
 
 // this view handles rendering an individual item
-example.views.item = pie.activeView.extend('item', function(listModel, itemModel) {
+example.views.item = pie.activeView.extend('item', {
+  init: function(listModel, itemModel) {
 
-  // this time we use autoRender to automatically render this view
-  // any time the "items" attribute of the model changes.
-  this._super({
-    template: 'itemContainer',
-    renderOnSetup: true
-  });
+    this.list = listModel;
+    this.item = this.model = itemModel;
 
-  this.list = listModel;
-  this.item = this.model = itemModel;
-});
-
-example.views.item.reopen(pie.mixins.bindings);
-
-example.views.item.reopen({
+    // this time we use autoRender to automatically render this view
+    // any time the "items" attribute of the model changes.
+    this._super({
+      template: 'itemContainer',
+      renderOnSetup: true
+    });
+  },
 
   // set up our events, then invoke super.
   setup: function() {
@@ -290,4 +290,4 @@ example.views.item.reopen({
     // remove the item from the list.
     this.list.remove(index);
   }
-});
+}, pie.mixins.bindings);

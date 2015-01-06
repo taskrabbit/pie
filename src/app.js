@@ -195,15 +195,15 @@ pie.app = pie.base.extend('app', {
     // use the view key of the parsedUrl to find the viewClass
     var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
     // the instance to be added.
-    child = new viewClass(this);
+    child = new viewClass({ app: this });
     child._pieName = this.parsedUrl.view;
 
-    transition = new this.viewTransitionClass(this, {
+    transition = new this.viewTransitionClass(this, pie.object.merge({
       oldChild: current,
       newChild: child,
       childName: 'currentView',
       targetEl: target
-    });
+    }, this.options.viewTransitionOptions));
 
     // get us back to the top of the page.
     // todo: make part of the transition configuration?

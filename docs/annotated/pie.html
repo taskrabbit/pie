@@ -3434,15 +3434,15 @@ Maybe the entry point is server generated.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    child = <span class="hljs-keyword">new</span> viewClass(<span class="hljs-keyword">this</span>);
+            <div class="content"><div class='highlight'><pre>    child = <span class="hljs-keyword">new</span> viewClass({ app: <span class="hljs-keyword">this</span> });
     child._pieName = <span class="hljs-keyword">this</span>.parsedUrl.view;
 
-    transition = <span class="hljs-keyword">new</span> <span class="hljs-keyword">this</span>.viewTransitionClass(<span class="hljs-keyword">this</span>, {
+    transition = <span class="hljs-keyword">new</span> <span class="hljs-keyword">this</span>.viewTransitionClass(<span class="hljs-keyword">this</span>, pie.object.merge({
       oldChild: current,
       newChild: child,
       childName: <span class="hljs-string">'currentView'</span>,
       targetEl: target
-    });</pre></div></div>
+    }, <span class="hljs-keyword">this</span>.options.viewTransitionOptions));</pre></div></div>
             
         </li>
         
@@ -3727,7 +3727,9 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
             </div>
             
             <div class="content"><div class='highlight'><pre>  deliverChangeRecords: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> observers = {}, os, o, change;
+    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.changeRecords.length) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+
+    <span class="hljs-keyword">var</span> observers = {}, os, o, change, changeSet;
 
     <span class="hljs-keyword">this</span>.trackVersion();</pre></div></div>
             
@@ -3777,7 +3779,7 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
             <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">while</span>(o = os.shift()) {
 
         <span class="hljs-keyword">if</span>(!observers[o.pieId]) {
-          <span class="hljs-keyword">var</span> changeSet = [];
+          changeSet = [];
           pie.object.merge(changeSet, pie.mixins.changeSet);
           observers[o.pieId] = {fn: o, changes: changeSet};
         }
@@ -4134,11 +4136,17 @@ this.compute(‘fullName’, ‘first_name’, ‘last_name’);</p>
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.setup) <span class="hljs-keyword">this</span>.setup();
   },
 
+  addedToParent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'addedToParent'</span>);
+  },
+
   appendToDom: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(target)</span> </span>{
     target = target || <span class="hljs-keyword">this</span>.options.uiTarget;
-    <span class="hljs-keyword">this</span>.emitter.fireSequence(<span class="hljs-string">'attach'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      target.appendChild(<span class="hljs-keyword">this</span>.el);
-    }.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">if</span>(target !== <span class="hljs-keyword">this</span>.el.parentNode) {
+      <span class="hljs-keyword">this</span>.emitter.fireSequence(<span class="hljs-string">'attach'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        target.appendChild(<span class="hljs-keyword">this</span>.el);
+      }.bind(<span class="hljs-keyword">this</span>));
+    }
   },
 
   consumeEvent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e, immediate)</span> </span>{
@@ -4268,6 +4276,10 @@ If the object is not observable, an error will be thrown.</p>
         <span class="hljs-keyword">this</span>.el.parentNode.removeChild(<span class="hljs-keyword">this</span>.el);
       }.bind(<span class="hljs-keyword">this</span>));
     }
+  },
+
+  removedFromParent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'removedFromParent'</span>);
   },</pre></div></div>
             
         </li>
@@ -4297,9 +4309,7 @@ If the object is not observable, an error will be thrown.</p>
       <span class="hljs-keyword">this</span>._unobserveEvents();
       <span class="hljs-keyword">this</span>._unobserveChangeCallbacks();
 
-      <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span> </span>{
-        child.teardown();
-      });</pre></div></div>
+      <span class="hljs-keyword">this</span>.teardownChildren();</pre></div></div>
             
         </li>
         
@@ -4319,6 +4329,12 @@ If the object is not observable, an error will be thrown.</p>
     }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },
+
+  teardownChildren: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span> </span>{
+      child.teardown();
+    });
   },</pre></div></div>
             
         </li>
@@ -5930,13 +5946,23 @@ pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
     }
 
     <span class="hljs-built_in">window</span>.history[replace ? <span class="hljs-string">'replaceState'</span> : <span class="hljs-string">'pushState'</span>]({}, <span class="hljs-built_in">document</span>.title, url);
-
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.setDataFromLocation();
+    <span class="hljs-built_in">window</span>.historyObserver();
   },
 
 
   start: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    pie.dom.on(<span class="hljs-built_in">window</span>, <span class="hljs-string">'popstate'</span>, <span class="hljs-keyword">this</span>.setDataFromLocation.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">window</span>.historyObserver) {
+      <span class="hljs-built_in">window</span>.historyObserver = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        pie.dom.trigger(<span class="hljs-built_in">window</span>, <span class="hljs-string">'pieHistoryChange'</span>);
+      };
+    }
+
+    pie.dom.on(<span class="hljs-built_in">window</span>, <span class="hljs-string">'popstate'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      <span class="hljs-built_in">window</span>.historyObserver();
+    });
+
+    pie.dom.on(<span class="hljs-built_in">window</span>, <span class="hljs-string">'pieHistoryChange.nav-'</span> + <span class="hljs-keyword">this</span>.pieId, <span class="hljs-keyword">this</span>.setDataFromLocation.bind(<span class="hljs-keyword">this</span>));
+
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.setDataFromLocation();
   },
 
@@ -5950,8 +5976,6 @@ pie.navigator = pie.model.extend(<span class="hljs-string">'navigator'</span>, {
       fullPath: pie.array.compact([<span class="hljs-built_in">window</span>.location.pathname, stringQuery], <span class="hljs-literal">true</span>).join(<span class="hljs-string">'?'</span>),
       query: query
     });
-
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   }
 });</pre></div></div>
             
@@ -6310,8 +6334,8 @@ pie.router = pie.model.extend(<span class="hljs-string">'router'</span>, {
 this will even catch interpolated values.
 Given a named route: /things/page/:page.json
 And the current path == /things/page/1.json?q=test
-app.router.changedUrl({page: 3, q: ‘newQuery’});</p>
-<h1 id="-things-page-3-json-q-newquery">=&gt; /things/page/3.json?q=newQuery</h1>
+app.router.changedUrl({page: 3, q: ‘newQuery’});
+=&gt; /things/page/3.json?q=newQuery</p>
 
             </div>
             
@@ -6973,6 +6997,8 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.targetEl)  <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"No target element provided for view transition"</span>);
 
     <span class="hljs-keyword">this</span>.options = options;
+
+    <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'beforeTransition'</span>, <span class="hljs-keyword">this</span>.manageChildren.bind(<span class="hljs-keyword">this</span>));
   },</pre></div></div>
             
         </li>
@@ -6985,16 +7011,16 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
                 <a class="pilcrow" href="#section-202">&#182;</a>
               </div>
               <p>fire a sequence which looks like</p>
-<p>| beforeTransition
+<pre><code>| beforeTransition
 | transition
-|—| beforeRemoveOldChild
+|--| beforeRemoveOldChild
 |  | removeOldChild
 |  | afterRemoveOldChild
-|  |—| beforeAddNewChild
+|  |--| beforeAddNewChild
 |     | addNewChild
 |     | afterAddNewChild
-| afterTransition</p>
-
+| afterTransition
+</code></pre>
             </div>
             
             <div class="content"><div class='highlight'><pre>  transition: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -7007,9 +7033,7 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
     }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">this</span>.emitter.fireSequence(<span class="hljs-string">'transition'</span>);
-  }
-
-});</pre></div></div>
+  },</pre></div></div>
             
         </li>
         
@@ -7019,6 +7043,31 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-203">&#182;</a>
+              </div>
+              <p>to be called at the beginning of each transition.
+this removes the old child from it’s parent and adds the new one
+it also begins the setup process for the new child.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  manageChildren: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.oldChild) <span class="hljs-keyword">this</span>.parent.removeChild(<span class="hljs-keyword">this</span>.oldChild);
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.newChild) {
+      <span class="hljs-keyword">this</span>.parent.addChild(<span class="hljs-keyword">this</span>.childName, <span class="hljs-keyword">this</span>.newChild);
+      <span class="hljs-keyword">this</span>.newChild.setup();
+    }
+  },
+
+});</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-204">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-204">&#182;</a>
               </div>
               <p>Simple view transition: remove the old child from the view and dom, add the new child immediately after.
 Uses the default sequence of events.</p>
@@ -7036,31 +7085,69 @@ Uses the default sequence of events.</p>
 
   addNewChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.newChild) {
-      <span class="hljs-keyword">this</span>.parent.addChild(<span class="hljs-keyword">this</span>.childName, <span class="hljs-keyword">this</span>.newChild);
       <span class="hljs-keyword">this</span>.newChild.emitter.once(<span class="hljs-string">'afterSetup'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
         <span class="hljs-keyword">this</span>.newChild.appendToDom(<span class="hljs-keyword">this</span>.targetEl);
-      }.bind(<span class="hljs-keyword">this</span>));
-      <span class="hljs-keyword">this</span>.newChild.setup();
+      }.bind(<span class="hljs-keyword">this</span>), {immediate: <span class="hljs-literal">true</span>});
     }
   },
 
   removeOldChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.oldChild) {
-      <span class="hljs-keyword">this</span>.parent.removeChild(<span class="hljs-keyword">this</span>.oldChild);
       <span class="hljs-keyword">this</span>.oldChild.teardown();
     }
   }
 
+});
+
+pie.loadingViewTransition = pie.simpleViewTransition.extend(<span class="hljs-string">'loadingViewTransition'</span>, {
+
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
+
+    <span class="hljs-keyword">this</span>.options.loadingClass = <span class="hljs-keyword">this</span>.options.loadingClass || <span class="hljs-string">'is-loading'</span>;
+  },
+
+  setLoading: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(bool)</span> </span>{
+    <span class="hljs-keyword">this</span>.targetEl.classList[bool ? <span class="hljs-string">'add'</span> : <span class="hljs-string">'remove'</span>](<span class="hljs-keyword">this</span>.options.loadingClass);
+  },
+
+  addNewChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.newChild) <span class="hljs-keyword">return</span>;
+
+    <span class="hljs-keyword">this</span>.begin = pie.date.now();
+
+    <span class="hljs-keyword">this</span>.setLoading(<span class="hljs-literal">true</span>);
+
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.minDelay) {
+      setTimeout(<span class="hljs-keyword">this</span>.attemptToAddChild.bind(<span class="hljs-keyword">this</span>), <span class="hljs-keyword">this</span>.options.minDelay);
+    }
+
+    <span class="hljs-keyword">this</span>.newChild.emitter.once(<span class="hljs-string">'afterSetup'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">this</span>.attemptToAddChild(<span class="hljs-literal">true</span>);
+    }.bind(<span class="hljs-keyword">this</span>), {immediate: <span class="hljs-literal">true</span>});
+  },
+
+  attemptToAddChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(partOfAfterSetup)</span> </span>{
+    <span class="hljs-keyword">var</span> now = pie.date.now();
+    <span class="hljs-keyword">if</span>(partOfAfterSetup || <span class="hljs-keyword">this</span>.newChild.emitter.hasEvent(<span class="hljs-string">'afterSetup'</span>)) {
+      <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.options.minDelay || now &gt;= (<span class="hljs-keyword">this</span>.begin + <span class="hljs-keyword">this</span>.options.minDelay)) {
+        <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.newChild.emitter.hasEvent(<span class="hljs-string">'removedFromParent'</span>)) {
+          <span class="hljs-keyword">this</span>.setLoading(<span class="hljs-literal">false</span>);
+          <span class="hljs-keyword">this</span>.newChild.appendToDom(<span class="hljs-keyword">this</span>.targetEl);
+        }
+      }
+    }
+  }
 });</pre></div></div>
             
         </li>
         
         
-        <li id="section-204">
+        <li id="section-205">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-204">&#182;</a>
+                <a class="pilcrow" href="#section-205">&#182;</a>
               </div>
               <p>A transition which applies an “out” class to the old view, removes it after it transitions out, then adds
 the new view to the dom and applies an “in” class.
@@ -7079,11 +7166,11 @@ amount of delay before the next view is added to the dom.</p>
         </li>
         
         
-        <li id="section-205">
+        <li id="section-206">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-205">&#182;</a>
+                <a class="pilcrow" href="#section-206">&#182;</a>
               </div>
               <p>the new view will gain this class</p>
 
@@ -7094,11 +7181,11 @@ amount of delay before the next view is added to the dom.</p>
         </li>
         
         
-        <li id="section-206">
+        <li id="section-207">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-206">&#182;</a>
+                <a class="pilcrow" href="#section-207">&#182;</a>
               </div>
               <p>the old view will gain this class</p>
 
@@ -7109,11 +7196,11 @@ amount of delay before the next view is added to the dom.</p>
         </li>
         
         
-        <li id="section-207">
+        <li id="section-208">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-207">&#182;</a>
+                <a class="pilcrow" href="#section-208">&#182;</a>
               </div>
               <p>if the browser doesn’t support onTransitionEnd, here’s the backup transition duration</p>
 
@@ -7124,11 +7211,11 @@ amount of delay before the next view is added to the dom.</p>
         </li>
         
         
-        <li id="section-208">
+        <li id="section-209">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-208">&#182;</a>
+                <a class="pilcrow" href="#section-209">&#182;</a>
               </div>
               <p>async=true means the new view doesn’t wait for the old one to leave.
 async=false means the new view won’t be added to the dom until the previous is removed.</p>
@@ -7136,22 +7223,7 @@ async=false means the new view won’t be added to the dom until the previous is
             </div>
             
             <div class="content"><div class='highlight'><pre>      async: <span class="hljs-literal">false</span>
-    });</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-209">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-209">&#182;</a>
-              </div>
-              <p>We update the parent immediately, adding &amp; removing the appropriate children.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'beforeTransition'</span>, <span class="hljs-keyword">this</span>.manageChildren.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+    }, <span class="hljs-keyword">this</span>.options);</pre></div></div>
             
         </li>
         
@@ -7183,7 +7255,7 @@ the callback waits for the transition to end before firing.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'aroundTransitionOldChild'</span>, <span class="hljs-keyword">this</span>.transitionOldChild.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'aroundTransitionOldChild'</span>, <span class="hljs-keyword">this</span>.cancelWrap(<span class="hljs-keyword">this</span>.transitionOldChild.bind(<span class="hljs-keyword">this</span>)));</pre></div></div>
             
         </li>
         
@@ -7198,7 +7270,7 @@ the callback waits for the transition to end before firing.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'removeOldChild'</span>,           <span class="hljs-keyword">this</span>.removeOldChild.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'removeOldChild'</span>,           <span class="hljs-keyword">this</span>.cancelWrap(<span class="hljs-keyword">this</span>.removeOldChild.bind(<span class="hljs-keyword">this</span>)));</pre></div></div>
             
         </li>
         
@@ -7213,7 +7285,7 @@ the callback waits for the transition to end before firing.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'afterRemoveOldChild'</span>,      <span class="hljs-keyword">this</span>.teardownOldChild.bind(<span class="hljs-keyword">this</span>));
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">''</span>,                         <span class="hljs-keyword">this</span>.cancelWrap(<span class="hljs-keyword">this</span>.teardownOldChild.bind(<span class="hljs-keyword">this</span>)));
     }
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.newChild) {</pre></div></div>
@@ -7227,11 +7299,11 @@ the callback waits for the transition to end before firing.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-214">&#182;</a>
               </div>
-              <p>we setup() the new child as soon as possible.</p>
+              <p>ok, add the new child to the dom.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'beforeTransition'</span>,         <span class="hljs-keyword">this</span>.setupNewChild.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'addNewChild'</span>,              <span class="hljs-keyword">this</span>.cancelWrap(<span class="hljs-keyword">this</span>.addNewChild.bind(<span class="hljs-keyword">this</span>)));</pre></div></div>
             
         </li>
         
@@ -7242,11 +7314,11 @@ the callback waits for the transition to end before firing.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-215">&#182;</a>
               </div>
-              <p>ok, add the new child to the dom.</p>
+              <p>make sure the browser is up to date.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'addNewChild'</span>,              <span class="hljs-keyword">this</span>.addNewChild.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'beforeTransitionNewChild'</span>, <span class="hljs-keyword">this</span>.cancelWrap(<span class="hljs-keyword">this</span>.refresh.bind(<span class="hljs-keyword">this</span>)));</pre></div></div>
             
         </li>
         
@@ -7257,11 +7329,11 @@ the callback waits for the transition to end before firing.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-216">&#182;</a>
               </div>
-              <p>make sure the browser is up to date.</p>
+              <p>ok, start the transition.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'beforeTransitionNewChild'</span>, <span class="hljs-keyword">this</span>.refresh.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'aroundTransitionNewChild'</span>, <span class="hljs-keyword">this</span>.cancelWrap(<span class="hljs-keyword">this</span>.transitionNewChild.bind(<span class="hljs-keyword">this</span>)));</pre></div></div>
             
         </li>
         
@@ -7272,13 +7344,21 @@ the callback waits for the transition to end before firing.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-217">&#182;</a>
               </div>
-              <p>ok, start the transition.</p>
+              <p>if the new child is pulled before we’re able to get it into the dom, we cancel the rest of our transition.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'aroundTransitionNewChild'</span>, <span class="hljs-keyword">this</span>.transitionNewChild.bind(<span class="hljs-keyword">this</span>));
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.newChild.emitter.once(<span class="hljs-string">'removedFromParent'</span>, <span class="hljs-keyword">this</span>.cancel.bind(<span class="hljs-keyword">this</span>));
     }
 
+  },
+
+  cancelWrap: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span></span>{
+      <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.emitter.hasEvent(<span class="hljs-string">'cancel'</span>)) {
+        fn.apply(<span class="hljs-literal">null</span>, <span class="hljs-built_in">arguments</span>);
+      }
+    }.bind(<span class="hljs-keyword">this</span>);
   },</pre></div></div>
             
         </li>
@@ -7313,52 +7393,40 @@ the callback waits for the transition to end before firing.</p>
               </div>
               <p>WHEN options.async !== true
 fire a sequence which looks like</p>
-<p>| beforeTransition
+<pre><code>| beforeTransition
 | transition
-|—| beforeRemoveOldChild
-|  |—| beforeTransitionOldChild
+|--| beforeRemoveOldChild
+|  |--| beforeTransitionOldChild
 |     | transitionOldChild
 |     | afterTransitionOldChild
 |  | removeOldChild
 |  | afterRemoveOldChild
-|  |—| beforeAddNewChild
+|  |--| beforeAddNewChild
 |     | addNewChild
 |     | afterAddNewChild
-|     |—| beforeTransitionNewChild
+|     |--| beforeTransitionNewChild
 |        | transitionNewChild
 |        | afterTransitionNewChild
-| afterTransition</p>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-220">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-220">&#182;</a>
-              </div>
-              <p>WHEN options.async === true
+| afterTransition
+</code></pre><p>WHEN options.async === true
 fire a sequence which looks like</p>
-<p>| beforeTransition
+<pre><code>| beforeTransition
 | transition
-|—| beforeRemoveOldChild
-|  |—| beforeTransitionOldChild
+|--| beforeRemoveOldChild
+|  |--| beforeTransitionOldChild
 |     | transitionOldChild
 |     | afterTransitionOldChild
 |  | removeOldChild
 |  | afterRemoveOldChild
-….
-|—| beforeAddNewChild
+....
+|--| beforeAddNewChild
 |  | addNewChild
 |  | afterAddNewChild
-|  |—| beforeTransitionNewChild
+|  |--| beforeTransitionNewChild
 |     | transitionNewChild
 |     | afterTransitionNewChild
-| afterTransition</p>
-
+| afterTransition
+</code></pre>
             </div>
             
             <div class="content"><div class='highlight'><pre>
@@ -7387,7 +7455,34 @@ fire a sequence which looks like</p>
     }
 
     <span class="hljs-keyword">this</span>.emitter.fireSequence(<span class="hljs-string">'transition'</span>);
-  },</pre></div></div>
+  },
+
+  cancel: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.emitter.hasEvent(<span class="hljs-string">'afterTransitionNewChild'</span>)) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-220">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-220">&#182;</a>
+              </div>
+              <p>the goal of a transition is to get the old child out and the new child in,
+we make sure we’ve done that.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.oldChild) {
+        <span class="hljs-keyword">this</span>.removeOldChild();
+        <span class="hljs-keyword">this</span>.teardownOldChild();
+      }
+
+      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.newChild) {
+        <span class="hljs-keyword">this</span>.applyClass(<span class="hljs-keyword">this</span>.newChild.el, <span class="hljs-literal">true</span>);
+        <span class="hljs-keyword">this</span>.newChild.appendToDom(<span class="hljs-keyword">this</span>.targetEl);
+      }</pre></div></div>
             
         </li>
         
@@ -7398,13 +7493,11 @@ fire a sequence which looks like</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-221">&#182;</a>
               </div>
-              <p>if the new child hasn’t setup() yet, do so.</p>
+              <p>then we let everyone else know.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  setupNewChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.newChild.emitter.hasEvent(<span class="hljs-string">'beforeSetup'</span>)) {
-      <span class="hljs-keyword">this</span>.newChild.setup();
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'cancel'</span>);
     }
   },</pre></div></div>
             
@@ -7496,7 +7589,8 @@ when complete, invoke the callback.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  transitionOldChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span> </span>{
-    <span class="hljs-keyword">this</span>.observeTransitionEnd(<span class="hljs-keyword">this</span>.oldChild.el, <span class="hljs-literal">false</span>, cb);
+    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.oldChild.el.parentNode) cb();
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">this</span>.observeTransitionEnd(<span class="hljs-keyword">this</span>.oldChild.el, <span class="hljs-literal">false</span>, cb);
   },</pre></div></div>
             
         </li>
@@ -7515,29 +7609,26 @@ when the transition is complete, invoke the callback.</p>
             
             <div class="content"><div class='highlight'><pre>  observeTransitionEnd: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, isIn, cb)</span> </span>{
     <span class="hljs-keyword">var</span> trans = <span class="hljs-keyword">this</span>.transitionEndEvent(),
-    onTransitionEnd, backupDuration;
+    called = <span class="hljs-literal">false</span>,
+    onTransitionEnd = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">if</span>(called) <span class="hljs-keyword">return</span>;
+      called = <span class="hljs-literal">true</span>;
+      <span class="hljs-keyword">if</span>(trans) pie.dom.off(el, trans, onTransitionEnd);
+      cb();
+    };
+
+    <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'cancel'</span>, onTransitionEnd);
 
     <span class="hljs-keyword">if</span>(trans) {
-      onTransitionEnd = (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-        <span class="hljs-keyword">var</span> called = <span class="hljs-literal">false</span>;
-        <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-          <span class="hljs-keyword">if</span>(called) <span class="hljs-keyword">return</span>;
-          called = <span class="hljs-literal">true</span>;
-          pie.dom.off(el, trans, onTransitionEnd);
-          cb();
-        };
-      })();
-
       pie.dom.on(el, trans, onTransitionEnd);
     } <span class="hljs-keyword">else</span> {
-      setTimeout(cb, <span class="hljs-keyword">this</span>.options.backupDuration);
+      setTimeout(onTransitionEnd, <span class="hljs-keyword">this</span>.options.backupDuration);
     }
 
     <span class="hljs-keyword">this</span>.applyClass(el, isIn);
 
     <span class="hljs-keyword">if</span>(trans) {
-
-      backupDuration = <span class="hljs-keyword">this</span>.determineBackupDuration(el);
+      <span class="hljs-keyword">var</span> backupDuration = <span class="hljs-keyword">this</span>.determineBackupDuration(el);
       <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">isNaN</span>(backupDuration)) {
         setTimeout(onTransitionEnd, backupDuration * <span class="hljs-number">1.1</span>);
       }
@@ -7552,24 +7643,6 @@ when the transition is complete, invoke the callback.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-228">&#182;</a>
-              </div>
-              <p>add &amp; remove the children from the parent.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  manageChildren: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.oldChild) <span class="hljs-keyword">this</span>.parent.removeChild(<span class="hljs-keyword">this</span>.oldChild);
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.newChild) <span class="hljs-keyword">this</span>.parent.addChild(<span class="hljs-keyword">this</span>.childName, <span class="hljs-keyword">this</span>.newChild);
-  },</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-229">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-229">&#182;</a>
               </div>
               <p>which transition event should we use?</p>
 
@@ -7597,11 +7670,11 @@ when the transition is complete, invoke the callback.</p>
         </li>
         
         
-        <li id="section-230">
+        <li id="section-229">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-230">&#182;</a>
+                <a class="pilcrow" href="#section-229">&#182;</a>
               </div>
               <p>get a transition property based on the browser’s compatability.</p>
 
@@ -7615,11 +7688,11 @@ when the transition is complete, invoke the callback.</p>
         </li>
         
         
-        <li id="section-231">
+        <li id="section-230">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-231">&#182;</a>
+                <a class="pilcrow" href="#section-230">&#182;</a>
               </div>
               
             </div>
@@ -7653,11 +7726,11 @@ when the transition is complete, invoke the callback.</p>
         </li>
         
         
-        <li id="section-232">
+        <li id="section-231">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-232">&#182;</a>
+                <a class="pilcrow" href="#section-231">&#182;</a>
               </div>
               <p>AMD. Register as an anonymous module.</p>
 

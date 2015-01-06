@@ -20,13 +20,23 @@ pie.navigator = pie.model.extend('navigator', {
     }
 
     window.history[replace ? 'replaceState' : 'pushState']({}, document.title, url);
-
-    return this.setDataFromLocation();
+    window.historyObserver();
   },
 
 
   start: function() {
-    pie.dom.on(window, 'popstate', this.setDataFromLocation.bind(this));
+    if(!window.historyObserver) {
+      window.historyObserver = function() {
+        pie.dom.trigger(window, 'pieHistoryChange');
+      };
+    }
+
+    pie.dom.on(window, 'popstate', function() {
+      window.historyObserver();
+    });
+
+    pie.dom.on(window, 'pieHistoryChange.nav-' + this.pieId, this.setDataFromLocation.bind(this));
+
     return this.setDataFromLocation();
   },
 
@@ -40,7 +50,5 @@ pie.navigator = pie.model.extend('navigator', {
       fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
       query: query
     });
-
-    return this;
   }
 });

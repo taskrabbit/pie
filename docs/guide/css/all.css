@@ -189,15 +189,6 @@ code, code * {
   left: 250px;
 }
 
-.page > div {
-  transition: left 2s;
-  position: relative;
-  left: 0;
-}
-
-.page .view-out {
-  left: 100%;
-}
 
 @media all and (min-width: 731px) {
 

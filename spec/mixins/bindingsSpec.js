@@ -7,10 +7,12 @@ describe("View Binding Integration", function() {
     this.model = this.view.model;
   });
 
+  afterEach(function() {
+    this.view.removeFromDom();
+  });
+
   it("should allow binding of model attributes to form fields", function() {
     var el = this.view.qs('input[name="foo"]');
-
-    debugger;
 
     expect(el).not.toBeFalsy();
     expect(el.value).toEqual('');

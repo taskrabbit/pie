@@ -86,7 +86,9 @@ pie.model = pie.base.extend('model', {
 
   // After updates have been made we deliver our change records to our observers.
   deliverChangeRecords: function() {
-    var observers = {}, os, o, change;
+    if(!this.changeRecords.length) return this;
+
+    var observers = {}, os, o, change, changeSet;
 
     this.trackVersion();
 
@@ -100,7 +102,7 @@ pie.model = pie.base.extend('model', {
       while(o = os.shift()) {
 
         if(!observers[o.pieId]) {
-          var changeSet = [];
+          changeSet = [];
           pie.object.merge(changeSet, pie.mixins.changeSet);
           observers[o.pieId] = {fn: o, changes: changeSet};
         }
