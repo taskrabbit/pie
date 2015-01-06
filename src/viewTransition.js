@@ -45,6 +45,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
 
 
 // Simple view transition: remove the old child from the view and dom, add the new child immediately after.
+// Uses the default sequence of events.
 pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransition', {
 
   init: function() {
@@ -73,37 +74,56 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
 
 });
 
-
+// A transition which applies an "out" class to the old view, removes it after it transitions out, then adds
+// the new view to the dom and applies an "in" class.
+// Preparation of the new view is done as soon as the transition is started, enabling the shortest possible
+// amount of delay before the next view is added to the dom.
 pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition', {
 
   init: function() {
     this._super.apply(this, arguments);
 
     this.options = pie.object.merge({
+      // the new view will gain this class
       inClass: 'view-in',
+      // the old view will gain this class
       outClass: 'view-out',
+      // if the browser doesn't support onTransitionEnd, here's the backup transition duration
       backupDuration: 250,
+      // async=true means the new view doesn't wait for the old one to leave.
+      // async=false means the new view won't be added to the dom until the previous is removed.
       async: false
     });
 
+    // We update the parent immediately, adding & removing the appropriate children.
     this.emitter.on('beforeTransition', this.manageChildren.bind(this));
 
+    // It's not necessary for an oldChild to exist, if it does we tie into the parts of the process
+    // which are relevant to it.
     if(this.oldChild) {
-      this.emitter.on('beforeTransitionOldChild', this.refresh.bind(this));
+      // we control the transition events via an around event.
+      // the callback waits for the transition to end before firing.
       this.emitter.on('aroundTransitionOldChild', this.transitionOldChild.bind(this));
+      // remove the old child from the dom
       this.emitter.on('removeOldChild',           this.removeOldChild.bind(this));
+      // teardown the child since we're done with it.
       this.emitter.on('afterRemoveOldChild',      this.teardownOldChild.bind(this));
     }
 
     if(this.newChild) {
-      this.emitter.on('transition',               this.setupNewChild.bind(this));
+      // we setup() the new child as soon as possible.
+      this.emitter.on('beforeTransition',         this.setupNewChild.bind(this));
+      // ok, add the new child to the dom.
       this.emitter.on('addNewChild',              this.addNewChild.bind(this));
+      // make sure the browser is up to date.
       this.emitter.on('beforeTransitionNewChild', this.refresh.bind(this));
+      // ok, start the transition.
       this.emitter.on('aroundTransitionNewChild', this.transitionNewChild.bind(this));
     }
 
   },
 
+  // apply the relevant class(es) to the element.
   applyClass: function(el, isIn) {
     var add = isIn ? this.options.inClass : this.options.outClass,
         remove = isIn ? this.options.outClass : this.options.inClass;
@@ -178,28 +198,32 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     this.emitter.fireSequence('transition');
   },
 
+  // if the new child hasn't setup() yet, do so.
   setupNewChild: function() {
     if(!this.newChild.emitter.hasEvent('beforeSetup')) {
       this.newChild.setup();
     }
   },
 
+  // teardown() the child if it hasn't already.
   teardownOldChild: function() {
     if(!this.oldChild.emitter.hasEvent('beforeTeardown')) {
       this.oldChild.teardown();
     }
   },
 
+  // give the new child the "out" classes, then add it to the dom.
   addNewChild: function() {
     this.applyClass(this.newChild.el, false);
     this.newChild.appendToDom(this.targetEl);
   },
 
+  // remove the old child from the dom.
   removeOldChild: function() {
     this.oldChild.removeFromDom();
   },
 
-  // make sure we're rendered, then invoke then begin the ui transition.
+  // make sure we're rendered, then begin the ui transition in.
   // when complete, invoke the callback.
   transitionNewChild: function(cb) {
     this.newChild.emitter.once('afterRender', function() {
@@ -207,10 +231,13 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     }.bind(this), {immediate: true});
   },
 
+  // start the transition out. when complete, invoke the callback.
   transitionOldChild: function(cb) {
     this.observeTransitionEnd(this.oldChild.el, false, cb);
   },
 
+  // build a transition callback, and apply the appropriate class.
+  // when the transition is complete, invoke the callback.
   observeTransitionEnd: function(el, isIn, cb) {
     var trans = this.transitionEndEvent(),
     onTransitionEnd, backupDuration;
@@ -242,11 +269,13 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     }
   },
 
+  // add & remove the children from the parent.
   manageChildren: function() {
     if(this.oldChild) this.parent.removeChild(this.oldChild);
     if(this.newChild) this.parent.addChild(this.childName, this.newChild);
   },
 
+  // which transition event should we use?
   transitionEndEvent: function(){
 
     if(this._transitionEndEvent === undefined) {
@@ -266,11 +295,13 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     return this._transitionEndEvent;
   },
 
+  // get a transition property based on the browser's compatability.
   transitionProperty: function(prop) {
     var trans = this.transitionEndEvent();
     return trans && trans.replace(/end/i, pie.string.capitalize(prop));
   },
 
+  //
   refresh: function(cb) {
     if(this.oldChild) this.oldChild.el.getBoundingClientRect();
     if(this.newChild) this.newChild.el.getBoundingClientRect();
