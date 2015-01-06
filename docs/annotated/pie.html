@@ -6985,17 +6985,15 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
                 <a class="pilcrow" href="#section-202">&#182;</a>
               </div>
               <p>fire a sequence which looks like</p>
-<p>beforeTransition
-transition
-  beforeRemoveOldChild
-  removeOldChild
-  afterRemoveOldChild
-    beforeAddNewChild
-    addNewChild
-    afterAddNewChild</p>
-<ul>
-<li>afterTransition</li>
-</ul>
+<p>| beforeTransition
+| transition
+|—| beforeRemoveOldChild
+|  | removeOldChild
+|  | afterRemoveOldChild
+|  |—| beforeAddNewChild
+|     | addNewChild
+|     | afterAddNewChild
+| afterTransition</p>
 
             </div>
             
@@ -7102,22 +7100,53 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend(<span class="hljs-st
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-204">&#182;</a>
               </div>
-              <p>fire a sequence which looks like.
-beforeTransition
-transition
- beforeOldChildTransition
- oldChildTransition
- afterOldChildTransition
-   beforeRemoveOldChild
-   removeOldChild
-   afterRemoveOldChild
-   beforeNewChildTransition
-     beforeAddNewChild
-     addNewChild
-     afterAddNewChild
-      newChildTransition
-      afterNewChildTransition
-afterTransition</p>
+              <p>WHEN options.async !== true
+fire a sequence which looks like</p>
+<p>| beforeTransition
+| transition
+|—| beforeRemoveOldChild
+|  |—| beforeTransitionOldChild
+|     | transitionOldChild
+|     | afterTransitionOldChild
+|  | removeOldChild
+|  | afterRemoveOldChild
+|  |—| beforeAddNewChild
+|     | addNewChild
+|     | afterAddNewChild
+|     |—| beforeTransitionNewChild
+|        | transitionNewChild
+|        | afterTransitionNewChild
+| afterTransition</p>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-205">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-205">&#182;</a>
+              </div>
+              <p>WHEN options.async === true
+fire a sequence which looks like</p>
+<p>| beforeTransition
+| transition
+|—| beforeRemoveOldChild
+|  |—| beforeTransitionOldChild
+|     | transitionOldChild
+|     | afterTransitionOldChild
+|  | removeOldChild
+|  | afterRemoveOldChild
+….
+|—| beforeAddNewChild
+|  | addNewChild
+|  | afterAddNewChild
+|  |—| beforeTransitionNewChild
+|     | transitionNewChild
+|     | afterTransitionNewChild
+| afterTransition</p>
 
             </div>
             
@@ -7173,11 +7202,11 @@ afterTransition</p>
         </li>
         
         
-        <li id="section-205">
+        <li id="section-206">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-205">&#182;</a>
+                <a class="pilcrow" href="#section-206">&#182;</a>
               </div>
               <p>make sure we’re rendered, then invoke then begin the ui transition.
 when complete, invoke the callback.</p>
@@ -7283,11 +7312,11 @@ when complete, invoke the callback.</p>
         </li>
         
         
-        <li id="section-206">
+        <li id="section-207">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-206">&#182;</a>
+                <a class="pilcrow" href="#section-207">&#182;</a>
               </div>
               <p>AMD. Register as an anonymous module.</p>
 

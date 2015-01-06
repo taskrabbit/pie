@@ -19,15 +19,15 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
 
   // fire a sequence which looks like
   //
-  // beforeTransition
-  // transition
-  //   beforeRemoveOldChild
-  //   removeOldChild
-  //   afterRemoveOldChild
-  //     beforeAddNewChild
-  //     addNewChild
-  //     afterAddNewChild
-  // - afterTransition
+  // | beforeTransition
+  // | transition
+  // |--| beforeRemoveOldChild
+  // |  | removeOldChild
+  // |  | afterRemoveOldChild
+  // |  |--| beforeAddNewChild
+  // |     | addNewChild
+  // |     | afterAddNewChild
+  // | afterTransition
   //
   transition: function() {
     this.emitter.prependOnce('transition', function() {
@@ -112,22 +112,44 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     if(remove) el.classList.remove(remove);
   },
 
-  // fire a sequence which looks like.
-  // beforeTransition
-  // transition
-  //  beforeOldChildTransition
-  //  oldChildTransition
-  //  afterOldChildTransition
-  //    beforeRemoveOldChild
-  //    removeOldChild
-  //    afterRemoveOldChild
-  //    beforeNewChildTransition
-  //      beforeAddNewChild
-  //      addNewChild
-  //      afterAddNewChild
-  //       newChildTransition
-  //       afterNewChildTransition
-  // afterTransition
+  // WHEN options.async !== true
+  // fire a sequence which looks like
+  //
+  // | beforeTransition
+  // | transition
+  // |--| beforeRemoveOldChild
+  // |  |--| beforeTransitionOldChild
+  // |     | transitionOldChild
+  // |     | afterTransitionOldChild
+  // |  | removeOldChild
+  // |  | afterRemoveOldChild
+  // |  |--| beforeAddNewChild
+  // |     | addNewChild
+  // |     | afterAddNewChild
+  // |     |--| beforeTransitionNewChild
+  // |        | transitionNewChild
+  // |        | afterTransitionNewChild
+  // | afterTransition
+
+  // WHEN options.async === true
+  // fire a sequence which looks like
+  //
+  // | beforeTransition
+  // | transition
+  // |--| beforeRemoveOldChild
+  // |  |--| beforeTransitionOldChild
+  // |     | transitionOldChild
+  // |     | afterTransitionOldChild
+  // |  | removeOldChild
+  // |  | afterRemoveOldChild
+  // ....
+  // |--| beforeAddNewChild
+  // |  | addNewChild
+  // |  | afterAddNewChild
+  // |  |--| beforeTransitionNewChild
+  // |     | transitionNewChild
+  // |     | afterTransitionNewChild
+  // | afterTransition
 
   transition: function() {
     this.emitter.on('transition', function() {
