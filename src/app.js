@@ -119,6 +119,7 @@ pie.app = pie.base.extend('app', {
     if(this.router.parseUrl(path).hasOwnProperty('view')) {
       this.navigator.go(path, replaceState);
       if(notificationArgs && notificationArgs.length) {
+        this.emitter.once('viewChanged')
         this.notifier.notify.apply(this.notifier, notificationArgs);
       }
     } else {
@@ -161,9 +162,8 @@ pie.app = pie.base.extend('app', {
   // we always remove the current before instantiating the next. this ensures are views can prepare
   // context's in removedFromParent before the constructor of the next view is invoked.
   navigationChanged: function() {
-    var target = document.querySelector(this.options.uiTarget),
-      current  = this.getChild('currentView'),
-      transition;
+    var current  = this.getChild('currentView'),
+        transition;
 
     // let the router determine our new url
     this.previousUrl = this.parsedUrl;
@@ -192,37 +192,50 @@ pie.app = pie.base.extend('app', {
       return;
     }
 
-    // use the view key of the parsedUrl to find the viewClass
-    var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
-    // the instance to be added.
-    child = new viewClass({ app: this });
-    child._pieName = this.parsedUrl.view;
+    this.transitionToNewView();
 
-    transition = new this.viewTransitionClass(this, pie.object.merge({
-      oldChild: current,
-      newChild: child,
-      childName: 'currentView',
-      targetEl: target
-    }, this.options.viewTransitionOptions));
-
-    // get us back to the top of the page.
-    // todo: make part of the transition configuration?
-    window.scrollTo(0,0);
-
-    // clear any leftover notifications
-    this.notifier.clear();
-
-    transition.emitter.on('afterRemoveOldChild', function() {
-      this.emitter.fire('oldViewRemoved', current);
-    }.bind(this));
-
-    transition.emitter.on('afterTransition', function() {
-      this.emitter.fire('newViewLoaded', child);
-    }.bind(this));
-
-    // add the instance as our 'currentView'
-    transition.transition();
   },
+
+  transitionToNewView: function() {
+    var target = document.querySelector(this.options.uiTarget),
+        current = this.getChild('currentView'),
+        viewClass, child, transition;
+
+    this.emitter.fire('beforeViewChanged');
+    this.emitter.fireAround('aroundViewChanged', function() {
+
+      this.emitter.fire('viewChanged');
+
+      // use the view key of the parsedUrl to find the viewClass
+      var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
+      // the instance to be added.
+      child = new viewClass({ app: this });
+      child._pieName = this.parsedUrl.view;
+
+      transition = new this.viewTransitionClass(this, pie.object.merge({
+        oldChild: current,
+        newChild: child,
+        childName: 'currentView',
+        targetEl: target
+      }, this.options.viewTransitionOptions));
+
+
+      transition.emitter.on('afterRemoveOldChild', function() {
+        this.emitter.fire('oldViewRemoved', current);
+      }.bind(this));
+
+      transition.emitter.on('afterTransition', function() {
+        this.emitter.fire('newViewLoaded', child);
+      }.bind(this));
+
+      // add the instance as our 'currentView'
+      transition.transition(function(){
+        this.emitter.fire('afterViewChanged');
+      }.bind(this));
+
+    }.bind(this));
+  },
+
   // reload the page without reloading the browser.
   // alters the current view's _pieName to appear as invalid for the route.
   refresh: function() {

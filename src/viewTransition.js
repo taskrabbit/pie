@@ -31,11 +31,12 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
   // |     | afterAddNewChild
   // | afterTransition
   // ```
-  transition: function() {
+  transition: function(cb) {
     var em = this.emitter;
 
     em.on('afterAddNewChild', function() {
       em.fire('afterTransition');
+      if(cb) cb();
     });
 
     em.on('afterRemoveOldChild', function() {
@@ -257,11 +258,12 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   // |              |--| afterTransition
   // ```
 
-  transition: function() {
+  transition: function(cb) {
     var em = this.emitter;
 
     em.on('afterTransitionNewChild', function() {
       em.fire('afterTransition');
+      if(cb) cb();
     });
 
     if(this.options.async) {

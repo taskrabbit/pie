@@ -12,7 +12,7 @@
 }
 
 #fade .view {
-  transition: opacity 1s linear;
+  transition: opacity 1s ease-in-out;
   opacity: 0;
 }
 
@@ -22,7 +22,7 @@
 
 
 #slide .view {
-  transition: transform 1s linear, opacity 1s linear;
+  transition: transform 1s ease-in-out, opacity 1s ease-in-out;
   transform: scale(0.5);
   opacity: 0;
 }
