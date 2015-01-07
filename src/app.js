@@ -49,11 +49,7 @@ pie.app = pie.base.extend('app', {
     // the validator which should be used in the context of the app
     this.validator = classOption('validator', pie.validator);
 
-    // app.models is globally available. app.models is solely for page context.
-    // this is not a singleton container or anything like that. it's just for passing
-    // models from one view to the next. the rendered layout may inject values here to initialize the page.
-    // after each navigation change, this.models is reset.
-    this.models = {};
+    this.viewTransitionClass = this.options.viewTransitionClass || pie.simpleViewTransition;
 
     // after a navigation change, app.parsedUrl is the new parsed route
     this.parsedUrl = {};
@@ -123,6 +119,7 @@ pie.app = pie.base.extend('app', {
     if(this.router.parseUrl(path).hasOwnProperty('view')) {
       this.navigator.go(path, replaceState);
       if(notificationArgs && notificationArgs.length) {
+        this.emitter.once('viewChanged')
         this.notifier.notify.apply(this.notifier, notificationArgs);
       }
     } else {
@@ -165,8 +162,8 @@ pie.app = pie.base.extend('app', {
   // we always remove the current before instantiating the next. this ensures are views can prepare
   // context's in removedFromParent before the constructor of the next view is invoked.
   navigationChanged: function() {
-    var target = document.querySelector(this.options.uiTarget),
-      current  = this.getChild('currentView');
+    var current  = this.getChild('currentView'),
+        transition;
 
     // let the router determine our new url
     this.previousUrl = this.parsedUrl;
@@ -195,35 +192,50 @@ pie.app = pie.base.extend('app', {
       return;
     }
 
-    // remove the existing view if there is one.
-    if(current) {
-      this.removeChild(current);
-      if(current.el.parentNode) current.el.parentNode.removeChild(current.el);
-      this.emitter.fire('oldViewRemoved', current);
-    }
+    this.transitionToNewView();
 
-    // clear any leftover notifications
-    this.notifier.clear();
-
-    // use the view key of the parsedUrl to find the viewClass
-    var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
-    // the instance to be added.
-
-    // add the instance as our 'currentView'
-    child = new viewClass(this);
-    child._pieName = this.parsedUrl.view;
-    child.setRenderTarget(target);
-    this.addChild('currentView', child);
-
-
-    // remove the leftover model references
-    this.models = {},
-
-    // get us back to the top of the page.
-    window.scrollTo(0,0);
-
-    this.emitter.fire('newViewLoaded', child);
   },
+
+  transitionToNewView: function() {
+    var target = document.querySelector(this.options.uiTarget),
+        current = this.getChild('currentView'),
+        viewClass, child, transition;
+
+    this.emitter.fire('beforeViewChanged');
+    this.emitter.fireAround('aroundViewChanged', function() {
+
+      this.emitter.fire('viewChanged');
+
+      // use the view key of the parsedUrl to find the viewClass
+      var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
+      // the instance to be added.
+      child = new viewClass({ app: this });
+      child._pieName = this.parsedUrl.view;
+
+      transition = new this.viewTransitionClass(this, pie.object.merge({
+        oldChild: current,
+        newChild: child,
+        childName: 'currentView',
+        targetEl: target
+      }, this.options.viewTransitionOptions));
+
+
+      transition.emitter.on('afterRemoveOldChild', function() {
+        this.emitter.fire('oldViewRemoved', current);
+      }.bind(this));
+
+      transition.emitter.on('afterTransition', function() {
+        this.emitter.fire('newViewLoaded', child);
+      }.bind(this));
+
+      // add the instance as our 'currentView'
+      transition.transition(function(){
+        this.emitter.fire('afterViewChanged');
+      }.bind(this));
+
+    }.bind(this));
+  },
+
   // reload the page without reloading the browser.
   // alters the current view's _pieName to appear as invalid for the route.
   refresh: function() {

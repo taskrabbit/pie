@@ -24,19 +24,19 @@ describe("pie.view", function() {
 
   it("should not remove events from it's el if this.on() is never called", function() {
     spyOn(pie.dom, 'off');
-    this.view.removedFromParent();
+    this.view.teardown();
     expect(pie.dom.off).not.toHaveBeenCalledWith();
   });
 
   it("should remove all observers when removed from it's parent", function() {
     var model = new pie.model(), f;
 
-    this.view.onChange(model, this.view.addedToParent.bind(this.view));
+    this.view.onChange(model, this.view.setup.bind(this.view));
 
     f = this.view.changeCallbacks[0][1][0];
     expect(model.observations.__all__[0]).toEqual(f);
 
-    this.view.removedFromParent();
+    this.view.teardown();
 
     expect(this.view.changeCallbacks.length).toEqual(0);
     expect(model.observations.__all__.length).toEqual(0);
@@ -44,7 +44,7 @@ describe("pie.view", function() {
 
   it("should remove it's el from the dom, but not call pie.dom.remove on it's el", function() {
     spyOn(pie.dom, 'remove');
-    this.view.removedFromParent();
+    this.view.teardown();
     expect(pie.dom.remove).not.toHaveBeenCalled();
   });
 
@@ -53,7 +53,7 @@ describe("pie.view", function() {
     spyOn(pie.dom, 'on');
     spyOn(pie.dom, 'off');
     this.view.on('click', 'a', f);
-    this.view.removedFromParent();
+    this.view.teardown();
     var args = pie.dom.on.calls.argsFor(0);
     expect(args[0]).toEqual(this.view.el);
     expect(args[1]).toEqual('click.' + this.view.eventNamespace());

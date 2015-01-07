@@ -10,13 +10,25 @@ pie.view = pie.base.extend('view', {
 
     this.emitter = new pie.emitter();
 
+    if(this.options.uiTarget) {
+      this.emitter.once('afterSetup', this.appendToDom.bind(this));
+    }
+
     if(this.options.setup) this.setup();
   },
 
   addedToParent: function() {
-    if(!this.emitter.hasEvent('beforeSetup')) this.setup();
+    this.emitter.fire('addedToParent');
   },
 
+  appendToDom: function(target) {
+    target = target || this.options.uiTarget;
+    if(target !== this.el.parentNode) {
+      this.emitter.fireSequence('attach', function(){
+        target.appendChild(this.el);
+      }.bind(this));
+    }
+  },
 
   consumeEvent: function(e, immediate) {
     if(e) {
@@ -25,7 +37,6 @@ pie.view = pie.base.extend('view', {
       if(immediate) e.stopImmediatePropagation();
     }
   },
-
 
   // all events observed using view.on() will use the unique namespace for this instance.
   eventNamespace: function() {
@@ -61,7 +72,6 @@ pie.view = pie.base.extend('view', {
     return this;
   },
 
-
   // Observe changes to an observable, unobserving them when the view is removed.
   // If the object is not observable, an error will be thrown.
   onChange: function() {
@@ -84,29 +94,46 @@ pie.view = pie.base.extend('view', {
     return this.el.querySelectorAll(selector);
   },
 
-
-  // clean up.
-  removedFromParent: function() {
-    this._unobserveEvents();
-    this._unobserveChangeCallbacks();
-
-    // views remove their children upon removal to ensure all irrelevant observations are cleaned up.
-    this.removeChildren();
-
-    return this;
+  removeFromDom: function() {
+    if(this.el.parentNode) {
+      this.emitter.fireSequence('detach', function() {
+        this.el.parentNode.removeChild(this.el);
+      }.bind(this));
+    }
   },
 
-  // we extract the functionality of setting our render target so we can override this as we see fit.
-  // for example, other implementation could store the target, then show a loader until render() is called.
-  // by default we simply append ourselves to the target.
-  setRenderTarget: function(target) {
-    target.appendChild(this.el);
+  removedFromParent: function() {
+    this.emitter.fire('removedFromParent');
   },
 
   // placeholder for default functionality
   setup: function(){
     this.emitter.fireSequence('setup');
     return this;
+  },
+
+  teardown: function() {
+
+    this.emitter.fireSequence('teardown', function() {
+
+      this.removeFromDom();
+
+      this._unobserveEvents();
+      this._unobserveChangeCallbacks();
+
+      this.teardownChildren();
+      // views remove their children upon removal to ensure all irrelevant observations are cleaned up.
+      this.removeChildren();
+
+    }.bind(this));
+
+    return this;
+  },
+
+  teardownChildren: function() {
+    this.children.forEach(function(child) {
+      child.teardown();
+    });
   },
 
   // release all observed events.

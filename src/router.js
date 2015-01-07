@@ -23,7 +23,7 @@ pie.router = pie.model.extend('router', {
   // Given a named route: /things/page/:page.json
   // And the current path == /things/page/1.json?q=test
   // app.router.changedUrl({page: 3, q: 'newQuery'});
-  // # => /things/page/3.json?q=newQuery
+  // => /things/page/3.json?q=newQuery
   changedUrl: function(changes) {
     var current = this.app.parsedUrl;
     return this.path(current.route && current.route.name || current.path, pie.object.merge({}, current.data, changes));

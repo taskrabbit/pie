@@ -29,10 +29,11 @@ pie.mixins.container = {
   },
 
   getChild: function(obj) {
-    var name = obj._nameWithinParent || obj,
-    idx = this.childNames[name];
-
     /* jslint eqeq:true */
+    if(obj == null) return;
+    if(obj._nameWithinParent) return obj;
+
+    var idx = this.childNames[obj];
     if(idx == null) idx = obj;
 
     return ~idx && this.children[idx] || undefined;
