@@ -1305,9 +1305,12 @@ pie.mixins.bindings = (function(){
       return pie.array.from(raw);
     },
 
-    boolean: function(raw) {
-      return !!parseInt(raw, 10);
-    },
+    boolean: (function(){
+      var reg = /^(1|true|yes|t|ok)$/;
+      return function(raw) {
+        return raw && reg.test(String(raw));
+      };
+    })(),
 
     number: function(raw) {
       return parseFloat(raw, 10);
