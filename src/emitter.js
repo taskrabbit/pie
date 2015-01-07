@@ -7,6 +7,10 @@ pie.emitter = pie.model.extend('emitter', {
     });
   },
 
+  debug: function(bool) {
+    this.isDebugging = bool || bool === undefined;
+  },
+
 
   hasEvent: function(event) {
     return !!~this.get('triggeredEvents').indexOf(event);
@@ -52,27 +56,7 @@ pie.emitter = pie.model.extend('emitter', {
     this._once(event, fn, options, 'unshift');
   },
 
-
   // Event Triggering
-
-  _fireAround: function(event, onComplete) {
-    var callbacks = this.get('eventCallbacks.' + event) || [],
-    compactNeeded = false,
-    fns;
-
-    fns = callbacks.map(function(cb, i) {
-      if(cb.onceOnly) {
-        compactNeeded = true;
-        cb[i] = undefined;
-      }
-      return cb.fn;
-    });
-
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
-    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
-
-    pie.fn.async(fns, onComplete);
-  },
 
   // trigger an event (string) on the app.
   // any callbacks associated with that event will be invoked with the extra arguments
@@ -81,6 +65,8 @@ pie.emitter = pie.model.extend('emitter', {
     event = args.shift(),
     callbacks = this.get('eventCallbacks.' + event),
     compactNeeded = false;
+
+    if(this.isDebugging) this.app.debug(event);
 
     if(callbacks) {
       callbacks.forEach(function(cb, i) {
@@ -97,22 +83,35 @@ pie.emitter = pie.model.extend('emitter', {
   },
 
   fireSequence: function(event, fn) {
-    this.fireAround(event, function() {
-      if(fn) fn();
-      this.fire(event);
-    }.bind(this));
-  },
-
-  fireAround: function(event, fn) {
     var before = pie.string.modularize("before_" + event),
     after = pie.string.modularize("after_" + event),
     around = pie.string.modularize('around_' + event);
 
     this.fire(before);
-    this._fireAround(around, function() {
-      fn();
+    this.fireAround(around, function() {
+      if(fn) fn();
+      this.fire(event);
       this.fire(after);
     }.bind(this));
+  },
+
+  fireAround: function(event, onComplete) {
+    var callbacks = this.get('eventCallbacks.' + event) || [],
+    compactNeeded = false,
+    fns;
+
+    fns = callbacks.map(function(cb, i) {
+      if(cb.onceOnly) {
+        compactNeeded = true;
+        cb[i] = undefined;
+      }
+      return cb.fn;
+    });
+
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
+    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+
+    pie.fn.async(fns, onComplete);
   }
 
 });

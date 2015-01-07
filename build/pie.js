@@ -2623,8 +2623,18 @@ pie.view = pie.base.extend('view', {
 pie.activeView = pie.view.extend('activeView', {
 
   setup: function() {
-    this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
+
+    if(this.options.autoRender && this.model) {
+      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+      this.onChange(this.model, this.render.bind(this), field);
+    }
+
+    if(this.options.renderOnSetup) {
+      this.emitter.once('setup', this.render.bind(this));
+    }
+
     this.emitter.on('render', this._renderTemplateToEl.bind(this));
+
     this._super();
   },
 
@@ -2635,21 +2645,6 @@ pie.activeView = pie.view.extend('activeView', {
       var content = this.app.templates.render(templateName, this.renderData());
       this.el.innerHTML = content;
     }
-  },
-
-  _activeViewSetup: function(cb) {
-    if(this.options.autoRender && this.model) {
-      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-      this.onChange(this.model, this.render.bind(this), field);
-    }
-
-    if(this.options.renderOnSetup) {
-      this.emitter.once('afterRender', cb);
-      this.render();
-    } else {
-      cb();
-    }
-
   },
 
   // If the first option passed is a node, it will use that as the query scope.
@@ -2930,6 +2925,10 @@ pie.emitter = pie.model.extend('emitter', {
     });
   },
 
+  debug: function(bool) {
+    this.isDebugging = bool || bool === undefined;
+  },
+
 
   hasEvent: function(event) {
     return !!~this.get('triggeredEvents').indexOf(event);
@@ -2975,27 +2974,7 @@ pie.emitter = pie.model.extend('emitter', {
     this._once(event, fn, options, 'unshift');
   },
 
-
   // Event Triggering
-
-  _fireAround: function(event, onComplete) {
-    var callbacks = this.get('eventCallbacks.' + event) || [],
-    compactNeeded = false,
-    fns;
-
-    fns = callbacks.map(function(cb, i) {
-      if(cb.onceOnly) {
-        compactNeeded = true;
-        cb[i] = undefined;
-      }
-      return cb.fn;
-    });
-
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
-    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
-
-    pie.fn.async(fns, onComplete);
-  },
 
   // trigger an event (string) on the app.
   // any callbacks associated with that event will be invoked with the extra arguments
@@ -3004,6 +2983,8 @@ pie.emitter = pie.model.extend('emitter', {
     event = args.shift(),
     callbacks = this.get('eventCallbacks.' + event),
     compactNeeded = false;
+
+    if(this.isDebugging) this.app.debug(event);
 
     if(callbacks) {
       callbacks.forEach(function(cb, i) {
@@ -3020,22 +3001,35 @@ pie.emitter = pie.model.extend('emitter', {
   },
 
   fireSequence: function(event, fn) {
-    this.fireAround(event, function() {
-      if(fn) fn();
-      this.fire(event);
-    }.bind(this));
-  },
-
-  fireAround: function(event, fn) {
     var before = pie.string.modularize("before_" + event),
     after = pie.string.modularize("after_" + event),
     around = pie.string.modularize('around_' + event);
 
     this.fire(before);
-    this._fireAround(around, function() {
-      fn();
+    this.fireAround(around, function() {
+      if(fn) fn();
+      this.fire(event);
       this.fire(after);
     }.bind(this));
+  },
+
+  fireAround: function(event, onComplete) {
+    var callbacks = this.get('eventCallbacks.' + event) || [],
+    compactNeeded = false,
+    fns;
+
+    fns = callbacks.map(function(cb, i) {
+      if(cb.onceOnly) {
+        compactNeeded = true;
+        cb[i] = undefined;
+      }
+      return cb.fn;
+    });
+
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
+    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+
+    pie.fn.async(fns, onComplete);
   }
 
 });
@@ -3139,10 +3133,12 @@ pie.formView = pie.activeView.extend('formView', {
     this._super(options);
 
     this.model = this.model || new pie.model({});
-
     if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
+  },
 
+  setup: function() {
     this.emitter.once('setup', this.setupFormBindings.bind(this));
+    this._super();
   },
 
   // the process of applying form data to the model.
@@ -4597,15 +4593,30 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
   // | afterTransition
   // ```
   transition: function() {
-    this.emitter.prependOnce('transition', function() {
-      this.emitter.fireSequence('removeOldChild');
-    }.bind(this));
+    var em = this.emitter;
 
-    this.emitter.prependOnce('afterRemoveOldChild', function() {
-      this.emitter.fireSequence('addNewChild');
-    }.bind(this));
+    em.on('afterAddNewChild', function() {
+      em.fire('afterTransition');
+    });
 
-    this.emitter.fireSequence('transition');
+    em.on('afterRemoveOldChild', function() {
+      em.fire('beforeAddNewChild');
+      em.fireAround('aroundAddNewChlid', function() {
+        em.fire('addNewChild');
+      });
+    });
+
+    em.on('transition', function() {
+      em.fire('beforeRemoveOldChild');
+      em.fireAround('aroundRemoveOldChild', function() {
+        em.fire('removeOldChild');
+      });
+    });
+
+    em.fire('beforeTransition');
+    em.fireAround('aroundTransition', function() {
+      em.fire('transition');
+    });
   },
 
   // to be called at the beginning of each transition.
@@ -4630,14 +4641,17 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
     this._super.apply(this, arguments);
 
     this.emitter.on('removeOldChild', this.removeOldChild.bind(this));
-    this.emitter.on('addNewChild', this.addNewChild.bind(this));
+    this.emitter.on('addNewChild',    this.addNewChild.bind(this));
   },
 
   addNewChild: function() {
     if(this.newChild) {
       this.newChild.emitter.once('afterSetup', function(){
         this.newChild.appendToDom(this.targetEl);
+        this.emitter.fire('afterAddNewChild');
       }.bind(this), {immediate: true});
+    } else {
+      this.emitter.fire('afterAddNewChild');
     }
   },
 
@@ -4645,6 +4659,7 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
     if(this.oldChild) {
       this.oldChild.teardown();
     }
+    this.emitter.fire('afterRemoveOldChild');
   }
 
 });
@@ -4662,7 +4677,10 @@ pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransiti
   },
 
   addNewChild: function() {
-    if(!this.newChild) return;
+    if(!this.newChild) {
+      this.emitter.fire('afterAddNewChild');
+      return;
+    }
 
     this.begin = pie.date.now();
 
@@ -4684,6 +4702,7 @@ pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransiti
         if(!this.newChild.emitter.hasEvent('removedFromParent')) {
           this.setLoading(false);
           this.newChild.appendToDom(this.targetEl);
+          this.emitter.fire('afterAddNewChild');
         }
       }
     }
@@ -4711,36 +4730,39 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
       async: false
     }, this.options);
 
-    // It's not necessary for an oldChild to exist, if it does we tie into the parts of the process
-    // which are relevant to it.
+    this.setupObservations();
+  },
+
+  setupObservations: function() {
+    var em = this.emitter;
+
     if(this.oldChild) {
-      // we control the transition events via an around event.
-      // the callback waits for the transition to end before firing.
-      this.emitter.on('aroundTransitionOldChild', this.cancelWrap(this.transitionOldChild.bind(this)));
-      // remove the old child from the dom
-      this.emitter.on('removeOldChild',           this.cancelWrap(this.removeOldChild.bind(this)));
-      // teardown the child since we're done with it.
-      this.emitter.on('',                         this.cancelWrap(this.teardownOldChild.bind(this)));
+      em.on('transitionOldChild',       this.cancelWrap('transitionOldChild'));
+      em.on('afterTransitionOldChild',  this.cancelWrap('teardownOldChild'));
+    } else {
+      em.on('transitionOldChild', function() {
+        em.fire('afterTransitionOldChild');
+      });
     }
 
     if(this.newChild) {
-      // ok, add the new child to the dom.
-      this.emitter.on('addNewChild',              this.cancelWrap(this.addNewChild.bind(this)));
-      // make sure the browser is up to date.
-      this.emitter.on('beforeTransitionNewChild', this.cancelWrap(this.refresh.bind(this)));
-      // ok, start the transition.
-      this.emitter.on('aroundTransitionNewChild', this.cancelWrap(this.transitionNewChild.bind(this)));
+      em.on('addNewChild',              this.cancelWrap('addNewChild'));
+      em.on('aroundTransitionNewChild', this.cancelWrap('ensureNewChildPrepared'));
+      em.on('transitionNewChild',       this.cancelWrap('refresh'));
+      em.on('transitionNewChild',       this.cancelWrap('transitionNewChild'));
 
-      // if the new child is pulled before we're able to get it into the dom, we cancel the rest of our transition.
       this.newChild.emitter.once('removedFromParent', this.cancel.bind(this));
+    } else {
+      em.on('transitionNewChild', function() {
+        em.fire('afterTransitionNewChild');
+      });
     }
-
   },
 
-  cancelWrap: function(fn) {
-    return function(cb){
+  cancelWrap: function(fnName) {
+    return function(){
       if(!this.emitter.hasEvent('cancel')) {
-        fn.apply(null, arguments);
+        this[fnName].apply(this, arguments);
       }
     }.bind(this);
   },
@@ -4759,19 +4781,20 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   // ```
   // | beforeTransition
   // | transition
-  // |--| beforeRemoveOldChild
-  // |  |--| beforeTransitionOldChild
-  // |     | transitionOldChild
-  // |     | afterTransitionOldChild
-  // |  | removeOldChild
-  // |  | afterRemoveOldChild
-  // |  |--| beforeAddNewChild
-  // |     | addNewChild
-  // |     | afterAddNewChild
-  // |     |--| beforeTransitionNewChild
-  // |        | transitionNewChild
-  // |        | afterTransitionNewChild
-  // | afterTransition
+  // |  |--| beforeRemoveOldChild
+  // |     |--| beforeTransitionOldChild
+  // |        | transitionOldChild
+  // |        |--| afterTransitionOldChild
+  // |           |--| removeOldChild
+  // |           |  |--| afterRemoveOldChild
+  // |           |
+  // |           |--| beforeAddNewChild
+  // |              | addNewChild
+  // |              |--| afterAddNewChild
+  // |                 |--| beforeTransitionNewChild
+  // |                    | transitionNewChild
+  // |                    |--| afterTransitionNewChild
+  // |                       |--| afterTransition
   // ```
   //
   // WHEN options.async === true
@@ -4779,47 +4802,62 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   // ```
   // | beforeTransition
   // | transition
-  // |--| beforeRemoveOldChild
-  // |  |--| beforeTransitionOldChild
-  // |     | transitionOldChild
-  // |     | afterTransitionOldChild
-  // |  | removeOldChild
-  // |  | afterRemoveOldChild
-  // ....
-  // |--| beforeAddNewChild
-  // |  | addNewChild
-  // |  | afterAddNewChild
-  // |  |--| beforeTransitionNewChild
-  // |     | transitionNewChild
-  // |     | afterTransitionNewChild
-  // | afterTransition
+  // |  |--| beforeRemoveOldChild
+  // |  |  |--| beforeTransitionOldChild
+  // |  |     | transitionOldChild
+  // |  |     |--| afterTransitionOldChild
+  // |  |        |--| removeOldChild
+  // |  |           |--| afterRemoveOldChild
+  // |  |
+  // |  |--| beforeAddNewChild
+  // |     | addNewChild
+  // |     |--| afterAddNewChild
+  // |        |--| beforeTransitionNewChild
+  // |           | transitionNewChild
+  // |           |--| afterTransitionNewChild
+  // |              |--| afterTransition
   // ```
 
   transition: function() {
-    this.emitter.on('transition', function() {
-      this.emitter.fireSequence('removeOldChild');
-    }.bind(this));
+    var em = this.emitter;
 
-    this.emitter.on('aroundRemoveOldChild', function(cb) {
-      this.emitter.once('afterTransitionOldChild', cb);
-      this.emitter.fireSequence('transitionOldChild');
-    }.bind(this));
-
-    this.emitter.on('afterAddNewChild', function() {
-      this.emitter.fireSequence('transitionNewChild');
-    }.bind(this));
+    em.on('afterTransitionNewChild', function() {
+      em.fire('afterTransition');
+    });
 
     if(this.options.async) {
-      this.emitter.on('transition', function() {
-        this.emitter.fireSequence('addNewChild');
-      }.bind(this));
+      em.on('transition', function() {
+        em.fireSequence('addNewChild');
+      });
     } else {
-      this.emitter.on('afterRemoveOldChild', function() {
-        this.emitter.fireSequence('addNewChild');
-      }.bind(this));
+      em.on('afterRemoveOldChild', function() {
+        em.fireSequence('addNewChild');
+      });
     }
 
-    this.emitter.fireSequence('transition');
+    em.on('afterAddNewChild', function() {
+      em.fire('beforeTransitionNewChild');
+      em.fireAround('aroundTransitionNewChild', function() {
+        em.fire('transitionNewChild');
+      });
+    });
+
+    em.on('afterTransitionOldChild', function() {
+      em.fireSequence('removeOldChild');
+    });
+
+    em.on('transition', function() {
+      em.fire('beforeTransitionOldChild');
+      em.fireAround('aroundTransitionOldChild', function() {
+        em.fire('transitionOldChild');
+      });
+    });
+
+    em.fire('beforeTransition');
+    em.fireAround('aroundTransition', function() {
+      em.fire('transition');
+    });
+
   },
 
   cancel: function() {
@@ -4828,7 +4866,6 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
       // the goal of a transition is to get the old child out and the new child in,
       // we make sure we've done that.
       if(this.oldChild) {
-        this.removeOldChild();
         this.teardownOldChild();
       }
 
@@ -4855,43 +4892,38 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     this.newChild.appendToDom(this.targetEl);
   },
 
-  // remove the old child from the dom.
-  removeOldChild: function() {
-    this.oldChild.removeFromDom();
+  ensureNewChildPrepared: function(cb) {
+    this.newChild.emitter.once('afterRender', cb, {immediate: true});
   },
 
   // make sure we're rendered, then begin the ui transition in.
   // when complete, invoke the callback.
-  transitionNewChild: function(cb) {
-    this.newChild.emitter.once('afterRender', function() {
-      this.observeTransitionEnd(this.newChild.el, true, cb);
-    }.bind(this), {immediate: true});
+  transitionNewChild: function() {
+    this.observeTransitionEnd(this.newChild.el, true, 'afterTransitionNewChild');
   },
 
   // start the transition out. when complete, invoke the callback.
-  transitionOldChild: function(cb) {
-    if(!this.oldChild.el.parentNode) cb();
-    else this.observeTransitionEnd(this.oldChild.el, false, cb);
+  transitionOldChild: function() {
+    if(!this.oldChild.el.parentNode) this.emitter.fire('afterTransitionOldChild');
+    else this.observeTransitionEnd(this.oldChild.el, false, 'afterTransitionOldChild');
   },
 
   // build a transition callback, and apply the appropriate class.
   // when the transition is complete, invoke the callback.
-  observeTransitionEnd: function(el, isIn, cb) {
+  observeTransitionEnd: function(el, isIn, fire) {
     var trans = this.transitionEndEvent(),
     called = false,
     onTransitionEnd = function() {
       if(called) return;
       called = true;
       if(trans) pie.dom.off(el, trans, onTransitionEnd);
-      cb();
-    };
+      this.emitter.fire(fire);
+    }.bind(this);
 
     this.emitter.once('cancel', onTransitionEnd);
 
     if(trans) {
       pie.dom.on(el, trans, onTransitionEnd);
-    } else {
-      setTimeout(onTransitionEnd, this.options.backupDuration);
     }
 
     this.applyClass(el, isIn);
@@ -4901,6 +4933,8 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
       if(!isNaN(backupDuration)) {
         setTimeout(onTransitionEnd, backupDuration * 1.1);
       }
+    } else {
+      setTimeout(onTransitionEnd, this.options.backupDuration);
     }
   },
 

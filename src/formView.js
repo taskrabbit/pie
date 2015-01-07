@@ -5,10 +5,12 @@ pie.formView = pie.activeView.extend('formView', {
     this._super(options);
 
     this.model = this.model || new pie.model({});
-
     if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
+  },
 
+  setup: function() {
     this.emitter.once('setup', this.setupFormBindings.bind(this));
+    this._super();
   },
 
   // the process of applying form data to the model.

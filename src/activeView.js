@@ -2,8 +2,18 @@
 pie.activeView = pie.view.extend('activeView', {
 
   setup: function() {
-    this.emitter.once('aroundSetup', this._activeViewSetup.bind(this));
+
+    if(this.options.autoRender && this.model) {
+      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+      this.onChange(this.model, this.render.bind(this), field);
+    }
+
+    if(this.options.renderOnSetup) {
+      this.emitter.once('setup', this.render.bind(this));
+    }
+
     this.emitter.on('render', this._renderTemplateToEl.bind(this));
+
     this._super();
   },
 
@@ -14,21 +24,6 @@ pie.activeView = pie.view.extend('activeView', {
       var content = this.app.templates.render(templateName, this.renderData());
       this.el.innerHTML = content;
     }
-  },
-
-  _activeViewSetup: function(cb) {
-    if(this.options.autoRender && this.model) {
-      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-      this.onChange(this.model, this.render.bind(this), field);
-    }
-
-    if(this.options.renderOnSetup) {
-      this.emitter.once('afterRender', cb);
-      this.render();
-    } else {
-      cb();
-    }
-
   },
 
   // If the first option passed is a node, it will use that as the query scope.
