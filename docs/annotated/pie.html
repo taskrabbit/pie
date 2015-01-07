@@ -3200,7 +3200,7 @@ arguments =&gt; [‘/test-url’, {query: ‘object’}]</p>
             <div class="content"><div class='highlight'><pre>    notificationArgs = args;
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.router.parseUrl(path).hasOwnProperty(<span class="hljs-string">'view'</span>)) {
-      <span class="hljs-keyword">this</span>.navigator.go(path, replaceState);
+      <span class="hljs-keyword">this</span>.navigator.go(path, {}, replaceState);
       <span class="hljs-keyword">if</span>(notificationArgs &amp;&amp; notificationArgs.length) {
         <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'viewChanged'</span>)
         <span class="hljs-keyword">this</span>.notifier.notify.apply(<span class="hljs-keyword">this</span>.notifier, notificationArgs);

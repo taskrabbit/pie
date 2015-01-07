@@ -2002,7 +2002,7 @@ pie.app = pie.base.extend('app', {
     notificationArgs = args;
 
     if(this.router.parseUrl(path).hasOwnProperty('view')) {
-      this.navigator.go(path, replaceState);
+      this.navigator.go(path, {}, replaceState);
       if(notificationArgs && notificationArgs.length) {
         this.emitter.once('viewChanged')
         this.notifier.notify.apply(this.notifier, notificationArgs);
