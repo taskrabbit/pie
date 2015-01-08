@@ -1944,7 +1944,7 @@ This mixin should be used with a pie view.</p>
     },
 
     boolean: (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      <span class="hljs-keyword">var</span> reg = <span class="hljs-regexp">/^(1|true|yes|t|ok)$/</span>;
+      <span class="hljs-keyword">var</span> reg = <span class="hljs-regexp">/^(1|true|yes|t|ok|on)$/</span>;
       <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(raw)</span> </span>{
         <span class="hljs-keyword">return</span> raw &amp;&amp; reg.test(<span class="hljs-built_in">String</span>(raw));
       };
@@ -2038,10 +2038,12 @@ This mixin should be used with a pie view.</p>
     <span class="hljs-keyword">var</span> val = integrationForBinding(el, binding).getValue(el, binding),
     fn = typeCasterForBinding(binding.dataType);
     val = fn(val);
+
     <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(val) &amp;&amp; binding.eachType) {
       <span class="hljs-keyword">var</span> eachFn = typeCasterForBinding(binding.eachType);
       val = val.map(eachFn);
     }
+
     <span class="hljs-keyword">return</span> val;
   };
 
@@ -2314,9 +2316,14 @@ pie.mixins.validatable = {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  reportValidationError: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, errors)</span> </span>{
-    <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'validationErrors.'</span> + key, errors || []);
-  },</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  reportValidationError: (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+    <span class="hljs-keyword">var</span> opts = {noRecursive: <span class="hljs-literal">true</span>};
+
+    <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, errors)</span> </span>{
+      errors = errors &amp;&amp; errors.length ? errors : <span class="hljs-literal">undefined</span>;
+      <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'validationErrors.'</span> + key, errors, opts);
+    };
+  })(),</pre></div></div>
             
         </li>
         
@@ -2549,7 +2556,7 @@ will be invoked.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.data.validationErrors[change.name] &amp;&amp; <span class="hljs-keyword">this</span>.data.validationErrors[change.name].length) {
-        <span class="hljs-keyword">this</span>.reportValidationError(change.name, <span class="hljs-literal">false</span>);
+        <span class="hljs-keyword">this</span>.reportValidationError(change.name, <span class="hljs-literal">undefined</span>);
       }
     }
   },</pre></div></div>
@@ -2573,7 +2580,7 @@ will be invoked.</p>
     value = <span class="hljs-keyword">this</span>.get(k),
     valid = <span class="hljs-literal">true</span>,
     fns,
-    messages = [],</pre></div></div>
+    messages,</pre></div></div>
             
         </li>
         
@@ -2591,7 +2598,10 @@ It updates our validity boolean</p>
             
             <div class="content"><div class='highlight'><pre>    counterObserver = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(validation, bool)</span> </span>{
       valid = !!(valid &amp;&amp; bool);
-      <span class="hljs-keyword">if</span>(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
+      <span class="hljs-keyword">if</span>(!bool) {
+        messages = messages || [],
+        messages.push(validators.errorMessage(validation.type, validation.options));
+      }
     },</pre></div></div>
             
         </li>
@@ -3740,7 +3750,7 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
 
 
   trackVersion: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.trackVersion !== <span class="hljs-literal">false</span> &amp;&amp; <span class="hljs-keyword">this</span>.changeRecords.length) {
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.trackVersion !== <span class="hljs-literal">false</span>) {
       <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'_version'</span>, <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'_version'</span>) + <span class="hljs-number">1</span>, {skipObservers: <span class="hljs-literal">true</span>});
     }
   },</pre></div></div>
@@ -3966,7 +3976,8 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  set: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value, options)</span> </span>{
-    <span class="hljs-keyword">var</span> steps = ~key.indexOf(<span class="hljs-string">'.'</span>) ? pie.string.pathSteps(key) : <span class="hljs-literal">null</span>,
+    <span class="hljs-keyword">var</span> recursive = (!options || !options.noRecursive),
+    steps = ~key.indexOf(<span class="hljs-string">'.'</span>) &amp;&amp; recursive ? pie.string.pathSteps(key) : <span class="hljs-literal">null</span>,
     o, oldKeys, type, change;
 
     change = { name: key, object: <span class="hljs-keyword">this</span>.data };
@@ -4002,7 +4013,7 @@ Note: skipping observation does not stop changeRecords from accruing.</p>
     change.value = value;
 
     <span class="hljs-keyword">if</span>(value === <span class="hljs-literal">undefined</span>) {
-      pie.object.deletePath(<span class="hljs-keyword">this</span>.data, key, <span class="hljs-literal">true</span>);
+      pie.object.deletePath(<span class="hljs-keyword">this</span>.data, key, recursive);
       change.type = <span class="hljs-string">'delete'</span>;
     } <span class="hljs-keyword">else</span> {
       pie.object.setPath(<span class="hljs-keyword">this</span>.data, key, value);
@@ -5266,11 +5277,12 @@ pie.formView = pie.activeView.extend(<span class="hljs-string">'formView'</span>
   normalizeFormOptions: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
     options = options || {};
     options.fields = options.fields || [];
-    options.fields.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(field)</span> </span>{
+    options.fields = options.fields.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(field)</span> </span>{
       field = pie.object.isString(field) ? {name: field} : field || {};
       <span class="hljs-keyword">if</span>(!field.name) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"A `name` property must be provided for all fields."</span>);
       field.binding = field.binding || {};
       field.binding.attr = field.binding.attr || field.name;
+      <span class="hljs-keyword">return</span> field;
     });
     <span class="hljs-keyword">return</span> options;
   },
@@ -5304,13 +5316,13 @@ by default these are the defined fields extracted out of the model.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  submissionData: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  submissionData: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> fieldNames = pie.array.map(<span class="hljs-keyword">this</span>.options.fields, <span class="hljs-string">'name'</span>);
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.model.gets(fieldNames);
   },
 
   submitForm: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{
-    <span class="hljs-keyword">var</span> data = <span class="hljs-keyword">this</span>.submissionData(form);
+    <span class="hljs-keyword">var</span> data = <span class="hljs-keyword">this</span>.submissionData();
 
     app.ajax.ajax(pie.object.merge({
       url: form.getAttribute(<span class="hljs-string">'action'</span>),
@@ -6710,7 +6722,10 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
 
 
     chosen: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
-      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.presence(value, options);
+      <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(value)) {
+        <span class="hljs-keyword">return</span> !!value.length;
+      }
+      <span class="hljs-keyword">return</span> value != <span class="hljs-literal">null</span>;
     },</pre></div></div>
             
         </li>

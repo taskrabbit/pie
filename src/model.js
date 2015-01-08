@@ -78,7 +78,7 @@ pie.model = pie.base.extend('model', {
 
 
   trackVersion: function() {
-    if(this.options.trackVersion !== false && this.changeRecords.length) {
+    if(this.options.trackVersion !== false) {
       this.set('_version', this.get('_version') + 1, {skipObservers: true});
     }
   },
@@ -185,7 +185,8 @@ pie.model = pie.base.extend('model', {
   // Optionally provide false as the third argument to skip observation.
   // Note: skipping observation does not stop changeRecords from accruing.
   set: function(key, value, options) {
-    var steps = ~key.indexOf('.') ? pie.string.pathSteps(key) : null,
+    var recursive = (!options || !options.noRecursive),
+    steps = ~key.indexOf('.') && recursive ? pie.string.pathSteps(key) : null,
     o, oldKeys, type, change;
 
     change = { name: key, object: this.data };
@@ -209,7 +210,7 @@ pie.model = pie.base.extend('model', {
     change.value = value;
 
     if(value === undefined) {
-      pie.object.deletePath(this.data, key, true);
+      pie.object.deletePath(this.data, key, recursive);
       change.type = 'delete';
     } else {
       pie.object.setPath(this.data, key, value);

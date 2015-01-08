@@ -155,7 +155,7 @@ pie.mixins.bindings = (function(){
     },
 
     boolean: (function(){
-      var reg = /^(1|true|yes|t|ok)$/;
+      var reg = /^(1|true|yes|t|ok|on)$/;
       return function(raw) {
         return raw && reg.test(String(raw));
       };
@@ -249,10 +249,12 @@ pie.mixins.bindings = (function(){
     var val = integrationForBinding(el, binding).getValue(el, binding),
     fn = typeCasterForBinding(binding.dataType);
     val = fn(val);
+
     if(Array.isArray(val) && binding.eachType) {
       var eachFn = typeCasterForBinding(binding.eachType);
       val = val.map(eachFn);
     }
+
     return val;
   };
 

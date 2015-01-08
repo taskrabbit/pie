@@ -32,11 +32,12 @@ pie.formView = pie.activeView.extend('formView', {
   normalizeFormOptions: function(options) {
     options = options || {};
     options.fields = options.fields || [];
-    options.fields.forEach(function(field) {
+    options.fields = options.fields.map(function(field) {
       field = pie.object.isString(field) ? {name: field} : field || {};
       if(!field.name) throw new Error("A `name` property must be provided for all fields.");
       field.binding = field.binding || {};
       field.binding.attr = field.binding.attr || field.name;
+      return field;
     });
     return options;
   },
@@ -58,13 +59,13 @@ pie.formView = pie.activeView.extend('formView', {
 
   // the data to be sent from the server.
   // by default these are the defined fields extracted out of the model.
-  submissionData: function(form) {
+  submissionData: function() {
     var fieldNames = pie.array.map(this.options.fields, 'name');
     return this.model.gets(fieldNames);
   },
 
   submitForm: function(form) {
-    var data = this.submissionData(form);
+    var data = this.submissionData();
 
     app.ajax.ajax(pie.object.merge({
       url: form.getAttribute('action'),

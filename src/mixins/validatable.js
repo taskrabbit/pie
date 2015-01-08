@@ -10,9 +10,14 @@ pie.mixins.validatable = {
   },
 
   // default to a model implementation
-  reportValidationError: function(key, errors) {
-    this.set('validationErrors.' + key, errors || []);
-  },
+  reportValidationError: (function(){
+    var opts = {noRecursive: true};
+
+    return function(key, errors) {
+      errors = errors && errors.length ? errors : undefined;
+      this.set('validationErrors.' + key, errors, opts);
+    };
+  })(),
 
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
@@ -109,7 +114,7 @@ pie.mixins.validatable = {
     } else if(this.validationStrategy === 'dirty') {
       // for speed.
       if(this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
-        this.reportValidationError(change.name, false);
+        this.reportValidationError(change.name, undefined);
       }
     }
   },
@@ -121,13 +126,16 @@ pie.mixins.validatable = {
     value = this.get(k),
     valid = true,
     fns,
-    messages = [],
+    messages,
 
     // The callback invoked after each individual validation is run.
     // It updates our validity boolean
     counterObserver = function(validation, bool) {
       valid = !!(valid && bool);
-      if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
+      if(!bool) {
+        messages = messages || [],
+        messages.push(validators.errorMessage(validation.type, validation.options));
+      }
     },
 
     // When all validations for the key have run, we report any errors and let the callback know

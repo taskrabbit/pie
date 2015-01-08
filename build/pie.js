@@ -1306,7 +1306,7 @@ pie.mixins.bindings = (function(){
     },
 
     boolean: (function(){
-      var reg = /^(1|true|yes|t|ok)$/;
+      var reg = /^(1|true|yes|t|ok|on)$/;
       return function(raw) {
         return raw && reg.test(String(raw));
       };
@@ -1400,10 +1400,12 @@ pie.mixins.bindings = (function(){
     var val = integrationForBinding(el, binding).getValue(el, binding),
     fn = typeCasterForBinding(binding.dataType);
     val = fn(val);
+
     if(Array.isArray(val) && binding.eachType) {
       var eachFn = typeCasterForBinding(binding.eachType);
       val = val.map(eachFn);
     }
+
     return val;
   };
 
@@ -1652,9 +1654,14 @@ pie.mixins.validatable = {
   },
 
   // default to a model implementation
-  reportValidationError: function(key, errors) {
-    this.set('validationErrors.' + key, errors || []);
-  },
+  reportValidationError: (function(){
+    var opts = {noRecursive: true};
+
+    return function(key, errors) {
+      errors = errors && errors.length ? errors : undefined;
+      this.set('validationErrors.' + key, errors, opts);
+    };
+  })(),
 
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
@@ -1751,7 +1758,7 @@ pie.mixins.validatable = {
     } else if(this.validationStrategy === 'dirty') {
       // for speed.
       if(this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
-        this.reportValidationError(change.name, false);
+        this.reportValidationError(change.name, undefined);
       }
     }
   },
@@ -1763,13 +1770,16 @@ pie.mixins.validatable = {
     value = this.get(k),
     valid = true,
     fns,
-    messages = [],
+    messages,
 
     // The callback invoked after each individual validation is run.
     // It updates our validity boolean
     counterObserver = function(validation, bool) {
       valid = !!(valid && bool);
-      if(!bool) messages.push(validators.errorMessage(validation.type, validation.options));
+      if(!bool) {
+        messages = messages || [],
+        messages.push(validators.errorMessage(validation.type, validation.options));
+      }
     },
 
     // When all validations for the key have run, we report any errors and let the callback know
@@ -2289,7 +2299,7 @@ pie.model = pie.base.extend('model', {
 
 
   trackVersion: function() {
-    if(this.options.trackVersion !== false && this.changeRecords.length) {
+    if(this.options.trackVersion !== false) {
       this.set('_version', this.get('_version') + 1, {skipObservers: true});
     }
   },
@@ -2396,7 +2406,8 @@ pie.model = pie.base.extend('model', {
   // Optionally provide false as the third argument to skip observation.
   // Note: skipping observation does not stop changeRecords from accruing.
   set: function(key, value, options) {
-    var steps = ~key.indexOf('.') ? pie.string.pathSteps(key) : null,
+    var recursive = (!options || !options.noRecursive),
+    steps = ~key.indexOf('.') && recursive ? pie.string.pathSteps(key) : null,
     o, oldKeys, type, change;
 
     change = { name: key, object: this.data };
@@ -2420,7 +2431,7 @@ pie.model = pie.base.extend('model', {
     change.value = value;
 
     if(value === undefined) {
-      pie.object.deletePath(this.data, key, true);
+      pie.object.deletePath(this.data, key, recursive);
       change.type = 'delete';
     } else {
       pie.object.setPath(this.data, key, value);
@@ -3205,11 +3216,12 @@ pie.formView = pie.activeView.extend('formView', {
   normalizeFormOptions: function(options) {
     options = options || {};
     options.fields = options.fields || [];
-    options.fields.forEach(function(field) {
+    options.fields = options.fields.map(function(field) {
       field = pie.object.isString(field) ? {name: field} : field || {};
       if(!field.name) throw new Error("A `name` property must be provided for all fields.");
       field.binding = field.binding || {};
       field.binding.attr = field.binding.attr || field.name;
+      return field;
     });
     return options;
   },
@@ -3231,13 +3243,13 @@ pie.formView = pie.activeView.extend('formView', {
 
   // the data to be sent from the server.
   // by default these are the defined fields extracted out of the model.
-  submissionData: function(form) {
+  submissionData: function() {
     var fieldNames = pie.array.map(this.options.fields, 'name');
     return this.model.gets(fieldNames);
   },
 
   submitForm: function(form) {
-    var data = this.submissionData(form);
+    var data = this.submissionData();
 
     app.ajax.ajax(pie.object.merge({
       url: form.getAttribute('action'),
@@ -4420,7 +4432,10 @@ pie.validator = pie.base.extend('validator', (function(){
 
 
     chosen: function(value, options){
-      return this.presence(value, options);
+      if(Array.isArray(value)) {
+        return !!value.length;
+      }
+      return value != null;
     },
 
 
