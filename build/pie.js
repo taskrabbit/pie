@@ -3145,11 +3145,11 @@ pie.errorHandler = pie.model.extend('errorHandler', {
 pie.formView = pie.activeView.extend('formView', {
 
   init: function(options) {
-    options = this.normalizeFormOptions(options);
-    this._super(options);
-
     this.model = this.model || new pie.model({});
     if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
+
+    options = this.normalizeFormOptions(options);
+    this._super(options);
   },
 
   setup: function() {
