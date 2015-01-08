@@ -1,9 +1,10 @@
-
-// operator of the site. contains a router, navigator, etc with the intention of holding page context.
+// # pie.app
+// The app class is the entry point of your application. It acts as container in charge of managing the page's context.
+// It provides access to application utilities, routing, templates, i18n, etc.
 pie.app = pie.base.extend('app', {
   init: function(options) {
 
-    // general app options
+    // Default application options.
     this.options = pie.object.deepMerge({
       uiTarget: 'body',
       viewNamespace: 'lib.views',
@@ -11,9 +12,11 @@ pie.app = pie.base.extend('app', {
       root: '/'
     }, options);
 
+    //
     var classOption = function(key, _default){
-      var k = this.options[key] || _default;
-      return new k(this);
+      var k = this.options[key] || _default,
+      opt = this.options[key + 'Options'] || {};
+      return new k(this, opt);
     }.bind(this);
 
     // app.emitter is an interface for subscribing and observing app events

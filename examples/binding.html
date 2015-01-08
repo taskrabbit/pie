@@ -14,7 +14,7 @@
         <table width="100%">
           <row>
             <td width="50%" id="inputs">
-              <label for="val">Value Binding</label>
+              <label for="val">Value Binding (250ms debounce)</label>
               <br>
               <input type="text" name="val" id="val"></input>
               <br>
@@ -27,7 +27,20 @@
               <p class="js-html-binding"></p>
               <br>
 
-              <label>Check Binding</label>
+              <label>Single Check Binding</label>
+              <br />
+              <label>
+                Foo:
+                <input name="foo" type="checkbox" value="bar" />
+              </label>
+              <label>
+                Bar:
+                <input name="bar" type="checkbox" value="baz" />
+              </label>
+              <br />
+              <br />
+              <label>Multiple Check Binding</label>
+              <br />
               <label>
                 1:
                 <input name="checks" type="checkbox" value="1" />
@@ -44,8 +57,10 @@
                 4:
                 <input name="checks" type="checkbox" value="4" />
               </label>
-              <br>
+              <br />
+              <br />
               <label>Radio Binding</label>
+              <br />
               <label>
                 A:
                 <input name="radio" type="radio" value="1" />

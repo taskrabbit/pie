@@ -1224,8 +1224,6 @@ pie.mixins.bindings = (function(){
             // if we are not checked but we do have it, then we add it.
             } else if(!el.checked && i >= 0) {
               existing.splice(i, 1);
-            } else {
-              return undefined;
             }
 
             return existing;
@@ -1253,7 +1251,9 @@ pie.mixins.bindings = (function(){
     radio: {
 
       getValue: function(el, binding) {
-        return el.checked ? el.value : null;
+        var existing = binding.model.get(binding.attr);
+        if(el.checked) return el.value;
+        return existing;
       },
 
       setValue: function(el, binding) {
@@ -1313,15 +1313,19 @@ pie.mixins.bindings = (function(){
     })(),
 
     number: function(raw) {
-      return parseFloat(raw, 10);
+      var val = parseFloat(raw, 10);
+      if(isNaN(val)) return null;
+      return val;
     },
 
     integer: function(raw) {
-      return parseInt(raw, 10);
+      var val = parseInt(raw, 10);
+      if(isNaN(val)) return null;
+      return val;
     },
 
     string: function(raw) {
-      return String(raw);
+      return raw == null ? raw : String(raw);
     },
 
     "default" : function(raw) {
@@ -1373,11 +1377,9 @@ pie.mixins.bindings = (function(){
     return typeCasters[dataType] || typeCasters.default;
   };
 
-  var applyValueToModel = function(value, binding) {
-    if(value === undefined) return;
-
+  var applyValueToModel = function(value, binding, opts) {
     binding.ignore = true;
-    binding.model.set(binding.attr, value);
+    binding.model.set(binding.attr, value, opts);
     binding.ignore = false;
   };
 
@@ -1408,10 +1410,14 @@ pie.mixins.bindings = (function(){
   var initCallbacks = function(binding) {
 
     if(binding.toModel) {
+      binding._toModel = function(el, opts) {
+        var value = getValueFromElement(el, binding);
+        applyValueToModel(value, binding, opts);
+      };
+
       binding.toModel = function(e) {
         var el = e.delegateTarget;
-        var value = getValueFromElement(el, binding);
-        applyValueToModel(value, binding);
+        binding._toModel(el);
       };
 
       if(binding.debounce) binding.toModel = pie.fn.debounce(binding.toModel, binding.debounce);
@@ -1461,8 +1467,28 @@ pie.mixins.bindings = (function(){
 
     initBoundFields: function() {
       this._bindings.forEach(function(b){
-        b.toView();
+        if(b.toView) b.toView();
       });
+    },
+
+    readBoundFields: function() {
+      var models = {}, skip = {skipObservers: true}, els;
+
+      this._bindings.forEach(function(b) {
+        if(b.toModel) {
+
+          models[b.model.pieId] = b.model;
+          els = pie.array.from(this.qsa(b.sel));
+
+          els.forEach(function(el) { b._toModel(el, skip); });
+
+        }
+      }.bind(this));
+
+      pie.object.values(models).forEach(function(m) {
+        m.deliverChangeRecords();
+      });
+
     }
   };
 
@@ -1883,12 +1909,13 @@ pie.base._wrap = (function() {
     };
   };
 })();
-
-// operator of the site. contains a router, navigator, etc with the intention of holding page context.
+// # pie.app
+// The app class is the entry point of your application. It acts as container in charge of managing the page's context.
+// It provides access to application utilities, routing, templates, i18n, etc.
 pie.app = pie.base.extend('app', {
   init: function(options) {
 
-    // general app options
+    // Default application options.
     this.options = pie.object.deepMerge({
       uiTarget: 'body',
       viewNamespace: 'lib.views',
@@ -1896,9 +1923,11 @@ pie.app = pie.base.extend('app', {
       root: '/'
     }, options);
 
+    //
     var classOption = function(key, _default){
-      var k = this.options[key] || _default;
-      return new k(this);
+      var k = this.options[key] || _default,
+      opt = this.options[key + 'Options'] || {};
+      return new k(this, opt);
     }.bind(this);
 
     // app.emitter is an interface for subscribing and observing app events
@@ -3158,9 +3187,8 @@ pie.formView = pie.activeView.extend('formView', {
   },
 
   // the process of applying form data to the model.
-  applyFieldsToModel: function(form) {
-    var data = this.formData(form);
-    this.model.sets(data);
+  applyFieldsToModel: function() {
+    this.readBoundFields();
   },
 
   // the data coming from the UI that should be applied to the model before validation
@@ -3189,13 +3217,14 @@ pie.formView = pie.activeView.extend('formView', {
   setupFormBindings: function() {
     var validation;
     this.on('submit', this.options.formSel || 'form', this.validateAndSubmitForm.bind(this));
+
     this.options.fields.forEach(function(field) {
       this.bind(field.binding);
       validation = field.validation;
       if(validation) {
         validation = {};
         validation[field.name] = field.validation;
-        this.model.validates(validation);
+        this.model.validates(validation, this.options.validationStrategy);
       }
     }.bind(this));
   },
@@ -3220,7 +3249,7 @@ pie.formView = pie.activeView.extend('formView', {
   validateAndSubmitForm: function(e) {
     e.preventDefault();
 
-    this.applyFieldsToModel(e.delegateTarget);
+    this.applyFieldsToModel();
 
     this.model.validateAll(function(bool) {
       if(bool) {
@@ -3228,7 +3257,7 @@ pie.formView = pie.activeView.extend('formView', {
       } else {
         this.handleErrors();
       }
-    }.bind(this), this.options.validateImmediately);
+    }.bind(this));
   }
 
 }, pie.mixins.bindings);

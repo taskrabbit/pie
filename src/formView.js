@@ -14,9 +14,8 @@ pie.formView = pie.activeView.extend('formView', {
   },
 
   // the process of applying form data to the model.
-  applyFieldsToModel: function(form) {
-    var data = this.formData(form);
-    this.model.sets(data);
+  applyFieldsToModel: function() {
+    this.readBoundFields();
   },
 
   // the data coming from the UI that should be applied to the model before validation
@@ -45,13 +44,14 @@ pie.formView = pie.activeView.extend('formView', {
   setupFormBindings: function() {
     var validation;
     this.on('submit', this.options.formSel || 'form', this.validateAndSubmitForm.bind(this));
+
     this.options.fields.forEach(function(field) {
       this.bind(field.binding);
       validation = field.validation;
       if(validation) {
         validation = {};
         validation[field.name] = field.validation;
-        this.model.validates(validation);
+        this.model.validates(validation, this.options.validationStrategy);
       }
     }.bind(this));
   },
@@ -76,7 +76,7 @@ pie.formView = pie.activeView.extend('formView', {
   validateAndSubmitForm: function(e) {
     e.preventDefault();
 
-    this.applyFieldsToModel(e.delegateTarget);
+    this.applyFieldsToModel();
 
     this.model.validateAll(function(bool) {
       if(bool) {
@@ -84,7 +84,7 @@ pie.formView = pie.activeView.extend('formView', {
       } else {
         this.handleErrors();
       }
-    }.bind(this), this.options.validateImmediately);
+    }.bind(this));
   }
 
 }, pie.mixins.bindings);

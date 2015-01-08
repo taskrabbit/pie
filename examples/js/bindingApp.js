@@ -26,13 +26,15 @@ bindings.layout = pie.activeView.extend('layout', {
       attr: 'theAttr',
       text: 'theText',
       html: '<strong>theHtml</strong>',
+      foo: 'bar',
       checks: [1, 2, 4],
       radio: 1
     });
 
     this.bind({
       attr: 'val',
-      type: 'value'
+      type: 'value',
+      debounce: 250
     }, {
       attr: 'attr',
       type: 'attribute',
@@ -47,6 +49,14 @@ bindings.layout = pie.activeView.extend('layout', {
       type: 'html',
       sel: 'p.js-html-binding',
       toModel: false
+    }, {
+      attr: 'foo',
+      type: 'check',
+      dataType: 'string'
+    }, {
+      attr: 'bar',
+      type: 'check',
+      dataType: 'string'
     }, {
       attr: 'checks',
       type: 'check',
