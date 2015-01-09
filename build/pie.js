@@ -339,7 +339,7 @@ pie.browser.isRetina = function() {
 
 
 pie.browser.isTouchDevice = function() {
-  return ('ontouchstart' in window) ||
+  return pie.object.has(window, 'ontouchstart') ||
     (window.DocumentTouch && document instanceof window.DocumentTouch) ||
     navigator.MaxTouchPoints > 0 ||
     navigator.msMaxTouchPoints > 0;
@@ -839,12 +839,12 @@ pie.object.getValue = function(o, attribute) {
   if(pie.object.isFunction(attribute))          return attribute.call(null, o);
   else if (o == null)                           return void 0;
   else if(pie.object.isFunction(o[attribute]))  return o[attribute].call(o);
-  else if(pie.object.has(o, attribute))         return o[attribute];
+  else if(pie.object.has(o, attribute, true))   return o[attribute];
   else                                          return void 0;
 };
 
-pie.object.has = function(obj, key) {
-  return obj && obj.hasOwnProperty(key);
+pie.object.has = function(obj, key, includeInherited) {
+  return obj && (obj.hasOwnProperty(key) || (includeInherited && (key in obj)));
 };
 
 // does the object have the described path
@@ -1656,7 +1656,7 @@ pie.mixins.container = {
     child._nameWithinParent = name;
     child.parent = this;
 
-    if('addedToParent' in child) child.addedToParent.call(child);
+    if(pie.object.has(child, 'addedToParent', true)) child.addedToParent.call(child);
 
     return this;
   },
@@ -1708,7 +1708,7 @@ pie.mixins.container = {
       delete child._nameWithinParent;
       delete child.parent;
 
-      if('removedFromParent' in child) child.removedFromParent.call(child, this);
+      if(pie.object.has(child, 'removedFromParent', true)) child.removedFromParent.call(child, this);
     }
 
     return this;
@@ -2193,10 +2193,9 @@ pie.app = pie.base.extend('app', {
     // Anything left is considered arguments for the notifier.
     notificationArgs = args;
 
-    if(this.router.parseUrl(path).hasOwnProperty('view')) {
+    if(pie.object.has(this.router.parseUrl(path), 'view')) {
       this.navigator.go(path, {}, replaceState);
       if(notificationArgs && notificationArgs.length) {
-        this.emitter.once('viewChanged')
         this.notifier.notify.apply(this.notifier, notificationArgs);
       }
     } else {
@@ -2267,7 +2266,7 @@ pie.app = pie.base.extend('app', {
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.parsedUrl.view) {
-      if('navigationUpdated' in current) current.navigationUpdated();
+      if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
       return;
     }
 
@@ -2356,7 +2355,8 @@ pie.app = pie.base.extend('app', {
 
   // When a link is clicked, go there without a refresh if we recognize the route.
   setupSinglePageLinks: function() {
-    pie.dom.on(document.body, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
+    var target = document.querySelector(this.options.uiTarget);
+    pie.dom.on(target, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
   },
 
   // Show any notification which have been preserved via local storage.
@@ -2731,7 +2731,7 @@ pie.view = pie.base.extend('view', {
 
   navigationUpdated: function() {
     this.children.forEach(function(c){
-      if('navigationUpdated' in c) c.navigationUpdated();
+      if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated();
     });
   },
 
@@ -2761,7 +2761,7 @@ pie.view = pie.base.extend('view', {
   // If the object is not observable, an error will be thrown.
   onChange: function() {
     var observable = arguments[0], args = pie.array.from(arguments).slice(1);
-    if(!('observe' in observable)) throw new Error("Observable does not respond to observe");
+    if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
 
     this.changeCallbacks.push([observable, args]);
     observable.observe.apply(observable, args);
@@ -3193,7 +3193,7 @@ pie.emitter = pie.model.extend('emitter', {
         cb.fn.apply(null, args);
         if(cb.onceOnly) {
           compactNeeded = true;
-          cb[i] = undefined;
+          callbacks[i] = undefined;
         }
       });
     }
@@ -3311,11 +3311,11 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   reportError: function(err, options) {
     options = options || {};
 
-    if(options.prefix && 'message' in err) {
+    if(options.prefix && pie.object.has(err, 'message')) {
       err.message = options.prefix + ' ' + err.message;
     }
 
-    if(options.prefix && 'name' in err) {
+    if(options.prefix && pie.object.has(err, 'name')) {
       err.name = options.prefix + ' ' + err.name;
     }
 
@@ -4681,11 +4681,11 @@ pie.validator = pie.base.extend('validator', (function(){
     length: function(value, options){
       options = pie.object.merge({allowBlank: false}, options);
 
-      if(!('gt'  in options)  &&
-         !('gte' in options)  &&
-         !('lt'  in options)  &&
-         !('lte' in options)  &&
-         !('eq'  in options) ){
+      if(!pie.object.has(options, 'gt')  &&
+         !pie.object.has(options, 'gte')  &&
+         !pie.object.has(options, 'lt')  &&
+         !pie.object.has(options, 'lte')  &&
+         !pie.object.has(options, 'eq') ){
         options.gt = 0;
       }
 
@@ -5175,13 +5175,13 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   transitionEndEvent: function(){
 
     if(this._transitionEndEvent === undefined) {
-      if('ontransitionend' in window) {
+      if(pie.object.has(window, 'ontransitionend')) {
         this._transitionEndEvent = 'transitionend';
-      } else if('onwebkittransitionend' in window) {
+      } else if(pie.object.has(window, 'onwebkittransitionend')) {
         this._transitionEndEvent = 'webkitTransitionEnd';
-      } else if('msTransitionEnd' in window) {
+      } else if(pie.object.has(window, 'msTransitionEnd')) {
         this._transitionEndEvent = 'msTransitionEnd';
-      } else if('onotransitionend' in document.body || navigator.appName === 'Opera') {
+      } else if(pie.object.has(document.body, 'onotransitionend') || navigator.appName === 'Opera') {
         this._transitionEndEvent = 'oTransitionEnd';
       } else {
         this._transitionEndEvent = false;

@@ -508,7 +508,7 @@ pie.browser.isRetina = <span class="hljs-function"><span class="hljs-keyword">fu
 
 
 pie.browser.isTouchDevice = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-  <span class="hljs-keyword">return</span> (<span class="hljs-string">'ontouchstart'</span> <span class="hljs-keyword">in</span> <span class="hljs-built_in">window</span>) ||
+  <span class="hljs-keyword">return</span> pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'ontouchstart'</span>) ||
     (<span class="hljs-built_in">window</span>.DocumentTouch &amp;&amp; <span class="hljs-built_in">document</span> <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.DocumentTouch) ||
     navigator.MaxTouchPoints &gt; <span class="hljs-number">0</span> ||
     navigator.msMaxTouchPoints &gt; <span class="hljs-number">0</span>;
@@ -1237,12 +1237,12 @@ pie.object.getValue = <span class="hljs-function"><span class="hljs-keyword">fun
   <span class="hljs-keyword">if</span>(pie.object.isFunction(attribute))          <span class="hljs-keyword">return</span> attribute.call(<span class="hljs-literal">null</span>, o);
   <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (o == <span class="hljs-literal">null</span>)                           <span class="hljs-keyword">return</span> <span class="hljs-keyword">void</span> <span class="hljs-number">0</span>;
   <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isFunction(o[attribute]))  <span class="hljs-keyword">return</span> o[attribute].call(o);
-  <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(o, attribute))         <span class="hljs-keyword">return</span> o[attribute];
+  <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(o, attribute, <span class="hljs-literal">true</span>))   <span class="hljs-keyword">return</span> o[attribute];
   <span class="hljs-keyword">else</span>                                          <span class="hljs-keyword">return</span> <span class="hljs-keyword">void</span> <span class="hljs-number">0</span>;
 };
 
-pie.object.has = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj, key)</span> </span>{
-  <span class="hljs-keyword">return</span> obj &amp;&amp; obj.hasOwnProperty(key);
+pie.object.has = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj, key, includeInherited)</span> </span>{
+  <span class="hljs-keyword">return</span> obj &amp;&amp; (obj.hasOwnProperty(key) || (includeInherited &amp;&amp; (key <span class="hljs-keyword">in</span> obj)));
 };</pre></div></div>
             
         </li>
@@ -2906,7 +2906,7 @@ pie.mixins.container = {
     child._nameWithinParent = name;
     child.parent = <span class="hljs-keyword">this</span>;
 
-    <span class="hljs-keyword">if</span>(<span class="hljs-string">'addedToParent'</span> <span class="hljs-keyword">in</span> child) child.addedToParent.call(child);
+    <span class="hljs-keyword">if</span>(pie.object.has(child, <span class="hljs-string">'addedToParent'</span>, <span class="hljs-literal">true</span>)) child.addedToParent.call(child);
 
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },
@@ -2970,7 +2970,7 @@ pie.mixins.container = {
       <span class="hljs-keyword">delete</span> child._nameWithinParent;
       <span class="hljs-keyword">delete</span> child.parent;
 
-      <span class="hljs-keyword">if</span>(<span class="hljs-string">'removedFromParent'</span> <span class="hljs-keyword">in</span> child) child.removedFromParent.call(child, <span class="hljs-keyword">this</span>);
+      <span class="hljs-keyword">if</span>(pie.object.has(child, <span class="hljs-string">'removedFromParent'</span>, <span class="hljs-literal">true</span>)) child.removedFromParent.call(child, <span class="hljs-keyword">this</span>);
     }
 
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
@@ -4069,10 +4069,9 @@ arguments =&gt; ['/test-url', {query: 'object'}]
             
             <div class="content"><div class='highlight'><pre>    notificationArgs = args;
 
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.router.parseUrl(path).hasOwnProperty(<span class="hljs-string">'view'</span>)) {
+    <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-keyword">this</span>.router.parseUrl(path), <span class="hljs-string">'view'</span>)) {
       <span class="hljs-keyword">this</span>.navigator.go(path, {}, replaceState);
       <span class="hljs-keyword">if</span>(notificationArgs &amp;&amp; notificationArgs.length) {
-        <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'viewChanged'</span>)
         <span class="hljs-keyword">this</span>.notifier.notify.apply(<span class="hljs-keyword">this</span>.notifier, notificationArgs);
       }
     } <span class="hljs-keyword">else</span> {
@@ -4287,7 +4286,7 @@ Maybe the entry point is server generated.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(current &amp;&amp; current._pieName === <span class="hljs-keyword">this</span>.parsedUrl.view) {
-      <span class="hljs-keyword">if</span>(<span class="hljs-string">'navigationUpdated'</span> <span class="hljs-keyword">in</span> current) current.navigationUpdated();
+      <span class="hljs-keyword">if</span>(pie.object.has(current, <span class="hljs-string">'navigationUpdated'</span>, <span class="hljs-literal">true</span>)) current.navigationUpdated();
       <span class="hljs-keyword">return</span>;
     }
 
@@ -4509,7 +4508,8 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  setupSinglePageLinks: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    pie.dom.on(<span class="hljs-built_in">document</span>.body, <span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>.handleSinglePageLinkClick.bind(<span class="hljs-keyword">this</span>), <span class="hljs-string">'a[href]'</span>);
+    <span class="hljs-keyword">var</span> target = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-keyword">this</span>.options.uiTarget);
+    pie.dom.on(target, <span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>.handleSinglePageLinkClick.bind(<span class="hljs-keyword">this</span>), <span class="hljs-string">'a[href]'</span>);
   },</pre></div></div>
             
         </li>
@@ -5121,7 +5121,7 @@ this.compute(‘fullName’, ‘first_name’, ‘last_name’);</p>
 
   navigationUpdated: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span></span>{
-      <span class="hljs-keyword">if</span>(<span class="hljs-string">'navigationUpdated'</span> <span class="hljs-keyword">in</span> c) c.navigationUpdated();
+      <span class="hljs-keyword">if</span>(pie.object.has(c, <span class="hljs-string">'navigationUpdated'</span>, <span class="hljs-literal">true</span>)) c.navigationUpdated();
     });
   },</pre></div></div>
             
@@ -5174,7 +5174,7 @@ If the object is not observable, an error will be thrown.</p>
             
             <div class="content"><div class='highlight'><pre>  onChange: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> observable = <span class="hljs-built_in">arguments</span>[<span class="hljs-number">0</span>], args = pie.array.from(<span class="hljs-built_in">arguments</span>).slice(<span class="hljs-number">1</span>);
-    <span class="hljs-keyword">if</span>(!(<span class="hljs-string">'observe'</span> <span class="hljs-keyword">in</span> observable)) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Observable does not respond to observe"</span>);
+    <span class="hljs-keyword">if</span>(!pie.object.has(observable, <span class="hljs-string">'observe'</span>, <span class="hljs-literal">true</span>)) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Observable does not respond to observe"</span>);
 
     <span class="hljs-keyword">this</span>.changeCallbacks.push([observable, args]);
     observable.observe.apply(observable, args);
@@ -5850,7 +5850,7 @@ any callbacks associated with that event will be invoked with the extra argument
         cb.fn.apply(<span class="hljs-literal">null</span>, args);
         <span class="hljs-keyword">if</span>(cb.onceOnly) {
           compactNeeded = <span class="hljs-literal">true</span>;
-          cb[i] = <span class="hljs-literal">undefined</span>;
+          callbacks[i] = <span class="hljs-literal">undefined</span>;
         }
       });
     }
@@ -6061,11 +6061,11 @@ registerHandler(‘401’, myRedirectCallback);</p>
             <div class="content"><div class='highlight'><pre>  reportError: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(err, options)</span> </span>{
     options = options || {};
 
-    <span class="hljs-keyword">if</span>(options.prefix &amp;&amp; <span class="hljs-string">'message'</span> <span class="hljs-keyword">in</span> err) {
+    <span class="hljs-keyword">if</span>(options.prefix &amp;&amp; pie.object.has(err, <span class="hljs-string">'message'</span>)) {
       err.message = options.prefix + <span class="hljs-string">' '</span> + err.message;
     }
 
-    <span class="hljs-keyword">if</span>(options.prefix &amp;&amp; <span class="hljs-string">'name'</span> <span class="hljs-keyword">in</span> err) {
+    <span class="hljs-keyword">if</span>(options.prefix &amp;&amp; pie.object.has(err, <span class="hljs-string">'name'</span>)) {
       err.name = options.prefix + <span class="hljs-string">' '</span> + err.name;
     }
 
@@ -7775,11 +7775,11 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
             <div class="content"><div class='highlight'><pre>    length: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
       options = pie.object.merge({allowBlank: <span class="hljs-literal">false</span>}, options);
 
-      <span class="hljs-keyword">if</span>(!(<span class="hljs-string">'gt'</span>  <span class="hljs-keyword">in</span> options)  &amp;&amp;
-         !(<span class="hljs-string">'gte'</span> <span class="hljs-keyword">in</span> options)  &amp;&amp;
-         !(<span class="hljs-string">'lt'</span>  <span class="hljs-keyword">in</span> options)  &amp;&amp;
-         !(<span class="hljs-string">'lte'</span> <span class="hljs-keyword">in</span> options)  &amp;&amp;
-         !(<span class="hljs-string">'eq'</span>  <span class="hljs-keyword">in</span> options) ){
+      <span class="hljs-keyword">if</span>(!pie.object.has(options, <span class="hljs-string">'gt'</span>)  &amp;&amp;
+         !pie.object.has(options, <span class="hljs-string">'gte'</span>)  &amp;&amp;
+         !pie.object.has(options, <span class="hljs-string">'lt'</span>)  &amp;&amp;
+         !pie.object.has(options, <span class="hljs-string">'lte'</span>)  &amp;&amp;
+         !pie.object.has(options, <span class="hljs-string">'eq'</span>) ){
         options.gt = <span class="hljs-number">0</span>;
       }
 
@@ -8562,13 +8562,13 @@ when the transition is complete, invoke the callback.</p>
             <div class="content"><div class='highlight'><pre>  transitionEndEvent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._transitionEndEvent === <span class="hljs-literal">undefined</span>) {
-      <span class="hljs-keyword">if</span>(<span class="hljs-string">'ontransitionend'</span> <span class="hljs-keyword">in</span> <span class="hljs-built_in">window</span>) {
+      <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'ontransitionend'</span>)) {
         <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'transitionend'</span>;
-      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-string">'onwebkittransitionend'</span> <span class="hljs-keyword">in</span> <span class="hljs-built_in">window</span>) {
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'onwebkittransitionend'</span>)) {
         <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'webkitTransitionEnd'</span>;
-      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-string">'msTransitionEnd'</span> <span class="hljs-keyword">in</span> <span class="hljs-built_in">window</span>) {
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'msTransitionEnd'</span>)) {
         <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'msTransitionEnd'</span>;
-      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-string">'onotransitionend'</span> <span class="hljs-keyword">in</span> <span class="hljs-built_in">document</span>.body || navigator.appName === <span class="hljs-string">'Opera'</span>) {
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">document</span>.body, <span class="hljs-string">'onotransitionend'</span>) || navigator.appName === <span class="hljs-string">'Opera'</span>) {
         <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'oTransitionEnd'</span>;
       } <span class="hljs-keyword">else</span> {
         <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-literal">false</span>;

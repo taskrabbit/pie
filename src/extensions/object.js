@@ -153,12 +153,12 @@ pie.object.getValue = function(o, attribute) {
   if(pie.object.isFunction(attribute))          return attribute.call(null, o);
   else if (o == null)                           return void 0;
   else if(pie.object.isFunction(o[attribute]))  return o[attribute].call(o);
-  else if(pie.object.has(o, attribute))         return o[attribute];
+  else if(pie.object.has(o, attribute, true))   return o[attribute];
   else                                          return void 0;
 };
 
-pie.object.has = function(obj, key) {
-  return obj && obj.hasOwnProperty(key);
+pie.object.has = function(obj, key, includeInherited) {
+  return obj && (obj.hasOwnProperty(key) || (includeInherited && (key in obj)));
 };
 
 // does the object have the described path

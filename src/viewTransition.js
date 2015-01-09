@@ -383,13 +383,13 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   transitionEndEvent: function(){
 
     if(this._transitionEndEvent === undefined) {
-      if('ontransitionend' in window) {
+      if(pie.object.has(window, 'ontransitionend')) {
         this._transitionEndEvent = 'transitionend';
-      } else if('onwebkittransitionend' in window) {
+      } else if(pie.object.has(window, 'onwebkittransitionend')) {
         this._transitionEndEvent = 'webkitTransitionEnd';
-      } else if('msTransitionEnd' in window) {
+      } else if(pie.object.has(window, 'msTransitionEnd')) {
         this._transitionEndEvent = 'msTransitionEnd';
-      } else if('onotransitionend' in document.body || navigator.appName === 'Opera') {
+      } else if(pie.object.has(document.body, 'onotransitionend') || navigator.appName === 'Opera') {
         this._transitionEndEvent = 'oTransitionEnd';
       } else {
         this._transitionEndEvent = false;

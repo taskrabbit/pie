@@ -73,7 +73,7 @@ pie.emitter = pie.model.extend('emitter', {
         cb.fn.apply(null, args);
         if(cb.onceOnly) {
           compactNeeded = true;
-          cb[i] = undefined;
+          callbacks[i] = undefined;
         }
       });
     }

@@ -46,7 +46,7 @@ pie.view = pie.base.extend('view', {
 
   navigationUpdated: function() {
     this.children.forEach(function(c){
-      if('navigationUpdated' in c) c.navigationUpdated();
+      if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated();
     });
   },
 
@@ -76,7 +76,7 @@ pie.view = pie.base.extend('view', {
   // If the object is not observable, an error will be thrown.
   onChange: function() {
     var observable = arguments[0], args = pie.array.from(arguments).slice(1);
-    if(!('observe' in observable)) throw new Error("Observable does not respond to observe");
+    if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
 
     this.changeCallbacks.push([observable, args]);
     observable.observe.apply(observable, args);

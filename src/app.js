@@ -155,10 +155,9 @@ pie.app = pie.base.extend('app', {
     // Anything left is considered arguments for the notifier.
     notificationArgs = args;
 
-    if(this.router.parseUrl(path).hasOwnProperty('view')) {
+    if(pie.object.has(this.router.parseUrl(path), 'view')) {
       this.navigator.go(path, {}, replaceState);
       if(notificationArgs && notificationArgs.length) {
-        this.emitter.once('viewChanged')
         this.notifier.notify.apply(this.notifier, notificationArgs);
       }
     } else {
@@ -229,7 +228,7 @@ pie.app = pie.base.extend('app', {
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.parsedUrl.view) {
-      if('navigationUpdated' in current) current.navigationUpdated();
+      if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
       return;
     }
 
@@ -318,7 +317,8 @@ pie.app = pie.base.extend('app', {
 
   // When a link is clicked, go there without a refresh if we recognize the route.
   setupSinglePageLinks: function() {
-    pie.dom.on(document.body, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
+    var target = document.querySelector(this.options.uiTarget);
+    pie.dom.on(target, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
   },
 
   // Show any notification which have been preserved via local storage.

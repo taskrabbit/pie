@@ -17,7 +17,7 @@ pie.mixins.container = {
     child._nameWithinParent = name;
     child.parent = this;
 
-    if('addedToParent' in child) child.addedToParent.call(child);
+    if(pie.object.has(child, 'addedToParent', true)) child.addedToParent.call(child);
 
     return this;
   },
@@ -69,7 +69,7 @@ pie.mixins.container = {
       delete child._nameWithinParent;
       delete child.parent;
 
-      if('removedFromParent' in child) child.removedFromParent.call(child, this);
+      if(pie.object.has(child, 'removedFromParent', true)) child.removedFromParent.call(child, this);
     }
 
     return this;

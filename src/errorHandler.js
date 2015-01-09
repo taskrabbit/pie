@@ -74,11 +74,11 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   reportError: function(err, options) {
     options = options || {};
 
-    if(options.prefix && 'message' in err) {
+    if(options.prefix && pie.object.has(err, 'message')) {
       err.message = options.prefix + ' ' + err.message;
     }
 
-    if(options.prefix && 'name' in err) {
+    if(options.prefix && pie.object.has(err, 'name')) {
       err.name = options.prefix + ' ' + err.name;
     }
 

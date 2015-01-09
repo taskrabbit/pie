@@ -159,11 +159,11 @@ pie.validator = pie.base.extend('validator', (function(){
     length: function(value, options){
       options = pie.object.merge({allowBlank: false}, options);
 
-      if(!('gt'  in options)  &&
-         !('gte' in options)  &&
-         !('lt'  in options)  &&
-         !('lte' in options)  &&
-         !('eq'  in options) ){
+      if(!pie.object.has(options, 'gt')  &&
+         !pie.object.has(options, 'gte')  &&
+         !pie.object.has(options, 'lt')  &&
+         !pie.object.has(options, 'lte')  &&
+         !pie.object.has(options, 'eq') ){
         options.gt = 0;
       }
 
