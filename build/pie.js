@@ -332,13 +332,6 @@ pie.browser.getCookie = function(key, options) {
   return null;
 };
 
-// https://gist.github.com/padolsey/527683
-pie.browser.isIE = (function(){
-  var v = 3, div = document.createElement('div'), all = div.getElementsByTagName('i');
-  while ( div.innerHTML = '<!--[if gt IE '+(++v)+']><i></i><![endif]-->', all[0] );
-  return v > 4 ? v : void 0;
-})();
-
 
 pie.browser.isRetina = function() {
   return window.devicePixelRatio > 1;
@@ -1977,15 +1970,14 @@ pie.base._extend = function(parentProto, extensions) {
     name = pie.object.getPath(extensions[0], 'init.name') || '';
   }
 
-  // function name collisions in IE tend to cause headaches.
-  if(pie.browser.isIE) name = "";
-
   child = new Function(
     "var f = function " + name + "(){\n" +
     "  var myProto = Object.getPrototypeOf(this);\n" +
     "  var parentProto = Object.getPrototypeOf(myProto);\n" +
     "  parentProto.constructor.apply(this, arguments);\n" +
     "};\n" +
+    // ensures the function name is released. Certain browsers (take a guess)
+    // have an issue with conflicting function names.
     (name ? "var " + name + " = null;\n" : "") +
     "return f;"
   )();
