@@ -1977,6 +1977,9 @@ pie.base._extend = function(parentProto, extensions) {
     name = pie.object.getPath(extensions[0], 'init.name') || '';
   }
 
+  // function name collisions in IE tend to cause headaches.
+  if(pie.browser.isIE) name = "";
+
   child = new Function(
     "return function " + name + "(){\n" +
     "  var myProto = Object.getPrototypeOf(this);\n" +
