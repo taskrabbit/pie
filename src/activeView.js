@@ -26,16 +26,6 @@ pie.activeView = pie.view.extend('activeView', {
     }
   },
 
-  // If the first option passed is a node, it will use that as the query scope.
-  // Return an object representing the values of fields within this.el.
-  parseFields: function() {
-    var args = pie.array.from(arguments), e, el;
-    if(args[0] && !pie.object.isString(args[0])) el = args.shift();
-    else el = this.el;
-
-    return pie.dom.parseForm(el, args);
-  },
-
   renderData: function() {
     if(this.model) {
       return this.model.data;
