@@ -5957,14 +5957,7 @@ registerHandler(‘401’, myRedirectCallback);</p>
 });
 pie.formView = pie.activeView.extend(<span class="hljs-string">'formView'</span>, {
 
-<<<<<<< HEAD
-  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
-    <span class="hljs-keyword">this</span>.model = <span class="hljs-keyword">this</span>.model || <span class="hljs-keyword">new</span> pie.model({});
-    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.model.validates) <span class="hljs-keyword">this</span>.model.reopen(pie.mixins.validatable);
 
-    options = <span class="hljs-keyword">this</span>.normalizeFormOptions(options);
-    <span class="hljs-keyword">this</span>._super(options);
-=======
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
 
@@ -5972,7 +5965,6 @@ pie.formView = pie.activeView.extend(<span class="hljs-string">'formView'</span>
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.model.validates) <span class="hljs-keyword">this</span>.model.reopen(pie.mixins.validatable);
 
     <span class="hljs-keyword">this</span>._normalizeFormOptions();
->>>>>>> refactor the form view
   },
 
   setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{

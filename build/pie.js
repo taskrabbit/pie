@@ -3296,14 +3296,7 @@ pie.errorHandler = pie.model.extend('errorHandler', {
 });
 pie.formView = pie.activeView.extend('formView', {
 
-<<<<<<< HEAD
-  init: function(options) {
-    this.model = this.model || new pie.model({});
-    if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
 
-    options = this.normalizeFormOptions(options);
-    this._super(options);
-=======
   init: function() {
     this._super.apply(this, arguments);
 
@@ -3311,7 +3304,6 @@ pie.formView = pie.activeView.extend('formView', {
     if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
 
     this._normalizeFormOptions();
->>>>>>> refactor the form view
   },
 
   setup: function() {
