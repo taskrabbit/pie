@@ -48,11 +48,13 @@ pie.base._extend = function(parentProto, extensions) {
   if(pie.browser.isIE) name = "";
 
   child = new Function(
-    "return function " + name + "(){\n" +
+    "var f = function " + name + "(){\n" +
     "  var myProto = Object.getPrototypeOf(this);\n" +
     "  var parentProto = Object.getPrototypeOf(myProto);\n" +
     "  parentProto.constructor.apply(this, arguments);\n" +
-    "};"
+    "};\n" +
+    (name ? "var " + name + " = null;\n" : "") +
+    "return f;"
   )();
 
   child.prototype = Object.create(parentProto);

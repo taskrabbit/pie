@@ -3463,11 +3463,13 @@ pie.base._extend = <span class="hljs-function"><span class="hljs-keyword">functi
             <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span>(pie.browser.isIE) name = <span class="hljs-string">""</span>;
 
   child = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(
-    <span class="hljs-string">"return function "</span> + name + <span class="hljs-string">"(){\n"</span> +
+    <span class="hljs-string">"var f = function "</span> + name + <span class="hljs-string">"(){\n"</span> +
     <span class="hljs-string">"  var myProto = Object.getPrototypeOf(this);\n"</span> +
     <span class="hljs-string">"  var parentProto = Object.getPrototypeOf(myProto);\n"</span> +
     <span class="hljs-string">"  parentProto.constructor.apply(this, arguments);\n"</span> +
-    <span class="hljs-string">"};"</span>
+    <span class="hljs-string">"};\n"</span> +
+    (name ? <span class="hljs-string">"var "</span> + name + <span class="hljs-string">" = null;\n"</span> : <span class="hljs-string">""</span>) +
+    <span class="hljs-string">"return f;"</span>
   )();
 
   child.prototype = <span class="hljs-built_in">Object</span>.create(parentProto);
@@ -7468,12 +7470,12 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
 
     errorMessage: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(validationType, validationOptions)</span> </span>{
       <span class="hljs-keyword">if</span>(validationOptions.message) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.app.i18n.attempt(validationOptions.message);
-
-      <span class="hljs-keyword">var</span> base = <span class="hljs-keyword">this</span>.i18n.t(<span class="hljs-string">'app.validations.'</span> + validationType),
+      <span class="hljs-keyword">var</span> key = validationOptions.messageKey || validationType,
+      base = <span class="hljs-keyword">this</span>.i18n.t(<span class="hljs-string">'app.validations.'</span> + key),
       rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, validationOptions),
       range = rangeOptions.message();
 
-      <span class="hljs-keyword">if</span>(!range &amp;&amp; validationType === <span class="hljs-string">'length'</span>) {
+      <span class="hljs-keyword">if</span>(!range &amp;&amp; key === <span class="hljs-string">'length'</span>) {
         rangeOptions = <span class="hljs-keyword">new</span> pie.validator.rangeOptions(<span class="hljs-keyword">this</span>.app, {gt: <span class="hljs-number">0</span>});
         range = rangeOptions.message();
       }

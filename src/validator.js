@@ -17,12 +17,12 @@ pie.validator = pie.base.extend('validator', (function(){
 
     errorMessage: function(validationType, validationOptions) {
       if(validationOptions.message) return this.app.i18n.attempt(validationOptions.message);
-
-      var base = this.i18n.t('app.validations.' + validationType),
+      var key = validationOptions.messageKey || validationType,
+      base = this.i18n.t('app.validations.' + key),
       rangeOptions = new pie.validator.rangeOptions(this.app, validationOptions),
       range = rangeOptions.message();
 
-      if(!range && validationType === 'length') {
+      if(!range && key === 'length') {
         rangeOptions = new pie.validator.rangeOptions(this.app, {gt: 0});
         range = rangeOptions.message();
       }

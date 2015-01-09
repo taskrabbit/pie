@@ -19,7 +19,10 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
       validationStrategy: 'validate',
       fields: [
         {
-          name: 'first_name'
+          name: 'first_name',
+          binding: {
+            debounce: true
+          }
         }, {
           name: 'last_name'
         }, {
@@ -48,7 +51,7 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
             dataType: 'boolean'
           },
           validation: {
-            chosen: true
+            presence: {messageKey: 'chosen'}
           }
         }, {
           name: 'mailing_list',
@@ -62,11 +65,41 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
       ]
     });
 
-    this.onChange(this.model, this.modelChanged.bind(this), '_version');
-    this.emitter.once('afterSetup', this.modelChanged.bind(this));
+    this.model.compute('fullName', function(){
+      return pie.array.compact([this.get('first_name'), this.get('last_name')]).join(" ") || 'Unknown';
+    }, 'first_name', 'last_name');
+
   },
 
-  modelChanged: function() {
+  setup: function() {
+    this.onChange(this.model, this.modelChanged.bind(this), '_version');
+    this.emitter.once('afterSetup', this.modelChanged.bind(this));
+
+    this.bind({
+      attr: 'title'
+    });
+
+    this.bind({
+      attr: 'title',
+      type: 'attribute',
+      sel: '.title',
+      toModel: false,
+      options: {
+        attribute: 'style'
+      }
+    });
+
+    this.bind({
+      attr: 'fullName',
+      type: 'text',
+      sel: '.full-name',
+      toModel: false
+    });
+
+    this._super();
+  },
+
+  modelChanged: function(changes) {
     var str = JSON.stringify(this.model.data, null, '  ');
     this.qs('textarea[name="json"]').value = str;
     this.qs('textarea[name="submission"]').value = '';

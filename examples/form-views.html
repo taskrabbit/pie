@@ -11,13 +11,20 @@
 
     <script type="text/pie-template" id="layout">
       <div style="max-width: 900px;margin: 1em auto;">
-        <h1>FormView Example</h1>
+        <h1 class="title">FormView Example</h1>
         <table width="100%">
           <row>
             <td width="50%" id="inputs">
               <form>
+                <label for="title">Title style (attribute binding)</label>
+                <br />
+                <input name="title" id="title" type="text" />
+                <br />
+                <em>write some css for the title. ie `color:red`</em>
+                <br />
+                <br />
 
-                <label for="first_name">First Name</label>
+                <label for="first_name">First Name (debounced)</label>
                 <br />
                 <input name="first_name" id="first_name" type="text" />
                 <br />
@@ -81,11 +88,17 @@
             </td>
 
             <td width="50%">
-              <h5>Model Content</h5>
+              <h5>
+                <span>Model Content for</span>
+                <span class="full-name" />
+              </h5>
               <textarea name="json" style="width: 100%; height: 200px;"></textarea>
               <br />
               <br />
-              <h5>Submission Data</h5>
+              <h5>
+                <span>Submission Data for</span>
+                <span class="full-name" />
+              </h5>
               <textarea name="submission" style="width:100%; height: 200px;"></textarea>
             </td>
           </row>
