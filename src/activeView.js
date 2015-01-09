@@ -29,20 +29,11 @@ pie.activeView = pie.view.extend('activeView', {
   // If the first option passed is a node, it will use that as the query scope.
   // Return an object representing the values of fields within this.el.
   parseFields: function() {
-    var o = {}, e = arguments[0], i = 0, n, el;
+    var args = pie.array.from(arguments), e, el;
+    if(args[0] && !pie.object.isString(args[0])) el = args.shift();
+    else el = this.el;
 
-    if(pie.object.isString(e)) {
-      e = this.el;
-    } else {
-      i++;
-    }
-
-    for(;i<arguments.length;i++) {
-      n = arguments[i];
-      el = e.querySelector('[name="' + n + '"]:not([disabled])');
-      if(el) pie.object.setPath(o, n, el.value);
-    }
-    return o;
+    return pie.dom.parseForm(el, args);
   },
 
   renderData: function() {

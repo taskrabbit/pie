@@ -297,4 +297,4 @@ pie.app = pie.base.extend('app', {
       this.errorHandler.reportError(err, {prefix: "[caught] app#store:"});
     }
   }
-}, pie.mixins.container, pie.mixins.events);
+}, pie.mixins.container);

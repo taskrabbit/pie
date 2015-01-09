@@ -186,6 +186,7 @@ pie.model = pie.base.extend('model', {
   // Note: skipping observation does not stop changeRecords from accruing.
   set: function(key, value, options) {
     var recursive = (!options || !options.noRecursive),
+    deleteRecursive = (!options || !options.noDeleteRecursive),
     steps = ~key.indexOf('.') && recursive ? pie.string.pathSteps(key) : null,
     o, oldKeys, type, change;
 
@@ -210,7 +211,7 @@ pie.model = pie.base.extend('model', {
     change.value = value;
 
     if(value === undefined) {
-      pie.object.deletePath(this.data, key, recursive);
+      pie.object.deletePath(this.data, key, deleteRecursive);
       change.type = 'delete';
     } else {
       pie.object.setPath(this.data, key, value);

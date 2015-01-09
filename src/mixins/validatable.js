@@ -7,11 +7,17 @@ pie.mixins.validatable = {
     if(this._super) this._super.apply(this, arguments);
 
     if(!this.data.validationErrors) this.data.validationErrors = {};
+
+    this.compute('isValid', 'validationErrors');
+  },
+
+  isValid: function() {
+    return Object.keys(this.get('validationErrors')).length === 0;
   },
 
   // default to a model implementation
   reportValidationError: (function(){
-    var opts = {noRecursive: true};
+    var opts = {noDeleteRecursive: true};
 
     return function(key, errors) {
       errors = errors && errors.length ? errors : undefined;

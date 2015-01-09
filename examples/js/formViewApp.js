@@ -18,9 +18,11 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
       renderOnSetup: true,
       validationStrategy: 'validate',
       fields: [
-        'first_name',
-        'last_name',
         {
+          name: 'first_name'
+        }, {
+          name: 'last_name'
+        }, {
           name: 'email',
           validation: {
             email: true
@@ -28,7 +30,9 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
         }, {
           name: 'password',
           validation: {
-            presence: true
+            length: {
+              gte: 6
+            }
           }
         }, {
           name: 'interests',
@@ -41,7 +45,6 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
         }, {
           name: 'tos',
           binding: {
-            type: 'check',
             dataType: 'boolean'
           },
           validation: {
@@ -50,7 +53,6 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
         }, {
           name: 'mailing_list',
           binding: {
-            type: 'radio',
             dataType: 'boolean'
           },
           validation: {
@@ -72,11 +74,13 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
 
   // By default, this will conduct an ajax request with the "ajax" options provided in the constructor.
   // Since we're just showing an example, we're just outputting the submission data on the page.
-  submitForm: function(form) {
-    var d = this.submissionData();
-    var str = JSON.stringify(d, null, '  ');
-    this.qs('textarea[name="submission"]').value = str;
+  onValid: function() {
+    this.prepareSubmissionData(function(d) {
+      var str = JSON.stringify(d, null, '  ');
+      this.qs('textarea[name="submission"]').value = str;
+    }.bind(this));
   }
+
 });
 
 

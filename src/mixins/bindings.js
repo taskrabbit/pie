@@ -1,178 +1,217 @@
-// this.bind(model, {
-//   model: model,
-//   type: 'attribute',
-//   sel: 'input[name="first_name"]'
-//   attr: 'first_name',
-//   trigger: 'change',
-//   triggerSel: attr,
-//   toModel: true,
-//   toView: true,
-//   debounce: 150,
-// })
-
-
+// # Bindings Mixin
 // A mixin to provide two way data binding between a model and dom elements.
 // This mixin should be used with a pie view.
 pie.mixins.bindings = (function(){
 
-  var integrations = {
 
-    attribute: (function(){
+  var integrations = {};
 
-      var attributeName = function(binding){
-        return binding.options.attribute || ('data-' + binding.attr);
-      };
 
-      return {
+  // Bind to an element's attribute.
+  integrations.attribute = (function(){
 
-        getValue: function(el, binding) {
-          return el.getAttribute(attributeName(binding));
-        },
+    // extract the attribute name from the binding configuration.
+    var attributeName = function(binding){
+      return binding.options.attribute || ('data-' + binding.attr);
+    };
 
-        setValue: function(el, binding) {
-          var value = binding.model.get(binding.attr);
-          return el.setAttribute(attributeName(binding), value);
-        }
-
-      };
-    })(),
-
-    value: {
+    return {
 
       getValue: function(el, binding) {
-        return el.value;
+        return el.getAttribute(attributeName(binding));
       },
 
       setValue: function(el, binding) {
         var value = binding.model.get(binding.attr);
-        /* jslint eqnull:true */
-        if(value == null) value = '';
-        return el.value = value;
+        return el.setAttribute(attributeName(binding), value);
       }
 
+    };
+  })();
+
+  integrations.value = {
+
+    // Simple value extraction
+    getValue: function(el, binding) {
+      return el.value;
     },
 
-    check: (function(){
-
-      var index = function(arr, value) {
-        value = String(value);
-        return pie.array.indexOf(arr, function(e){ return String(e) === value; });
-      };
-
-      return {
-
-        getValue: function(el, binding) {
-          var existing = binding.model.get(binding.attr), i;
-
-          if(Array.isArray(existing)) {
-            existing = pie.array.dup(existing);
-            i = index(existing, el.value);
-            // if we are checked and we don't already have it, add it.
-            if(el.checked && i < 0) {
-              existing.push(el.value);
-            // if we are not checked but we do have it, then we add it.
-            } else if(!el.checked && i >= 0) {
-              existing.splice(i, 1);
-            }
-
-            return existing;
-          } else {
-            return el.checked ? el.value : null;
-          }
-        },
-
-        setValue: function(el, binding) {
-          var value = binding.model.get(binding.attr),
-          elValue = el.value;
-
-          if(Array.isArray(value)) {
-            var i = index(value, elValue);
-            return el.checked = !!~i;
-          } else {
-            /* jslint eqeq:true */
-            return el.checked = elValue == value;
-          }
-        }
-      };
-
-    })(),
-
-    radio: {
-
-      getValue: function(el, binding) {
-        var existing = binding.model.get(binding.attr);
-        if(el.checked) return el.value;
-        return existing;
-      },
-
-      setValue: function(el, binding) {
-        var value = binding.model.get(binding.attr),
-        elValue = el.value;
-
-        /* jslint eqeq:true */
-        return el.checked = elValue == value;
-      }
-
-    },
-
-    text: {
-
-      getValue: function(el, binding) {
-        return el.innerText;
-      },
-
-      setValue: function(el, binding) {
-        var value = binding.model.get(binding.attr);
-
-        /* jslint eqnull:true */
-        if(value == null) value = '';
-        return el.innerText = value;
-      }
-
-    },
-
-    html: {
-
-      getValue: function(el, binding) {
-        return el.innerHTML;
-      },
-
-      setValue: function(el, binding) {
-        var value = binding.model.get(binding.attr);
-        /* jslint eqnull:true */
-        if(value == null) value = '';
-        return el.innerHTML = value;
-      }
-
+    // Apply the model's value to the element's value.
+    setValue: function(el, binding) {
+      var value = binding.model.get(binding.attr);
+      /* jslint eqnull:true */
+      if(value == null) value = '';
+      return el.value = value;
     }
 
   };
 
+  integrations.check = (function(){
+
+    // String based index.
+    var index = function(arr, value) {
+      if(!arr) return -1;
+      value = String(value);
+      return pie.array.indexOf(arr, function(e){ return String(e) === value; });
+    };
+
+    return {
+
+      getValue: function(el, binding) {
+
+        // If we have an array, manage the values.
+        if(binding.dataType === 'array') {
+
+          var existing = pie.array.from(binding.model.get(binding.attr)), i;
+
+          i = index(existing, el.value);
+
+          // If we are checked and we don't already have it, add it.
+          if(el.checked && i < 0) {
+            existing = pie.array.dup(existing);
+            existing.push(el.value);
+          // If we are not checked but we do have it, then we add it.
+          } else if(!el.checked && i >= 0) {
+            existing = pie.array.dup(existing);
+            existing.splice(i, 1);
+          }
+
+          return existing;
+        } else {
+
+          // Otherwise, we return the el's value if it's checked.
+          return el.checked ? el.value : null;
+        }
+      },
+
+      // If the model's value contains the checkbox, check it.
+      setValue: function(el, binding) {
+        var value = binding.model.get(binding.attr),
+        elValue = el.value;
+
+        // In the case of an array, we check for inclusion.
+        if(binding.dataType === 'array') {
+          var i = index(value, elValue);
+          return el.checked = !!~i;
+        } else {
+          // Otherwise we check for equality
+          /* jslint eqeq:true */
+          return el.checked = elValue == value;
+        }
+      }
+    };
+
+  })();
+
+
+  integrations.radio = {
+
+    // If a radio input is checked, return it's value.
+    // Otherwise, return the existing value.
+    getValue: function(el, binding) {
+      var existing = binding.model.get(binding.attr);
+      if(el.checked) return el.value;
+      return existing;
+    },
+
+    // Check a radio button if the value matches.
+    setValue: function(el, binding) {
+      var value = binding.model.get(binding.attr),
+      elValue = el.value;
+
+      /* jslint eqeq:true */
+      return el.checked = elValue == String(value);
+    }
+
+  };
+
+  // Set the innerTEXT of an element based on the model's value.
+  integrations.text = {
+
+    getValue: function(el, binding) {
+      return el.innerText;
+    },
+
+    setValue: function(el, binding) {
+      var value = binding.model.get(binding.attr);
+
+      /* jslint eqnull:true */
+      if(value == null) value = '';
+      return el.innerText = value;
+    }
+
+  };
+
+  // Set the innerHTML of an element based on the model's value.
+  integrations.html = {
+
+    getValue: function(el, binding) {
+      return el.innerHTML;
+    },
+
+    setValue: function(el, binding) {
+      var value = binding.model.get(binding.attr);
+      /* jslint eqnull:true */
+      if(value == null) value = '';
+      return el.innerHTML = value;
+    }
+
+  };
+
+  // If type=auto, this does it's best to determine the appropriate integration.
+  var determineIntegrationForBinding = function(el, binding) {
+      var mod;
+      if(el.hasAttribute && el.hasAttribute('data-' + binding.attr)) mod = 'attribute';
+      else if(el.nodeName === 'INPUT' && el.getAttribute('type') === 'checkbox') mod = 'check';
+      else if(el.nodeName === 'INPUT' && el.getAttribute('type') === 'radio') mod = 'radio';
+      else if(el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName === 'TEXTAREA') mod = 'value';
+      else mod = 'text';
+
+      return integrations[mod];
+    };
+
+  // Provide a way to retrieve values out of the dom & apply values to the dom.
+  var integration = function(el, binding) {
+    if(binding.type === 'auto') return determineIntegrationForBinding(el, binding);
+    return integrations[binding.type] || integrations.value;
+  };
+
+
+
+  // A set of methods to cast raw values into a specific type.
   var typeCasters = {
 
+    // Note that `undefined` and `null` will result in `[]`.
     array: function(raw) {
       return pie.array.from(raw);
     },
 
     boolean: (function(){
+
+      // Match different strings representing truthy values.
       var reg = /^(1|true|yes|t|ok|on)$/;
+
       return function(raw) {
-        return raw && reg.test(String(raw));
+        return !!(raw && reg.test(String(raw)));
       };
+
     })(),
 
+    // Attempt to parse as a float, if `NaN` return `null`.
     number: function(raw) {
       var val = parseFloat(raw, 10);
       if(isNaN(val)) return null;
       return val;
     },
 
+    // Attempt to parse as an integer, if `NaN` return `null`.
     integer: function(raw) {
       var val = parseInt(raw, 10);
       if(isNaN(val)) return null;
       return val;
     },
 
+    // `null` or `undefined` are passed through, otherwise cast as a String.
     string: function(raw) {
       return raw == null ? raw : String(raw);
     },
@@ -183,160 +222,199 @@ pie.mixins.bindings = (function(){
 
   };
 
+  // The type caster based on the `dataType`.
+  var typeCaster = function(dataType) {
+    return typeCasters[dataType] || typeCasters['default'];
+  };
+
+
+  // take horrible user provided options and turn it into magical pie options.
   var normalizeBindingOptions = function(given) {
 
     if(!given.attr) throw new Error("An attr must be provided for data binding. " + JSON.stringify(given));
 
-    var out = {};
-    out.attr = given.attr;
-    out.model = given.model || this.model;
-    out.sel = given.sel || '[name="' + given.attr + '"]';
-    out.type = given.type || 'auto';
-    out.dataType = given.dataType || 'default';
-    out.eachType = given.eachType || undefined;
-    out.trigger = given.trigger || 'change keyup';
-    out.triggerSel = given.triggerSel || out.sel;
-    out.toModel = given.toModel || given.toModel === undefined;
-    out.toView = given.toView || given.toView === undefined;
-    out.debounce = given.debounce || false;
-    out.options = given.options || {};
+    var out         = {};
+    out.attr        = given.attr;                                           // the model attribute to be observed / updated.
+    out.model       = given.model       || this.model;                      // the model to apply changes to.
+    out.sel         = given.sel         || '[name="' + given.attr + '"]';   // the selector to observe
+    out.type        = given.type        || 'auto';                          // the way in which the binding should extract the value from the dom.
+    out.dataType    = given.dataType    || 'default';                       // the desired type the dom value's should be cast to.
+    out.eachType    = given.eachType    || undefined;                       // if `dataType` is "array", they type which should be applied to each.
+    out.trigger     = given.trigger     || 'change keyup';                  // when an input changes or has a keyup event, the model will update.
+    out.triggerSel  = given.triggerSel  || out.sel;                         // just in case the dom events should be based on a different field than that provided by `sel`
+    out.toModel     = given.toModel     || given.toModel === undefined;     // if toModel is not provided, it's presumed to be desired.
+    out.toView      = given.toView      || given.toView === undefined;      // if toView is not provided, it's presumed to be desired.
+    out.debounce    = given.debounce    || false;                           // no debounce by default.
+    out.options     = given.options     || {};                              // secondary options.
 
-    if(out.debounce === true) out.debounce = 150;
+    // A `true` value will results in a default debounce duration of 250ms.
+    if(out.debounce === true) out.debounce = 250;
 
     return out;
   };
 
-  var determineIntegrationForBinding = function(el, binding) {
-    var mod;
-    if(el.hasAttribute && el.hasAttribute('data-' + binding.attr)) mod = 'attribute';
-    else if(el.nodeName === 'INPUT' && el.getAttribute('type') === 'checkbox') mod = 'check';
-    else if(el.nodeName === 'INPUT' && el.getAttribute('type') === 'radio') mod = 'radio';
-    else if(el.nodeName === 'INPUT' || el.nodeName === 'SELECT') mod = 'value';
-    else mod = 'text';
-
-    return integrations[mod];
-  };
-
-  var integrationForBinding = function(el, binding) {
-    if(binding.type === 'auto') return determineIntegrationForBinding(el, binding);
-    return integrations[binding.type];
-  };
-
-  var typeCasterForBinding = function(dataType) {
-    return typeCasters[dataType] || typeCasters.default;
-  };
-
+  // Apply a value to the model, ensuring the model-to-view triggers do not take place.
   var applyValueToModel = function(value, binding, opts) {
-    binding.ignore = true;
-    binding.model.set(binding.attr, value, opts);
-    binding.ignore = false;
+    try{
+      binding.ignore = true;
+      binding.model.set(binding.attr, value, opts);
+
+    // Even if we error, we should reset the ignore.
+    } finally {
+      binding.ignore = false;
+    }
   };
 
-  var applyValueToElement = function(el, binding) {
-    integrationForBinding(el, binding).setValue(el, binding);
-  };
-
-  var applyValueToElements = function(binding) {
+  // Take a model's value, and apply it to all relevant elements within `parentEl`.
+  var applyValueToElements = function(parentEl, binding) {
     if(binding.ignore) return;
 
-    var els = pie.array.from(this.qsa(binding.sel));
-    els.forEach(function(el) {
-      applyValueToElement(el, binding);
-    });
+    var els = parentEl.querySelectorAll(binding.sel);
+
+    // For each matching element, set the value based on the binding.
+    for(var i = 0; i < els.length; i++) {
+      integration(els[i], binding).setValue(els[i], binding);
+    }
   };
 
+  // Extract a value out of an element based on a binding configuration.
   var getValueFromElement = function(el, binding) {
-    var val = integrationForBinding(el, binding).getValue(el, binding),
-    fn = typeCasterForBinding(binding.dataType);
+    // Get the basic value out of the element.
+    var val = integration(el, binding).getValue(el, binding),
+    // Get the type casting function it based on the configuration.
+    fn = typeCaster(binding.dataType);
+    // Type cast the value.
     val = fn(val);
 
-    if(Array.isArray(val) && binding.eachType) {
-      var eachFn = typeCasterForBinding(binding.eachType);
+    // If we're configured to have an array and have defined an `eachType`
+    // use it to typecast each value.
+    if(binding.dataType === 'array' && binding.eachType) {
+      var eachFn = typeCaster(binding.eachType);
       val = val.map(eachFn);
     }
 
     return val;
   };
 
+  // ### Binding Initializations
+  // With a binding configuration ready, let's wire up the callbacks.
   var initCallbacks = function(binding) {
-
-    if(binding.toModel) {
-      binding._toModel = function(el, opts) {
-        var value = getValueFromElement(el, binding);
-        applyValueToModel(value, binding, opts);
-      };
-
-      binding.toModel = function(e) {
-        var el = e.delegateTarget;
-        binding._toModel(el);
-      };
-
-      if(binding.debounce) binding.toModel = pie.fn.debounce(binding.toModel, binding.debounce);
-
-      initViewCallback.call(this, binding);
-    }
-
-    if(binding.toView) {
-      binding.toView = function() {
-        applyValueToElements.call(this, binding);
-      }.bind(this);
-
-      initModelCallback.call(this, binding);
-    }
+    initModelCallbacks.call(this, binding);
+    initViewCallbacks.call(this, binding);
 
     return binding;
   };
 
-  var initModelCallback = function(binding) {
-    this.onChange(binding.model, binding.toView, binding.attr);
-  };
+  // Wiring of the view-to-model callbacks. These will observe dom events
+  // and translate them to model values.
+  var initViewCallbacks = function(binding) {
 
-  var initViewCallback = function(binding) {
+    // If no view-to-model binding is desired, escape.
+    if(!binding.toModel) return;
+
+    // If a function is provided, use that as the base implementation.
+    if(pie.object.isFunction(binding.toModel)) {
+      binding._toModel = binding.toModel;
+    } else {
+      // Otherwise, we provide a default implementation.
+      binding._toModel = function(el, opts) {
+        var value = getValueFromElement(el, binding);
+        applyValueToModel(value, binding, opts);
+      };
+    }
+
+    // We wrap our base implementation with a function that handles event arguments
+    binding.toModel = function(e) {
+      var el = e.delegateTarget;
+      binding._toModel(el);
+    };
+
+    // If a debounce is requested, we apply the debounce to the wrapped function,
+    // Leaving the base function untouched.
+    if(binding.debounce) binding.toModel = pie.fn.debounce(binding.toModel, binding.debounce);
+
+    // Multiple events could be supplied, separated by a space.
     var events = binding.trigger.split(' ');
     events.forEach(function(event){
+      // Use the view's event management to register the callback.
       this.on(event, binding.triggerSel, binding.toModel);
     }.bind(this));
   };
 
+  // Initialization of model-to-view callbacks. These will observe relevant model
+  // changes and update the dom.
+  var initModelCallbacks = function(binding) {
+    // If no model-to-view binding is desired, escape.
+    if(!binding.toView) return;
 
+    // If a toView function is not provided, apply the default implementation.
+    if(!pie.object.isFunction(binding.toView)) {
+      binding.toView = function() {
+        applyValueToElements(this.el, binding);
+      }.bind(this);
+    }
+
+    // Register a change observer with the new.
+    this.onChange(binding.model, binding.toView, binding.attr);
+  };
+
+
+  // ## Bindings Mixin
   return {
 
+    // The registration & configuration of bindings is kept in this._bindings.
     init: function() {
       this._bindings = [];
       if(this._super) this._super.apply(this, arguments);
-      if(this.emitter) {
-        this.emitter.on('afterRender', this.initBoundFields.bind(this));
-      }
     },
 
+    // If we have an emitter, tap into the afterRender event and initialize the dom
+    // with our model values.
+    setup: function() {
+      if(this.emitter) this.emitter.on('afterRender', this.initBoundFields.bind(this));
+      if(this._super) this._super.apply(this, arguments);
+    },
+
+    // Register 1+ bindings within the view.
+    //
+    // ```
+    // this.bind({ attr: 'first_name' }, { attr: 'last_name' })
+    // ```;
     bind: function() {
       var wanted = pie.array.from(arguments);
-      wanted = wanted.map(normalizeBindingOptions.bind(this));
-      wanted = wanted.map(initCallbacks.bind(this));
+      wanted = wanted.map(function(opts) {
+        opts = normalizeBindingOptions.call(this, opts);
+        return initCallbacks.call(this, opts);
+      }.bind(this));
+
       this._bindings = this._bindings.concat(wanted);
     },
 
+    // Iterate each binding and propagate the model value to the dom.
     initBoundFields: function() {
       this._bindings.forEach(function(b){
         if(b.toView) b.toView();
       });
     },
 
+
+    /* Iterate each binding and propagate the dom value to the model. */
+    /* A single set of change records will be produced (`_version` will only increment by 1). */
     readBoundFields: function() {
-      var models = {}, skip = {skipObservers: true}, els;
+      var models = {}, skip = {skipObservers: true}, els, i;
 
       this._bindings.forEach(function(b) {
-        if(b.toModel) {
+        if(!b.toModel) return;
 
-          models[b.model.pieId] = b.model;
-          els = pie.array.from(this.qsa(b.sel));
+        models[b.model.pieId] = b.model;
+        els = this.qsa(b.sel);
 
-          els.forEach(function(el) { b._toModel(el, skip); });
-
+        for(i = 0; i < els.length; i++) {
+          b._toModel(els[i], skip);
         }
       }.bind(this));
 
-      pie.object.values(models).forEach(function(m) {
+      pie.object.forEach(function(id, m) {
         m.deliverChangeRecords();
       });
 

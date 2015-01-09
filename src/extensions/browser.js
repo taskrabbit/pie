@@ -14,6 +14,13 @@ pie.browser.getCookie = function(key, options) {
   return null;
 };
 
+// https://gist.github.com/padolsey/527683
+pie.browser.isIE = (function(){
+  var v = 3, div = document.createElement('div'), all = div.getElementsByTagName('i');
+  while ( div.innerHTML = '<!--[if gt IE '+(++v)+']><i></i><![endif]-->', all[0] );
+  return v > 4 ? v : void 0;
+})();
+
 
 pie.browser.isRetina = function() {
   return window.devicePixelRatio > 1;

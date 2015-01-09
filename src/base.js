@@ -23,7 +23,12 @@ pie.base.reopen = function() {
 };
 
 pie.base._extend = function(parentProto, extensions) {
-  extensions = pie.array.change(extensions, 'from', 'flatten', 'compact');
+  extensions = pie.array.change(extensions, 'from', 'flatten');
+
+  var oldLength = extensions.length;
+  extensions = pie.array.compact(extensions);
+
+  if(extensions.length !== oldLength) throw new Error("Null values not allowed");
 
   var name = "", child;
 
