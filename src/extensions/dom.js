@@ -139,6 +139,30 @@ pie.dom.on = function(el, event, fn, selector, capture) {
   return cb;
 };
 
+pie.dom.parseForm = function() {
+  var args = pie.array.from(arguments),
+  form = args.shift(),
+  names = pie.array.flatten(args),
+  inputs = form.querySelectorAll('input[name], select[name], textarea[name]'),
+  o = {};
+
+  inputs = pie.array.from(inputs);
+  inputs = pie.array.groupBy(inputs, 'name');
+
+  pie.object.forEach(inputs, function(name,fields) {
+    if(names.length && names.indexOf(name) < 0) return;
+
+    if(!(name in o)) {
+      o[name] = form.querySelectorAll('input[name="' + name + '"], select[name="' + name + '"], textarea[name="' + name + '"]').length > 1 ? [] : null;
+    }
+    fields = fields.filter(function(f){ return f.type.toLowerCase() === 'radio' || f.type.toLowerCase() === 'checkbox' ? f.checked : true; });
+
+    if(Array.isArray(o[name])) o[name] = pie.array.map(fields, 'value');
+    else o[name] = fields[0] && fields[0].value;
+  });
+
+  return o;
+};
 
 pie.dom.trigger = function(el, e, forceEvent) {
 

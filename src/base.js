@@ -23,7 +23,12 @@ pie.base.reopen = function() {
 };
 
 pie.base._extend = function(parentProto, extensions) {
-  extensions = pie.array.change(extensions, 'from', 'flatten', 'compact');
+  extensions = pie.array.change(extensions, 'from', 'flatten');
+
+  var oldLength = extensions.length;
+  extensions = pie.array.compact(extensions);
+
+  if(extensions.length !== oldLength) throw new Error("Null values not allowed");
 
   var name = "", child;
 
@@ -40,11 +45,15 @@ pie.base._extend = function(parentProto, extensions) {
   }
 
   child = new Function(
-    "return function " + name + "(){\n" +
+    "var f = function " + name + "(){\n" +
     "  var myProto = Object.getPrototypeOf(this);\n" +
     "  var parentProto = Object.getPrototypeOf(myProto);\n" +
     "  parentProto.constructor.apply(this, arguments);\n" +
-    "};"
+    "};\n" +
+    // ensures the function name is released. Certain browsers (take a guess)
+    // have an issue with conflicting function names.
+    (name ? "var " + name + " = null;\n" : "") +
+    "return f;"
   )();
 
   child.prototype = Object.create(parentProto);

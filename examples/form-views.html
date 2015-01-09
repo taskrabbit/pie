@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pie FormViews</title>
+
+  </head>
+  <body>
+
+    <script type="text/javascript" src="/build/pie.js"></script>
+
+
+    <script type="text/pie-template" id="layout">
+      <div style="max-width: 900px;margin: 1em auto;">
+        <h1 class="title">FormView Example</h1>
+        <table width="100%">
+          <row>
+            <td width="50%" id="inputs">
+              <form>
+                <label for="title">Title style (attribute binding)</label>
+                <br />
+                <input name="title" id="title" type="text" />
+                <br />
+                <em>write some css for the title. ie `color:red`</em>
+                <br />
+                <br />
+
+                <label for="first_name">First Name (debounced)</label>
+                <br />
+                <input name="first_name" id="first_name" type="text" />
+                <br />
+                <br />
+
+                <label for="last_name">Last Name</label>
+                <br />
+                <input name="last_name" id="last_name" type="text" />
+                <br />
+                <br />
+
+                <label for="email">Email</label>
+                <br />
+                <input name="email" id="email" type="text" />
+                <br />
+                <br />
+
+                <label for="password">Password</label>
+                <br />
+                <input name="password" id="password" type="password" />
+                <br />
+                <br />
+
+                <label>Interests</label>
+                <br />
+                <label>
+                  <input name="interests" type="checkbox" value="cars" />
+                  Cars
+                </label>
+                <br />
+                <label>
+                  <input name="interests" type="checkbox" value="trucks" />
+                  Trucks
+                </label>
+                <br /><label>
+                  <input name="interests" type="checkbox" value="airplanes" />
+                  Airplanes
+                </label>
+                <br />
+                <br />
+                <label for="tos">Accept the terms?</label>
+                <input name="tos" id="tos" type="checkbox" value="true" />
+                <br />
+                <br />
+
+                <label for="mailing_list">Mailing List?</label>
+                <br />
+                <label>
+                  <input name="mailing_list" id="mailing_list" type="radio" value="true" />
+                  Yes
+                </label>
+                <br />
+                <label>
+                  <input name="mailing_list" id="mailing_list" type="radio" value="false" />
+                  No
+                </label>
+                <br />
+                <br />
+                <button type="submit">Submit!</button>
+              </form>
+            </td>
+
+            <td width="50%">
+              <h5>
+                <span>Model Content for</span>
+                <span class="full-name" />
+              </h5>
+              <textarea name="json" style="width: 100%; height: 200px;"></textarea>
+              <br />
+              <br />
+              <h5>
+                <span>Submission Data for</span>
+                <span class="full-name" />
+              </h5>
+              <textarea name="submission" style="width:100%; height: 200px;"></textarea>
+            </td>
+          </row>
+        </table>
+      </div>
+    </script>
+    <script type="text/javascript" src="/examples/js/formViewApp.js"></script>
+
+
+
+  </body>
+</html>
