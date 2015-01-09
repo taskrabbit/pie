@@ -1,4 +1,3 @@
-/* global lib */
 describe("View Binding Integration", function() {
 
   beforeEach(function() {

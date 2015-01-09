@@ -132,7 +132,7 @@ pie.view = pie.base.extend('view', {
 
   teardownChildren: function() {
     this.children.forEach(function(child) {
-      child.teardown();
+      if(child.teardown) child.teardown();
     });
   },
 

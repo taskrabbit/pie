@@ -7,11 +7,14 @@ source_files       := src/pie.js src/extensions/*.js src/mixins/*.js src/base.js
 deploy             := build/pie.js.min
 debug              := build/pie.js
 
+spec_source_files  := spec/specHelper.js spec/**/*Spec.js spec/*Spec.js
+specs              := spec/compiled.js
+
 guide_source_files := docs/guide/js/app.js docs/guide/js/gist.js docs/guide/js/highlight.js
 guide_debug        := docs/guide/js/compiled.js
 
 
-all: clean $(debug) $(guide) $(deploy) $(guide_debug) document
+all: clean $(debug) $(specs) $(guide) $(deploy) $(guide_debug) document
 
 $(deploy): $(debug)
 	uglifyjs -cmo $(deploy) $(debug)
@@ -26,6 +29,9 @@ $(guide_pie): $(debug)
 $(guide_debug): $(guide_source_files)
 	cat $(guide_source_files) > $(guide_debug)
 
+$(specs): $(spec_source_files)
+	cat $(spec_source_files) > $(specs)
+
 test: $(deploy)
 	open specRunner.html
 
@@ -38,5 +44,6 @@ clean:
 document: $(debug)
 	docco -o docs/annotated/ $(debug)
 
-watch: $(source_files) $(guide_source_files)
+watch: $(source_files) $(guide_source_files) $(spec_source_files)
 	fswatch -o $^ | xargs -n1 -I{} make
+

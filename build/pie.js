@@ -2039,8 +2039,19 @@ pie.base._wrap = (function() {
 // # pie.app
 // The app class is the entry point of your application. It acts as container in charge of managing the page's context.
 // It provides access to application utilities, routing, templates, i18n, etc.
+// It observes navigation and changes the page's context automatically.
 pie.app = pie.base.extend('app', {
   init: function(options) {
+
+    // `pie.base.prototype.constructor` handles the setting of an app,
+    // but we don't want a reference to another app within this app.
+    delete this.app;
+
+    // Set a global instance which can be used as a backup within the pie library.
+    pie.appInstance = pie.appInstance || this;
+
+    // Register with pie to allow for nifty global lookups.
+    pie.apps[this.pieId] = this;
 
     // Default application options.
     this.options = pie.object.deepMerge({
@@ -2050,68 +2061,89 @@ pie.app = pie.base.extend('app', {
       root: '/'
     }, options);
 
+    // `classOption` Allows class configurations to be provided in the following formats:
+    // ```
+    // new pie.app({
+    //   i18n: myCustomI18nClass,
+    //   i18nOptions: {foo: 'bar'}
+    // });
+    // // which will result in `this.i18n = new myCustomI18nClass(this, {foo: 'bar'});`
+    // ```
     //
+    // ```
+    // var instance = new myCustomI18nClass();
+    // new pie.app({
+    //   i18n: instance,
+    // });
+    // // which will result in `this.i18n = instance; this.i18n.app = this;`
+    // ```
     var classOption = function(key, _default){
       var k = this.options[key] || _default,
       opt = this.options[key + 'Options'] || {};
+
       return new k(this, opt);
     }.bind(this);
 
-    // app.emitter is an interface for subscribing and observing app events
+    // `app.emitter` is an interface for subscribing and observing app events
     this.emitter = classOption('emitter', pie.emitter);
 
-    // app.i18n is the translation functionality
+    // `app.i18n` is the translation functionality
     this.i18n = classOption('i18n', pie.i18n);
 
-    // app.ajax is ajax interface + app specific functionality.
+    // `app.ajax` is ajax interface + app specific functionality.
     this.ajax = classOption('ajax', pie.ajax);
 
-    // app.notifier is the object responsible for showing page-level notifications, alerts, etc.
+    // `app.notifier` is the object responsible for showing page-level notifications, alerts, etc.
     this.notifier = classOption('notifier', pie.notifier);
 
-    // app.errorHandler is the object responsible for
+    // `app.errorHandler` is the object responsible for
     this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
-    // app.router is used to determine which view should be rendered based on the url
+    // `app.router` is used to determine which view should be rendered based on the url
     this.router = classOption('router', pie.router);
 
-    // app.resources is used for managing the loading of external resources.
+    // `app.resources` is used for managing the loading of external resources.
     this.resources = classOption('resources', pie.resources);
 
-    // template helper methods, they are evaluated to the local variable "h" in templates.
+    // Template helper methods are evaluated to the local variable `h` in templates.
+    // Any methods registered with this helpers module will be available in templates
+    // rendered by this app's `templates` object.
     this.helpers = classOption('helpers', pie.helpers);
 
-    // app.templates is used to manage application templates.
+    // `app.templates` is used to manage application templates.
     this.templates = classOption('templates', pie.templates);
 
-    // the only navigator which should exist in this app.
+    // `app.navigator` is the only navigator which should exist and be used within this app.
     this.navigator = classOption('navigator', pie.navigator);
 
-    // the validator which should be used in the context of the app
+    // `app.validator` a validator intance to be used in conjunction with this app's model activity.
     this.validator = classOption('validator', pie.validator);
 
+    // The view transition class to be used when transitioning between pages.
+    // Since a new instance of this is needed on every page change, just provide the class.
+    // You can also provide viewTransitionOptions which will be merged into the constructor of this class.
     this.viewTransitionClass = this.options.viewTransitionClass || pie.simpleViewTransition;
 
-    // after a navigation change, app.parsedUrl is the new parsed route
+    // After a navigation change, app.parsedUrl is the new parsed route
     this.parsedUrl = {};
 
-    // we observe the navigator and handle changing the context of the page
+    // We observe the navigator and handle changing the context of the page.
     this.navigator.observe(this.navigationChanged.bind(this), 'url');
 
+    // Before we get going, observe link navigation & show any notifications stored
+    // in localStorage.
     this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
     this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
 
-    // once the dom is loaded
-    document.addEventListener('DOMContentLoaded', this.start.bind(this));
-
-    // set a global instance which can be used as a backup within the pie library.
-    pie.appInstance = pie.appInstance || this;
-    pie.apps[this.pieId] = this;
+    if(!this.options.noAutoStart) {
+      // Once the dom is loaded, start the app.
+      document.addEventListener('DOMContentLoaded', this.start.bind(this));
+    }
   },
 
-  // just in case the client wants to override the standard confirmation dialog.
-  // eventually this could create a confirmation view and provide options to it.
-  // the view could have more options but would always end up invoking onConfirm or onDeny.
+  // Just in case the client wants to override the standard confirmation dialog.
+  // Eventually this could create a confirmation view and provide options to it.
+  // The view could have more options but would always end up invoking onConfirm or onDeny.
   confirm: function(options) {
     if(window.confirm(options.text)) {
       if(options.onConfirm) options.onConfirm();
@@ -2120,12 +2152,12 @@ pie.app = pie.base.extend('app', {
     }
   },
 
-  // print stuff if we're not in prod.
+  // Print stuff if we're not in prod.
   debug: function(msg) {
     if(this.env === 'production') return;
     if(console && console.log) console.log('[PIE] ' + msg);
   },
-  // use this to navigate. This allows us to apply app-specific navigation logic
+  // Use this to navigate. This allows us to apply app-specific navigation logic
   // without altering the underling navigator.
   // This can be called with just a path, a path with a query object, or with notification arguments.
   // app.go('/test-url')
@@ -2139,22 +2171,26 @@ pie.app = pie.base.extend('app', {
     path = args.shift();
 
 
+    // ```
     // arguments => '/test-url', {query: 'object'}
+    // ```
     if(typeof args[0] === 'object') {
       path = this.router.path(path, args.shift());
 
-    // arguments => '/test-url'
+    // ```
+    // arguments => '/test-url
     // arguments => ['/test-url', {query: 'object'}]
+    // ```
     } else {
       path = this.router.path.apply(this.router, pie.array.from(path));
     }
 
-    // if the next argument is a boolean, we care about replaceState
+    // If the next argument is a boolean, we care about replaceState
     if(pie.object.isBoolean(args[0])) {
       replaceState = args.shift();
     }
 
-    // anything left is considered arguments for the notifier.
+    // Anything left is considered arguments for the notifier.
     notificationArgs = args;
 
     if(this.router.parseUrl(path).hasOwnProperty('view')) {
@@ -2173,40 +2209,42 @@ pie.app = pie.base.extend('app', {
     }
   },
 
-  // go back one page.
+  // Go back one page.
   goBack: function() {
     window.history.back();
   },
 
-  // callback for when a link is clicked in our app
+  // Callback for when a link is clicked in our app
   handleSinglePageLinkClick: function(e){
-    // if the link is targeting something else, let the browser take over
+
+    // If the link is targeting something else, let the browser take over
     if(e.delegateTarget.getAttribute('target')) return;
 
-    // if the user is trying to do something beyond navigate, let the browser take over
+    // If the user is trying to do something beyond simple navigation, let the browser take over
     if(e.ctrlKey || e.metaKey) return;
 
-
+    // Extract the location from the link.
     var href = e.delegateTarget.getAttribute('href');
-    // if we're going nowhere, somewhere else, or to an anchor on the page, let the browser take over
+
+    // If we're going nowhere, somewhere else, or to an anchor on the page, let the browser take over
     if(!href || /^(#|[a-z]+:\/\/)/.test(href)) return;
 
-    // ensure that relative links are evaluated as relative
+    // Ensure that relative links are evaluated as relative
     if(href.charAt(0) === '?') href = window.location.pathname + href;
 
-    // great, we can handle it. let the app decide whether to use pushstate or not
+    // Great, we can handle it. let the app decide whether to use pushstate or not
     e.preventDefault();
     this.go(href);
   },
 
-  // when we change urls
-  // we always remove the current before instantiating the next. this ensures are views can prepare
-  // context's in removedFromParent before the constructor of the next view is invoked.
+  // When we change urls
+  // We always remove the current before instantiating the next. this ensures are views can prepare
+  // Context's in removedFromParent before the constructor of the next view is invoked.
   navigationChanged: function() {
     var current  = this.getChild('currentView'),
         transition;
 
-    // let the router determine our new url
+    // Let the router determine our new url
     this.previousUrl = this.parsedUrl;
     this.parsedUrl = this.router.parseUrl(this.navigator.get('fullPath'));
 
@@ -2237,22 +2275,30 @@ pie.app = pie.base.extend('app', {
 
   },
 
+  // The process for transitioning to a new view.
+  // Both the current view and the next view are optional.
   transitionToNewView: function() {
     var target = document.querySelector(this.options.uiTarget),
         current = this.getChild('currentView'),
         viewClass, child, transition;
 
+    // Provide some events that can be observed around the transition process.
     this.emitter.fire('beforeViewChanged');
     this.emitter.fireAround('aroundViewChanged', function() {
 
       this.emitter.fire('viewChanged');
 
-      // use the view key of the parsedUrl to find the viewClass
+      // Use the view key of the parsedUrl to find the viewClass.
+      // At this point we've already verified the view option exists, so we don't have to check it.
       var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
-      // the instance to be added.
+      // The instance to be added. If the class is not defined, this could and should blow up.
       child = new viewClass({ app: this });
+
+      // Cache an identifier on the view so we can invoke navigationUpdated instead of reloading
+      // if the url changes but the view does not
       child._pieName = this.parsedUrl.view;
 
+      // Instantiate a transition object based on the app configuration.
       transition = new this.viewTransitionClass(this, pie.object.merge({
         oldChild: current,
         newChild: child,
@@ -2260,7 +2306,7 @@ pie.app = pie.base.extend('app', {
         targetEl: target
       }, this.options.viewTransitionOptions));
 
-
+      // Provide a couple common events out of the app.
       transition.emitter.on('afterRemoveOldChild', function() {
         this.emitter.fire('oldViewRemoved', current);
       }.bind(this));
@@ -2269,23 +2315,24 @@ pie.app = pie.base.extend('app', {
         this.emitter.fire('newViewLoaded', child);
       }.bind(this));
 
-      // add the instance as our 'currentView'
       transition.transition(function(){
+
+        // The instance is now our 'currentView'
         this.emitter.fire('afterViewChanged');
       }.bind(this));
 
     }.bind(this));
   },
 
-  // reload the page without reloading the browser.
-  // alters the current view's _pieName to appear as invalid for the route.
+  // Reload the page without reloading the browser.
+  // Alters the current view's _pieName to appear as invalid for the route.
   refresh: function() {
     var current = this.getChild('currentView');
     current._pieName = '__remove__';
     this.navigationChanged();
   },
 
-  // safely access localStorage, passing along any errors for reporting.
+  // Safely access localStorage, passing along any errors for reporting.
   retrieve: function(key, clear) {
     var encoded, decoded;
 
@@ -2307,12 +2354,12 @@ pie.app = pie.base.extend('app', {
     return decoded;
   },
 
-  // when a link is clicked, go there without a refresh if we recognize the route.
+  // When a link is clicked, go there without a refresh if we recognize the route.
   setupSinglePageLinks: function() {
     pie.dom.on(document.body, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
   },
 
-  // show any notification which have been preserved via local storage.
+  // Show any notification which have been preserved via local storage.
   showStoredNotifications: function() {
     var encoded = this.retrieve(this.notifier.storageKey), decoded;
 
@@ -2322,12 +2369,12 @@ pie.app = pie.base.extend('app', {
     }
   },
 
-  // start the app, apply fake navigation to the current url to get our navigation observation underway.
+  // Start the app by starting the navigator (which we have observed).
   start: function() {
     this.emitter.fireSequence('start', this.navigator.start.bind(this.navigator));
   },
 
-  // safely access localStorage, passing along any errors for reporting.
+  // Safely access localStorage, passing along any errors for reporting.
   store: function(key, data) {
     try{
       window.localStorage.setItem(key, JSON.stringify(data));
@@ -2770,7 +2817,7 @@ pie.view = pie.base.extend('view', {
 
   teardownChildren: function() {
     this.children.forEach(function(child) {
-      child.teardown();
+      if(child.teardown) child.teardown();
     });
   },
 
@@ -3425,10 +3472,11 @@ pie.helpers = pie.model.extend('helpers', {
 // made to be used as an instance so multiple translations could exist if we so choose.
 pie.i18n = pie.model.extend('i18n', {
 
-  init: function(app) {
-    this._super(pie.object.merge({}, pie.i18n.defaultTranslations), {
-      app: app
-    });
+  init: function(app, options) {
+    var data = pie.object.merge({}, pie.i18n.defaultTranslations);
+    options = pie.object.merge(options || {}, {app: app});
+
+    this._super(data, options);
   },
 
   _ampm: function(num) {
@@ -4417,7 +4465,7 @@ pie.templates = pie.model.extend('templates', {
     return document.querySelector(this.app.options.templateSelector + '[id="' + name + '"]');
   },
 
-  _registerTemplate: function(name, content) {
+  registerTemplate: function(name, content) {
     this.app.debug('Compiling and storing template: ' + name);
     var vars = "var h = pie.apps[" + this.app.pieId + "].helpers.provide();";
     vars += "var get = function(p){ return pie.object.getPath(data, p); };";
@@ -4436,7 +4484,7 @@ pie.templates = pie.model.extend('templates', {
       accept: 'text/html',
       src: src,
       dataSuccess: function(content) {
-        this._registerTemplate(name, content);
+        this.registerTemplate(name, content);
       }.bind(this),
       error: function() {
         throw new Error("[PIE] Template fetch error: " + name);
@@ -4451,7 +4499,7 @@ pie.templates = pie.model.extend('templates', {
       var node = this._node(name);
 
       if(node) {
-        this._registerTemplate(name, node.content || node.textContent);
+        this.registerTemplate(name, node.content || node.textContent);
       } else {
         throw new Error("[PIE] Unknown template error: " + name);
       }

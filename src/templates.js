@@ -10,7 +10,7 @@ pie.templates = pie.model.extend('templates', {
     return document.querySelector(this.app.options.templateSelector + '[id="' + name + '"]');
   },
 
-  _registerTemplate: function(name, content) {
+  registerTemplate: function(name, content) {
     this.app.debug('Compiling and storing template: ' + name);
     var vars = "var h = pie.apps[" + this.app.pieId + "].helpers.provide();";
     vars += "var get = function(p){ return pie.object.getPath(data, p); };";
@@ -29,7 +29,7 @@ pie.templates = pie.model.extend('templates', {
       accept: 'text/html',
       src: src,
       dataSuccess: function(content) {
-        this._registerTemplate(name, content);
+        this.registerTemplate(name, content);
       }.bind(this),
       error: function() {
         throw new Error("[PIE] Template fetch error: " + name);
@@ -44,7 +44,7 @@ pie.templates = pie.model.extend('templates', {
       var node = this._node(name);
 
       if(node) {
-        this._registerTemplate(name, node.content || node.textContent);
+        this.registerTemplate(name, node.content || node.textContent);
       } else {
         throw new Error("[PIE] Unknown template error: " + name);
       }
