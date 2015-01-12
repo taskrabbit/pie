@@ -88,33 +88,35 @@ pie.model = pie.base.extend('model', {
   deliverChangeRecords: function() {
     if(!this.changeRecords.length) return this;
 
-    var observers = {}, os, o, change, changeSet;
-
     this.trackVersion();
 
-    // grab each change record
-    while(change = this.changeRecords.shift()) {
-
-      // grab all the observers for the attribute specified by change.name
-      os = pie.array.union(this.observations[change.name], this.observations.__all__);
-
-      // then for each observer, build or concatenate to the array of changes.
-      while(o = os.shift()) {
-
-        if(!observers[o.pieId]) {
-          changeSet = [];
-          pie.object.merge(changeSet, pie.mixins.changeSet);
-          observers[o.pieId] = {fn: o, changes: changeSet};
-        }
-
-        observers[o.pieId].changes.push(change);
+    var changeSet = pie.object.merge(this.changeRecords, changeSet),
+    observers = pie.object.values(this.observations),
+    invoker = function(obj) {
+      if(obj.keys === '__all__' || changeSet.hasAny.apply(changeSet, obj.keys)) {
+        obj.fn.call(null, changeSet);
       }
+    },
+    o, idx;
+
+
+    pie.object.merge(changeSet, pie.mixins.changeSet);
+
+
+    // Deliver change records to all computed properties first.
+    // This will ensure that the changeRecords include the computed property changes
+    // along with the original property changes.
+    while(~(idx = pie.array.indexOf(observers, 'computed'))) {
+      o = observers[idx];
+      observers.splice(idx, 1);
+      invoker(o);
     }
 
-    // Iterate each observer, calling it with the changes which it was subscribed for.
-    pie.object.forEach(observers, function(uid, obj) {
-      obj.fn.call(null, obj.changes);
-    });
+    // now we reset the changeRecords on this model.
+    this.changeRecords = [];
+
+    // and deliver the changeSet
+    observers.forEach(invoker);
 
     return this;
   },
@@ -160,12 +162,12 @@ pie.model = pie.base.extend('model', {
 
     keys = pie.array.flatten(keys);
 
-    if(!keys.length) keys.push('__all__');
+    if(!keys.length) keys = '__all__';
 
-    keys.forEach(function(k) {
-      this.observations[k] = this.observations[k] || [];
-      if(this.observations[k].indexOf(fn) < 0) this.observations[k].push(fn);
-    }.bind(this));
+    this.observations[fn.pieId] = {
+      fn: fn,
+      keys: keys
+    };
 
     return this;
   },
@@ -264,14 +266,24 @@ pie.model = pie.base.extend('model', {
   unobserve: function(/* fn[, key1, key2, key3] */) {
     var keys = pie.array.from(arguments),
     fn = keys.shift(),
-    i;
+    observation;
 
-    if(!keys.length) keys = Object.keys(this.observations);
+    pie.setUid(fn);
 
-    keys.forEach(function(k){
-      i = this.observations[k].indexOf(fn);
-      if(~i) this.observations[k].splice(i,1);
-    }.bind(this));
+    observation = this.observations[fn.pieId];
+
+    if(!observation) return this;
+
+    if(!keys.length || observation.keys === '__all__') {
+      delete this.observations[fn.pieId];
+      return this;
+    }
+
+    observation.keys = pie.array.subtract(observation.keys, keys);
+    if(!observation.keys.length) {
+      delete this.observations[fn.pieId];
+      return this;
+    }
 
     return this;
   },
@@ -283,16 +295,20 @@ pie.model = pie.base.extend('model', {
   compute: function(/* name, fn?[, prop1, prop2 ] */) {
     var props = pie.array.from(arguments),
     name = props.shift(),
-    fn = props.shift();
+    fn = props.shift(),
+    wrap;
 
     if(!pie.object.isFunction(fn)) {
       props.unshift(fn);
       fn = this[name].bind(this);
     }
 
-    this.observe(function(/* changes */){
-      this.set(name, fn.call(this));
-    }.bind(this), props);
+    wrap = function(/* changes */){
+      this.set(name, fn.call(this), {skipObservers: true});
+    }.bind(this);
+
+    this.observe(wrap, props);
+    this.observations[wrap.pieId].computed = true;
 
     // initialize it
     this.set(name, fn.call(this));

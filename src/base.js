@@ -1,6 +1,10 @@
 pie.base = function() {
   pie.setUid(this);
   this.init.apply(this, arguments);
+  if(!this.app) {
+    if(this.options && this.options.app) this.app = this.options.app;
+    else this.app = pie.appInstance;
+  }
 };
 pie.base.prototype.init = function(){};
 
@@ -56,6 +60,8 @@ pie.base._extend = function(parentProto, extensions) {
     "return f;"
   )();
 
+  // We don't set the constructor of the prototype since it would cause
+  // an infinite loop upon instantiation of our object. (due to the constructor.apply(this) & multiple levels of inheritance.)
   child.prototype = Object.create(parentProto);
   child.prototype.className = name;
 

@@ -33,6 +33,25 @@ pie.formView = pie.activeView.extend('formView', {
     });
   },
 
+  _onInvalid: function() {
+    this.emitter.fire('onInvalid');
+    this.onInvalid.apply(this, arguments);
+  },
+
+  _onFailure: function() {
+    this.emitter.fire('onFailure');
+    this.onFailure.apply(this, arguments);
+  },
+
+  _onSuccess: function() {
+    this.emitter.fire('onSuccess');
+    this.onSuccess.apply(this, arguments);
+  },
+
+  _onValid: function() {
+    this.emitter.fire('onValid');
+    this.onValid.apply(this, arguments);
+  },
 
   _setupFormBindings: function() {
     var validation;
@@ -60,6 +79,7 @@ pie.formView = pie.activeView.extend('formView', {
   // for the inheriting class to override.
   onInvalid: function(form) {},
 
+
   // what happens when validations pass.
   onValid: function(form) {
     this.prepareSubmissionData(function(data) {
@@ -68,8 +88,8 @@ pie.formView = pie.activeView.extend('formView', {
         url: form.getAttribute('action'),
         verb: form.getAttribute('method') || 'post',
         data: data,
-        extraError: this.onFailure.bind(this),
-        success: this.onSuccess.bind(this)
+        extraError: this._onFailure.bind(this),
+        success: this._onSuccess.bind(this)
       }, this.options.ajax));
 
     }.bind(this));
@@ -103,11 +123,14 @@ pie.formView = pie.activeView.extend('formView', {
     var form = e.delegateTarget;
 
     this.applyFieldsToModel(form);
+
+    this.emitter.fire('submit');
+
     this.validateModel(function(bool) {
       if(bool) {
-        this.onValid(form);
+        this._onValid(form);
       } else {
-        this.onInvalid(form);
+        this._onInvalid(form);
       }
     }.bind(this));
   }
