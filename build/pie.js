@@ -1304,7 +1304,7 @@ pie.mixins.bindings = (function(){
   integrations.text = {
 
     getValue: function(el, binding) {
-      return el.innerText;
+      return el.textContent;
     },
 
     setValue: function(el, binding) {
@@ -1312,7 +1312,7 @@ pie.mixins.bindings = (function(){
 
       /* jslint eqnull:true */
       if(value == null) value = '';
-      return el.innerText = value;
+      return el.textContent = value;
     }
 
   };
