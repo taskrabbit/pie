@@ -64,12 +64,12 @@ describe("pie.view", function() {
       this.view.onChange(model, this.view.setup.bind(this.view));
 
       f = this.view.changeCallbacks[0][1][0];
-      expect(model.observations.__all__[0]).toEqual(f);
+      expect(model.observations[f.pieId]).toBeTruthy();
 
       this.view.teardown();
 
       expect(this.view.changeCallbacks.length).toEqual(0);
-      expect(model.observations.__all__.length).toEqual(0);
+      expect(model.observations[f.pieId]).toBeFalsy();
     });
 
     it("should observe events on it's el via this.on and remove the events", function() {

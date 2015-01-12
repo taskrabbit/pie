@@ -1675,6 +1675,18 @@ pie.mixins.container = {
     var idx = this.childNames[obj];
     if(idx == null) idx = obj;
 
+    // It's a path.
+    if(String(idx).match(/\./)) {
+      var steps = idx.split('.'),
+      step, child = this;
+      while(step = steps.shift()) {
+        child = child.getChild(step);
+        if(!child) return undefined;
+      }
+
+      return child;
+    }
+
     return ~idx && this.children[idx] || undefined;
   },
 
@@ -1732,7 +1744,7 @@ pie.mixins.container = {
       return s;
     };
     var str = "\n", nextIndent = indent + (indent ? 4 : 1);
-    str += pad((indent ? '|- ' : '') + this.className + ' (' + (this._nameWithinParent || this.pieId) + ')', indent);
+    str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this._indexWithinParent || this.className) + ' (' + (this.className || this.pieId) + ')', indent);
 
     this.children.forEach(function(child) {
       str += "\n" + pad('|', nextIndent);
@@ -1927,6 +1939,10 @@ pie.mixins.validatable = {
 pie.base = function() {
   pie.setUid(this);
   this.init.apply(this, arguments);
+  if(!this.app) {
+    if(this.options && this.options.app) this.app = this.options.app;
+    else this.app = pie.appInstance;
+  }
 };
 pie.base.prototype.init = function(){};
 
@@ -1982,6 +1998,8 @@ pie.base._extend = function(parentProto, extensions) {
     "return f;"
   )();
 
+  // We don't set the constructor of the prototype since it would cause
+  // an infinite loop upon instantiation of our object. (due to the constructor.apply(this) & multiple levels of inheritance.)
   child.prototype = Object.create(parentProto);
   child.prototype.className = name;
 
@@ -2473,33 +2491,35 @@ pie.model = pie.base.extend('model', {
   deliverChangeRecords: function() {
     if(!this.changeRecords.length) return this;
 
-    var observers = {}, os, o, change, changeSet;
-
     this.trackVersion();
 
-    // grab each change record
-    while(change = this.changeRecords.shift()) {
-
-      // grab all the observers for the attribute specified by change.name
-      os = pie.array.union(this.observations[change.name], this.observations.__all__);
-
-      // then for each observer, build or concatenate to the array of changes.
-      while(o = os.shift()) {
-
-        if(!observers[o.pieId]) {
-          changeSet = [];
-          pie.object.merge(changeSet, pie.mixins.changeSet);
-          observers[o.pieId] = {fn: o, changes: changeSet};
-        }
-
-        observers[o.pieId].changes.push(change);
+    var changeSet = pie.object.merge(this.changeRecords, changeSet),
+    observers = pie.object.values(this.observations),
+    invoker = function(obj) {
+      if(obj.keys === '__all__' || changeSet.hasAny.apply(changeSet, obj.keys)) {
+        obj.fn.call(null, changeSet);
       }
+    },
+    o, idx;
+
+
+    pie.object.merge(changeSet, pie.mixins.changeSet);
+
+
+    // Deliver change records to all computed properties first.
+    // This will ensure that the changeRecords include the computed property changes
+    // along with the original property changes.
+    while(~(idx = pie.array.indexOf(observers, 'computed'))) {
+      o = observers[idx];
+      observers.splice(idx, 1);
+      invoker(o);
     }
 
-    // Iterate each observer, calling it with the changes which it was subscribed for.
-    pie.object.forEach(observers, function(uid, obj) {
-      obj.fn.call(null, obj.changes);
-    });
+    // now we reset the changeRecords on this model.
+    this.changeRecords = [];
+
+    // and deliver the changeSet
+    observers.forEach(invoker);
 
     return this;
   },
@@ -2545,12 +2565,12 @@ pie.model = pie.base.extend('model', {
 
     keys = pie.array.flatten(keys);
 
-    if(!keys.length) keys.push('__all__');
+    if(!keys.length) keys = '__all__';
 
-    keys.forEach(function(k) {
-      this.observations[k] = this.observations[k] || [];
-      if(this.observations[k].indexOf(fn) < 0) this.observations[k].push(fn);
-    }.bind(this));
+    this.observations[fn.pieId] = {
+      fn: fn,
+      keys: keys
+    };
 
     return this;
   },
@@ -2649,14 +2669,24 @@ pie.model = pie.base.extend('model', {
   unobserve: function(/* fn[, key1, key2, key3] */) {
     var keys = pie.array.from(arguments),
     fn = keys.shift(),
-    i;
+    observation;
 
-    if(!keys.length) keys = Object.keys(this.observations);
+    pie.setUid(fn);
 
-    keys.forEach(function(k){
-      i = this.observations[k].indexOf(fn);
-      if(~i) this.observations[k].splice(i,1);
-    }.bind(this));
+    observation = this.observations[fn.pieId];
+
+    if(!observation) return this;
+
+    if(!keys.length || observation.keys === '__all__') {
+      delete this.observations[fn.pieId];
+      return this;
+    }
+
+    observation.keys = pie.array.subtract(observation.keys, keys);
+    if(!observation.keys.length) {
+      delete this.observations[fn.pieId];
+      return this;
+    }
 
     return this;
   },
@@ -2668,16 +2698,20 @@ pie.model = pie.base.extend('model', {
   compute: function(/* name, fn?[, prop1, prop2 ] */) {
     var props = pie.array.from(arguments),
     name = props.shift(),
-    fn = props.shift();
+    fn = props.shift(),
+    wrap;
 
     if(!pie.object.isFunction(fn)) {
       props.unshift(fn);
       fn = this[name].bind(this);
     }
 
-    this.observe(function(/* changes */){
-      this.set(name, fn.call(this));
-    }.bind(this), props);
+    wrap = function(/* changes */){
+      this.set(name, fn.call(this), {skipObservers: true});
+    }.bind(this);
+
+    this.observe(wrap, props);
+    this.observations[wrap.pieId].computed = true;
 
     // initialize it
     this.set(name, fn.call(this));
@@ -3363,6 +3397,25 @@ pie.formView = pie.activeView.extend('formView', {
     });
   },
 
+  _onInvalid: function() {
+    this.emitter.fire('onInvalid');
+    this.onInvalid.apply(this, arguments);
+  },
+
+  _onFailure: function() {
+    this.emitter.fire('onFailure');
+    this.onFailure.apply(this, arguments);
+  },
+
+  _onSuccess: function() {
+    this.emitter.fire('onSuccess');
+    this.onSuccess.apply(this, arguments);
+  },
+
+  _onValid: function() {
+    this.emitter.fire('onValid');
+    this.onValid.apply(this, arguments);
+  },
 
   _setupFormBindings: function() {
     var validation;
@@ -3390,6 +3443,7 @@ pie.formView = pie.activeView.extend('formView', {
   // for the inheriting class to override.
   onInvalid: function(form) {},
 
+
   // what happens when validations pass.
   onValid: function(form) {
     this.prepareSubmissionData(function(data) {
@@ -3398,8 +3452,8 @@ pie.formView = pie.activeView.extend('formView', {
         url: form.getAttribute('action'),
         verb: form.getAttribute('method') || 'post',
         data: data,
-        extraError: this.onFailure.bind(this),
-        success: this.onSuccess.bind(this)
+        extraError: this._onFailure.bind(this),
+        success: this._onSuccess.bind(this)
       }, this.options.ajax));
 
     }.bind(this));
@@ -3433,11 +3487,14 @@ pie.formView = pie.activeView.extend('formView', {
     var form = e.delegateTarget;
 
     this.applyFieldsToModel(form);
+
+    this.emitter.fire('submit');
+
     this.validateModel(function(bool) {
       if(bool) {
-        this.onValid(form);
+        this._onValid(form);
       } else {
-        this.onInvalid(form);
+        this._onInvalid(form);
       }
     }.bind(this));
   }

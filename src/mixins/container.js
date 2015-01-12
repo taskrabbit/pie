@@ -36,6 +36,18 @@ pie.mixins.container = {
     var idx = this.childNames[obj];
     if(idx == null) idx = obj;
 
+    // It's a path.
+    if(String(idx).match(/\./)) {
+      var steps = idx.split('.'),
+      step, child = this;
+      while(step = steps.shift()) {
+        child = child.getChild(step);
+        if(!child) return undefined;
+      }
+
+      return child;
+    }
+
     return ~idx && this.children[idx] || undefined;
   },
 
@@ -93,7 +105,7 @@ pie.mixins.container = {
       return s;
     };
     var str = "\n", nextIndent = indent + (indent ? 4 : 1);
-    str += pad((indent ? '|- ' : '') + this.className + ' (' + (this._nameWithinParent || this.pieId) + ')', indent);
+    str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this._indexWithinParent || this.className) + ' (' + (this.className || this.pieId) + ')', indent);
 
     this.children.forEach(function(child) {
       str += "\n" + pad('|', nextIndent);

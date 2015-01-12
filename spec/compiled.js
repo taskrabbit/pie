@@ -2436,22 +2436,28 @@ describe("pie.model", function() {
 
   describe("observation", function() {
 
-    it("should allow observation of specific keys", function() {
+    it("should allow observation of specific keys", function(done) {
       var observer = jasmine.createSpy('observer'),
       response = this.model.observe(observer, 'foo');
+
+      observer.and.callFake(function(changes) {
+        expect(changes.get('foo')).toEqual({
+          'type' : 'add',
+          'name' : 'foo',
+          'object' : this.model.data,
+          'value' : 'bar'
+        });
+
+
+        expect(observer.calls.count()).toEqual(1);
+
+        done();
+      }.bind(this));
 
       expect(response).toEqual(this.model);
 
       this.model.set('biz', 'baz');
       this.model.set('foo', 'bar');
-
-      expect(observer.calls.count()).toEqual(1);
-      expect(observer).toHaveBeenCalledWith([{
-        'type' : 'add',
-        'name' : 'foo',
-        'object' : this.model.data,
-        'value' : 'bar'
-      }]);
     });
 
     it("should not add a change record if the value is identical", function() {
@@ -2464,20 +2470,25 @@ describe("pie.model", function() {
       expect(observer).not.toHaveBeenCalled();
     });
 
-    it("should add a change record even if the value is identical IF the force option is provided", function() {
+    it("should add a change record even if the value is identical IF the force option is provided", function(done) {
       var observer = jasmine.createSpy('observer');
+
+      observer.and.callFake(function(changes) {
+        expect(changes.get('foo')).toEqual({
+          'type' : 'update',
+          'name' : 'foo',
+          'object' : this.model.data,
+          'oldValue' : 'bar',
+          'value' : 'bar'
+        });
+
+        done();
+      }.bind(this));
+
       this.model.observe(observer, 'foo');
 
       this.model.data.foo = 'bar';
       this.model.set('foo', 'bar', {force: true});
-
-      expect(observer).toHaveBeenCalledWith([{
-        'type' : 'update',
-        'name' : 'foo',
-        'object' : this.model.data,
-        'oldValue' : 'bar',
-        'value' : 'bar'
-      }]);
     });
 
     it("should allow observation of all keys", function() {
@@ -2504,26 +2515,30 @@ describe("pie.model", function() {
     });
 
 
-    it("should send an array of changes, not triggering multiple times", function() {
+    it("should send an array of changes, not triggering multiple times", function(done) {
       var observer = jasmine.createSpy('observer');
+
+      observer.and.callFake(function(changes){
+        var change = changes.get('foo');
+
+        expect(change).toEqual({
+          type: 'update',
+          name: 'foo',
+          oldValue: 'bar',
+          value: 'baz',
+          object: this.model.data
+        });
+
+        expect(observer.calls.count()).toEqual(1);
+
+        done();
+
+      }.bind(this));
+
       this.model.observe(observer, 'foo');
 
       this.model.set('foo', 'bar', {skipObservers: true});
       this.model.set('foo', 'baz');
-
-      expect(observer.calls.count()).toEqual(1);
-      expect(observer).toHaveBeenCalledWith([{
-        type: 'add',
-        name: 'foo',
-        value: 'bar',
-        object: this.model.data
-      }, {
-        type: 'update',
-        name: 'foo',
-        oldValue: 'bar',
-        value: 'baz',
-        object: this.model.data
-      }]);
 
     });
 
@@ -2565,7 +2580,7 @@ describe("pie.model", function() {
     it("should allow trigger changes on subpaths as well", function(done) {
 
       var observer1 = function(changes) {
-        var change = changes[0];
+        var change = changes.get('foo.bar');
         expect(change.type).toEqual('add');
         expect(change.name).toEqual('foo.bar');
         expect(change.oldValue).toEqual(undefined);
@@ -2573,7 +2588,7 @@ describe("pie.model", function() {
       };
 
       var observer2 = function(changes){
-        var change = changes[0];
+        var change = changes.get('foo');
         expect(change.type).toEqual('add');
         expect(change.name).toEqual('foo');
         expect(change.oldValue).toEqual(undefined);
@@ -2586,6 +2601,24 @@ describe("pie.model", function() {
       this.model.observe(observer2, 'foo');
 
       this.model.set('foo.bar', 1);
+    });
+
+    it("should include changes to the computed properties for observers registered before the properties", function(done) {
+      var observer = jasmine.createSpy('observer'), i = 0;
+
+      this.model.observe(observer, 'first_name');
+
+      this.model.compute('full_name', function(){
+        return this.get('first_name') + (++i);
+      }, 'first_name');
+
+      observer.and.callFake(function(changes) {
+        expect(changes.hasAll('first_name', 'full_name')).toEqual(true);
+        done();
+      });
+
+      this.model.set('first_name', 'Foo');
+
     });
 
   });
@@ -2639,8 +2672,53 @@ describe("pie.model", function() {
       expect(this.foo.get('full_name')).toEqual('Bob Dole');
     });
 
-    it("should send changes to the observers", function() {
-      var observer = jasmine.createSpy('observer');
+    it("should send changes to the observers", function(done) {
+      var observer = jasmine.createSpy('observer'),
+      portion = 1;
+
+      observer.and.callFake(function(changes) {
+
+        var full = changes.get('full_name'),
+        first = changes.get('first_name');
+
+        if(portion === 1) {
+
+          expect(full).toEqual({
+            type: 'update',
+            name: 'full_name',
+            oldValue: '',
+            value: 'Doug Wilson',
+            object: this.foo.data
+          });
+
+          expect(first).toEqual({
+            type: 'add',
+            name: 'first_name',
+            value: 'Doug',
+            object: this.foo.data
+          });
+
+        } else if(portion === 2) {
+          expect(full).toEqual({
+            type: 'update',
+            name: 'full_name',
+            oldValue: 'Doug Wilson',
+            value: 'William Wilson',
+            object: this.foo.data
+          });
+        } else {
+          expect(full).toEqual({
+            type: 'update',
+            name: 'full_name',
+            oldValue: 'William Wilson',
+            value: 'William Tell',
+            object: this.foo.data
+          });
+
+          done();
+        }
+
+      }.bind(this));
 
       this.foo.observe(observer, 'full_name');
 
@@ -2650,33 +2728,11 @@ describe("pie.model", function() {
         'last_name' : 'Wilson'
       });
 
-      // one invocation with one change record.
-      expect(observer).toHaveBeenCalledWith([{
-        type: 'update',
-        name: 'full_name',
-        oldValue: '',
-        value: 'Doug Wilson',
-        object: this.foo.data
-      }]);
-
+      portion = 2;
       this.foo.set('first_name', 'William');
+
+      portion = 3;
       this.foo.set('last_name', 'Tell');
-
-      expect(observer).toHaveBeenCalledWith([{
-        type: 'update',
-        name: 'full_name',
-        oldValue: 'Doug Wilson',
-        value: 'William Wilson',
-        object: this.foo.data
-      }]);
-
-      expect(observer).toHaveBeenCalledWith([{
-        type: 'update',
-        name: 'full_name',
-        oldValue: 'William Wilson',
-        value: 'William Tell',
-        object: this.foo.data
-      }]);
     });
   });
 
@@ -3014,12 +3070,12 @@ describe("pie.view", function() {
       this.view.onChange(model, this.view.setup.bind(this.view));
 
       f = this.view.changeCallbacks[0][1][0];
-      expect(model.observations.__all__[0]).toEqual(f);
+      expect(model.observations[f.pieId]).toBeTruthy();
 
       this.view.teardown();
 
       expect(this.view.changeCallbacks.length).toEqual(0);
-      expect(model.observations.__all__.length).toEqual(0);
+      expect(model.observations[f.pieId]).toBeFalsy();
     });
 
     it("should observe events on it's el via this.on and remove the events", function() {
