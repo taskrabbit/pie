@@ -73,7 +73,7 @@ pie.resources = pie.model.extend('resources', {
   },
 
   load: function(/* src1, src2, src3, onload */) {
-    var sources = pie.array.change(pie.array.from(arguments), 'flatten', 'compact'),
+    var sources = pie.array.change(arguments, 'from', 'flatten', 'compact'),
     onload = pie.object.isFunction(pie.array.last(sources)) ? sources.pop() : function(){},
     fns;
 
