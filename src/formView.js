@@ -51,21 +51,20 @@
 pie.formView = pie.activeView.extend('formView', {
 
 
-  init: function() {
-    this.model = this.model || this.options.model || new pie.model({});
-    if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
-
-    this._super.apply(this, arguments);
-
-    this._normalizeFormOptions();
-  },
-
   setup: function() {
+    this._ensureModel();
+    this._normalizeFormOptions();
     this._setupFormBindings();
 
     this.on('submit', this.options.formSel, this.validateAndSubmitForm.bind(this));
 
     this._super.apply(this, arguments);
+  },
+
+  _ensureModel: function() {
+    this.model = this.model || this.options.model || new pie.model({});
+
+    if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
   },
 
 
