@@ -70,27 +70,31 @@ pie.emitter = pie.model.extend('emitter', {
   // trigger an event (string) on the app.
   // any callbacks associated with that event will be invoked with the extra arguments
   fire: function(/* event, arg1, arg2, */) {
-    if(!this.hasCallback(arguments[0])) return;
+    var event = arguments[0];
 
-    var args = pie.array.from(arguments),
-    event = args.shift(),
-    callbacks = this.get('eventCallbacks.' + event),
-    compactNeeded = false;
+    if(event) {
 
-    if(this.isDebugging) this.app.debug(event);
+      var args = pie.array.from(arguments).slice(1),
+      callbacks = this.get('eventCallbacks.' + event),
+      compactNeeded = false;
 
-    if(callbacks) {
-      callbacks.forEach(function(cb, i) {
-        cb.fn.apply(null, args);
-        if(cb.onceOnly) {
-          compactNeeded = true;
-          callbacks[i] = undefined;
-        }
-      });
+      if(this.isDebugging) this.app.debug(event);
+
+      if(callbacks) {
+        callbacks.forEach(function(cb, i) {
+          cb.fn.apply(null, args);
+          if(cb.onceOnly) {
+            compactNeeded = true;
+            callbacks[i] = undefined;
+          }
+        });
+      }
+
+      if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
     }
 
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
     if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+
   },
 
   fireSequence: function(event, fn) {

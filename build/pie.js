@@ -2998,11 +2998,6 @@ pie.activeView = pie.view.extend('activeView', {
 pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
   init: function(data, options) {
-    data = pie.object.merge({
-      accept: 'application/json',
-      verb: this.VERBS.get
-    }, data);
-
     this._super(data, options);
 
     this.xhr = null;
@@ -3284,9 +3279,18 @@ pie.ajax = pie.base.extend('ajax', {
     this.app = app;
   },
 
+  defaultAjaxOptions: {
+    accept: 'application/json',
+    verb: 'GET'
+  },
+
   // Interface for conducting ajax requests.
   // Returns a pie.ajaxRequest object
   ajax: function(options, skipSend) {
+    if(pie.object.isString(options)) options = {url: options};
+
+    options = pie.object.merge({}, this.defaultAjaxOptions, options);
+
     var request = new pie.ajaxRequest({}, { app: this.app });
     request.build(options, skipSend);
 
@@ -3298,8 +3302,19 @@ pie.ajax = pie.base.extend('ajax', {
     return request;
   },
 
+
+  del: function(options, skipSend) {
+    options = pie.object.merge({verb: 'DELETE'}, options);
+    return this.ajax(options, skipSend);
+  },
+
   get: function(options, skipSend) {
     options = pie.object.merge({verb: 'GET'}, options);
+    return this.ajax(options, skipSend);
+  },
+
+  patch: function(options, skipSend) {
+    options = pie.object.merge({verb: 'PATCH'}, options);
     return this.ajax(options, skipSend);
   },
 
@@ -3310,16 +3325,6 @@ pie.ajax = pie.base.extend('ajax', {
 
   put: function(options, skipSend) {
     options = pie.object.merge({verb: 'PUT'}, options);
-    return this.ajax(options, skipSend);
-  },
-
-  del: function(options, skipSend) {
-    options = pie.object.merge({verb: 'DELETE'}, options);
-    return this.ajax(options, skipSend);
-  },
-
-  patch: function(options, skipSend) {
-    options = pie.object.merge({verb: 'PATCH'}, options);
     return this.ajax(options, skipSend);
   }
 
@@ -3472,27 +3477,31 @@ pie.emitter = pie.model.extend('emitter', {
   // trigger an event (string) on the app.
   // any callbacks associated with that event will be invoked with the extra arguments
   fire: function(/* event, arg1, arg2, */) {
-    if(!this.hasCallback(arguments[0])) return;
+    var event = arguments[0];
 
-    var args = pie.array.from(arguments),
-    event = args.shift(),
-    callbacks = this.get('eventCallbacks.' + event),
-    compactNeeded = false;
+    if(event) {
 
-    if(this.isDebugging) this.app.debug(event);
+      var args = pie.array.from(arguments).slice(1),
+      callbacks = this.get('eventCallbacks.' + event),
+      compactNeeded = false;
 
-    if(callbacks) {
-      callbacks.forEach(function(cb, i) {
-        cb.fn.apply(null, args);
-        if(cb.onceOnly) {
-          compactNeeded = true;
-          callbacks[i] = undefined;
-        }
-      });
+      if(this.isDebugging) this.app.debug(event);
+
+      if(callbacks) {
+        callbacks.forEach(function(cb, i) {
+          cb.fn.apply(null, args);
+          if(cb.onceOnly) {
+            compactNeeded = true;
+            callbacks[i] = undefined;
+          }
+        });
+      }
+
+      if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
     }
 
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
     if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+
   },
 
   fireSequence: function(event, fn) {
@@ -3528,6 +3537,10 @@ pie.emitter = pie.model.extend('emitter', {
   }
 
 });
+// # Pie ErrorHandler
+// A class which knows how to handle errors in the app.
+// By default, it focuses mostly on xhr issues.
+
 pie.errorHandler = pie.model.extend('errorHandler', {
 
   init: function(app) {
@@ -4530,6 +4543,7 @@ pie.navigator = pie.model.extend('navigator', {
   // ```
   // navigator.go('/foo/bar', {page: 2});
   // //=> pushState: '/foo/bar?page=2'
+  // ```
   go: function(path, params, replace) {
     var url = path;
 

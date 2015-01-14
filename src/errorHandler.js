@@ -1,3 +1,7 @@
+// # Pie ErrorHandler
+// A class which knows how to handle errors in the app.
+// By default, it focuses mostly on xhr issues.
+
 pie.errorHandler = pie.model.extend('errorHandler', {
 
   init: function(app) {

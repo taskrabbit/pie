@@ -1,11 +1,6 @@
 pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
   init: function(data, options) {
-    data = pie.object.merge({
-      accept: 'application/json',
-      verb: this.VERBS.get
-    }, data);
-
     this._super(data, options);
 
     this.xhr = null;
