@@ -1,6 +1,41 @@
 // # Pie i18n
 // The i18n class is in charge of the defining and lookup of translations, the
 // defining and lookup of date formats, and the standardization of "word" things.
+// The standard i18n lookup usage is as follows:
+//
+// ```
+// i18n.load({
+//   hi: "Hi %{firstName}",
+//   followers: {
+//     zero: "${hi}, you don't have any followers :(",
+//     one: "${hi}, you have a follower!",
+//     other: ${hi}, you have %{count} followers!"
+// });
+//
+// i18n.t("hi");
+// //=> "Hi undefined"
+// i18n.t("hi", {firstName: 'Doug'});
+// //=> "Hi Doug"
+// i18n.t("hi", {firstName: 'Doug'}, 'upcase');
+// //=> "HI DOUG"
+// i18n.t("followers", {firstName: 'Doug', count: 5});
+// //=> "Hi Doug, you have 5 followers!"
+// i18n.t("followers", {firstName: 'Doug', count: 0});
+// //=> "Hi Doug, you don't have any followers :("
+// ```
+// Note that recursive interpolation is allowed via the `${}` identifier. Direct interpolation is
+// handled by `%{}`. There is no loop detection so use this wisely.
+//
+// And date/time usage is as follows:
+//
+// ```
+// i18n.l(date, '%Y-%m');
+// //=> "2015-01"
+// i18n.l(date, 'isoTime');
+// //=> "2015-01-14T09:42:26.069-05:00"
+// ```
+
+// _**Todo:** allow a default scope (eg, en, en-GB, etc). Currently the assumption is that only the relevant translations are loaded._
 pie.i18n = pie.model.extend('i18n', {
 
   init: function(app, options) {
@@ -231,8 +266,8 @@ pie.i18n = pie.model.extend('i18n', {
   // *Ruby's strftime: http://ruby-doc.org/core-2.2.0/Time.html#method-i-strftime*
   //
   // ```
-  // i18n.d(date, 'short');
-  // i18n.d(date, '%Y-%m');
+  // i18n.l(date, 'shortDate');
+  // i18n.l(date, '%Y-%m');
   // ```
   strftime: function(date, f) {
     date = this._normalizedDate(date);
