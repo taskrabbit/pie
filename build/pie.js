@@ -3492,10 +3492,10 @@ pie.formView = pie.activeView.extend('formView', {
 
 
   init: function() {
-    this._super.apply(this, arguments);
-
     this.model = this.model || this.options.model || new pie.model({});
     if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
+
+    this._super.apply(this, arguments);
 
     this._normalizeFormOptions();
   },
