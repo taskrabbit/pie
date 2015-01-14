@@ -6318,12 +6318,12 @@ If you’re overriding formView behavior, here’s the general process which is 
   onValid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{
     <span class="hljs-keyword">this</span>.prepareSubmissionData(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data)</span> </span>{
 
-      <span class="hljs-keyword">this</span>.performSubmit(form, data, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(bool)</span> </span>{
+      <span class="hljs-keyword">this</span>.performSubmit(form, data, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(bool, data)</span> </span>{
 
         <span class="hljs-keyword">if</span>(bool) {
-          <span class="hljs-keyword">this</span>._onSuccess();
+          <span class="hljs-keyword">this</span>._onSuccess(data);
         } <span class="hljs-keyword">else</span> {
-          <span class="hljs-keyword">this</span>._onFailure();
+          <span class="hljs-keyword">this</span>._onFailure(data);
         }
       }.bind(<span class="hljs-keyword">this</span>));
 
@@ -6336,8 +6336,11 @@ If you’re overriding formView behavior, here’s the general process which is 
       url: form.getAttribute(<span class="hljs-string">'action'</span>),
       verb: form.getAttribute(<span class="hljs-string">'method'</span>) || <span class="hljs-string">'post'</span>,
       data: data,
-      complete: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
-        cb(xhr.status &lt; <span class="hljs-number">400</span>);
+      dataSuccess: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span></span>{
+        cb(<span class="hljs-literal">true</span>, d);
+      },
+      extraError: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
+        cb(<span class="hljs-literal">false</span>, xhr.data);
       }
     }, <span class="hljs-keyword">this</span>.options.ajax));
   },

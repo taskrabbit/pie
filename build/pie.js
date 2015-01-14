@@ -3574,12 +3574,12 @@ pie.formView = pie.activeView.extend('formView', {
   onValid: function(form) {
     this.prepareSubmissionData(function(data) {
 
-      this.performSubmit(form, data, function(bool) {
+      this.performSubmit(form, data, function(bool, data) {
 
         if(bool) {
-          this._onSuccess();
+          this._onSuccess(data);
         } else {
-          this._onFailure();
+          this._onFailure(data);
         }
       }.bind(this));
 
@@ -3592,8 +3592,11 @@ pie.formView = pie.activeView.extend('formView', {
       url: form.getAttribute('action'),
       verb: form.getAttribute('method') || 'post',
       data: data,
-      complete: function(xhr) {
-        cb(xhr.status < 400);
+      dataSuccess: function(d){
+        cb(true, d);
+      },
+      extraError: function(xhr) {
+        cb(false, xhr.data);
       }
     }, this.options.ajax));
   },
