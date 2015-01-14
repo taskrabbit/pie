@@ -145,6 +145,14 @@ pie.validator = pie.base.extend('validator', (function(){
       });
     },
 
+    inclusion: function(value, options) {
+      options = options || {};
+      return this.withStandardChecks(value, options, function() {
+        var list = pie.fn.valueFrom(options['in']);
+        return !list || !list.length || !!~list.indexOf(value);
+      });
+    },
+
 
     // must be an integer (2.0 is ok) (good for quantities)
     integer: function(value, options){

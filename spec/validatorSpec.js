@@ -74,4 +74,19 @@ describe("pie.validator", function() {
     });
 
   });
+
+  describe('#inclusion', function() {
+    it("should allow an empty list", function() {
+      expect(this.validator.inclusion('foo', {in: []})).toEqual(true);
+      expect(this.validator.inclusion('foo')).toEqual(true);
+    });
+
+    it("should return true if the value is in the list", function() {
+      expect(this.validator.inclusion('foo', {in: ['qux', 'foo', 'bar']})).toEqual(true);
+    });
+
+    it("should return false if the value is not in the list", function() {
+      expect(this.validator.inclusion('foo', {in: ['qux', 'baz', 'bar']})).toEqual(false);
+    });
+  });
 });
