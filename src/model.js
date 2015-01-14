@@ -78,6 +78,7 @@ pie.model = pie.base.extend('model', {
     this.app = this.app || this.options.app || pie.appInstance;
     this.observations = {};
     this.changeRecords = [];
+    this.deliveringRecords = 0;
   },
 
 
@@ -115,6 +116,7 @@ pie.model = pie.base.extend('model', {
   /* After updates have been made we deliver our change records to our observers */
   deliverChangeRecords: function() {
     if(!this.changeRecords.length) return this;
+    if(this.deliveringRecords) return this;
 
     /* This is where the version tracking is incremented. */
     this.trackVersion();
@@ -145,10 +147,18 @@ pie.model = pie.base.extend('model', {
     /* Now we reset the changeRecords on this model. */
     this.changeRecords = [];
 
+    /* We increment our deliveringRecords flag to ensure records are delivered in the correct order */
+    this.deliveringRecords++;
+
     /* And deliver the changeSet to each observer. */
     observers.forEach(invoker);
 
+    /* Now we can decrement our deliveringRecords flag and attempt to deliver any leftover records */
+    this.deliveringRecords--;
+    this.deliverChangeRecords();
+
     return this;
+
   },
 
   // Access the value stored at data[key]

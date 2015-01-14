@@ -2621,6 +2621,26 @@ describe("pie.model", function() {
 
     });
 
+    it("should deliver records in the correct order", function(done) {
+      var m = this.model, setProcessed = false;
+
+      var o1 = function(){
+        m.set('last_name', 'bar');
+        setProcessed = true;
+      };
+
+      var o2 = function() {
+        expect(setProcessed).toEqual(true);
+        done();
+      };
+
+      m.observe(o1, 'first_name');
+      m.observe(o2, 'last_name');
+
+      m.set('first_name', 'foo');
+
+    });
+
   });
 
   describe("inheritance", function() {

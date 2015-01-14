@@ -133,16 +133,28 @@ pie.formView = pie.activeView.extend('formView', {
   onValid: function(form) {
     this.prepareSubmissionData(function(data) {
 
-      app.ajax.ajax(pie.object.merge({
-        url: form.getAttribute('action'),
-        verb: form.getAttribute('method') || 'post',
-        data: data,
-        extraError: this._onFailure.bind(this),
-        success: this._onSuccess.bind(this)
-      }, this.options.ajax));
+      this.performSubmit(form, data, function(bool) {
+
+        if(bool) {
+          this._onSuccess();
+        } else {
+          this._onFailure();
+        }
+      }.bind(this));
 
     }.bind(this));
 
+  },
+
+  performSubmit: function(form, data, cb) {
+    app.ajax.ajax(pie.object.merge({
+      url: form.getAttribute('action'),
+      verb: form.getAttribute('method') || 'post',
+      data: data,
+      complete: function(xhr) {
+        cb(xhr.status < 400);
+      }
+    }, this.options.ajax));
   },
 
   /* for the inheriting class to override. */
