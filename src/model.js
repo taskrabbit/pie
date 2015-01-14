@@ -107,16 +107,16 @@ pie.model = pie.base.extend('model', {
     this.observe(wrap, props);
     this.observations[wrap.pieId].computed = true;
 
-    // Initialize the computed properties value immediately.
+    /* Initialize the computed properties value immediately. */
     this.set(name, fn.call(this));
   },
 
 
-  // After updates have been made we deliver our change records to our observers
+  /* After updates have been made we deliver our change records to our observers */
   deliverChangeRecords: function() {
     if(!this.changeRecords.length) return this;
 
-    // This is where the version tracking is incremented.
+    /* This is where the version tracking is incremented. */
     this.trackVersion();
 
 
@@ -129,23 +129,23 @@ pie.model = pie.base.extend('model', {
     },
     o, idx;
 
-    // We modify the `changeSet` array with the `pie.mixins.changeSet`.
+    /* We modify the `changeSet` array with the `pie.mixins.changeSet`. */
     pie.object.merge(changeSet, pie.mixins.changeSet);
 
 
-    // Deliver change records to all computed properties first.
-    // This will ensure that the change records include the computed property changes
-    // along with the original property changes.
+    /* Deliver change records to all computed properties first. */
+    /* This will ensure that the change records include the computed property changes */
+    /* along with the original property changes. */
     while(~(idx = pie.array.indexOf(observers, 'computed'))) {
       o = observers[idx];
       observers.splice(idx, 1);
       invoker(o);
     }
 
-    // Now we reset the changeRecords on this model.
+    /* Now we reset the changeRecords on this model. */
     this.changeRecords = [];
 
-    // And deliver the changeSet to each observer.
+    /* And deliver the changeSet to each observer. */
     observers.forEach(invoker);
 
     return this;
@@ -222,7 +222,7 @@ pie.model = pie.base.extend('model', {
     var keys = pie.array.change(arguments, 'from', 'flatten'),
     fn = keys.shift();
 
-    // Setting the uid is needed because we'll want to manage unobservation effectively.
+    /* Setting the uid is needed because we'll want to manage unobservation effectively. */
     pie.setUid(fn);
 
 
@@ -276,7 +276,7 @@ pie.model = pie.base.extend('model', {
       change.type = 'update';
       change.oldValue = pie.object.getPath(this.data, key);
 
-      // If we haven't actually changed, don't bother doing anything.
+      /* If we haven't actually changed, don't bother doing anything. */
       if((!options || !options.force) && value === change.oldValue) return this;
     }
 
@@ -290,23 +290,23 @@ pie.model = pie.base.extend('model', {
 
     change.value = value;
 
-    // If we are "unsetting" the value, delete the path from `this.data`.
+    /* If we are "unsetting" the value, delete the path from `this.data`. */
     if(value === undefined) {
       pie.object.deletePath(this.data, key, deleteRecursive);
       change.type = 'delete';
 
-    // Otherwise, we set the value within `this.data`.
+    /* Otherwise, we set the value within `this.data`. */
     } else {
       pie.object.setPath(this.data, key, value);
       change.type = change.type || 'add';
     }
 
-    // Add the change to the `changeRecords`.
+    /* Add the change to the `changeRecords`. */
     this.changeRecords.push(change);
 
-    // Compile subpath change records.
-    // Subpath change records have the same structure but for performance reasons the
-    // oldValue & value are the sets of the keys rather than the object itself.
+    /* Compile subpath change records. */
+    /* Subpath change records have the same structure but for performance reasons the */
+    /* oldValue & value are the sets of the keys rather than the object itself. */
     if(steps) {
       steps.forEach(function(step) {
         oldKeys = step[1];
@@ -314,14 +314,14 @@ pie.model = pie.base.extend('model', {
 
         o = this.get(step);
 
-        // If we deleted the end of the branch,
-        // we may have deleted the object itself.
+        /* If we deleted the end of the branch, */
+        /* we may have deleted the object itself. */
         if(change.type === 'delete') {
           type = o ? 'update' : 'delete';
-        // If there are no old keys, we are new.
+        /* If there are no old keys, we are new. */
         } else if(!oldKeys) {
           type = 'add';
-        // Otherwise, we just updated.
+        /* Otherwise, we just updated. */
         } else {
           type = 'update';
         }
@@ -356,12 +356,15 @@ pie.model = pie.base.extend('model', {
   },
 
   // Increment the `_version` of this model.
+  // Observers are skipped since this is invoked while change records are delivered.
   trackVersion: function() {
     this.set('_version', this.get('_version') + 1, {skipObservers: true});
   },
 
 
   // Unregister an observer. Optionally for specific keys.
+  // If a subset of the original keys are provided it will only unregister
+  // for those provided.
   unobserve: function(/* fn[, key1, key2, key3] */) {
     var keys = pie.array.from(arguments),
     fn = keys.shift(),

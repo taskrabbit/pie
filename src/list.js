@@ -1,3 +1,11 @@
+// # Pie List
+// A model representing a list. Essentially an array wrapper.
+// List models provide observation for:
+//   * The entire list
+//   * Specific indexes
+//   * Length of the list
+//   * Any other key not related to the list.
+
 pie.list = pie.model.extend('list', {
 
   init: function(array, options) {
@@ -6,6 +14,14 @@ pie.list = pie.model.extend('list', {
   },
 
 
+  // Converts a potential index into the numeric form.
+  // If the index is negative, it should represent the index from the end of the current list.
+  // ```
+  // // assuming a list length of 3
+  // list._normalizeIndex('foo') //=> 'foo'
+  // list._normalizeIndex('4') //=> 4
+  // list._normalizeIndex(-1) //=> 2
+  // ```
   _normalizedIndex: function(wanted) {
     wanted = parseInt(wanted, 10);
     if(!isNaN(wanted) && wanted < 0) wanted += this.data.items.length;
@@ -13,6 +29,7 @@ pie.list = pie.model.extend('list', {
   },
 
 
+  // Track changes to the array which occur during `fn`'s execution.
   _trackMutations: function(options, fn) {
     var oldLength = this.data.items.length,
     changes = [fn.call()],
@@ -35,11 +52,15 @@ pie.list = pie.model.extend('list', {
   },
 
 
+
+  // Iterate the list, calling `f` with each item.
   forEach: function(f) {
     return this.get('items').forEach(f);
   },
 
 
+  // Get an item at a specific index.
+  // `key` can be any valid input to `_normalizeIndex`.
   get: function(key) {
     var idx = this._normalizedIndex(key), path;
 
@@ -50,16 +71,20 @@ pie.list = pie.model.extend('list', {
   },
 
 
+  // Find the index of a specific value.
+  // Uses the standard array equality check for indexOf.
   indexOf: function(value) {
     return this.get('items').indexOf(value);
   },
 
 
+  // Insert `value` at the index specified by `key`.
+  // Returns the list.
   insert: function(key, value, options) {
-    var idx = this._normalizedIndex(key);
-
     return this._trackMutations(options, function(){
-      var change = {
+
+      var idx = this._normalizedIndex(key),
+      change = {
         name: String(idx),
         object: this.data.items,
         type: 'add',
@@ -73,12 +98,36 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
-
+  // The length of the list.
   length: function() {
     return this.get('items.length');
   },
 
+  // Pop an item off the end of the list.
+  // Returns the item.
+  pop: function(options) {
+    var l = this.length(), value;
 
+    if(!l) return;
+
+    this._trackMutations(options, function() {
+      var change = {
+        name: l,
+        object: this.data.items,
+        type: 'delete',
+        value: undefined,
+      };
+
+      change.oldValue = value = this.data.items.pop();
+
+      return change;
+    }.bind(this));
+
+    return value;
+  },
+
+  // Add an item to the end of the list.
+  // Returns the list.
   push: function(value, options) {
     return this._trackMutations(options, function(){
       var change = {
@@ -95,31 +144,36 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
-
+  // Remove a specific index from the list.
+  // Returns the removed item.
   remove: function(key, options) {
-    var idx = this._normalizedIndex(key);
 
-    return this._trackMutations(options, function(){
-      var change = {
+    var value;
+
+    this._trackMutations(options, function(){
+      var idx = this._normalizedIndex(key),
+      change = {
         name: String(idx),
         object: this.data.items,
-        type: 'delete',
-        oldValue: this.data.items[idx],
-        value: undefined
+        type: 'delete'
       };
 
+      change.oldValue = value = this.data.items[idx];
       this.data.items.splice(idx, 1);
+      change.value = this.data.items[idx];
 
       return change;
     }.bind(this));
+
+    return value;
   },
 
-
+  // Set an attribute or an index based on `key` to `value`.
   set: function(key, value, options) {
     var idx = this._normalizedIndex(key);
 
     if(isNaN(idx)) {
-      return pie.model.prototype.set.call(this, key, value, options);
+      return this._super(key, value, options);
     }
 
     return this._trackMutations(options, function(){
@@ -136,23 +190,13 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
-
+  // Pop an item off the front of the list.
+  // Returns the removed item.
   shift: function(options) {
-    return this._trackMutations(options, function(){
-      var change = {
-        name: '0',
-        object: this.data.items,
-        type: 'delete'
-      };
-
-      change.oldValue = this.data.items.shift();
-      change.value = this.data.items[0];
-
-      return change;
-    }.bind(this));
+    return this.remove(0, options);
   },
 
-
+  // Insert an item at the beginning of the list.
   unshift: function(value, options) {
     return this.insert(0, value, options);
   }

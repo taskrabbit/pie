@@ -1,4 +1,6 @@
-// made to be used as an instance so multiple translations could exist if we so choose.
+// # Pie i18n
+// The i18n class is in charge of the defining and lookup of translations, the
+// defining and lookup of date formats, and the standardization of "word" things.
 pie.i18n = pie.model.extend('i18n', {
 
   init: function(app, options) {
@@ -44,7 +46,7 @@ pie.i18n = pie.model.extend('i18n', {
   },
 
 
-  // assumes that dates either come in as dates, iso strings, or epoch timestamps
+  /* assumes that dates either come in as dates, iso strings, or epoch timestamps */
   _normalizedDate: function(d) {
     if(String(d).match(/^\d+$/)) {
       d = parseInt(d, 10);
@@ -53,7 +55,7 @@ pie.i18n = pie.model.extend('i18n', {
     } else if(pie.object.isString(d)) {
       d = pie.date.timeFromISO(d);
     } else {
-      // let the system parse
+      /* let the system parse */
       d = new Date(d);
     }
     return d;
@@ -104,18 +106,39 @@ pie.i18n = pie.model.extend('i18n', {
 
   keyCheck: /^\.(.+)$/,
 
+  // If the provided `key` looks like a translation key, prepended with a ".",
+  // try to look it up. If it does not or the provided key does not exist, return
+  // the provided key.
+  // ```
+  // i18n.attempt('.foo.bar.baz')
+  // ```
   attempt: function(key) {
     var m = key && key.match(this.keyCheck);
     if(!m) return key;
     return this.t(m[1], {default: key});
   },
 
+  // Load translations into this instance.
+  // By default, a deep merge will occur, provide `false` for `shallow`
+  // if you would like a shallow merge to occur.
+  // ```
+  // i18n.load({foo: 'Bar %{baz}'});
+  // ```
   load: function(data, shallow) {
     var f = shallow ? pie.object.merge : pie.object.deepMerge;
     f.call(null, this.data, data);
   },
 
-
+  // Given a `path`, look up a translation.
+  // If the second argument `data` is provided, the `data` will be
+  // interpolated into the translation before returning.
+  // Arguments 3+ are string modification methods as defined by `pie.string`.
+  // `translate` is aliased as `t`.
+  // ```
+  // //=> Assuming 'foo.path' is defined as "This is %{name}"
+  // i18n.t('foo.path', {name: 'Bar'}, 'pluralize', 'upcase')
+  // //=> "THIS IS BAR'S"
+  // ```
   translate: function(/* path, data, stringChange1, stringChange2 */) {
     var changes = pie.array.from(arguments),
     path = changes.shift(),
@@ -153,7 +176,22 @@ pie.i18n = pie.model.extend('i18n', {
     return translation;
   },
 
-
+  // Return a human representation of the time since the provided time `t`.
+  // You can also pass an alternate "relative to" time as the second argument.
+  // ```
+  // d.setDate(d.getDate() - 4);
+  // i18n.timeago(d)
+  // //=> "4 days ago"
+  //
+  // d.setDate(d.getDate() - 7);
+  // i18n.timeago(d)
+  // //=> "1 week ago"
+  //
+  // d.setDate(d.getDate() - 90);
+  // d2.setDate(d.getDate() + 2);
+  // i18n.timeago(d, d2)
+  // //=> "2 days ago"
+  // ```
   timeago: function(t, now, scope) {
     t = this._normalizedDate(t).getTime()  / 1000;
     now = this._normalizedDate(now || new Date()).getTime() / 1000;
@@ -185,12 +223,22 @@ pie.i18n = pie.model.extend('i18n', {
     }
   },
 
-  // pass in the date instance and the string 'format'
+  // Given a `date`, format it based on the format `f`.
+  // The format can be:
+  //   * A named format, existing at app.time.formats.X
+  //   * A custom format following the guidelines of ruby's strftime
+  //
+  // *Ruby's strftime: http://ruby-doc.org/core-2.2.0/Time.html#method-i-strftime*
+  //
+  // ```
+  // i18n.d(date, 'short');
+  // i18n.d(date, '%Y-%m');
+  // ```
   strftime: function(date, f) {
     date = this._normalizedDate(date);
 
-    // named format from translations.time.
-    if(!~f.indexOf('%')) f = this.t('app.time.formats.' + f);
+    /* named format from translations.time. */
+    if(!~f.indexOf('%')) f = this.t('app.time.formats.' + f, {"default" : f});
 
     var weekDay           = date.getDay(),
         day               = date.getDate(),
@@ -241,6 +289,7 @@ pie.i18n = pie.model.extend('i18n', {
   },
 });
 
+// Aliases
 pie.i18n.prototype.t = pie.i18n.prototype.translate;
 pie.i18n.prototype.l = pie.i18n.prototype.strftime;
 
@@ -249,36 +298,36 @@ pie.i18n.defaultTranslations = {
     timeago: {
       now: "just now",
       minutes: {
-        one: "%{count} minute ago",
-        other: "%{count} minutes ago"
+        one:    "%{count} minute ago",
+        other:  "%{count} minutes ago"
       },
       hours: {
-        one: "%{count} hour ago",
-        other: "%{count} hours ago"
+        one:    "%{count} hour ago",
+        other:  "%{count} hours ago"
       },
       days: {
-        one: "%{count} day ago",
-        other: "%{count} days ago"
+        one:    "%{count} day ago",
+        other:  "%{count} days ago"
       },
       weeks: {
-        one: "%{count} week ago",
-        other: "%{count} weeks ago"
+        one:    "%{count} week ago",
+        other:  "%{count} weeks ago"
       },
       months: {
-        one: "%{count} month ago",
-        other: "%{count} months ago"
+        one:    "%{count} month ago",
+        other:  "%{count} months ago"
       },
       years: {
-        one: "%{count} year ago",
-        other: "%{count} years ago"
+        one:    "%{count} year ago",
+        other:  "%{count} years ago"
       }
     },
     time: {
       formats: {
-        isoDate: '%Y-%m-%d',
-        isoTime: '%Y-%m-%dT%H:%M:%S.%L%:z',
-        shortDate: '%m/%d/%Y',
-        longDate: '%B %-do, %Y'
+        isoDate:    '%Y-%m-%d',
+        isoTime:    '%Y-%m-%dT%H:%M:%S.%L%:z',
+        shortDate:  '%m/%d/%Y',
+        longDate:   '%B %-do, %Y'
       },
       meridiems: {
         am: 'am',
@@ -346,20 +395,20 @@ pie.i18n.defaultTranslations = {
 
     validations: {
 
-      ccNumber: "does not look like a credit card number",
-      ccSecurity: "is not a valid security code",
-      ccExpirationMonth: "is not a valid expiration month",
-      ccExpirationYear: "is not a valid expiration year",
-      chosen:   "must be chosen",
-      date:     "is not a valid date",
-      email:    "must be a valid email",
-      format:   "is invalid",
-      integer:  "must be an integer",
-      length:   "length must be",
-      number:   "must be a number",
-      phone:    "is not a valid phone number",
-      presence: "can't be blank",
-      url:      "must be a valid url",
+      ccNumber:           "does not look like a credit card number",
+      ccSecurity:         "is not a valid security code",
+      ccExpirationMonth:  "is not a valid expiration month",
+      ccExpirationYear:   "is not a valid expiration year",
+      chosen:             "must be chosen",
+      date:               "is not a valid date",
+      email:              "must be a valid email",
+      format:             "is invalid",
+      integer:            "must be an integer",
+      length:             "length must be",
+      number:             "must be a number",
+      phone:              "is not a valid phone number",
+      presence:           "can't be blank",
+      url:                "must be a valid url",
 
       range_messages: {
         eq:  "equal to %{count}",

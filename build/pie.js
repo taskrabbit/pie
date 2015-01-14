@@ -1166,7 +1166,7 @@ pie.string.urlConcat = function() {
 
   // we replace all question marks in the query with &
   if(query.indexOf('?') === 0) query = query.replace('?', '&');
-  else query = '&' + query;
+  else if(query.indexOf('&') !== 0) query = '&' + query;
 
   base += query;
   base = base.replace('?&', '?').replace('&&', '&').replace('??', '?');
@@ -2510,16 +2510,16 @@ pie.model = pie.base.extend('model', {
     this.observe(wrap, props);
     this.observations[wrap.pieId].computed = true;
 
-    // Initialize the computed properties value immediately.
+    /* Initialize the computed properties value immediately. */
     this.set(name, fn.call(this));
   },
 
 
-  // After updates have been made we deliver our change records to our observers
+  /* After updates have been made we deliver our change records to our observers */
   deliverChangeRecords: function() {
     if(!this.changeRecords.length) return this;
 
-    // This is where the version tracking is incremented.
+    /* This is where the version tracking is incremented. */
     this.trackVersion();
 
 
@@ -2532,23 +2532,23 @@ pie.model = pie.base.extend('model', {
     },
     o, idx;
 
-    // We modify the `changeSet` array with the `pie.mixins.changeSet`.
+    /* We modify the `changeSet` array with the `pie.mixins.changeSet`. */
     pie.object.merge(changeSet, pie.mixins.changeSet);
 
 
-    // Deliver change records to all computed properties first.
-    // This will ensure that the change records include the computed property changes
-    // along with the original property changes.
+    /* Deliver change records to all computed properties first. */
+    /* This will ensure that the change records include the computed property changes */
+    /* along with the original property changes. */
     while(~(idx = pie.array.indexOf(observers, 'computed'))) {
       o = observers[idx];
       observers.splice(idx, 1);
       invoker(o);
     }
 
-    // Now we reset the changeRecords on this model.
+    /* Now we reset the changeRecords on this model. */
     this.changeRecords = [];
 
-    // And deliver the changeSet to each observer.
+    /* And deliver the changeSet to each observer. */
     observers.forEach(invoker);
 
     return this;
@@ -2625,7 +2625,7 @@ pie.model = pie.base.extend('model', {
     var keys = pie.array.change(arguments, 'from', 'flatten'),
     fn = keys.shift();
 
-    // Setting the uid is needed because we'll want to manage unobservation effectively.
+    /* Setting the uid is needed because we'll want to manage unobservation effectively. */
     pie.setUid(fn);
 
 
@@ -2679,7 +2679,7 @@ pie.model = pie.base.extend('model', {
       change.type = 'update';
       change.oldValue = pie.object.getPath(this.data, key);
 
-      // If we haven't actually changed, don't bother doing anything.
+      /* If we haven't actually changed, don't bother doing anything. */
       if((!options || !options.force) && value === change.oldValue) return this;
     }
 
@@ -2693,23 +2693,23 @@ pie.model = pie.base.extend('model', {
 
     change.value = value;
 
-    // If we are "unsetting" the value, delete the path from `this.data`.
+    /* If we are "unsetting" the value, delete the path from `this.data`. */
     if(value === undefined) {
       pie.object.deletePath(this.data, key, deleteRecursive);
       change.type = 'delete';
 
-    // Otherwise, we set the value within `this.data`.
+    /* Otherwise, we set the value within `this.data`. */
     } else {
       pie.object.setPath(this.data, key, value);
       change.type = change.type || 'add';
     }
 
-    // Add the change to the `changeRecords`.
+    /* Add the change to the `changeRecords`. */
     this.changeRecords.push(change);
 
-    // Compile subpath change records.
-    // Subpath change records have the same structure but for performance reasons the
-    // oldValue & value are the sets of the keys rather than the object itself.
+    /* Compile subpath change records. */
+    /* Subpath change records have the same structure but for performance reasons the */
+    /* oldValue & value are the sets of the keys rather than the object itself. */
     if(steps) {
       steps.forEach(function(step) {
         oldKeys = step[1];
@@ -2717,14 +2717,14 @@ pie.model = pie.base.extend('model', {
 
         o = this.get(step);
 
-        // If we deleted the end of the branch,
-        // we may have deleted the object itself.
+        /* If we deleted the end of the branch, */
+        /* we may have deleted the object itself. */
         if(change.type === 'delete') {
           type = o ? 'update' : 'delete';
-        // If there are no old keys, we are new.
+        /* If there are no old keys, we are new. */
         } else if(!oldKeys) {
           type = 'add';
-        // Otherwise, we just updated.
+        /* Otherwise, we just updated. */
         } else {
           type = 'update';
         }
@@ -2759,12 +2759,15 @@ pie.model = pie.base.extend('model', {
   },
 
   // Increment the `_version` of this model.
+  // Observers are skipped since this is invoked while change records are delivered.
   trackVersion: function() {
     this.set('_version', this.get('_version') + 1, {skipObservers: true});
   },
 
 
   // Unregister an observer. Optionally for specific keys.
+  // If a subset of the original keys are provided it will only unregister
+  // for those provided.
   unobserve: function(/* fn[, key1, key2, key3] */) {
     var keys = pie.array.from(arguments),
     fn = keys.shift(),
@@ -3573,6 +3576,10 @@ pie.formView = pie.activeView.extend('formView', {
   }
 
 }, pie.mixins.bindings);
+// Pie Helpers
+// A registry for template helpers.
+// Any helper function register here will be available in the
+// templates rendered by the associated app's `templates` object.
 pie.helpers = pie.model.extend('helpers', {
 
   init: function(app) {
@@ -3589,17 +3596,21 @@ pie.helpers = pie.model.extend('helpers', {
     this.register('get', pie.object.getPath);
   },
 
+  // Register a function to be available in templates.
   register: function(name, fn) {
     if(!this[name]) this[name] = fn;
     return this.set(name, fn);
   },
 
+  // Provide the functions which should be available in templates.
   provide: function() {
     return this.data;
   }
 
 });
-// made to be used as an instance so multiple translations could exist if we so choose.
+// # Pie i18n
+// The i18n class is in charge of the defining and lookup of translations, the
+// defining and lookup of date formats, and the standardization of "word" things.
 pie.i18n = pie.model.extend('i18n', {
 
   init: function(app, options) {
@@ -3645,7 +3656,7 @@ pie.i18n = pie.model.extend('i18n', {
   },
 
 
-  // assumes that dates either come in as dates, iso strings, or epoch timestamps
+  /* assumes that dates either come in as dates, iso strings, or epoch timestamps */
   _normalizedDate: function(d) {
     if(String(d).match(/^\d+$/)) {
       d = parseInt(d, 10);
@@ -3654,7 +3665,7 @@ pie.i18n = pie.model.extend('i18n', {
     } else if(pie.object.isString(d)) {
       d = pie.date.timeFromISO(d);
     } else {
-      // let the system parse
+      /* let the system parse */
       d = new Date(d);
     }
     return d;
@@ -3705,18 +3716,39 @@ pie.i18n = pie.model.extend('i18n', {
 
   keyCheck: /^\.(.+)$/,
 
+  // If the provided `key` looks like a translation key, prepended with a ".",
+  // try to look it up. If it does not or the provided key does not exist, return
+  // the provided key.
+  // ```
+  // i18n.attempt('.foo.bar.baz')
+  // ```
   attempt: function(key) {
     var m = key && key.match(this.keyCheck);
     if(!m) return key;
     return this.t(m[1], {default: key});
   },
 
+  // Load translations into this instance.
+  // By default, a deep merge will occur, provide `false` for `shallow`
+  // if you would like a shallow merge to occur.
+  // ```
+  // i18n.load({foo: 'Bar %{baz}'});
+  // ```
   load: function(data, shallow) {
     var f = shallow ? pie.object.merge : pie.object.deepMerge;
     f.call(null, this.data, data);
   },
 
-
+  // Given a `path`, look up a translation.
+  // If the second argument `data` is provided, the `data` will be
+  // interpolated into the translation before returning.
+  // Arguments 3+ are string modification methods as defined by `pie.string`.
+  // `translate` is aliased as `t`.
+  // ```
+  // //=> Assuming 'foo.path' is defined as "This is %{name}"
+  // i18n.t('foo.path', {name: 'Bar'}, 'pluralize', 'upcase')
+  // //=> "THIS IS BAR'S"
+  // ```
   translate: function(/* path, data, stringChange1, stringChange2 */) {
     var changes = pie.array.from(arguments),
     path = changes.shift(),
@@ -3754,7 +3786,22 @@ pie.i18n = pie.model.extend('i18n', {
     return translation;
   },
 
-
+  // Return a human representation of the time since the provided time `t`.
+  // You can also pass an alternate "relative to" time as the second argument.
+  // ```
+  // d.setDate(d.getDate() - 4);
+  // i18n.timeago(d)
+  // //=> "4 days ago"
+  //
+  // d.setDate(d.getDate() - 7);
+  // i18n.timeago(d)
+  // //=> "1 week ago"
+  //
+  // d.setDate(d.getDate() - 90);
+  // d2.setDate(d.getDate() + 2);
+  // i18n.timeago(d, d2)
+  // //=> "2 days ago"
+  // ```
   timeago: function(t, now, scope) {
     t = this._normalizedDate(t).getTime()  / 1000;
     now = this._normalizedDate(now || new Date()).getTime() / 1000;
@@ -3786,12 +3833,22 @@ pie.i18n = pie.model.extend('i18n', {
     }
   },
 
-  // pass in the date instance and the string 'format'
+  // Given a `date`, format it based on the format `f`.
+  // The format can be:
+  //   * A named format, existing at app.time.formats.X
+  //   * A custom format following the guidelines of ruby's strftime
+  //
+  // *Ruby's strftime: http://ruby-doc.org/core-2.2.0/Time.html#method-i-strftime*
+  //
+  // ```
+  // i18n.d(date, 'short');
+  // i18n.d(date, '%Y-%m');
+  // ```
   strftime: function(date, f) {
     date = this._normalizedDate(date);
 
-    // named format from translations.time.
-    if(!~f.indexOf('%')) f = this.t('app.time.formats.' + f);
+    /* named format from translations.time. */
+    if(!~f.indexOf('%')) f = this.t('app.time.formats.' + f, {"default" : f});
 
     var weekDay           = date.getDay(),
         day               = date.getDate(),
@@ -3842,6 +3899,7 @@ pie.i18n = pie.model.extend('i18n', {
   },
 });
 
+// Aliases
 pie.i18n.prototype.t = pie.i18n.prototype.translate;
 pie.i18n.prototype.l = pie.i18n.prototype.strftime;
 
@@ -3850,36 +3908,36 @@ pie.i18n.defaultTranslations = {
     timeago: {
       now: "just now",
       minutes: {
-        one: "%{count} minute ago",
-        other: "%{count} minutes ago"
+        one:    "%{count} minute ago",
+        other:  "%{count} minutes ago"
       },
       hours: {
-        one: "%{count} hour ago",
-        other: "%{count} hours ago"
+        one:    "%{count} hour ago",
+        other:  "%{count} hours ago"
       },
       days: {
-        one: "%{count} day ago",
-        other: "%{count} days ago"
+        one:    "%{count} day ago",
+        other:  "%{count} days ago"
       },
       weeks: {
-        one: "%{count} week ago",
-        other: "%{count} weeks ago"
+        one:    "%{count} week ago",
+        other:  "%{count} weeks ago"
       },
       months: {
-        one: "%{count} month ago",
-        other: "%{count} months ago"
+        one:    "%{count} month ago",
+        other:  "%{count} months ago"
       },
       years: {
-        one: "%{count} year ago",
-        other: "%{count} years ago"
+        one:    "%{count} year ago",
+        other:  "%{count} years ago"
       }
     },
     time: {
       formats: {
-        isoDate: '%Y-%m-%d',
-        isoTime: '%Y-%m-%dT%H:%M:%S.%L%:z',
-        shortDate: '%m/%d/%Y',
-        longDate: '%B %-do, %Y'
+        isoDate:    '%Y-%m-%d',
+        isoTime:    '%Y-%m-%dT%H:%M:%S.%L%:z',
+        shortDate:  '%m/%d/%Y',
+        longDate:   '%B %-do, %Y'
       },
       meridiems: {
         am: 'am',
@@ -3947,20 +4005,20 @@ pie.i18n.defaultTranslations = {
 
     validations: {
 
-      ccNumber: "does not look like a credit card number",
-      ccSecurity: "is not a valid security code",
-      ccExpirationMonth: "is not a valid expiration month",
-      ccExpirationYear: "is not a valid expiration year",
-      chosen:   "must be chosen",
-      date:     "is not a valid date",
-      email:    "must be a valid email",
-      format:   "is invalid",
-      integer:  "must be an integer",
-      length:   "length must be",
-      number:   "must be a number",
-      phone:    "is not a valid phone number",
-      presence: "can't be blank",
-      url:      "must be a valid url",
+      ccNumber:           "does not look like a credit card number",
+      ccSecurity:         "is not a valid security code",
+      ccExpirationMonth:  "is not a valid expiration month",
+      ccExpirationYear:   "is not a valid expiration year",
+      chosen:             "must be chosen",
+      date:               "is not a valid date",
+      email:              "must be a valid email",
+      format:             "is invalid",
+      integer:            "must be an integer",
+      length:             "length must be",
+      number:             "must be a number",
+      phone:              "is not a valid phone number",
+      presence:           "can't be blank",
+      url:                "must be a valid url",
 
       range_messages: {
         eq:  "equal to %{count}",
@@ -3972,6 +4030,14 @@ pie.i18n.defaultTranslations = {
     }
   }
 };
+// # Pie List
+// A model representing a list. Essentially an array wrapper.
+// List models provide observation for:
+//   * The entire list
+//   * Specific indexes
+//   * Length of the list
+//   * Any other key not related to the list.
+
 pie.list = pie.model.extend('list', {
 
   init: function(array, options) {
@@ -3980,6 +4046,14 @@ pie.list = pie.model.extend('list', {
   },
 
 
+  // Converts a potential index into the numeric form.
+  // If the index is negative, it should represent the index from the end of the current list.
+  // ```
+  // // assuming a list length of 3
+  // list._normalizeIndex('foo') //=> 'foo'
+  // list._normalizeIndex('4') //=> 4
+  // list._normalizeIndex(-1) //=> 2
+  // ```
   _normalizedIndex: function(wanted) {
     wanted = parseInt(wanted, 10);
     if(!isNaN(wanted) && wanted < 0) wanted += this.data.items.length;
@@ -3987,6 +4061,7 @@ pie.list = pie.model.extend('list', {
   },
 
 
+  // Track changes to the array which occur during `fn`'s execution.
   _trackMutations: function(options, fn) {
     var oldLength = this.data.items.length,
     changes = [fn.call()],
@@ -4009,11 +4084,15 @@ pie.list = pie.model.extend('list', {
   },
 
 
+
+  // Iterate the list, calling `f` with each item.
   forEach: function(f) {
     return this.get('items').forEach(f);
   },
 
 
+  // Get an item at a specific index.
+  // `key` can be any valid input to `_normalizeIndex`.
   get: function(key) {
     var idx = this._normalizedIndex(key), path;
 
@@ -4024,16 +4103,20 @@ pie.list = pie.model.extend('list', {
   },
 
 
+  // Find the index of a specific value.
+  // Uses the standard array equality check for indexOf.
   indexOf: function(value) {
     return this.get('items').indexOf(value);
   },
 
 
+  // Insert `value` at the index specified by `key`.
+  // Returns the list.
   insert: function(key, value, options) {
-    var idx = this._normalizedIndex(key);
-
     return this._trackMutations(options, function(){
-      var change = {
+
+      var idx = this._normalizedIndex(key),
+      change = {
         name: String(idx),
         object: this.data.items,
         type: 'add',
@@ -4047,12 +4130,36 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
-
+  // The length of the list.
   length: function() {
     return this.get('items.length');
   },
 
+  // Pop an item off the end of the list.
+  // Returns the item.
+  pop: function(options) {
+    var l = this.length(), value;
 
+    if(!l) return;
+
+    this._trackMutations(options, function() {
+      var change = {
+        name: l,
+        object: this.data.items,
+        type: 'delete',
+        value: undefined,
+      };
+
+      change.oldValue = value = this.data.items.pop();
+
+      return change;
+    }.bind(this));
+
+    return value;
+  },
+
+  // Add an item to the end of the list.
+  // Returns the list.
   push: function(value, options) {
     return this._trackMutations(options, function(){
       var change = {
@@ -4069,31 +4176,36 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
-
+  // Remove a specific index from the list.
+  // Returns the removed item.
   remove: function(key, options) {
-    var idx = this._normalizedIndex(key);
 
-    return this._trackMutations(options, function(){
-      var change = {
+    var value;
+
+    this._trackMutations(options, function(){
+      var idx = this._normalizedIndex(key),
+      change = {
         name: String(idx),
         object: this.data.items,
-        type: 'delete',
-        oldValue: this.data.items[idx],
-        value: undefined
+        type: 'delete'
       };
 
+      change.oldValue = value = this.data.items[idx];
       this.data.items.splice(idx, 1);
+      change.value = this.data.items[idx];
 
       return change;
     }.bind(this));
+
+    return value;
   },
 
-
+  // Set an attribute or an index based on `key` to `value`.
   set: function(key, value, options) {
     var idx = this._normalizedIndex(key);
 
     if(isNaN(idx)) {
-      return pie.model.prototype.set.call(this, key, value, options);
+      return this._super(key, value, options);
     }
 
     return this._trackMutations(options, function(){
@@ -4110,27 +4222,21 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
-
+  // Pop an item off the front of the list.
+  // Returns the removed item.
   shift: function(options) {
-    return this._trackMutations(options, function(){
-      var change = {
-        name: '0',
-        object: this.data.items,
-        type: 'delete'
-      };
-
-      change.oldValue = this.data.items.shift();
-      change.value = this.data.items[0];
-
-      return change;
-    }.bind(this));
+    return this.remove(0, options);
   },
 
-
+  // Insert an item at the beginning of the list.
   unshift: function(value, options) {
     return this.insert(0, value, options);
   }
 });
+// # Pie Navigator
+// The navigator is in charge of observing browser navigation and updating it's data.
+// It's also the place to conduct push/replaceState history changes.
+// The navigator is simply a model, enabling observation, computed values, etc.
 pie.navigator = pie.model.extend('navigator', {
 
   init: function(app) {
@@ -4138,6 +4244,12 @@ pie.navigator = pie.model.extend('navigator', {
     this._super({});
   },
 
+  // Go to `path`, appending `params`.
+  // If `replace` is true replaceState will be used in favor of pushState.
+  // If no changes are made, nothing will happen.
+  // ```
+  // navigator.go('/foo/bar', {page: 2});
+  // //=> pushState: '/foo/bar?page=2'
   go: function(path, params, replace) {
     var url = path;
 
@@ -4148,31 +4260,34 @@ pie.navigator = pie.model.extend('navigator', {
     }
 
     if(Object.keys(params).length) {
-      url += '?';
-      url += pie.object.serialize(params);
+      url = pie.string.urlConcat(url, pie.object.serialize(params));
     }
 
     window.history[replace ? 'replaceState' : 'pushState']({}, document.title, url);
     window.historyObserver();
   },
 
-
+  // Setup the navigator and initialize the data.
   start: function() {
+    /* we can only have one per browser. Multiple apps should observe pieHistoryChang on the body */
     if(!window.historyObserver) {
       window.historyObserver = function() {
-        pie.dom.trigger(window, 'pieHistoryChange');
+        pie.dom.trigger(document.body, 'pieHistoryChange');
       };
     }
-
+    /* observe popstate and invoke our single history observer */
     pie.dom.on(window, 'popstate', function() {
       window.historyObserver();
     });
 
-    pie.dom.on(window, 'pieHistoryChange.nav-' + this.pieId, this.setDataFromLocation.bind(this));
+    /* subscribe this navigator to the global history event */
+    pie.dom.on(document.body, 'pieHistoryChange.nav-' + this.pieId, this.setDataFromLocation.bind(this));
 
     return this.setDataFromLocation();
   },
 
+  // Look at `window.location` and transform it into stuff we care about.
+  // Set the data on this navigator object.
   setDataFromLocation: function() {
     var stringQuery = window.location.search.slice(1),
     query = pie.string.deserialize(stringQuery);

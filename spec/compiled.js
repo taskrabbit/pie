@@ -2277,7 +2277,7 @@ describe("pie.list", function() {
         expect(this.changes[0].type).toEqual('delete');
         expect(this.changes[0].name).toEqual('1');
         expect(this.changes[0].oldValue).toEqual('b');
-        expect(this.changes[0].value).toEqual(undefined);
+        expect(this.changes[0].value).toEqual('c');
 
         expect(this.changes[1].type).toEqual('update');
         expect(this.changes[1].name).toEqual('length');
