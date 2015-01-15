@@ -3055,7 +3055,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     options = pie.object.merge({}, options);
 
-    ['complete', 'dataSuccess', 'error', 'success'].forEach(function(n){
+    ['setup', 'complete', 'dataSuccess', 'error', 'extraError', 'progress', 'success', 'uploadProgress'].forEach(function(n){
       if(options[n]) {
 
         pie.array.from(options[n]).forEach(function(fn){

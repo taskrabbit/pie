@@ -5518,7 +5518,7 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
     options = pie.object.merge({}, options);
 
-    [<span class="hljs-string">'complete'</span>, <span class="hljs-string">'dataSuccess'</span>, <span class="hljs-string">'error'</span>, <span class="hljs-string">'success'</span>].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(n)</span></span>{
+    [<span class="hljs-string">'setup'</span>, <span class="hljs-string">'complete'</span>, <span class="hljs-string">'dataSuccess'</span>, <span class="hljs-string">'error'</span>, <span class="hljs-string">'extraError'</span>, <span class="hljs-string">'progress'</span>, <span class="hljs-string">'success'</span>, <span class="hljs-string">'uploadProgress'</span>].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(n)</span></span>{
       <span class="hljs-keyword">if</span>(options[n]) {
 
         pie.array.from(options[n]).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span></span>{
