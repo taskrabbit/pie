@@ -414,7 +414,7 @@ pie.mixins.bindings = (function(){
         }
       }.bind(this));
 
-      pie.object.forEach(function(id, m) {
+      pie.object.forEach(models, function(id, m) {
         m.deliverChangeRecords();
       });
 

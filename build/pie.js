@@ -1589,7 +1589,7 @@ pie.mixins.bindings = (function(){
         }
       }.bind(this));
 
-      pie.object.forEach(function(id, m) {
+      pie.object.forEach(models, function(id, m) {
         m.deliverChangeRecords();
       });
 
@@ -1612,28 +1612,17 @@ pie.mixins.changeSet = {
   },
 
   hasAny: function() {
-    var known = this.names(),
-    wanted = pie.array.from(arguments);
-
-    return pie.array.areAny(wanted, function(name) {
-      return !!~known.indexOf(name);
-    });
+    for(var i = 0; i < arguments.length; i++) {
+      if(this.has(arguments[i])) return true;
+    }
+    return false;
   },
 
   hasAll: function() {
-    var known = this.names(),
-    wanted = pie.array.from(arguments);
-    return pie.array.areAll(wanted, function(name) {
-      return !!~known.indexOf(name);
-    });
-  },
-
-  last: function() {
-    return pie.array.last(this);
-  },
-
-  names: function() {
-    return pie.array.unique(pie.array.map(this, 'name'));
+    for(var i = 0; i < arguments.length; i++) {
+      if(!this.has(arguments[i])) return false;
+    }
+    return true;
   }
 
 };
@@ -1830,7 +1819,10 @@ pie.mixins.validatable = {
       this.validations[k] = this.validations[k] || [];
       this.validations[k] = this.validations[k].concat(resultConfigs);
 
-      this.observe(this.validationChangeObserver.bind(this), k);
+      this.observe(function(changes){
+        var change = changes.get(k);
+        return this.validationChangeObserver(change);
+      }.bind(this), k);
 
     }.bind(this));
 
@@ -1871,8 +1863,7 @@ pie.mixins.validatable = {
   },
 
 
-  validationChangeObserver: function(changes) {
-    var change = changes[0];
+  validationChangeObserver: function(change) {
     if(this.validationStrategy === 'validate') {
       this.validate(change.name);
     } else if(this.validationStrategy === 'dirty') {
@@ -2481,6 +2472,7 @@ pie.model = pie.base.extend('model', {
     this.app = this.app || this.options.app || pie.appInstance;
     this.observations = {};
     this.changeRecords = [];
+    this.deliveringRecords = 0;
   },
 
 
@@ -2518,6 +2510,7 @@ pie.model = pie.base.extend('model', {
   /* After updates have been made we deliver our change records to our observers */
   deliverChangeRecords: function() {
     if(!this.changeRecords.length) return this;
+    if(this.deliveringRecords) return this;
 
     /* This is where the version tracking is incremented. */
     this.trackVersion();
@@ -2548,10 +2541,18 @@ pie.model = pie.base.extend('model', {
     /* Now we reset the changeRecords on this model. */
     this.changeRecords = [];
 
+    /* We increment our deliveringRecords flag to ensure records are delivered in the correct order */
+    this.deliveringRecords++;
+
     /* And deliver the changeSet to each observer. */
     observers.forEach(invoker);
 
+    /* Now we can decrement our deliveringRecords flag and attempt to deliver any leftover records */
+    this.deliveringRecords--;
+    this.deliverChangeRecords();
+
     return this;
+
   },
 
   // Access the value stored at data[key]
@@ -3769,16 +3770,31 @@ pie.formView = pie.activeView.extend('formView', {
   onValid: function(form) {
     this.prepareSubmissionData(function(data) {
 
-      app.ajax.ajax(pie.object.merge({
-        url: form.getAttribute('action'),
-        verb: form.getAttribute('method') || 'post',
-        data: data,
-        extraError: this._onFailure.bind(this),
-        success: this._onSuccess.bind(this)
-      }, this.options.ajax));
+      this.performSubmit(form, data, function(bool, data) {
+
+        if(bool) {
+          this._onSuccess(data);
+        } else {
+          this._onFailure(data);
+        }
+      }.bind(this));
 
     }.bind(this));
 
+  },
+
+  performSubmit: function(form, data, cb) {
+    app.ajax.ajax(pie.object.merge({
+      url: form.getAttribute('action'),
+      verb: form.getAttribute('method') || 'post',
+      data: data,
+      dataSuccess: function(d){
+        cb(true, d);
+      },
+      extraError: function(xhr) {
+        cb(false, xhr.data);
+      }
+    }, this.options.ajax));
   },
 
   /* for the inheriting class to override. */

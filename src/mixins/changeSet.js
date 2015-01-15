@@ -13,28 +13,17 @@ pie.mixins.changeSet = {
   },
 
   hasAny: function() {
-    var known = this.names(),
-    wanted = pie.array.from(arguments);
-
-    return pie.array.areAny(wanted, function(name) {
-      return !!~known.indexOf(name);
-    });
+    for(var i = 0; i < arguments.length; i++) {
+      if(this.has(arguments[i])) return true;
+    }
+    return false;
   },
 
   hasAll: function() {
-    var known = this.names(),
-    wanted = pie.array.from(arguments);
-    return pie.array.areAll(wanted, function(name) {
-      return !!~known.indexOf(name);
-    });
-  },
-
-  last: function() {
-    return pie.array.last(this);
-  },
-
-  names: function() {
-    return pie.array.unique(pie.array.map(this, 'name'));
+    for(var i = 0; i < arguments.length; i++) {
+      if(!this.has(arguments[i])) return false;
+    }
+    return true;
   }
 
 };

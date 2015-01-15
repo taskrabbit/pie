@@ -2839,7 +2839,7 @@ with our model values.</p>
         }
       }.bind(<span class="hljs-keyword">this</span>));
 
-      pie.object.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(id, m)</span> </span>{
+      pie.object.forEach(models, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(id, m)</span> </span>{
         m.deliverChangeRecords();
       });
 
@@ -2862,28 +2862,17 @@ pie.mixins.changeSet = {
   },
 
   hasAny: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> known = <span class="hljs-keyword">this</span>.names(),
-    wanted = pie.array.from(<span class="hljs-built_in">arguments</span>);
-
-    <span class="hljs-keyword">return</span> pie.array.areAny(wanted, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
-      <span class="hljs-keyword">return</span> !!~known.indexOf(name);
-    });
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">arguments</span>.length; i++) {
+      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.has(<span class="hljs-built_in">arguments</span>[i])) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
   },
 
   hasAll: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> known = <span class="hljs-keyword">this</span>.names(),
-    wanted = pie.array.from(<span class="hljs-built_in">arguments</span>);
-    <span class="hljs-keyword">return</span> pie.array.areAll(wanted, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
-      <span class="hljs-keyword">return</span> !!~known.indexOf(name);
-    });
-  },
-
-  last: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">return</span> pie.array.last(<span class="hljs-keyword">this</span>);
-  },
-
-  names: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">return</span> pie.array.unique(pie.array.map(<span class="hljs-keyword">this</span>, <span class="hljs-string">'name'</span>));
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">arguments</span>.length; i++) {
+      <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.has(<span class="hljs-built_in">arguments</span>[i])) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
   }
 
 };
@@ -3215,7 +3204,10 @@ validates({name: [‘presence’, {format: /[a]/}]})</p>
             <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.validations[k] = <span class="hljs-keyword">this</span>.validations[k] || [];
       <span class="hljs-keyword">this</span>.validations[k] = <span class="hljs-keyword">this</span>.validations[k].concat(resultConfigs);
 
-      <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.validationChangeObserver.bind(<span class="hljs-keyword">this</span>), k);
+      <span class="hljs-keyword">this</span>.observe(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span></span>{
+        <span class="hljs-keyword">var</span> change = changes.get(k);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.validationChangeObserver(change);
+      }.bind(<span class="hljs-keyword">this</span>), k);
 
     }.bind(<span class="hljs-keyword">this</span>));
 
@@ -3280,8 +3272,7 @@ will be invoked.</p>
   },
 
 
-  validationChangeObserver: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span> </span>{
-    <span class="hljs-keyword">var</span> change = changes[<span class="hljs-number">0</span>];
+  validationChangeObserver: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(change)</span> </span>{
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.validationStrategy === <span class="hljs-string">'validate'</span>) {
       <span class="hljs-keyword">this</span>.validate(change.name);
     } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.validationStrategy === <span class="hljs-string">'dirty'</span>) {</pre></div></div>
@@ -4690,6 +4681,7 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
     <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.app || <span class="hljs-keyword">this</span>.options.app || pie.appInstance;
     <span class="hljs-keyword">this</span>.observations = {};
     <span class="hljs-keyword">this</span>.changeRecords = [];
+    <span class="hljs-keyword">this</span>.deliveringRecords = <span class="hljs-number">0</span>;
   },</pre></div></div>
             
         </li>
@@ -4736,6 +4728,7 @@ model.compute(<span class="hljs-string">'displayName'</span>, <span class="hljs-
   <span class="hljs-comment">/* After updates have been made we deliver our change records to our observers */</span>
   deliverChangeRecords: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.changeRecords.length) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.deliveringRecords) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
 
     <span class="hljs-comment">/* This is where the version tracking is incremented. */</span>
     <span class="hljs-keyword">this</span>.trackVersion();
@@ -4766,10 +4759,18 @@ model.compute(<span class="hljs-string">'displayName'</span>, <span class="hljs-
     <span class="hljs-comment">/* Now we reset the changeRecords on this model. */</span>
     <span class="hljs-keyword">this</span>.changeRecords = [];
 
+    <span class="hljs-comment">/* We increment our deliveringRecords flag to ensure records are delivered in the correct order */</span>
+    <span class="hljs-keyword">this</span>.deliveringRecords++;
+
     <span class="hljs-comment">/* And deliver the changeSet to each observer. */</span>
     observers.forEach(invoker);
 
+    <span class="hljs-comment">/* Now we can decrement our deliveringRecords flag and attempt to deliver any leftover records */</span>
+    <span class="hljs-keyword">this</span>.deliveringRecords--;
+    <span class="hljs-keyword">this</span>.deliverChangeRecords();
+
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+
   },</pre></div></div>
             
         </li>
@@ -6672,16 +6673,31 @@ If you’re overriding formView behavior, here’s the general process which is 
   onValid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{
     <span class="hljs-keyword">this</span>.prepareSubmissionData(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data)</span> </span>{
 
-      app.ajax.ajax(pie.object.merge({
-        url: form.getAttribute(<span class="hljs-string">'action'</span>),
-        verb: form.getAttribute(<span class="hljs-string">'method'</span>) || <span class="hljs-string">'post'</span>,
-        data: data,
-        extraError: <span class="hljs-keyword">this</span>._onFailure.bind(<span class="hljs-keyword">this</span>),
-        success: <span class="hljs-keyword">this</span>._onSuccess.bind(<span class="hljs-keyword">this</span>)
-      }, <span class="hljs-keyword">this</span>.options.ajax));
+      <span class="hljs-keyword">this</span>.performSubmit(form, data, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(bool, data)</span> </span>{
+
+        <span class="hljs-keyword">if</span>(bool) {
+          <span class="hljs-keyword">this</span>._onSuccess(data);
+        } <span class="hljs-keyword">else</span> {
+          <span class="hljs-keyword">this</span>._onFailure(data);
+        }
+      }.bind(<span class="hljs-keyword">this</span>));
 
     }.bind(<span class="hljs-keyword">this</span>));
 
+  },
+
+  performSubmit: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form, data, cb)</span> </span>{
+    app.ajax.ajax(pie.object.merge({
+      url: form.getAttribute(<span class="hljs-string">'action'</span>),
+      verb: form.getAttribute(<span class="hljs-string">'method'</span>) || <span class="hljs-string">'post'</span>,
+      data: data,
+      dataSuccess: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span></span>{
+        cb(<span class="hljs-literal">true</span>, d);
+      },
+      extraError: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
+        cb(<span class="hljs-literal">false</span>, xhr.data);
+      }
+    }, <span class="hljs-keyword">this</span>.options.ajax));
   },
 
   <span class="hljs-comment">/* for the inheriting class to override. */</span>

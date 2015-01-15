@@ -72,7 +72,10 @@ pie.mixins.validatable = {
       this.validations[k] = this.validations[k] || [];
       this.validations[k] = this.validations[k].concat(resultConfigs);
 
-      this.observe(this.validationChangeObserver.bind(this), k);
+      this.observe(function(changes){
+        var change = changes.get(k);
+        return this.validationChangeObserver(change);
+      }.bind(this), k);
 
     }.bind(this));
 
@@ -113,8 +116,7 @@ pie.mixins.validatable = {
   },
 
 
-  validationChangeObserver: function(changes) {
-    var change = changes[0];
+  validationChangeObserver: function(change) {
     if(this.validationStrategy === 'validate') {
       this.validate(change.name);
     } else if(this.validationStrategy === 'dirty') {
