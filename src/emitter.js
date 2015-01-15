@@ -7,13 +7,22 @@ pie.emitter = pie.model.extend('emitter', {
     });
   },
 
+  clear: function(eventName) {
+    this.set('eventCallbacks.' + eventName, undefined);
+  },
+
   debug: function(bool) {
     this.isDebugging = bool || bool === undefined;
   },
 
 
-  hasEvent: function(event) {
-    return !!~this.get('triggeredEvents').indexOf(event);
+  hasEvent: function(eventName) {
+    return !!~this.get('triggeredEvents').indexOf(eventName);
+  },
+
+  hasCallback: function(eventName) {
+    var cbs = this.get('eventCallbacks.' + eventName);
+    return !!(cbs && cbs.length);
   },
 
 
@@ -61,25 +70,31 @@ pie.emitter = pie.model.extend('emitter', {
   // trigger an event (string) on the app.
   // any callbacks associated with that event will be invoked with the extra arguments
   fire: function(/* event, arg1, arg2, */) {
-    var args = pie.array.from(arguments),
-    event = args.shift(),
-    callbacks = this.get('eventCallbacks.' + event),
-    compactNeeded = false;
+    var event = arguments[0];
 
-    if(this.isDebugging) this.app.debug(event);
+    if(event) {
 
-    if(callbacks) {
-      callbacks.forEach(function(cb, i) {
-        cb.fn.apply(null, args);
-        if(cb.onceOnly) {
-          compactNeeded = true;
-          callbacks[i] = undefined;
-        }
-      });
+      var args = pie.array.from(arguments).slice(1),
+      callbacks = this.get('eventCallbacks.' + event),
+      compactNeeded = false;
+
+      if(this.isDebugging) this.app.debug(event);
+
+      if(callbacks) {
+        callbacks.forEach(function(cb, i) {
+          cb.fn.apply(null, args);
+          if(cb.onceOnly) {
+            compactNeeded = true;
+            callbacks[i] = undefined;
+          }
+        });
+      }
+
+      if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
     }
 
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
     if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+
   },
 
   fireSequence: function(event, fn) {

@@ -438,6 +438,7 @@ pie.i18n.defaultTranslations = {
       date:               "is not a valid date",
       email:              "must be a valid email",
       format:             "is invalid",
+      inclusion:          "is not a valid value",
       integer:            "must be an integer",
       length:             "length must be",
       number:             "must be a number",

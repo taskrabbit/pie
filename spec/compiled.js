@@ -1176,28 +1176,28 @@ describe("pie.ajax", function() {
     spyOn(this.ajax, 'ajax');
 
     this.ajax.get({"data" : "test"});
-    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "GET", "data" : "test"});
+    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "GET", "data" : "test"}, undefined);
   });
 
   it("post() should invoke ajax() with a POST", function() {
     spyOn(this.ajax, 'ajax');
 
     this.ajax.post({"data" : "test"});
-    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "POST", "data" : "test"});
+    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "POST", "data" : "test"}, undefined);
   });
 
   it("put() should invoke ajax() with a PUT", function() {
     spyOn(this.ajax, 'ajax');
 
     this.ajax.put({"data" : "test"});
-    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "PUT", "data" : "test"});
+    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "PUT", "data" : "test"}, undefined);
   });
 
   it("del() should invoke ajax() with a DELETE", function() {
     spyOn(this.ajax, 'ajax');
 
     this.ajax.del({"data" : "test"});
-    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "DELETE", "data" : "test"});
+    expect(this.ajax.ajax).toHaveBeenCalledWith({"verb" : "DELETE", "data" : "test"}, undefined);
   });
 
   describe("with mock-ajax running", function() {
@@ -3022,6 +3022,21 @@ describe("pie.validator", function() {
       });
     });
 
+  });
+
+  describe('#inclusion', function() {
+    it("should allow an empty list", function() {
+      expect(this.validator.inclusion('foo', {in: []})).toEqual(true);
+      expect(this.validator.inclusion('foo')).toEqual(true);
+    });
+
+    it("should return true if the value is in the list", function() {
+      expect(this.validator.inclusion('foo', {in: ['qux', 'foo', 'bar']})).toEqual(true);
+    });
+
+    it("should return false if the value is not in the list", function() {
+      expect(this.validator.inclusion('foo', {in: ['qux', 'baz', 'bar']})).toEqual(false);
+    });
   });
 });
 describe("pie.view", function() {

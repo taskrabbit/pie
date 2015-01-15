@@ -15,6 +15,7 @@ pie.navigator = pie.model.extend('navigator', {
   // ```
   // navigator.go('/foo/bar', {page: 2});
   // //=> pushState: '/foo/bar?page=2'
+  // ```
   go: function(path, params, replace) {
     var url = path;
 

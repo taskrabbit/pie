@@ -2996,114 +2996,111 @@ pie.activeView = pie.view.extend('activeView', {
   }
 
 });
-pie.ajax = pie.base.extend('ajax', {
+pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
-  init: function(app){
-    this.app = app;
-    this.defaultAjaxOptions = {};
+  init: function(data, options) {
+    this._super(data, options);
+
+    this.xhr = null;
+    this.emitter = new pie.emitter();
+
+    this.validates({
+      url: { presence: true },
+      verb: { inclusion: { in: pie.object.values(this.VERBS) }}
+    }, null);
   },
 
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  DELETE: 'DELETE',
+  VERBS: {
+    del: 'DELETE',
+    get: 'GET',
+    patch: 'PATCH',
+    post: 'POST',
+    put: 'PUT'
+  },
 
-  // default ajax options. override this method to
-  _defaultAjaxOptions: function() {
-    return pie.object.merge({}, this.defaultAjaxOptions, {
-      accept: 'application/json',
-      verb: this.GET,
-      error: this.app.errorHandler.handleXhrError.bind(this.app.errorHandler)
+  _append: function(name, fns, immediate) {
+    fns = pie.array.change(fns, 'from', 'flatten');
+    fns.forEach(function(fn){
+      this.emitter.on(name, fn, {immediate: immediate});
+    }.bind(this));
+  },
+
+  _onDataSuccess: function(data) {
+    this.emitter.fire('dataSuccess', data);
+  },
+
+  _onSuccess: function(data, xhr) {
+    this.emitter.fire('success', data, xhr);
+  },
+
+  _onComplete: function(xhr) {
+    this.emitter.fire('complete', xhr);
+  },
+
+  _onError: function(xhr) {
+    this.emitter.fire('error', xhr);
+    this.emitter.fire('extraError', xhr);
+  },
+
+  _onProgress: function(event) {
+    this.emitter.fire('progress', event);
+  },
+
+  _onUploadProgress: function(event) {
+    this.emitter.fire('uploadProgress', event);
+  },
+
+  _parseOptions: function(options) {
+    if(!options) return;
+
+    options = pie.object.merge({}, options);
+
+    ['setup', 'complete', 'dataSuccess', 'error', 'extraError', 'progress', 'success', 'uploadProgress'].forEach(function(n){
+      if(options[n]) {
+
+        pie.array.from(options[n]).forEach(function(fn){
+          this[n](fn);
+        }.bind(this));
+
+        delete options[n];
+      }
+    }.bind(this));
+
+    this.sets(options);
+  },
+
+  _validateOptions: function(cb) {
+    // upcase before we validate inclusion.
+    if(this.get('verb')) this.set('verb', this.get('verb').toUpperCase());
+
+    this.validateAll(function(bool){
+      if(!bool) throw new Error(JSON.stringify(this.get('validationErrors')));
+      cb();
     });
   },
 
+  _applyHeaders: function(xhr) {
 
-  // interface for conducting ajax requests.
-  // app.ajax.post({
-  //  url: '/login',
-  //  data: { email: 'xxx', password: 'yyy' },
-  //  progress: this.progressCallback.bind(this),
-  //  success: this.
-  // })
-  ajax: function(options) {
+    var accept = this.get('accept'),
+    contentType = this.get('contentType'),
+    data = this.get('data');
 
-    options = pie.object.compact(options);
-    options = pie.object.merge({}, this._defaultAjaxOptions(), options);
-    options.verb = options.verb.toUpperCase();
+    this._applyCsrfToken(xhr);
 
-    if(options.extraError) {
-      var oldError = options.error;
-      options.error = function(xhr){ oldError(xhr); options.extraError(xhr); };
+    if(accept) xhr.setRequestHeader('Accept', accept);
+
+    if(contentType) {
+      xhr.setRequestHeader('Content-Type', contentType);
+    } else if(pie.object.isString(data)) {
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    // if we aren't already sending a string, we will encode to json.
+    } else {
+      xhr.setRequestHeader('Content-Type', 'application/json');
     }
-
-    var xhr = new XMLHttpRequest(),
-    url = options.url,
-    that = this,
-    d;
-
-    if(options.verb === this.GET && options.data) {
-      url = pie.string.urlConcat(url, pie.object.serialize(options.data));
-    }
-
-    url = pie.string.normalizeUrl(url);
-
-
-    if(options.progress) {
-      xhr.addEventListener('progress', options.progress, false);
-    } else if(options.uploadProgress) {
-      xhr.upload.addEventListener('progress', options.uploadProgress, false);
-    }
-
-    xhr.open(options.verb, url, true);
-
-    this._applyHeaders(xhr, options);
-    if(options.setup) options.setup(xhr, options);
-
-    xhr.onload = function() {
-      if(options.tracker) options.tracker(this);
-
-      that._parseResponse(this, options);
-
-      if(this.status >= 200 && this.status < 300 || this.status === 304) {
-        if(options.dataSuccess) options.dataSuccess(this.data);
-        if(options.success) options.success(this.data, this);
-      } else if(options.error){
-        options.error(this);
-      }
-
-      if(options.complete) options.complete(this);
-    };
-
-    if(options.verb !== this.GET) {
-      d = options.data ? (pie.object.isString(options.data) ? options.data : JSON.stringify(pie.object.compact(options.data))) : undefined;
-    }
-
-    xhr.send(d);
-    return xhr;
   },
 
-  get: function(options) {
-    options = pie.object.merge({verb: this.GET}, options);
-    return this.ajax(options);
-  },
-
-  post: function(options) {
-    options = pie.object.merge({verb: this.POST}, options);
-    return this.ajax(options);
-  },
-
-  put: function(options) {
-    options = pie.object.merge({verb: this.PUT}, options);
-    return this.ajax(options);
-  },
-
-  del: function(options) {
-    options = pie.object.merge({verb: this.DELETE}, options);
-    return this.ajax(options);
-  },
-
-  _applyCsrfToken: function(xhr, options) {
-    var token = pie.fn.valueFrom(options.csrfToken),
+  _applyCsrfToken: function(xhr) {
+    var token = pie.fn.valueFrom(this.get('csrfToken')),
     tokenEl;
 
     if(!token) {
@@ -3116,30 +3113,15 @@ pie.ajax = pie.base.extend('ajax', {
     }
   },
 
-  _applyHeaders: function(xhr, options) {
-
-    this._applyCsrfToken(xhr, options);
-
-    if(options.accept) xhr.setRequestHeader('Accept', options.accept);
-
-    if(options.contentType) {
-      xhr.setRequestHeader('Content-Type', options.contentType);
-    } else if(pie.object.isString(options.data)) {
-      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    // if we aren't already sending a string, we will encode to json.
-    } else {
-      xhr.setRequestHeader('Content-Type', 'application/json');
-    }
-  },
-
-  _parseResponse: function(xhr, options) {
-    var parser = options.accept && this.responseParsers[options.accept] || this.responseParsers.default;
-    xhr.data = parser(xhr, options);
+  _parseResponse: function(xhr) {
+    var accept = this.get('accept'),
+    parser = accept && this.responseParsers[accept] || this.responseParsers.default;
+    xhr.data = this.response = parser.call(this, xhr);
   },
 
   responseParsers: {
 
-    "application/json" : function(xhr, options) {
+    "application/json" : function(xhr) {
       try{
         return xhr.responseText.trim().length ? JSON.parse(xhr.responseText) : {};
       } catch(err) {
@@ -3148,10 +3130,205 @@ pie.ajax = pie.base.extend('ajax', {
       }
     },
 
-    "default" : function(xhr, options) {
+    "default" : function(xhr) {
       return xhr.responseText;
     }
+  },
+
+  _buildXhr: function() {
+    var xhr = new XMLHttpRequest(),
+    url = this.get('url'),
+    verb = this.get('verb'),
+    data = this.get('data'),
+    tracker = this.get('tracker'),
+    self = this,
+    d;
+
+    if(verb === this.VERBS.get && data) {
+      url = pie.string.urlConcat(url, pie.object.serialize(data));
+    }
+
+    url = pie.string.normalizeUrl(url);
+
+    if(this.hasCallback('progress')) {
+      xhr.addEventListener('progress', this._onProgress.bind(this), false);
+    }
+
+    if(this.hasCallback('uploadProgress')) {
+      xhr.upload.addEventListener('progress', this._onUploadProgress.bind(this), false);
+    }
+
+    xhr.open(verb, url, true);
+
+    this._applyHeaders(xhr);
+    this.emitter.fire('setup', xhr, this);
+
+    xhr.onload = function() {
+      if(tracker) tracker(xhr, self);
+
+      self._parseResponse(xhr);
+
+      if(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
+        self._onDataSuccess(self.response);
+        self._onSuccess(self.response, xhr);
+      } else {
+        self._onError(xhr);
+      }
+
+      self._onComplete(xhr);
+    };
+
+    this.xhr = xhr;
+
+    this.emitter.fire('xhrBuilt');
+
+    return xhr;
+  },
+
+  // Validate the options and build the xhr object.
+  // By default, it immediately sends the request.
+  // By passing `skipSend = false` you can manage the `send()` invocation manually.
+  build: function(options, skipSend) {
+    this._parseOptions(options);
+    this._validateOptions(function(){
+      this._buildXhr();
+      if(!skipSend) this.send();
+    }.bind(this));
+
+    return this;
+  },
+
+  // Send the xhr. Assumes build() has been called.
+  send: function() {
+    var data = this.get('data'), d;
+
+    if(this.get('verb') !== this.VERBS.get) {
+      d = data ? (pie.object.isString(data) ? data : JSON.stringify(pie.object.compact(data))) : undefined;
+    }
+
+    this.xhr.send(d);
+  },
+
+  // Check if a callback is registered for a specific event.
+  hasCallback: function(eventName) {
+    return this.emitter.hasCallback(eventName);
+  },
+
+  // Register callbacks to be invoked as part of the setup process.
+  // Callbacks are provided with the xhr & the request object (this).
+  setup: function() {
+    this._append('setup', arguments, false);
+    return this;
+  },
+
+  // Utility method for clearing previous / default events out
+  // request.clear('error').error(myErrorHandler);
+  clear: function(eventName) {
+    this.emitter.clear(eventName);
+    return this;
+  },
+
+  // Register a callback for when the request is complete.
+  complete: function() {
+    this._append('complete', arguments, true);
+    return this;
+  },
+
+  // Register a callback which will only receive the parsed data.
+  dataSuccess: function() {
+    this._append('dataSuccess', arguments, true);
+    return this;
+  },
+
+  // Register a callback when the request is unsuccessful.
+  // `app.ajax` will provide a default error callback as long as the `error` callbacks are empty.
+  // If you would like the default & your error callback, use extraError.
+  error: function() {
+    this._append('error', arguments, true);
+    return this;
+  },
+
+  // Register a callback when the request is unsuccessful.
+  extraError: function() {
+    this._append('extraError', arguments, true);
+    return this;
+  },
+
+  // Register a callback when the request succeeds.
+  // Callbacks are invoked with the parsed response & the xhr object.
+  success: function() {
+    this._append('success', arguments, true);
+    return this;
+  },
+
+  // Register a callback to be invoked when progress events are triggered from the request.
+  progress: function() {
+    this._append('progress', arguments, false);
+    return this;
+  },
+
+  // Register a callback to be invoked when upload progress events are triggered from the request.
+  uploadProgress: function() {
+    this._append('uploadProgress', arguments, false);
+    return this;
   }
+
+}, pie.mixins.validatable);
+pie.ajax = pie.base.extend('ajax', {
+
+  init: function(app){
+    this.app = app;
+  },
+
+  defaultAjaxOptions: {
+    accept: 'application/json',
+    verb: 'GET'
+  },
+
+  // Interface for conducting ajax requests.
+  // Returns a pie.ajaxRequest object
+  ajax: function(options, skipSend) {
+    if(pie.object.isString(options)) options = {url: options};
+
+    options = pie.object.merge({}, this.defaultAjaxOptions, options);
+
+    var request = new pie.ajaxRequest({}, { app: this.app });
+    request.build(options, skipSend);
+
+    /* add a default error handler if the user hasn't provided one. */
+    if(!request.emitter.hasCallback('error')) {
+      request.error(this.app.errorHandler.handleXhrError.bind(this.app.errorHandler));
+    }
+
+    return request;
+  },
+
+
+  del: function(options, skipSend) {
+    options = pie.object.merge({verb: 'DELETE'}, options);
+    return this.ajax(options, skipSend);
+  },
+
+  get: function(options, skipSend) {
+    options = pie.object.merge({verb: 'GET'}, options);
+    return this.ajax(options, skipSend);
+  },
+
+  patch: function(options, skipSend) {
+    options = pie.object.merge({verb: 'PATCH'}, options);
+    return this.ajax(options, skipSend);
+  },
+
+  post: function(options, skipSend) {
+    options = pie.object.merge({verb: 'POST'}, options);
+    return this.ajax(options, skipSend);
+  },
+
+  put: function(options, skipSend) {
+    options = pie.object.merge({verb: 'PUT'}, options);
+    return this.ajax(options, skipSend);
+  }
+
 });
 pie.cache = pie.model.extend('cache', {
 
@@ -3238,13 +3415,22 @@ pie.emitter = pie.model.extend('emitter', {
     });
   },
 
+  clear: function(eventName) {
+    this.set('eventCallbacks.' + eventName, undefined);
+  },
+
   debug: function(bool) {
     this.isDebugging = bool || bool === undefined;
   },
 
 
-  hasEvent: function(event) {
-    return !!~this.get('triggeredEvents').indexOf(event);
+  hasEvent: function(eventName) {
+    return !!~this.get('triggeredEvents').indexOf(eventName);
+  },
+
+  hasCallback: function(eventName) {
+    var cbs = this.get('eventCallbacks.' + eventName);
+    return !!(cbs && cbs.length);
   },
 
 
@@ -3292,25 +3478,31 @@ pie.emitter = pie.model.extend('emitter', {
   // trigger an event (string) on the app.
   // any callbacks associated with that event will be invoked with the extra arguments
   fire: function(/* event, arg1, arg2, */) {
-    var args = pie.array.from(arguments),
-    event = args.shift(),
-    callbacks = this.get('eventCallbacks.' + event),
-    compactNeeded = false;
+    var event = arguments[0];
 
-    if(this.isDebugging) this.app.debug(event);
+    if(event) {
 
-    if(callbacks) {
-      callbacks.forEach(function(cb, i) {
-        cb.fn.apply(null, args);
-        if(cb.onceOnly) {
-          compactNeeded = true;
-          callbacks[i] = undefined;
-        }
-      });
+      var args = pie.array.from(arguments).slice(1),
+      callbacks = this.get('eventCallbacks.' + event),
+      compactNeeded = false;
+
+      if(this.isDebugging) this.app.debug(event);
+
+      if(callbacks) {
+        callbacks.forEach(function(cb, i) {
+          cb.fn.apply(null, args);
+          if(cb.onceOnly) {
+            compactNeeded = true;
+            callbacks[i] = undefined;
+          }
+        });
+      }
+
+      if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
     }
 
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
     if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+
   },
 
   fireSequence: function(event, fn) {
@@ -3346,6 +3538,10 @@ pie.emitter = pie.model.extend('emitter', {
   }
 
 });
+// # Pie ErrorHandler
+// A class which knows how to handle errors in the app.
+// By default, it focuses mostly on xhr issues.
+
 pie.errorHandler = pie.model.extend('errorHandler', {
 
   init: function(app) {
@@ -4125,6 +4321,7 @@ pie.i18n.defaultTranslations = {
       date:               "is not a valid date",
       email:              "must be a valid email",
       format:             "is invalid",
+      inclusion:          "is not a valid value",
       integer:            "must be an integer",
       length:             "length must be",
       number:             "must be a number",
@@ -4362,6 +4559,7 @@ pie.navigator = pie.model.extend('navigator', {
   // ```
   // navigator.go('/foo/bar', {page: 2});
   // //=> pushState: '/foo/bar?page=2'
+  // ```
   go: function(path, params, replace) {
     var url = path;
 
@@ -5021,6 +5219,14 @@ pie.validator = pie.base.extend('validator', (function(){
         }
 
         return !!fmt.test(String(value));
+      });
+    },
+
+    inclusion: function(value, options) {
+      options = options || {};
+      return this.withStandardChecks(value, options, function() {
+        var list = pie.fn.valueFrom(options['in']);
+        return !list || !list.length || !!~list.indexOf(value);
       });
     },
 
