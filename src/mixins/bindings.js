@@ -29,6 +29,33 @@ pie.mixins.bindings = (function(){
     };
   })();
 
+  // Bind
+  integrations['class'] = {
+    getValue: function(el, binding) {
+      throw new Error("class bindings can only be from the model to the view. Please declare toModel: false");
+    },
+
+    setValue: function(el, binding) {
+      var className = binding.options.className;
+
+      if(className === '_value_') {
+        var change = binding.lastChange;
+        if(change) {
+          if(change.oldValue) el.classList.remove(change.oldValue);
+          if(change.value) {
+            el.classList.add(change.value);
+            return change.value;
+          }
+        }
+      } else {
+        var value = binding.model.get(binding.attr);
+        className = className || binding.attr;
+        el.classList[!!value ? 'add' : 'remove'](className);
+        return className;
+      }
+    }
+  };
+
   integrations.value = {
 
     // Simple value extraction
@@ -228,26 +255,38 @@ pie.mixins.bindings = (function(){
   };
 
 
-  // take horrible user provided options and turn it into magical pie options.
+  // Take horrible user provided options and turn it into magical pie options.
   var normalizeBindingOptions = function(given) {
 
     if(!given.attr) throw new Error("An attr must be provided for data binding. " + JSON.stringify(given));
 
     var out         = {};
-    out.attr        = given.attr;                                           // the model attribute to be observed / updated.
-    out.model       = given.model       || this.model;                      // the model to apply changes to.
-    out.sel         = given.sel         || '[name="' + given.attr + '"]';   // the selector to observe
-    out.type        = given.type        || 'auto';                          // the way in which the binding should extract the value from the dom.
-    out.dataType    = given.dataType    || 'default';                       // the desired type the dom value's should be cast to.
-    out.eachType    = given.eachType    || undefined;                       // if `dataType` is "array", they type which should be applied to each.
-    out.trigger     = given.trigger     || 'change keyup';                  // when an input changes or has a keyup event, the model will update.
-    out.triggerSel  = given.triggerSel  || out.sel;                         // just in case the dom events should be based on a different field than that provided by `sel`
-    out.toModel     = given.toModel     || given.toModel === undefined;     // if toModel is not provided, it's presumed to be desired.
-    out.toView      = given.toView      || given.toView === undefined;      // if toView is not provided, it's presumed to be desired.
-    out.debounce    = given.debounce    || false;                           // no debounce by default.
-    out.options     = given.options     || {};                              // secondary options.
+    /* the model attribute to be observed / updated. */
+    out.attr        = given.attr;
+    /* the model to apply changes to. */
+    out.model       = given.model       || this.model;
+    /* the selector to observe */
+    out.sel         = given.sel         || '[name="' + given.attr + '"]';
+    /* the way in which the binding should extract the value from the dom. */
+    out.type        = given.type        || 'auto';
+    /* the desired type the dom value's should be cast to. */
+    out.dataType    = given.dataType    || 'default';
+    /* if `dataType` is "array", they type which should be applied to each. */
+    out.eachType    = given.eachType    || undefined;
+    /* when an input changes or has a keyup event, the model will update. */
+    out.trigger     = given.trigger     || 'change keyup';
+    /* just in case the dom events should be based on a different field than that provided by `sel` */
+    out.triggerSel  = given.triggerSel  || out.sel;
+    /* if toModel is not provided, it's presumed to be desired. */
+    out.toModel     = given.toModel     || (given.toModel === undefined && out.type !== 'class');
+    /* if toView is not provided, it's presumed to be desired. */
+    out.toView      = given.toView      || given.toView === undefined;
+    /* no debounce by default. */
+    out.debounce    = given.debounce    || false;
+    /* secondary options. */
+    out.options     = given.options     || {};
 
-    // A `true` value will results in a default debounce duration of 250ms.
+    /* A `true` value will results in a default debounce duration of 250ms. */
     if(out.debounce === true) out.debounce = 250;
 
     return out;
@@ -349,7 +388,8 @@ pie.mixins.bindings = (function(){
 
     // If a toView function is not provided, apply the default implementation.
     if(!pie.object.isFunction(binding.toView)) {
-      binding.toView = function() {
+      binding.toView = function(changes) {
+        binding.lastChange = changes && changes.get(binding.attr);
         applyValueToElements(this.el, binding);
       }.bind(this);
     }

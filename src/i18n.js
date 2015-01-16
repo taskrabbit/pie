@@ -330,6 +330,11 @@ pie.i18n.prototype.l = pie.i18n.prototype.strftime;
 
 pie.i18n.defaultTranslations = {
   app: {
+    sentence: {
+      conjunction: ' and ',
+      delimeter: ', '
+    },
+
     timeago: {
       now: "just now",
       minutes: {

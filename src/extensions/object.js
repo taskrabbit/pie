@@ -9,15 +9,15 @@ pie.object.compact = function(a, removeEmpty){
 };
 
 
-// deep merge
+// deep merge. Does not preserve identity of inner objects.
 pie.object.deepMerge = function() {
   var args = pie.array.from(arguments),
       targ = args.shift(),
       obj;
 
   function fn(k) {
-    if(k in targ && pie.object.isObject(targ[k])) {
-      targ[k] = pie.object.deepMerge(targ[k], obj[k]);
+    if(pie.object.has(targ, k) && pie.object.isObject(targ[k])) {
+      targ[k] = pie.object.deepMerge({}, targ[k], obj[k]);
     } else {
       targ[k] = obj[k];
     }

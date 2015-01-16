@@ -50,9 +50,12 @@
 //   11. If successful, an `onSuccess` event & function are triggered.
 pie.formView = pie.activeView.extend('formView', {
 
+  init: function() {
+    this._super.apply(this, arguments);
+    this._ensureModel();
+  },
 
   setup: function() {
-    this._ensureModel();
     this._normalizeFormOptions();
     this._setupFormBindings();
 
@@ -119,6 +122,10 @@ pie.formView = pie.activeView.extend('formView', {
     }.bind(this));
   },
 
+  /* The ajax options to be applied before submission */
+  ajaxOptions: function() {
+    return this.options.ajax;
+  },
 
   /* the process of applying form data to the model. */
   applyFieldsToModel: function(form) {
@@ -147,17 +154,19 @@ pie.formView = pie.activeView.extend('formView', {
   },
 
   performSubmit: function(form, data, cb) {
-    app.ajax.ajax(pie.object.merge({
+    var request = app.ajax.ajax(pie.object.merge({
       url: form.getAttribute('action'),
       verb: form.getAttribute('method') || 'post',
-      data: data,
-      dataSuccess: function(d){
-        cb(true, d);
-      },
-      extraError: function(xhr) {
-        cb(false, xhr.data);
-      }
-    }, this.options.ajax));
+      data: data
+    }, this.ajaxOptions()));
+
+    request.dataSuccess(function(d){
+      cb(true, d);
+    });
+
+    request.extraError(function(xhr) {
+      cb(false, xhr.data);
+    });
   },
 
   /* for the inheriting class to override. */

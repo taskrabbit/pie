@@ -90,6 +90,16 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
     });
 
     this.bind({
+      attr: 'title',
+      type: 'class',
+      sel: '.title',
+      toModel: false,
+      options: {
+        className: '_value_'
+      }
+    });
+
+    this.bind({
       attr: 'fullName',
       type: 'text',
       sel: '.full-name',
