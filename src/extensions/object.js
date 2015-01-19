@@ -179,6 +179,12 @@ pie.object.hasPath = function(obj, path) {
   return true;
 };
 
+pie.object.reverseMerge = function(/* args */) {
+  var args = pie.array.from(arguments);
+  args.reverse();
+  return pie.object.merge.apply(null, args);
+};
+
 // serialize object into query string
 // {foo: 'bar'} => foo=bar
 // {foo: {inner: 'bar'}} => foo[inner]=bar

@@ -1084,6 +1084,12 @@ pie.object.hasPath = function(obj, path) {
   return true;
 };
 
+pie.object.reverseMerge = function(/* args */) {
+  var args = pie.array.from(arguments);
+  args.reverse();
+  return pie.object.merge.apply(null, args);
+};
+
 // serialize object into query string
 // {foo: 'bar'} => foo=bar
 // {foo: {inner: 'bar'}} => foo[inner]=bar
@@ -5094,12 +5100,18 @@ pie.route = pie.model.extend('route', {
 
   // assume path is already normalized and we've "matched" it.
   interpolations: function(path, parseValues) {
-    var splitPath = path.split('/'),
-    interpolations = {};
+    var splitPaths = path.split('/'),
+    tmpls = this.get('splitPathTemplate'),
+    interpolations = {},
+    splitPath, tmpl;
 
-    for(var i = 0; i < splitPath.length; i++){
-      if(/^:/.test(this.get('splitPathTemplate.' + i))) {
-        interpolations[this.get('splitPathTemplate.' + i).replace(/^:/, '')] = splitPath[i];
+    for(var i = 0; i < splitPaths.length; i++){
+      tmpl = tmpls[i];
+      splitPath = splitPaths[i];
+      if(splitPath !== tmpl) {
+        if(/^:/.test(tmpl)) {
+          interpolations[tmpl.replace(/^:/, '')] = splitPath;
+        }
       }
     }
 
@@ -5218,6 +5230,9 @@ pie.router = pie.model.extend('router', {
   // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
   path: function(nameOrPath, data, interpolateOnly) {
     var r = this.findRoute(nameOrPath) || new pie.route(nameOrPath),
+    path;
+
+    data = pie.object.merge(r.interpolations(nameOrPath), data);
     path = r.path(data, interpolateOnly);
 
     // apply the root.

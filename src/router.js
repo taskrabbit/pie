@@ -71,6 +71,9 @@ pie.router = pie.model.extend('router', {
   // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
   path: function(nameOrPath, data, interpolateOnly) {
     var r = this.findRoute(nameOrPath) || new pie.route(nameOrPath),
+    path;
+
+    data = pie.object.merge(r.interpolations(nameOrPath), data);
     path = r.path(data, interpolateOnly);
 
     // apply the root.

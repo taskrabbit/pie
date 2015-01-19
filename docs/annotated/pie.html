@@ -1633,6 +1633,12 @@ pie.object.has = <span class="hljs-function"><span class="hljs-keyword">function
   }
 
   <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+};
+
+pie.object.reverseMerge = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* args */</span>)</span> </span>{
+  <span class="hljs-keyword">var</span> args = pie.array.from(<span class="hljs-built_in">arguments</span>);
+  args.reverse();
+  <span class="hljs-keyword">return</span> pie.object.merge.apply(<span class="hljs-literal">null</span>, args);
 };</pre></div></div>
             
         </li>
@@ -8520,12 +8526,18 @@ pie.route = pie.model.extend(<span class="hljs-string">'route'</span>, {
             </div>
             
             <div class="content"><div class='highlight'><pre>  interpolations: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, parseValues)</span> </span>{
-    <span class="hljs-keyword">var</span> splitPath = path.split(<span class="hljs-string">'/'</span>),
-    interpolations = {};
+    <span class="hljs-keyword">var</span> splitPaths = path.split(<span class="hljs-string">'/'</span>),
+    tmpls = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'splitPathTemplate'</span>),
+    interpolations = {},
+    splitPath, tmpl;
 
-    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; splitPath.length; i++){
-      <span class="hljs-keyword">if</span>(<span class="hljs-regexp">/^:/</span>.test(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'splitPathTemplate.'</span> + i))) {
-        interpolations[<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'splitPathTemplate.'</span> + i).replace(<span class="hljs-regexp">/^:/</span>, <span class="hljs-string">''</span>)] = splitPath[i];
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; splitPaths.length; i++){
+      tmpl = tmpls[i];
+      splitPath = splitPaths[i];
+      <span class="hljs-keyword">if</span>(splitPath !== tmpl) {
+        <span class="hljs-keyword">if</span>(<span class="hljs-regexp">/^:/</span>.test(tmpl)) {
+          interpolations[tmpl.replace(<span class="hljs-regexp">/^:/</span>, <span class="hljs-string">''</span>)] = splitPath;
+        }
       }
     }
 
@@ -8679,6 +8691,9 @@ with path interpolation path(“/foo/bar/:id”, {id: ‘44’, q: ‘search’}
             
             <div class="content"><div class='highlight'><pre>  path: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(nameOrPath, data, interpolateOnly)</span> </span>{
     <span class="hljs-keyword">var</span> r = <span class="hljs-keyword">this</span>.findRoute(nameOrPath) || <span class="hljs-keyword">new</span> pie.route(nameOrPath),
+    path;
+
+    data = pie.object.merge(r.interpolations(nameOrPath), data);
     path = r.path(data, interpolateOnly);</pre></div></div>
             
         </li>

@@ -21,12 +21,18 @@ pie.route = pie.model.extend('route', {
 
   // assume path is already normalized and we've "matched" it.
   interpolations: function(path, parseValues) {
-    var splitPath = path.split('/'),
-    interpolations = {};
+    var splitPaths = path.split('/'),
+    tmpls = this.get('splitPathTemplate'),
+    interpolations = {},
+    splitPath, tmpl;
 
-    for(var i = 0; i < splitPath.length; i++){
-      if(/^:/.test(this.get('splitPathTemplate.' + i))) {
-        interpolations[this.get('splitPathTemplate.' + i).replace(/^:/, '')] = splitPath[i];
+    for(var i = 0; i < splitPaths.length; i++){
+      tmpl = tmpls[i];
+      splitPath = splitPaths[i];
+      if(splitPath !== tmpl) {
+        if(/^:/.test(tmpl)) {
+          interpolations[tmpl.replace(/^:/, '')] = splitPath;
+        }
       }
     }
 
