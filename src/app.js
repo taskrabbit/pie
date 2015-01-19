@@ -317,7 +317,7 @@ pie.app = pie.base.extend('app', {
 
   // When a link is clicked, go there without a refresh if we recognize the route.
   setupSinglePageLinks: function() {
-    var target = document.querySelector(this.options.uiTarget);
+    var target = document.querySelector(this.options.navigationContainer || this.options.uiTarget);
     pie.dom.on(target, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
   },
 

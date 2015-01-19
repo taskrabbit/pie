@@ -329,7 +329,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
 
   // give the new child the "out" classes, then add it to the dom.
   addNewChild: function() {
-    this.applyClass(this.newChild.el, false);
+    // this.applyClass(this.newChild.el, false);
     this.newChild.appendToDom(this.targetEl);
   },
 
@@ -349,10 +349,19 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     else this.observeTransitionEnd(this.oldChild.el, false, 'afterTransitionOldChild');
   },
 
+  // ensure the browser has redrawn and locations are up to date.
+  refresh: function(cb) {
+    if(this.oldChild) this.oldChild.el.getBoundingClientRect();
+    if(this.newChild) this.newChild.el.getBoundingClientRect();
+    if(cb) cb();
+  },
+
   // build a transition callback, and apply the appropriate class.
   // when the transition is complete, invoke the callback.
   observeTransitionEnd: function(el, isIn, fire) {
-    var trans = this.transitionEndEvent(),
+    var transitionEvent = this.transitionEvent(el),
+    trans = transitionEvent.event,
+    dur = transitionEvent.duration,
     called = false,
     onTransitionEnd = function() {
       if(called) return;
@@ -370,9 +379,8 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     this.applyClass(el, isIn);
 
     if(trans) {
-      var backupDuration = this.determineBackupDuration(el);
-      if(!isNaN(backupDuration)) {
-        setTimeout(onTransitionEnd, backupDuration * 1.1);
+      if(!isNaN(dur)) {
+        setTimeout(onTransitionEnd, dur * 1.1);
       }
     } else {
       setTimeout(onTransitionEnd, this.options.backupDuration);
@@ -380,17 +388,18 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   },
 
   // which transition event should we use?
-  transitionEndEvent: function(){
+  transitionEndEvent: function(base){
+    var cap = pie.string.capitalize(base);
 
     if(this._transitionEndEvent === undefined) {
-      if(pie.object.has(window, 'ontransitionend')) {
-        this._transitionEndEvent = 'transitionend';
-      } else if(pie.object.has(window, 'onwebkittransitionend')) {
-        this._transitionEndEvent = 'webkitTransitionEnd';
-      } else if(pie.object.has(window, 'msTransitionEnd')) {
-        this._transitionEndEvent = 'msTransitionEnd';
-      } else if(pie.object.has(document.body, 'onotransitionend') || navigator.appName === 'Opera') {
-        this._transitionEndEvent = 'oTransitionEnd';
+      if(pie.object.has(window, 'on' + base + 'end', true)) {
+        this._transitionEndEvent = base + 'end';
+      } else if(pie.object.has(window, 'onwebkit' + base + 'end', true)) {
+        this._transitionEndEvent = 'webkit' + cap + 'End';
+      } else if(pie.object.has(window, 'ms' + cap + 'End', true)) {
+        this._transitionEndEvent = 'ms' + cap + 'End';
+      } else if(pie.object.has(document.body, 'ono' + base + 'end', true) || navigator.appName === 'Opera') {
+        this._transitionEndEvent = 'o' + cap + 'End';
       } else {
         this._transitionEndEvent = false;
       }
@@ -399,34 +408,53 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     return this._transitionEndEvent;
   },
 
-  // get a transition property based on the browser's compatability.
-  transitionProperty: function(prop) {
-    var trans = this.transitionEndEvent();
-    return trans && trans.replace(/end/i, pie.string.capitalize(prop));
+  // get a transition or animation property based on the browser's compatability.
+  subProperty: function(endEvent, prop) {
+    return endEvent.replace(/end/i, pie.string.capitalize(prop));
   },
 
-  //
-  refresh: function(cb) {
-    if(this.oldChild) this.oldChild.el.getBoundingClientRect();
-    if(this.newChild) this.newChild.el.getBoundingClientRect();
-    if(cb) cb();
+  transitionEvent: function(el) {
+    var endA = this.transitionEndEvent('transition'),
+        endB = this.transitionEndEvent('animation'),
+        objA = this._transitionEvent(endA, el),
+        objB = this._transitionEvent(endB, el);
+
+
+    return objA.duration > objB.duration ? objA : objB;
   },
 
-  determineBackupDuration: function(el) {
-    var durProp = this.transitionProperty('duration'),
-      delayProp = this.transitionProperty('delay'),
-      style = window.getComputedStyle(el),
-      dur, delay;
-
-    dur = parseInt(style[durProp].toLowerCase(), 10);
-    delay = parseInt(style[delayProp].toLowerCase(), 10);
-
-    if(durProp.indexOf('ms') < 0) {
-      dur = dur * 1000;
-      delay = delay * 1000;
+  _transitionEvent: function(endEvent, el) {
+    if(!endEvent) {
+      return {
+        duration: 0
+      };
     }
 
-    return dur + delay;
+    var durProp = this.subProperty(endEvent, 'duration'),
+        delayProp = this.subProperty(endEvent, 'delay'),
+        style = window.getComputedStyle(el),
+        durs = durProp && style[durProp] && style[durProp].split(',') || ['0'],
+        delays = delayProp && style[delayProp] && style[delayProp].split(',') || ['0'],
+        dur, delay;
+
+    durs = durs.map(function(d){ return parseFloat(d.toLowerCase(), 10); });
+    delays = delays.map(function(d){ return parseFloat(d.toLowerCase(), 10); });
+
+    dur = Math.max.apply(null, durs);
+    delay = Math.max.apply(null, delays);
+
+    if(durProp && durProp.indexOf('ms') < 0) {
+      dur *= 1000;
+    }
+
+    if(delayProp && delayProp.indexOf('ms') < 0) {
+      delay *= 1000;
+    }
+
+    return {
+      event: endEvent,
+      duration: parseInt(dur + delay, 10)
+    };
   }
 
 });

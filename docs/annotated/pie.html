@@ -4941,7 +4941,7 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  setupSinglePageLinks: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> target = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-keyword">this</span>.options.uiTarget);
+    <span class="hljs-keyword">var</span> target = <span class="hljs-built_in">document</span>.querySelector(<span class="hljs-keyword">this</span>.options.navigationContainer || <span class="hljs-keyword">this</span>.options.uiTarget);
     pie.dom.on(target, <span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>.handleSinglePageLinkClick.bind(<span class="hljs-keyword">this</span>), <span class="hljs-string">'a[href]'</span>);
   },</pre></div></div>
             
@@ -9755,14 +9755,7 @@ we make sure we’ve done that.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  addNewChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">this</span>.applyClass(<span class="hljs-keyword">this</span>.newChild.el, <span class="hljs-literal">false</span>);
-    <span class="hljs-keyword">this</span>.newChild.appendToDom(<span class="hljs-keyword">this</span>.targetEl);
-  },
-
-  ensureNewChildPrepared: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span> </span>{
-    <span class="hljs-keyword">this</span>.newChild.emitter.once(<span class="hljs-string">'afterRender'</span>, cb, {immediate: <span class="hljs-literal">true</span>});
-  },</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  addNewChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{</pre></div></div>
             
         </li>
         
@@ -9772,6 +9765,26 @@ we make sure we’ve done that.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-327">&#182;</a>
+              </div>
+              <p>this.applyClass(this.newChild.el, false);</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.newChild.appendToDom(<span class="hljs-keyword">this</span>.targetEl);
+  },
+
+  ensureNewChildPrepared: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span> </span>{
+    <span class="hljs-keyword">this</span>.newChild.emitter.once(<span class="hljs-string">'afterRender'</span>, cb, {immediate: <span class="hljs-literal">true</span>});
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-328">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-328">&#182;</a>
               </div>
               <p>make sure we’re rendered, then begin the ui transition in.
 when complete, invoke the callback.</p>
@@ -9785,11 +9798,11 @@ when complete, invoke the callback.</p>
         </li>
         
         
-        <li id="section-328">
+        <li id="section-329">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-328">&#182;</a>
+                <a class="pilcrow" href="#section-329">&#182;</a>
               </div>
               <p>start the transition out. when complete, invoke the callback.</p>
 
@@ -9803,11 +9816,30 @@ when complete, invoke the callback.</p>
         </li>
         
         
-        <li id="section-329">
+        <li id="section-330">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-329">&#182;</a>
+                <a class="pilcrow" href="#section-330">&#182;</a>
+              </div>
+              <p>ensure the browser has redrawn and locations are up to date.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  refresh: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span> </span>{
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.oldChild) <span class="hljs-keyword">this</span>.oldChild.el.getBoundingClientRect();
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.newChild) <span class="hljs-keyword">this</span>.newChild.el.getBoundingClientRect();
+    <span class="hljs-keyword">if</span>(cb) cb();
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-331">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-331">&#182;</a>
               </div>
               <p>build a transition callback, and apply the appropriate class.
 when the transition is complete, invoke the callback.</p>
@@ -9815,7 +9847,9 @@ when the transition is complete, invoke the callback.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  observeTransitionEnd: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, isIn, fire)</span> </span>{
-    <span class="hljs-keyword">var</span> trans = <span class="hljs-keyword">this</span>.transitionEndEvent(),
+    <span class="hljs-keyword">var</span> transitionEvent = <span class="hljs-keyword">this</span>.transitionEvent(el),
+    trans = transitionEvent.event,
+    dur = transitionEvent.duration,
     called = <span class="hljs-literal">false</span>,
     onTransitionEnd = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
       <span class="hljs-keyword">if</span>(called) <span class="hljs-keyword">return</span>;
@@ -9833,63 +9867,12 @@ when the transition is complete, invoke the callback.</p>
     <span class="hljs-keyword">this</span>.applyClass(el, isIn);
 
     <span class="hljs-keyword">if</span>(trans) {
-      <span class="hljs-keyword">var</span> backupDuration = <span class="hljs-keyword">this</span>.determineBackupDuration(el);
-      <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">isNaN</span>(backupDuration)) {
-        setTimeout(onTransitionEnd, backupDuration * <span class="hljs-number">1.1</span>);
+      <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">isNaN</span>(dur)) {
+        setTimeout(onTransitionEnd, dur * <span class="hljs-number">1.1</span>);
       }
     } <span class="hljs-keyword">else</span> {
       setTimeout(onTransitionEnd, <span class="hljs-keyword">this</span>.options.backupDuration);
     }
-  },</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-330">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-330">&#182;</a>
-              </div>
-              <p>which transition event should we use?</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  transitionEndEvent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._transitionEndEvent === <span class="hljs-literal">undefined</span>) {
-      <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'ontransitionend'</span>)) {
-        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'transitionend'</span>;
-      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'onwebkittransitionend'</span>)) {
-        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'webkitTransitionEnd'</span>;
-      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'msTransitionEnd'</span>)) {
-        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'msTransitionEnd'</span>;
-      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">document</span>.body, <span class="hljs-string">'onotransitionend'</span>) || navigator.appName === <span class="hljs-string">'Opera'</span>) {
-        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'oTransitionEnd'</span>;
-      } <span class="hljs-keyword">else</span> {
-        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-literal">false</span>;
-      }
-    }
-
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._transitionEndEvent;
-  },</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-331">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-331">&#182;</a>
-              </div>
-              <p>get a transition property based on the browser’s compatability.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  transitionProperty: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(prop)</span> </span>{
-    <span class="hljs-keyword">var</span> trans = <span class="hljs-keyword">this</span>.transitionEndEvent();
-    <span class="hljs-keyword">return</span> trans &amp;&amp; trans.replace(<span class="hljs-regexp">/end/i</span>, pie.string.capitalize(prop));
   },</pre></div></div>
             
         </li>
@@ -9901,34 +9884,29 @@ when the transition is complete, invoke the callback.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-332">&#182;</a>
               </div>
-              
+              <p>which transition event should we use?</p>
+
             </div>
             
-            <div class="content"><div class='highlight'><pre>  refresh: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span> </span>{
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.oldChild) <span class="hljs-keyword">this</span>.oldChild.el.getBoundingClientRect();
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.newChild) <span class="hljs-keyword">this</span>.newChild.el.getBoundingClientRect();
-    <span class="hljs-keyword">if</span>(cb) cb();
-  },
+            <div class="content"><div class='highlight'><pre>  transitionEndEvent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(base)</span></span>{
+    <span class="hljs-keyword">var</span> cap = pie.string.capitalize(base);
 
-  determineBackupDuration: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
-    <span class="hljs-keyword">var</span> durProp = <span class="hljs-keyword">this</span>.transitionProperty(<span class="hljs-string">'duration'</span>),
-      delayProp = <span class="hljs-keyword">this</span>.transitionProperty(<span class="hljs-string">'delay'</span>),
-      style = <span class="hljs-built_in">window</span>.getComputedStyle(el),
-      dur, delay;
-
-    dur = <span class="hljs-built_in">parseInt</span>(style[durProp].toLowerCase(), <span class="hljs-number">10</span>);
-    delay = <span class="hljs-built_in">parseInt</span>(style[delayProp].toLowerCase(), <span class="hljs-number">10</span>);
-
-    <span class="hljs-keyword">if</span>(durProp.indexOf(<span class="hljs-string">'ms'</span>) &lt; <span class="hljs-number">0</span>) {
-      dur = dur * <span class="hljs-number">1000</span>;
-      delay = delay * <span class="hljs-number">1000</span>;
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._transitionEndEvent === <span class="hljs-literal">undefined</span>) {
+      <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'on'</span> + base + <span class="hljs-string">'end'</span>, <span class="hljs-literal">true</span>)) {
+        <span class="hljs-keyword">this</span>._transitionEndEvent = base + <span class="hljs-string">'end'</span>;
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'onwebkit'</span> + base + <span class="hljs-string">'end'</span>, <span class="hljs-literal">true</span>)) {
+        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'webkit'</span> + cap + <span class="hljs-string">'End'</span>;
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'ms'</span> + cap + <span class="hljs-string">'End'</span>, <span class="hljs-literal">true</span>)) {
+        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'ms'</span> + cap + <span class="hljs-string">'End'</span>;
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-built_in">document</span>.body, <span class="hljs-string">'ono'</span> + base + <span class="hljs-string">'end'</span>, <span class="hljs-literal">true</span>) || navigator.appName === <span class="hljs-string">'Opera'</span>) {
+        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-string">'o'</span> + cap + <span class="hljs-string">'End'</span>;
+      } <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">this</span>._transitionEndEvent = <span class="hljs-literal">false</span>;
+      }
     }
 
-    <span class="hljs-keyword">return</span> dur + delay;
-  }
-
-});
-  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._transitionEndEvent;
+  },</pre></div></div>
             
         </li>
         
@@ -9938,6 +9916,70 @@ when the transition is complete, invoke the callback.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-333">&#182;</a>
+              </div>
+              <p>get a transition or animation property based on the browser’s compatability.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  subProperty: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(endEvent, prop)</span> </span>{
+    <span class="hljs-keyword">return</span> endEvent.replace(<span class="hljs-regexp">/end/i</span>, pie.string.capitalize(prop));
+  },
+
+  transitionEvent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
+    <span class="hljs-keyword">var</span> endA = <span class="hljs-keyword">this</span>.transitionEndEvent(<span class="hljs-string">'transition'</span>),
+        endB = <span class="hljs-keyword">this</span>.transitionEndEvent(<span class="hljs-string">'animation'</span>),
+        objA = <span class="hljs-keyword">this</span>._transitionEvent(endA, el),
+        objB = <span class="hljs-keyword">this</span>._transitionEvent(endB, el);
+
+
+    <span class="hljs-keyword">return</span> objA.duration &gt; objB.duration ? objA : objB;
+  },
+
+  _transitionEvent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(endEvent, el)</span> </span>{
+    <span class="hljs-keyword">if</span>(!endEvent) {
+      <span class="hljs-keyword">return</span> {
+        duration: <span class="hljs-number">0</span>
+      };
+    }
+
+    <span class="hljs-keyword">var</span> durProp = <span class="hljs-keyword">this</span>.subProperty(endEvent, <span class="hljs-string">'duration'</span>),
+        delayProp = <span class="hljs-keyword">this</span>.subProperty(endEvent, <span class="hljs-string">'delay'</span>),
+        style = <span class="hljs-built_in">window</span>.getComputedStyle(el),
+        durs = durProp &amp;&amp; style[durProp] &amp;&amp; style[durProp].split(<span class="hljs-string">','</span>) || [<span class="hljs-string">'0'</span>],
+        delays = delayProp &amp;&amp; style[delayProp] &amp;&amp; style[delayProp].split(<span class="hljs-string">','</span>) || [<span class="hljs-string">'0'</span>],
+        dur, delay;
+
+    durs = durs.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span></span>{ <span class="hljs-keyword">return</span> <span class="hljs-built_in">parseFloat</span>(d.toLowerCase(), <span class="hljs-number">10</span>); });
+    delays = delays.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span></span>{ <span class="hljs-keyword">return</span> <span class="hljs-built_in">parseFloat</span>(d.toLowerCase(), <span class="hljs-number">10</span>); });
+
+    dur = <span class="hljs-built_in">Math</span>.max.apply(<span class="hljs-literal">null</span>, durs);
+    delay = <span class="hljs-built_in">Math</span>.max.apply(<span class="hljs-literal">null</span>, delays);
+
+    <span class="hljs-keyword">if</span>(durProp &amp;&amp; durProp.indexOf(<span class="hljs-string">'ms'</span>) &lt; <span class="hljs-number">0</span>) {
+      dur *= <span class="hljs-number">1000</span>;
+    }
+
+    <span class="hljs-keyword">if</span>(delayProp &amp;&amp; delayProp.indexOf(<span class="hljs-string">'ms'</span>) &lt; <span class="hljs-number">0</span>) {
+      delay *= <span class="hljs-number">1000</span>;
+    }
+
+    <span class="hljs-keyword">return</span> {
+      event: endEvent,
+      duration: <span class="hljs-built_in">parseInt</span>(dur + delay, <span class="hljs-number">10</span>)
+    };
+  }
+
+});
+  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-334">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-334">&#182;</a>
               </div>
               <p>AMD. Register as an anonymous module.</p>
 
