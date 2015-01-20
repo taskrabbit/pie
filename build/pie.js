@@ -3060,7 +3060,14 @@ pie.model = pie.base.extend('model', {
   }
 });
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
-pie.view = pie.base.extend('view', {
+pie.view = pie.base.extend('view');
+
+pie.view.prototype.constructor = function view() {
+  pie.base.prototype.constructor.apply(this, arguments);
+  if(this.options.setup) this.setup();
+};
+
+pie.view.reopen({
 
   init: function(options) {
     this.options = options || {},
@@ -3074,8 +3081,6 @@ pie.view = pie.base.extend('view', {
     if(this.options.uiTarget) {
       this.emitter.once('afterSetup', this.appendToDom.bind(this));
     }
-
-    if(this.options.setup) this.setup();
   },
 
   addedToParent: function() {
@@ -3955,10 +3960,10 @@ pie.formView = pie.activeView.extend('formView', {
   init: function() {
     this._super.apply(this, arguments);
     this._ensureModel();
+    this._normalizeFormOptions();
   },
 
   setup: function() {
-    this._normalizeFormOptions();
     this._setupFormBindings();
 
     this.on('submit', this.options.formSel, this.validateAndSubmitForm.bind(this));
