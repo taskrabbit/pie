@@ -31,6 +31,7 @@ pie.cache = pie.model.extend('cache', {
   getOrSet: function(path, value, options) {
     var result = this.get(path);
     if(result !== undefined) return result;
+    value = pie.fn.valueFrom(value);
     this.set(path, value, options);
     return value;
   },

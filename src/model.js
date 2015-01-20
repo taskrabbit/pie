@@ -201,10 +201,12 @@ pie.model = pie.base.extend('model', {
     o = {};
 
     args.forEach(function(arg){
-      pie.object.setPath(o, arg, pie.object.getPath(this.data, arg));
+      if(this.has(arg)) {
+        pie.object.setPath(o, arg, this.get(arg));
+      }
     }.bind(this));
 
-    return pie.object.compact(o);
+    return o;
   },
 
   // Determines whether a path exists in our data.

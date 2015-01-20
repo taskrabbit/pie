@@ -19,17 +19,6 @@ var pie = window.pie = {
   pieId: 1,
 
 
-  ns: function(path) {
-    return pie.object.getPath(window, path) || pie.object.setPath(window, path, {});
-  },
-
-  setUid: function(obj) {
-    return obj.pieId = obj.pieId || pie.unique();
-  },
-
-  unique: function() {
-    return String(pie.pieId++);
-  },
 
   guid: function() {
     var r, v;
@@ -38,6 +27,26 @@ var pie = window.pie = {
       v = c === 'x' ? r : (r&0x3|0x8);
       return v.toString(16);
     });
+  },
+
+  ns: function(path) {
+    return pie.object.getPath(window, path) || pie.object.setPath(window, path, {});
+  },
+
+  qs: function() {
+    return document.querySelector.apply(document, arguments);
+  },
+
+  qsa: function() {
+    return document.querySelectorAll.apply(document, arguments);
+  },
+
+  setUid: function(obj) {
+    return obj.pieId = obj.pieId || pie.unique();
+  },
+
+  unique: function() {
+    return String(pie.pieId++);
   },
 
   // provide a util object for your app which utilizes pie's features.

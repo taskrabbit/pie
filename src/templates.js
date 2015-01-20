@@ -7,7 +7,7 @@ pie.templates = pie.model.extend('templates', {
   },
 
   _node: function(name) {
-    return document.querySelector(this.app.options.templateSelector + '[id="' + name + '"]');
+    return pie.qs(this.app.options.templateSelector + '[id="' + name + '"]');
   },
 
   registerTemplate: function(name, content) {

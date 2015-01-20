@@ -46,6 +46,9 @@ pie.app = pie.base.extend('app', {
       return new k(this, opt);
     }.bind(this);
 
+    // `app.cache` is a centralized cache store to be used by anyone.
+    this.cache = new pie.cache();
+
     // `app.emitter` is an interface for subscribing and observing app events
     this.emitter = classOption('emitter', pie.emitter);
 
@@ -239,7 +242,7 @@ pie.app = pie.base.extend('app', {
   // The process for transitioning to a new view.
   // Both the current view and the next view are optional.
   transitionToNewView: function() {
-    var target = document.querySelector(this.options.uiTarget),
+    var target = pie.qs(this.options.uiTarget),
         current = this.getChild('currentView'),
         viewClass, child, transition;
 
@@ -317,7 +320,7 @@ pie.app = pie.base.extend('app', {
 
   // When a link is clicked, go there without a refresh if we recognize the route.
   setupSinglePageLinks: function() {
-    var target = document.querySelector(this.options.navigationContainer || this.options.uiTarget);
+    var target = pie.qs(this.options.navigationContainer || this.options.uiTarget);
     pie.dom.on(target, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
   },
 

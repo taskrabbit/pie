@@ -3,7 +3,8 @@
 pie.object.compact = function(a, removeEmpty){
   var b = pie.object.merge({}, a);
   Object.keys(b).forEach(function(k) {
-    if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
+    /* jslint eqnull:true */
+    if(b[k] == null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
   });
   return b;
 };

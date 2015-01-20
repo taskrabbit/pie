@@ -47,6 +47,11 @@ describe("pie.model", function() {
       expect(this.model.gets(['foo', 'biz'])).toEqual({'foo' : 'bar', 'biz' : 'baz'});
     });
 
+    it("should return null values from gets", function() {
+      this.model.data.foo = undefined;
+      this.model.data.bar = null;
+      expect(this.model.gets('foo', 'bar')).toEqual({'foo' : undefined, 'bar' : null});
+    });
   });
 
   describe("#reset", function() {

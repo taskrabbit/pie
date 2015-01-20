@@ -1277,6 +1277,7 @@ describe("pie.ajax", function() {
     });
 
     it("should use the csrf token in the dom if it is present", function() {
+      this.ajax.app.cache.del('csrfToken');
       var meta = pie.dom.createElement('<meta name="csrf-token" content="abcdefg" />'), request;
       document.querySelector('head').appendChild(meta);
 
@@ -2440,6 +2441,11 @@ describe("pie.model", function() {
       expect(this.model.gets(['foo', 'biz'])).toEqual({'foo' : 'bar', 'biz' : 'baz'});
     });
 
+    it("should return null values from gets", function() {
+      this.model.data.foo = undefined;
+      this.model.data.bar = null;
+      expect(this.model.gets('foo', 'bar')).toEqual({'foo' : undefined, 'bar' : null});
+    });
   });
 
   describe("#reset", function() {

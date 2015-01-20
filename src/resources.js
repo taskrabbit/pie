@@ -10,7 +10,7 @@ pie.resources = pie.model.extend('resources', {
   },
 
   _appendNode: function(node) {
-    var target = document.querySelector('head');
+    var target = pie.qs('head');
     target = target || document.body;
     target.appendChild(node);
   },

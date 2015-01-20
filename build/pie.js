@@ -20,17 +20,6 @@ var pie = window.pie = {
   pieId: 1,
 
 
-  ns: function(path) {
-    return pie.object.getPath(window, path) || pie.object.setPath(window, path, {});
-  },
-
-  setUid: function(obj) {
-    return obj.pieId = obj.pieId || pie.unique();
-  },
-
-  unique: function() {
-    return String(pie.pieId++);
-  },
 
   guid: function() {
     var r, v;
@@ -39,6 +28,26 @@ var pie = window.pie = {
       v = c === 'x' ? r : (r&0x3|0x8);
       return v.toString(16);
     });
+  },
+
+  ns: function(path) {
+    return pie.object.getPath(window, path) || pie.object.setPath(window, path, {});
+  },
+
+  qs: function() {
+    return document.querySelector.apply(document, arguments);
+  },
+
+  qsa: function() {
+    return document.querySelectorAll.apply(document, arguments);
+  },
+
+  setUid: function(obj) {
+    return obj.pieId = obj.pieId || pie.unique();
+  },
+
+  unique: function() {
+    return String(pie.pieId++);
   },
 
   // provide a util object for your app which utilizes pie's features.
@@ -908,7 +917,8 @@ pie.math.precision = function(number, places) {
 pie.object.compact = function(a, removeEmpty){
   var b = pie.object.merge({}, a);
   Object.keys(b).forEach(function(k) {
-    if(b[k] === undefined || b[k] === null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
+    /* jslint eqnull:true */
+    if(b[k] == null || (removeEmpty && b[k].toString().length === 0)) delete b[k];
   });
   return b;
 };
@@ -2361,6 +2371,9 @@ pie.app = pie.base.extend('app', {
       return new k(this, opt);
     }.bind(this);
 
+    // `app.cache` is a centralized cache store to be used by anyone.
+    this.cache = new pie.cache();
+
     // `app.emitter` is an interface for subscribing and observing app events
     this.emitter = classOption('emitter', pie.emitter);
 
@@ -2554,7 +2567,7 @@ pie.app = pie.base.extend('app', {
   // The process for transitioning to a new view.
   // Both the current view and the next view are optional.
   transitionToNewView: function() {
-    var target = document.querySelector(this.options.uiTarget),
+    var target = pie.qs(this.options.uiTarget),
         current = this.getChild('currentView'),
         viewClass, child, transition;
 
@@ -2632,7 +2645,7 @@ pie.app = pie.base.extend('app', {
 
   // When a link is clicked, go there without a refresh if we recognize the route.
   setupSinglePageLinks: function() {
-    var target = document.querySelector(this.options.navigationContainer || this.options.uiTarget);
+    var target = pie.qs(this.options.navigationContainer || this.options.uiTarget);
     pie.dom.on(target, 'click', this.handleSinglePageLinkClick.bind(this), 'a[href]');
   },
 
@@ -2863,10 +2876,12 @@ pie.model = pie.base.extend('model', {
     o = {};
 
     args.forEach(function(arg){
-      pie.object.setPath(o, arg, pie.object.getPath(this.data, arg));
+      if(this.has(arg)) {
+        pie.object.setPath(o, arg, this.get(arg));
+      }
     }.bind(this));
 
-    return pie.object.compact(o);
+    return o;
   },
 
   // Determines whether a path exists in our data.
@@ -3387,16 +3402,27 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   },
 
   _applyCsrfToken: function(xhr) {
-    var token = pie.fn.valueFrom(this.get('csrfToken')),
-    tokenEl;
+
+    var cache = this.app.cache,
+    token = pie.fn.valueFrom(this.get('csrfToken')),
+    param = pie.fn.valueFrom(this.get('csrfParam'));
 
     if(!token) {
-      tokenEl = document.querySelector('meta[name="csrf-token"]'),
-      token = tokenEl ? tokenEl.getAttribute('content') : null;
+      token = cache.getOrSet('csrfToken', function() {
+        var el = pie.qs('meta[name="csrf-token"]');
+        return el ? el.getAttribute('content') : null;
+      });
+    }
+
+    if(!param) {
+      param = cache.getOrSet('csrfParam', function() {
+        var el = pie.qs('meta[name="csrf-param"]');
+        return el ? el.getAttribute('content') : 'X-CSRF-Token';
+      });
     }
 
     if(token) {
-      xhr.setRequestHeader('X-CSRF-Token', token);
+      xhr.setRequestHeader(param, token);
     }
   },
 
@@ -3651,6 +3677,7 @@ pie.cache = pie.model.extend('cache', {
   getOrSet: function(path, value, options) {
     var result = this.get(path);
     if(result !== undefined) return result;
+    value = pie.fn.valueFrom(value);
     this.set(path, value, options);
     return value;
   },
@@ -4989,7 +5016,7 @@ pie.resources = pie.model.extend('resources', {
   },
 
   _appendNode: function(node) {
-    var target = document.querySelector('head');
+    var target = pie.qs('head');
     target = target || document.body;
     target.appendChild(node);
   },
@@ -5328,7 +5355,7 @@ pie.templates = pie.model.extend('templates', {
   },
 
   _node: function(name) {
-    return document.querySelector(this.app.options.templateSelector + '[id="' + name + '"]');
+    return pie.qs(this.app.options.templateSelector + '[id="' + name + '"]');
   },
 
   registerTemplate: function(name, content) {
