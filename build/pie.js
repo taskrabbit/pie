@@ -2330,6 +2330,7 @@ pie.base._wrap = (function() {
 pie.app = pie.base.extend('app', {
   init: function(options) {
 
+
     // `pie.base.prototype.constructor` handles the setting of an app,
     // but we don't want a reference to another app within this app.
     delete this.app;
@@ -2345,8 +2346,15 @@ pie.app = pie.base.extend('app', {
       uiTarget: 'body',
       viewNamespace: 'lib.views',
       templateSelector: 'script[type="text/pie-template"]',
-      root: '/'
+      root: '/',
+      unsupportedPath: '/browser/unsupported',
+      verifySupport: true
     }, options);
+
+    if(this.options.verifySupport && !this.verifySupport()) {
+      window.location.href = this.options.unsupportedPath;
+      return;
+    }
 
     // `classOption` Allows class configurations to be provided in the following formats:
     // ```
@@ -2671,6 +2679,18 @@ pie.app = pie.base.extend('app', {
     }catch(err){
       this.errorHandler.reportError(err, {prefix: "[caught] app#store:"});
     }
+  },
+
+  verifySupport: function() {
+    var el = document.createElement('_');
+
+    return !!(el.classList &&
+      window.history.pushState &&
+      Date.prototype.toISOString &&
+      Array.isArray &&
+      Array.prototype.forEach &&
+      Object.keys &&
+      Number.prototype.toFixed);
   }
 }, pie.mixins.container);
 // # Pie Model

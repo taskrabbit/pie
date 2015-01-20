@@ -4106,8 +4106,15 @@ but we don’t want a reference to another app within this app.</p>
       uiTarget: <span class="hljs-string">'body'</span>,
       viewNamespace: <span class="hljs-string">'lib.views'</span>,
       templateSelector: <span class="hljs-string">'script[type="text/pie-template"]'</span>,
-      root: <span class="hljs-string">'/'</span>
-    }, options);</pre></div></div>
+      root: <span class="hljs-string">'/'</span>,
+      unsupportedPath: <span class="hljs-string">'/browser/unsupported'</span>,
+      verifySupport: <span class="hljs-literal">true</span>
+    }, options);
+
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.verifySupport &amp;&amp; !<span class="hljs-keyword">this</span>.verifySupport()) {
+      <span class="hljs-built_in">window</span>.location.href = <span class="hljs-keyword">this</span>.options.unsupportedPath;
+      <span class="hljs-keyword">return</span>;
+    }</pre></div></div>
             
         </li>
         
@@ -5037,6 +5044,18 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
     }<span class="hljs-keyword">catch</span>(err){
       <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {prefix: <span class="hljs-string">"[caught] app#store:"</span>});
     }
+  },
+
+  verifySupport: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> el = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'_'</span>);
+
+    <span class="hljs-keyword">return</span> !!(el.classList &amp;&amp;
+      <span class="hljs-built_in">window</span>.history.pushState &amp;&amp;
+      <span class="hljs-built_in">Date</span>.prototype.toISOString &amp;&amp;
+      <span class="hljs-built_in">Array</span>.isArray &amp;&amp;
+      <span class="hljs-built_in">Array</span>.prototype.forEach &amp;&amp;
+      <span class="hljs-built_in">Object</span>.keys &amp;&amp;
+      <span class="hljs-built_in">Number</span>.prototype.toFixed);
   }
 }, pie.mixins.container);</pre></div></div>
             
