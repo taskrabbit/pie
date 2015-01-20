@@ -5,8 +5,9 @@ pie.ajax = pie.base.extend('ajax', {
   },
 
   defaultAjaxOptions: {
+    verb: 'GET',
     accept: 'application/json',
-    verb: 'GET'
+    headers: {}
   },
 
   // Interface for conducting ajax requests.
@@ -14,7 +15,7 @@ pie.ajax = pie.base.extend('ajax', {
   ajax: function(options, skipSend) {
     if(pie.object.isString(options)) options = {url: options};
 
-    options = pie.object.merge({}, this.defaultAjaxOptions, options);
+    options = pie.object.deepMerge({}, this.defaultAjaxOptions, options);
 
     var request = new pie.ajaxRequest({}, { app: this.app });
     request.build(options, skipSend);

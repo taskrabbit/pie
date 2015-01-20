@@ -1379,8 +1379,11 @@ returns a new object less any empty key/values.</p>
       obj;
 
   <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">fn</span><span class="hljs-params">(k)</span> </span>{
+
     <span class="hljs-keyword">if</span>(pie.object.has(targ, k) &amp;&amp; pie.object.isObject(targ[k])) {
       targ[k] = pie.object.deepMerge({}, targ[k], obj[k]);
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isObject(obj[k])) {
+      targ[k] = pie.object.deepMerge({}, obj[k]);
     } <span class="hljs-keyword">else</span> {
       targ[k] = obj[k];
     }
@@ -5875,6 +5878,8 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, options)</span> </span>{
     <span class="hljs-keyword">this</span>._super(data, options);
 
+    <span class="hljs-keyword">this</span>.getOrSet(<span class="hljs-string">'headers'</span>, {});
+
     <span class="hljs-keyword">this</span>.xhr = <span class="hljs-literal">null</span>;
     <span class="hljs-keyword">this</span>.emitter = <span class="hljs-keyword">new</span> pie.emitter();
 
@@ -5970,16 +5975,22 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
     <span class="hljs-keyword">var</span> accept = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'accept'</span>),
     contentType = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'contentType'</span>),
+    headers = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'headers'</span>),
     data = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'data'</span>);
 
     <span class="hljs-keyword">this</span>._applyCsrfToken(xhr);
 
-    <span class="hljs-keyword">if</span>(accept) xhr.setRequestHeader(<span class="hljs-string">'Accept'</span>, accept);
+    <span class="hljs-keyword">if</span>(accept) {
+      headers[<span class="hljs-string">'Accept'</span>] = accept;
+    }
 
     <span class="hljs-keyword">if</span>(contentType) {
-      xhr.setRequestHeader(<span class="hljs-string">'Content-Type'</span>, contentType);
-    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isString(data)) {
-      xhr.setRequestHeader(<span class="hljs-string">'Content-Type'</span>, <span class="hljs-string">'application/x-www-form-urlencoded'</span>);</pre></div></div>
+      headers[<span class="hljs-string">'Content-Type'</span>] = contentType;
+    }
+
+    <span class="hljs-keyword">if</span>(!headers[<span class="hljs-string">'Content-Type'</span>]) {
+      <span class="hljs-keyword">if</span>(pie.object.isString(data)) {
+        headers[<span class="hljs-string">'Content-Type'</span>] = <span class="hljs-string">'application/x-www-form-urlencoded'</span>;</pre></div></div>
             
         </li>
         
@@ -5994,9 +6005,15 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    } <span class="hljs-keyword">else</span> {
-      xhr.setRequestHeader(<span class="hljs-string">'Content-Type'</span>, <span class="hljs-string">'application/json'</span>);
+            <div class="content"><div class='highlight'><pre>      } <span class="hljs-keyword">else</span> {
+        headers[<span class="hljs-string">'Content-Type'</span>] = <span class="hljs-string">'application/json'</span>;
+      }
     }
+
+    pie.object.forEach(headers, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,v)</span> </span>{
+      xhr.setRequestHeader(k, v);
+    });
+
   },
 
   _applyCsrfToken: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
@@ -6325,8 +6342,9 @@ pie.ajax = pie.base.extend(<span class="hljs-string">'ajax'</span>, {
   },
 
   defaultAjaxOptions: {
+    verb: <span class="hljs-string">'GET'</span>,
     accept: <span class="hljs-string">'application/json'</span>,
-    verb: <span class="hljs-string">'GET'</span>
+    headers: {}
   },</pre></div></div>
             
         </li>
@@ -6346,7 +6364,7 @@ Returns a pie.ajaxRequest object</p>
             <div class="content"><div class='highlight'><pre>  ajax: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, skipSend)</span> </span>{
     <span class="hljs-keyword">if</span>(pie.object.isString(options)) options = {url: options};
 
-    options = pie.object.merge({}, <span class="hljs-keyword">this</span>.defaultAjaxOptions, options);
+    options = pie.object.deepMerge({}, <span class="hljs-keyword">this</span>.defaultAjaxOptions, options);
 
     <span class="hljs-keyword">var</span> request = <span class="hljs-keyword">new</span> pie.ajaxRequest({}, { app: <span class="hljs-keyword">this</span>.app });
     request.build(options, skipSend);

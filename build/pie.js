@@ -921,8 +921,11 @@ pie.object.deepMerge = function() {
       obj;
 
   function fn(k) {
+
     if(pie.object.has(targ, k) && pie.object.isObject(targ[k])) {
       targ[k] = pie.object.deepMerge({}, targ[k], obj[k]);
+    } else if(pie.object.isObject(obj[k])) {
+      targ[k] = pie.object.deepMerge({}, obj[k]);
     } else {
       targ[k] = obj[k];
     }
@@ -3271,6 +3274,8 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   init: function(data, options) {
     this._super(data, options);
 
+    this.getOrSet('headers', {});
+
     this.xhr = null;
     this.emitter = new pie.emitter();
 
@@ -3353,20 +3358,32 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     var accept = this.get('accept'),
     contentType = this.get('contentType'),
+    headers = this.get('headers'),
     data = this.get('data');
 
     this._applyCsrfToken(xhr);
 
-    if(accept) xhr.setRequestHeader('Accept', accept);
+    if(accept) {
+      headers['Accept'] = accept;
+    }
 
     if(contentType) {
-      xhr.setRequestHeader('Content-Type', contentType);
-    } else if(pie.object.isString(data)) {
-      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    // if we aren't already sending a string, we will encode to json.
-    } else {
-      xhr.setRequestHeader('Content-Type', 'application/json');
+      headers['Content-Type'] = contentType;
     }
+
+    if(!headers['Content-Type']) {
+      if(pie.object.isString(data)) {
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      // if we aren't already sending a string, we will encode to json.
+      } else {
+        headers['Content-Type'] = 'application/json';
+      }
+    }
+
+    pie.object.forEach(headers, function(k,v) {
+      xhr.setRequestHeader(k, v);
+    });
+
   },
 
   _applyCsrfToken: function(xhr) {
@@ -3551,8 +3568,9 @@ pie.ajax = pie.base.extend('ajax', {
   },
 
   defaultAjaxOptions: {
+    verb: 'GET',
     accept: 'application/json',
-    verb: 'GET'
+    headers: {}
   },
 
   // Interface for conducting ajax requests.
@@ -3560,7 +3578,7 @@ pie.ajax = pie.base.extend('ajax', {
   ajax: function(options, skipSend) {
     if(pie.object.isString(options)) options = {url: options};
 
-    options = pie.object.merge({}, this.defaultAjaxOptions, options);
+    options = pie.object.deepMerge({}, this.defaultAjaxOptions, options);
 
     var request = new pie.ajaxRequest({}, { app: this.app });
     request.build(options, skipSend);

@@ -16,8 +16,11 @@ pie.object.deepMerge = function() {
       obj;
 
   function fn(k) {
+
     if(pie.object.has(targ, k) && pie.object.isObject(targ[k])) {
       targ[k] = pie.object.deepMerge({}, targ[k], obj[k]);
+    } else if(pie.object.isObject(obj[k])) {
+      targ[k] = pie.object.deepMerge({}, obj[k]);
     } else {
       targ[k] = obj[k];
     }

@@ -3,6 +3,8 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   init: function(data, options) {
     this._super(data, options);
 
+    this.getOrSet('headers', {});
+
     this.xhr = null;
     this.emitter = new pie.emitter();
 
@@ -85,20 +87,32 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     var accept = this.get('accept'),
     contentType = this.get('contentType'),
+    headers = this.get('headers'),
     data = this.get('data');
 
     this._applyCsrfToken(xhr);
 
-    if(accept) xhr.setRequestHeader('Accept', accept);
+    if(accept) {
+      headers['Accept'] = accept;
+    }
 
     if(contentType) {
-      xhr.setRequestHeader('Content-Type', contentType);
-    } else if(pie.object.isString(data)) {
-      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    // if we aren't already sending a string, we will encode to json.
-    } else {
-      xhr.setRequestHeader('Content-Type', 'application/json');
+      headers['Content-Type'] = contentType;
     }
+
+    if(!headers['Content-Type']) {
+      if(pie.object.isString(data)) {
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      // if we aren't already sending a string, we will encode to json.
+      } else {
+        headers['Content-Type'] = 'application/json';
+      }
+    }
+
+    pie.object.forEach(headers, function(k,v) {
+      xhr.setRequestHeader(k, v);
+    });
+
   },
 
   _applyCsrfToken: function(xhr) {
