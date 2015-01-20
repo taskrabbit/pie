@@ -118,8 +118,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   _applyCsrfToken: function(xhr) {
 
     var cache = this.app.cache,
-    token = pie.fn.valueFrom(this.get('csrfToken')),
-    param = pie.fn.valueFrom(this.get('csrfParam'));
+    token = pie.fn.valueFrom(this.get('csrfToken'));
 
     if(!token) {
       token = cache.getOrSet('csrfToken', function() {
@@ -128,15 +127,8 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       });
     }
 
-    if(!param) {
-      param = cache.getOrSet('csrfParam', function() {
-        var el = pie.qs('meta[name="csrf-param"]');
-        return el ? el.getAttribute('content') : 'X-CSRF-Token';
-      });
-    }
-
     if(token) {
-      xhr.setRequestHeader(param, token);
+      xhr.setRequestHeader('X-CSRF-Token', token);
     }
   },
 

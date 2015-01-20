@@ -544,6 +544,37 @@ pie.array.unique = function(arr) {
   return arr.filter(function(e, i){ return arr.indexOf(e) === i; });
 };
 
+/* From old jQuery */
+pie.browser.agent = function() {
+  if(pie.browser.__agent) return pie.browser.__agent;
+
+  var ua = navigator.userAgent.toLowerCase(),
+  match = /(chrome)[ \/]([\w.]+)/.exec( ua ) ||
+    /(webkit)[ \/]([\w.]+)/.exec( ua ) ||
+    /(opera)(?:.*version|)[ \/]([\w.]+)/.exec( ua ) ||
+    /(msie) ([\w.]+)/.exec( ua ) ||
+    ua.indexOf("compatible") < 0 && /(mozilla)(?:.*? rv:([\w.]+)|)/.exec( ua ) ||
+    [];
+
+  var b = {
+    browser: match[ 1 ] || "",
+    version: match[ 2 ] || "0"
+  };
+
+  if(b.browser) {
+    b[b.browser] = true;
+  }
+
+  // Chrome is Webkit, but Webkit is also Safari.
+  if ( b.chrome ) {
+    b.webkit = true;
+  } else if ( b.webkit ) {
+    b.safari = true;
+  }
+
+  return pie.browser.__agent = b;
+};
+
 pie.browser.getCookie = function(key, options) {
   var decode = options && options.raw ? function(s) { return s; } : decodeURIComponent,
   pairs = document.cookie.split('; '),
@@ -3424,8 +3455,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   _applyCsrfToken: function(xhr) {
 
     var cache = this.app.cache,
-    token = pie.fn.valueFrom(this.get('csrfToken')),
-    param = pie.fn.valueFrom(this.get('csrfParam'));
+    token = pie.fn.valueFrom(this.get('csrfToken'));
 
     if(!token) {
       token = cache.getOrSet('csrfToken', function() {
@@ -3434,15 +3464,8 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       });
     }
 
-    if(!param) {
-      param = cache.getOrSet('csrfParam', function() {
-        var el = pie.qs('meta[name="csrf-param"]');
-        return el ? el.getAttribute('content') : 'X-CSRF-Token';
-      });
-    }
-
     if(token) {
-      xhr.setRequestHeader(param, token);
+      xhr.setRequestHeader('X-CSRF-Token', token);
     }
   },
 
