@@ -5546,7 +5546,14 @@ for those provided.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.view = pie.base.extend(<span class="hljs-string">'view'</span>, {
+            <div class="content"><div class='highlight'><pre>pie.view = pie.base.extend(<span class="hljs-string">'view'</span>);
+
+pie.view.prototype.constructor = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">view</span><span class="hljs-params">()</span> </span>{
+  pie.base.prototype.constructor.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
+  <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.setup) <span class="hljs-keyword">this</span>.setup();
+};
+
+pie.view.reopen({
 
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
     <span class="hljs-keyword">this</span>.options = options || {},
@@ -5560,8 +5567,6 @@ for those provided.</p>
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.uiTarget) {
       <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'afterSetup'</span>, <span class="hljs-keyword">this</span>.appendToDom.bind(<span class="hljs-keyword">this</span>));
     }
-
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.setup) <span class="hljs-keyword">this</span>.setup();
   },
 
   addedToParent: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -6999,10 +7004,10 @@ If you’re overriding formView behavior, here’s the general process which is 
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
     <span class="hljs-keyword">this</span>._ensureModel();
+    <span class="hljs-keyword">this</span>._normalizeFormOptions();
   },
 
   setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">this</span>._normalizeFormOptions();
     <span class="hljs-keyword">this</span>._setupFormBindings();
 
     <span class="hljs-keyword">this</span>.on(<span class="hljs-string">'submit'</span>, <span class="hljs-keyword">this</span>.options.formSel, <span class="hljs-keyword">this</span>.validateAndSubmitForm.bind(<span class="hljs-keyword">this</span>));

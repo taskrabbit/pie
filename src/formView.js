@@ -53,10 +53,10 @@ pie.formView = pie.activeView.extend('formView', {
   init: function() {
     this._super.apply(this, arguments);
     this._ensureModel();
+    this._normalizeFormOptions();
   },
 
   setup: function() {
-    this._normalizeFormOptions();
     this._setupFormBindings();
 
     this.on('submit', this.options.formSel, this.validateAndSubmitForm.bind(this));
