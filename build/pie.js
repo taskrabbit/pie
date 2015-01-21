@@ -4045,6 +4045,8 @@ pie.emitter = pie.model.extend('emitter', {
       if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(callbacks));
 
       pie.fn.async(fns, onComplete);
+    } else {
+      onComplete();
     }
   }
 

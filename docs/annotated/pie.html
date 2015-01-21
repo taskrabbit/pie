@@ -7141,6 +7141,8 @@ emitter.fireAround(<span class="hljs-string">'aroundFoo'</span>, <span class="hl
       <span class="hljs-keyword">if</span>(compactNeeded) <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'eventCallbacks.'</span> + event, pie.array.compact(callbacks));
 
       pie.fn.async(fns, onComplete);
+    } <span class="hljs-keyword">else</span> {
+      onComplete();
     }
   }
 
