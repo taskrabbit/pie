@@ -1,10 +1,11 @@
 (function(window) {
-// pie namespace;
+// # Pie
+// The top level namespace of the framework.
 var pie = window.pie = {
 
   apps: {},
 
-  // native extensions
+  /* native extensions */
   array: {},
   browser: {},
   date: {},
@@ -14,13 +15,15 @@ var pie = window.pie = {
   object: {},
   string: {},
 
-  // extensions to be used within pie apps.
+  /* extensions to be used within pie apps. */
   mixins: {},
 
   pieId: 1,
 
 
-
+  // ** pie.guid **
+  //
+  // Generate a globally unique id.
   guid: function() {
     var r, v;
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -30,31 +33,58 @@ var pie = window.pie = {
     });
   },
 
-  ns: function(path) {
-    return pie.object.getPath(window, path) || pie.object.setPath(window, path, {});
+  // ** pie.ns **
+  //
+  // If it's not already present, build a path on `base`.
+  // By default, `base` is the global `window`.
+  // The deepest namespace object is returned so you can immediately use it.
+  // ```
+  // pie.ns('lib.foo.bar').baz = function(){};
+  // //=> generates { lib: { foo: { bar: { baz: function(){} } } } }
+  // ```
+  ns: function(path, base) {
+    base = base || window;
+    return pie.object.getPath(base, path) || pie.object.setPath(base, path, {});
   },
 
+  // ** pie.qs **
+  //
+  // Alias for `document.querySelector`
   qs: function() {
     return document.querySelector.apply(document, arguments);
   },
 
+  // ** pie.qsa **
+  //
+  // Alias for `document.querySelectorAll`
   qsa: function() {
     return document.querySelectorAll.apply(document, arguments);
   },
 
+  // ** pie.setUid **
+  //
+  // Set the `pieId` of `obj` if it isn't already present.
   setUid: function(obj) {
     return obj.pieId = obj.pieId || pie.unique();
   },
 
+  // ** pie.unique **
+  //
+  // Provide a unique integer not yet used by pie.
+  // This is good for unique local ids.
   unique: function() {
     return String(pie.pieId++);
   },
 
-  // provide a util object for your app which utilizes pie's features.
+  // ** pie.util **
+  //
+  // Provide a util object for your app which utilizes pie's features.
+  // ```
   // window._ = pie.util();
   // _.a.detect(/* .. */);
   // _.o.merge(a, b);
   // _.unique(); //=> '95'
+  // ```
   util: function() {
     var o = {};
 
@@ -68,8 +98,11 @@ var pie = window.pie = {
     o.s   = pie.string;
     o.x   = pie.mixins;
 
-    o.unique  = pie.unique;
-    o.setUid  = pie.setUid;
+    for(var i in pie) {
+      if(pie.object.isFunction(pie[i]) && i !== 'util') {
+        o[i] = pie[i];
+      }
+    }
 
     return o;
   }
@@ -2807,7 +2840,8 @@ pie.model = pie.base.extend('model', {
     this.deliveringRecords = 0;
   },
 
-
+  // ** pie.model.compute **
+  //
   // Register a computed property which is accessible via `name` and defined by `fn`.
   // Provide all properties which invalidate the definition.
   // If the definition of the property is defined by a function of the same name, the function can be ommitted.
@@ -2838,8 +2872,9 @@ pie.model = pie.base.extend('model', {
     this.set(name, fn.call(this));
   },
 
-
-  /* After updates have been made we deliver our change records to our observers */
+  // ** pie.model.compute **
+  //
+  // After updates have been made we deliver our change records to our observers
   deliverChangeRecords: function() {
     if(!this.changeRecords.length) return this;
     if(this.deliveringRecords) return this;
@@ -2887,6 +2922,8 @@ pie.model = pie.base.extend('model', {
 
   },
 
+  // ** pie.model.get **
+  //
   // Access the value stored at data[key]
   // Key can be multiple levels deep by providing a dot separated key.
   // ```
@@ -2899,6 +2936,8 @@ pie.model = pie.base.extend('model', {
     return pie.object.getPath(this.data, key);
   },
 
+  // ** pie.model.getOrSet **
+  //
   // Retrieve or set a key within the model.
   // The `defaultValue` will only be used if the value at `key` is `== null`.
   // ```
@@ -2915,6 +2954,8 @@ pie.model = pie.base.extend('model', {
     return this.get(key);
   },
 
+  // ** pie.model.gets **
+  //
   // Retrieve multiple values at once.
   // Returns an object of names & values.
   // Path keys will be transformed into objects.
@@ -2935,6 +2976,8 @@ pie.model = pie.base.extend('model', {
     return o;
   },
 
+  // ** pie.model.has **
+  //
   // Determines whether a path exists in our data.
   // ```
   // model.has('foo.bar')
@@ -2944,6 +2987,8 @@ pie.model = pie.base.extend('model', {
     return !!pie.object.hasPath(this.data, path);
   },
 
+  // ** pie.model.observe **
+  //
   // Register an observer and optionally filter by key.
   // If no keys are provided, any change will result in the observer being triggered.
   // ```
@@ -2974,6 +3019,8 @@ pie.model = pie.base.extend('model', {
     return this;
   },
 
+  // ** pie.model.reset **
+  //
   // Reset a model to it's empty state, without affecting the `_version` attribute.
   // Optionally, you can pass any options which are valid to `sets`.
   // ```
@@ -2990,6 +3037,8 @@ pie.model = pie.base.extend('model', {
     return this.sets(o, options);
   },
 
+  // ** pie.model.set **
+  //
   // Set a `value` on the model at the specified `key`.
   // Valid options are:
   // * skipObservers - when true, observers will not be triggered.
@@ -3079,6 +3128,8 @@ pie.model = pie.base.extend('model', {
     return this.deliverChangeRecords();
   },
 
+  // ** pie.model.sets **
+  //
   // Set a bunch of stuff at once.
   // Change records will not be delivered until all keys have been set.
   // ```
@@ -3093,13 +3144,16 @@ pie.model = pie.base.extend('model', {
     return this.deliverChangeRecords();
   },
 
+  // ** pie.model.trackVersion **
+  //
   // Increment the `_version` of this model.
   // Observers are skipped since this is invoked while change records are delivered.
   trackVersion: function() {
     this.set('_version', this.get('_version') + 1, {skipObservers: true});
   },
 
-
+  // ** pie.model.unobserve **
+  //
   // Unregister an observer. Optionally for specific keys.
   // If a subset of the original keys are provided it will only unregister
   // for those provided.
@@ -3764,109 +3818,193 @@ pie.cache = pie.model.extend('cache', {
     return pie.date.now();
   }
 });
+// # Pie Emitter
+//
+// An emitter is an event subscriber & notifier. It's similar to a pubsub implementation but
+// allows for blocking of an event via `around` callbacks. It's similar to a promise implementation,
+// but doesn't worry itself with the result of the underlying functions.
+// ```
+// var emitter = new pie.emitter();
+//
+// emitter.on('foo', function(){} );
+// emitter.prepend('foo', function(){} );
+//
+// emitter.once('afterBar', function(){} );
+// emitter.prependOnce('beforeBar', function(){} );
+// emitter.once('aroundBar', function(cb){} );
+//
+// emitter.fire('foo');
+// emitter.fireSequence('bar');
+// ```
 pie.emitter = pie.model.extend('emitter', {
 
   init: function() {
     this._super({
-      triggeredEvents: [],
+      triggeredEvents: {},
       eventCallbacks: {}
     });
   },
 
+  // ** pie.emitter.clear **
+  //
+  // Remove any events registered under `eventName`.
   clear: function(eventName) {
     this.set('eventCallbacks.' + eventName, undefined);
   },
 
+  // ** pie.emitter.debug **
+  //
+  // Begin logging events which are triggered by this emitter.
   debug: function(bool) {
     this.isDebugging = bool || bool === undefined;
   },
 
-
+  // ** pie.emitter.hasEvent **
+  //
+  // Has the event `eventName` been triggered by this emitter yet?
   hasEvent: function(eventName) {
-    return !!~this.get('triggeredEvents').indexOf(eventName);
+    return !!this.get('triggeredEvents')[eventName];
   },
 
+  // ** pie.emitter.hasCallback **
+  //
+  // Is there a callback for the event `eventName`.
   hasCallback: function(eventName) {
     var cbs = this.get('eventCallbacks.' + eventName);
     return !!(cbs && cbs.length);
   },
 
+  // #### Event Observation
 
-  // Event Observation
-
+  // ** pie.emitter._on **
+  //
+  // Append or prepend a function `fn` via `meth` to the callbacks registered under `event`.
+  // Options are as follows:
+  //
+  // * **immediate** - trigger the `fn` immediately if the `event` has been fired in the past.
+  // * **onceOnly** - trigger the `fn` a single time then remove the observer.
+  //
+  // _Note that if `immediate` and `onceOnly` are provided as options and the event has been previously
+  // triggered, the function will be invoked and nothing will be added to the callbacks._
   _on: function(event, fn, options, meth) {
-    options = options || {},
-
-    this.getOrSet('eventCallbacks.' + event, [])[meth](pie.object.merge({fn: fn}, options));
-  },
-
-
-  _once: function(event, fn, options, meth) {
     options = options || {};
 
     if(options.immediate && this.hasEvent(event)) {
       fn();
-      return;
+      if(options.onceOnly) return;
     }
 
-    this._on(event, fn, {onceOnly: true}, meth);
+    this.getOrSet('eventCallbacks.' + event, [])[meth](pie.object.merge({fn: fn}, options));
   },
 
-  // invoke fn when the event is triggered.
-  // options:
-  //  - onceOnly: if the callback should be called a single time then removed.
+  // Same method signature of `_on`, but handles the inclusion of the `onceOnly` option.
+  _once: function(event, fn, options, meth) {
+    options = pie.object.merge({onceOnly: true}, options);
+    this._on(event, fn, options, meth);
+  },
+
+  // ** pie.emitter.on **
+  //
+  // Public interface for invoking `_on` & pushing an event to the end of the callback chain.
+  // ```
+  // emitter.on('foo', function(){});
+  // emitter.on('afterFoo', function(){});
+  // ```
   on: function(event, fn, options) {
     this._on(event, fn, options, 'push');
   },
 
+  // ** pie.emitter.prepend **
+  //
+  // Public interface for invoking `_on` & prepending an event to the beginning of the callback chain.
+  // ```
+  // emitter.prepend('foo', function(){});
+  // ```
   prepend: function(event, fn, options) {
     this._on(event, fn, options, 'unshift');
   },
 
+  // ** pie.emitter.once **
+  //
+  // Public interface for invoking `_once` & pushing an event to the end of the callback chain.
+  // ```
+  // emitter.once('foo', function(){}, {immediate: true});
+  // ```
   once: function(event, fn, options) {
     this._once(event, fn, options, 'push');
   },
 
+  // ** pie.emitter.prependOnce **
+  //
+  // Public interface for invoking `_once` & prepending an event to the beginning of the callback chain.
+  // ```
+  // emitter.prependOnce('foo', function(){});
+  // ```
   prependOnce: function(event, fn, options) {
     this._once(event, fn, options, 'unshift');
   },
 
-  // Event Triggering
+  // #### Event Triggering
 
-  // trigger an event (string) on the app.
-  // any callbacks associated with that event will be invoked with the extra arguments
-  fire: function(/* event, arg1, arg2, */) {
-    var event = arguments[0];
-
-    if(event) {
-
-      var args = pie.array.from(arguments).slice(1),
-      callbacks = this.get('eventCallbacks.' + event),
-      compactNeeded = false;
-
-      if(this.isDebugging) this.app.debug(event);
-
-      if(callbacks) {
-        callbacks.forEach(function(cb, i) {
-          cb.fn.apply(null, args);
-          if(cb.onceOnly) {
-            compactNeeded = true;
-            callbacks[i] = undefined;
-          }
-        });
-      }
-
-      if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
-    }
-
-    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
-
+  // ** pie.emitter._reportTrigger **
+  //
+  // Increment our `triggeredEvents` counter.
+  _reportTrigger: function(event) {
+    var triggered = this.get('triggeredEvents');
+    triggered[event] = (triggered[event] || 0) + 1;
   },
 
+  // ** pie.emitter.fire **
+  //
+  // Trigger an `event` causing any registered callbacks to be fired.
+  // Any callbacks associated with that event will be invoked with the arguments supplied by positions 1-N.
+  // ```
+  // emitter.fire('userSignedUp', 'Doug Wilson');
+  // //=> invokes all registered callbacks of the `userSignedUp` event with a single argument, "Doug Wilson".
+  // ```
+  fire: function(/* event, arg1, arg2, */) {
+
+    var args = pie.array.from(arguments),
+    event = args.shift(),
+    callbacks = this.get('eventCallbacks.' + event),
+    compactNeeded = false;
+
+    /* show that this event was triggered if we're debugging */
+    if(this.isDebugging) this.app.debug(event);
+
+    if(callbacks) {
+      callbacks.forEach(function(cb, i) {
+        /* invoke the function for the callback */
+        cb.fn.apply(null, args);
+        /* if the function is `onceOnly`, clear it out */
+        if(cb.onceOnly) {
+          compactNeeded = true;
+          callbacks[i] = undefined;
+        }
+      });
+    }
+
+    /* if we removed callbacks, clean up */
+    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(callbacks));
+
+    /* increment our trigger counters */
+    this._reportTrigger(event);
+  },
+
+  // ** pie.emitter.fireSequence **
+  //
+  // Fire a sequence of events based on base event name of `event`.
+  // Optionally, provide a function `fn` which will be invoked before the base event is fired.
+  //
+  // ```
+  // emitter.fireSequence('foo', barFn);
+  // //=> invokes the following sequence:
+  // // fires "beforeFoo", fires "aroundFoo", invokes barFn, fires "foo", fires "afterFoo"
+  // ```
   fireSequence: function(event, fn) {
     var before = pie.string.modularize("before_" + event),
-    after = pie.string.modularize("after_" + event),
-    around = pie.string.modularize('around_' + event);
+        after  = pie.string.modularize("after_" + event),
+        around = pie.string.modularize('around_' + event);
 
     this.fire(before);
     this.fireAround(around, function() {
@@ -3876,30 +4014,44 @@ pie.emitter = pie.model.extend('emitter', {
     }.bind(this));
   },
 
+  // ** pie.emitter.fireAround **
+  //
+  // Invokes `event` callbacks and expects each callback to invoke a provided callback when complete.
+  // After all callbacks have reported that they're finished, `onComplete` will be invoked.
+  // ```
+  // cb1 = function(cb){ console.log('cb1!'); cb(); };
+  // cb2 = function(cb){ console.log('cb2!'); cb(); };
+  // emitter.on('aroundFoo', cb1);
+  // emitter.on('aroundFoo', cb2);
+  // emitter.fireAround('aroundFoo', function(){ console.log('done!'); });
+  // //=> console would log "cb1!", "cb2!", "done!"
+  // ```
   fireAround: function(event, onComplete) {
-    var callbacks = this.get('eventCallbacks.' + event) || [],
+    var callbacks = this.get('eventCallbacks.' + event),
     compactNeeded = false,
     fns;
 
-    fns = callbacks.map(function(cb, i) {
-      if(cb.onceOnly) {
-        compactNeeded = true;
-        cb[i] = undefined;
-      }
-      return cb.fn;
-    });
+    this._reportTrigger(event);
 
-    if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(this.get('eventCallbacks.' + event)));
-    if(!this.hasEvent(event)) this.get('triggeredEvents').push(event);
+    if(callbacks) {
+      fns = callbacks.map(function(cb, i) {
+        if(cb.onceOnly) {
+          compactNeeded = true;
+          cb[i] = undefined;
+        }
+        return cb.fn;
+      });
 
-    pie.fn.async(fns, onComplete);
+      if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(callbacks));
+
+      pie.fn.async(fns, onComplete);
+    }
   }
 
 });
-// # Pie ErrorHandler
+// # Pie Error Handler
 // A class which knows how to handle errors in the app.
 // By default, it focuses mostly on xhr issues.
-
 pie.errorHandler = pie.model.extend('errorHandler', {
 
   init: function(app) {
@@ -3911,18 +4063,33 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   },
 
 
-  // extract the "data" object out of an xhr
+  /* extract the "data" object out of an xhr */
   xhrData: function(xhr) {
     return xhr.data = xhr.data || (xhr.status ? JSON.parse(xhr.response) : {});
   },
 
 
-  // extract an error message from a response. Try to extract the error message from
+  // ** pie.errorHandler.errorMessagesFromRequest **
+  //
+  // Extract error messages from a response. Try to extract the messages from
   // the xhr data diretly, or allow overriding by response code.
+  // It will look for an "error", "errors", or "errors.message" response format.
+  // ```
+  // {
+  //   errors: [
+  //     {
+  //       key: 'invalid_email',
+  //       message: "Email is invalid"
+  //     }
+  //   ]
+  // }
+  // ```
   errorMessagesFromRequest: function(xhr) {
     var d = this.xhrData(xhr),
-    errors  = pie.array.map(d.errors || [], 'message'),
+    errors = pie.array.from(d.error || d.message || d.errors || []),
     clean;
+
+    errors = errors.map(function(e){ return pie.object.isString(e) ? e : e.message; });
 
     errors = pie.array.compact(errors, true);
     clean   = this.app.i18n.t('app.errors.' + xhr.status, {default: errors});
@@ -3936,7 +4103,9 @@ pie.errorHandler = pie.model.extend('errorHandler', {
     return this.get('responseCodeHandlers.' + status);
   },
 
-  // find a handler for the xhr via response code or the app default.
+  // ** pie.errorHandler.handleXhrError **
+  //
+  // Find a handler for the xhr via response code or the app default.
   handleXhrError: function(xhr) {
 
     var handler = this.getResponseCodeHandler(xhr.status.toString());
@@ -3949,30 +4118,38 @@ pie.errorHandler = pie.model.extend('errorHandler', {
 
   },
 
-  // build errors and send them to the notifier.
+  // ** pie.errorHandler.notifyErrors **
+  //
+  // Build errors and send them to the notifier.
   notifyErrors: function(xhr){
     var n = this.app.notifier, errors = this.errorMessagesFromRequest(xhr);
 
     if(errors.length) {
-      // clear all previous errors when an error occurs.
+      /* clear all previous errors when an error occurs. */
       n.clear('error');
 
-      // delay so UI will visibly change when the same content is shown.
+      /* delay so UI will visibly change when the same content is shown. */
       setTimeout(function(){
         n.notify(errors, 'error', 10000);
       }, 100);
     }
   },
 
-
-  // register a response code handler
-  // registerHandler('401', myRedirectCallback);
+  // ** pie.errorHandler.registerHandler **
+  //
+  // Register a response code handler
+  // ```
+  // handler.registerHandler('401', myRedirectCallback);
+  // handler.registerHandler('404', myFourOhFourCallback);
+  // ```
   registerHandler: function(responseCode, handler) {
     this.set('responseCodeHandlers.' + responseCode.toString(), handler);
   },
 
 
-  // provide an interface for sending errors to a bug reporting service.
+  // ** pie.errorHandler.reportError **
+  //
+  // Provide an interface for sending errors to a bug reporting service.
   reportError: function(err, options) {
     options = options || {};
 
@@ -3987,8 +4164,9 @@ pie.errorHandler = pie.model.extend('errorHandler', {
     this._reportError(err, options);
   },
 
-
-  // hook in your own error reporting service. bugsnag, airbrake, etc.
+  // ** pie.errorHandler._reportError **
+  //
+  // Hook in your own error reporting service. bugsnag, airbrake, etc.
   _reportError: function(err) {
     this.app.debug(err);
   }
@@ -4034,15 +4212,16 @@ pie.errorHandler = pie.model.extend('errorHandler', {
 // If you're overriding formView behavior, here's the general process which is taken:
 //   1. Upon setup, fields are bound & initialized
 //   2. Upon submission, fields are read one final time
-//   3. The model is validated.
-//   4. If invalid, an `onInvalid` event is fired and the `onInvalid` function is invoked.
-//   5. If invalid, an `onValid` event is fired and the `onValid` function is invoked.
-//   6. By default, the `onValid` function invokes `prepareSubmissionData` with a callback.
-//   7. `prepareSubmissionData` reads the fields out of the model. This is the point when ajax could take place if, say, a token needed to be generated by an external service (I'm talking to you, Stripe).
-//   8. When the data is prepared, the callback is invoked.
-//   9. The ajax request is made to the form target.
-//   10. If unsuccessful, an `onFailure` event & function are triggered.
-//   11. If successful, an `onSuccess` event & function are triggered.
+//   3. A `submit` event is triggered on our emitter.
+//   4. The model is validated.
+//   5. If invalid, an `onInvalid` event is fired and the `onInvalid` function is invoked.
+//   6. If invalid, an `onValid` event is fired and the `onValid` function is invoked.
+//   7. By default, the `onValid` function invokes `prepareSubmissionData` with a callback.
+//   8. `prepareSubmissionData` reads the fields out of the model. This is the point when ajax could take place if, say, a token needed to be generated by an external service (I'm talking to you, Stripe).
+//   9. When the data is prepared, the callback is invoked.
+//   10. The ajax request is made to the form target.
+//   11. If unsuccessful, an `onFailure` event & function are triggered.
+//   12. If successful, an `onSuccess` event & function are triggered.
 pie.formView = pie.activeView.extend('formView', {
 
   init: function() {
@@ -4059,6 +4238,8 @@ pie.formView = pie.activeView.extend('formView', {
     this._super.apply(this, arguments);
   },
 
+  /* we build a model if one isn't present already */
+  /* if the model doesn't know how to perform validations, we extend it with the functionality */
   _ensureModel: function() {
     this.model = this.model || this.options.model || new pie.model({});
 
@@ -4080,6 +4261,8 @@ pie.formView = pie.activeView.extend('formView', {
     });
   },
 
+  /* These `_on*` methods are provided to enable event observation. */
+  /* Implementers of formView should override `on*` methods. */
   _onInvalid: function() {
     this.emitter.fire('onInvalid');
     this.onInvalid.apply(this, arguments);
@@ -4127,11 +4310,17 @@ pie.formView = pie.activeView.extend('formView', {
     this.readBoundFields();
   },
 
-  /* for the inheriting class to override. */
+  // ** pie.formView.onInvalid **
+  //
+  // For the inheriting class to override.
   onInvalid: function(form) {},
 
 
-  /* what happens when validations pass. */
+  // ** pie.formView.onValid **
+  //
+  // What happens when the model validations pass.
+  // By default, the data is prepared for submission via `prepareSubmissionData`
+  // and sent to `performSubmit`.
   onValid: function(form) {
     this.prepareSubmissionData(function(data) {
 
@@ -4148,6 +4337,15 @@ pie.formView = pie.activeView.extend('formView', {
 
   },
 
+  // ** pie.formView.performSubmit **
+  //
+  // By default it builds an ajax request based on `this.options.ajax`
+  // and / or the <form> tag identified by `form`.
+  // Upon success or failure of the request, the `cb` is invoked with
+  // a signature of `cb(success?, responseData)`
+  // ```
+  // formView.performSubmit(<form>, {foo: 'bar'}, function(isSuccess, data){ console.log(isSuccess, data); });
+  // ```
   performSubmit: function(form, data, cb) {
     var request = app.ajax.ajax(pie.object.merge({
       url: form.getAttribute('action'),
@@ -4170,6 +4368,8 @@ pie.formView = pie.activeView.extend('formView', {
   /* for the inheriting class to override. */
   onSuccess: function(response, xhr) {},
 
+  // ** pie.formView.prepareSubmissionData **
+  //
   // The data to be sent to the server.
   // By default these are the defined fields extracted out of the model.
   prepareSubmissionData: function(cb) {
@@ -4180,11 +4380,21 @@ pie.formView = pie.activeView.extend('formView', {
     return data;
   },
 
+  // ** pie.formView.validateModel **
+  //
+  // Perform validations on the model & invoke `cb` when complete.
+  // By default, `model.validateAll` will be invoked but this can be overridden
+  // to talk to external services, etc.
   validateModel: function(cb) {
     this.model.validateAll(cb);
   },
 
-  // Start the submission process.
+  // ** pie.formView.validateAndSubmitForm **
+  //
+  // Start the submission process. We apply our form fields to the model
+  // via `applyFieldsToModel`, fire a submit event via our emitter, then
+  // begin the validation process via `validateModel`. If the model validates,
+  // we invoke our `onValid` function, otherwise the `onInvalid` function.
   validateAndSubmitForm: function(e) {
     e.preventDefault();
 
@@ -4391,6 +4601,8 @@ pie.i18n = pie.model.extend('i18n', {
 
   keyCheck: /^\.(.+)$/,
 
+  // ** pie.i18n.attempt **
+  //
   // If the provided `key` looks like a translation key, prepended with a ".",
   // try to look it up. If it does not or the provided key does not exist, return
   // the provided key.
@@ -4403,6 +4615,8 @@ pie.i18n = pie.model.extend('i18n', {
     return this.t(m[1], {default: key});
   },
 
+  // ** pie.i18n.load **
+  //
   // Load translations into this instance.
   // By default, a deep merge will occur, provide `false` for `shallow`
   // if you would like a shallow merge to occur.
@@ -4414,6 +4628,8 @@ pie.i18n = pie.model.extend('i18n', {
     f.call(null, this.data, data);
   },
 
+  // ** pie.i18n.translate (pie.i18n.t) **
+  //
   // Given a `path`, look up a translation.
   // If the second argument `data` is provided, the `data` will be
   // interpolated into the translation before returning.
@@ -4461,6 +4677,8 @@ pie.i18n = pie.model.extend('i18n', {
     return translation;
   },
 
+  // ** pie.i18n.timeago **
+  //
   // Return a human representation of the time since the provided time `t`.
   // You can also pass an alternate "relative to" time as the second argument.
   // ```
@@ -4508,6 +4726,8 @@ pie.i18n = pie.model.extend('i18n', {
     }
   },
 
+  // ** pie.i18n.strftime (pie.i18n.l) **
+  //
   // Given a `date`, format it based on the format `f`.
   // The format can be:
   //   * A named format, existing at app.time.formats.X
@@ -4574,7 +4794,7 @@ pie.i18n = pie.model.extend('i18n', {
   },
 });
 
-// Aliases
+/* Aliases */
 pie.i18n.prototype.t = pie.i18n.prototype.translate;
 pie.i18n.prototype.l = pie.i18n.prototype.strftime;
 
@@ -4726,7 +4946,8 @@ pie.list = pie.model.extend('list', {
     this._super({items: array}, options);
   },
 
-
+  // ** pie.list._normalizeIndex **
+  //
   // Converts a potential index into the numeric form.
   // If the index is negative, it should represent the index from the end of the current list.
   // ```
@@ -4741,7 +4962,8 @@ pie.list = pie.model.extend('list', {
     return wanted;
   },
 
-
+  // ** pie.list._trackMutations **
+  //
   // Track changes to the array which occur during `fn`'s execution.
   _trackMutations: function(options, fn) {
     var oldLength = this.data.items.length,
@@ -4765,13 +4987,15 @@ pie.list = pie.model.extend('list', {
   },
 
 
-
+  // ** pie.list.forEach **
+  //
   // Iterate the list, calling `f` with each item.
   forEach: function(f) {
     return this.get('items').forEach(f);
   },
 
-
+  // ** pie.list.get **
+  //
   // Get an item at a specific index.
   // `key` can be any valid input to `_normalizeIndex`.
   get: function(key) {
@@ -4783,14 +5007,16 @@ pie.list = pie.model.extend('list', {
     return pie.model.prototype.get.call(this, path);
   },
 
-
+  // ** pie.list.indexOf **
+  //
   // Find the index of a specific value.
   // Uses the standard array equality check for indexOf.
   indexOf: function(value) {
     return this.get('items').indexOf(value);
   },
 
-
+  // ** pie.list.insert **
+  //
   // Insert `value` at the index specified by `key`.
   // Returns the list.
   insert: function(key, value, options) {
@@ -4811,11 +5037,15 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
+  // ** pie.list.length **
+  //
   // The length of the list.
   length: function() {
     return this.get('items.length');
   },
 
+  // ** pie.list.pop **
+  //
   // Pop an item off the end of the list.
   // Returns the item.
   pop: function(options) {
@@ -4839,6 +5069,8 @@ pie.list = pie.model.extend('list', {
     return value;
   },
 
+  // ** pie.list.push **
+  //
   // Add an item to the end of the list.
   // Returns the list.
   push: function(value, options) {
@@ -4857,6 +5089,8 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
+  // ** pie.list.remove **
+  //
   // Remove a specific index from the list.
   // Returns the removed item.
   remove: function(key, options) {
@@ -4881,6 +5115,8 @@ pie.list = pie.model.extend('list', {
     return value;
   },
 
+  // ** pie.list.set **
+  //
   // Set an attribute or an index based on `key` to `value`.
   set: function(key, value, options) {
     var idx = this._normalizedIndex(key);
@@ -4903,12 +5139,16 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
-  // Pop an item off the front of the list.
+  // ** pie.list.shift **
+  //
+  // Shift an item off the front of the list.
   // Returns the removed item.
   shift: function(options) {
     return this.remove(0, options);
   },
 
+  // ** pie.list.unshift **
+  //
   // Insert an item at the beginning of the list.
   unshift: function(value, options) {
     return this.insert(0, value, options);
@@ -4925,6 +5165,8 @@ pie.navigator = pie.model.extend('navigator', {
     this._super({});
   },
 
+  // ** pie.navigator.go **
+  //
   // Go to `path`, appending `params`.
   // If `replace` is true replaceState will be used in favor of pushState.
   // If no changes are made, nothing will happen.
@@ -4949,6 +5191,8 @@ pie.navigator = pie.model.extend('navigator', {
     window.historyObserver();
   },
 
+  // ** pie.navigator.start **
+  //
   // Setup the navigator and initialize the data.
   start: function() {
     /* we can only have one per browser. Multiple apps should observe pieHistoryChang on the body */
@@ -4968,6 +5212,8 @@ pie.navigator = pie.model.extend('navigator', {
     return this.setDataFromLocation();
   },
 
+  // ** pie.navigator.setDataFromLocation **
+  //
   // Look at `window.location` and transform it into stuff we care about.
   // Set the data on this navigator object.
   setDataFromLocation: function() {
@@ -4982,7 +5228,10 @@ pie.navigator = pie.model.extend('navigator', {
     });
   }
 });
-// notifier is a class which provides an interface for rendering page-level notifications.
+// # Pie Notifier
+// A class which provides an interface for rendering page-level notifications.
+// This does only structures and manages the data to be used by a view. This does not impelement
+// UI notifications.
 pie.notifier = pie.base.extend('notifier', {
 
   init: function(app, options) {
@@ -5004,6 +5253,8 @@ pie.notifier = pie.base.extend('notifier', {
     }
   },
 
+  // ** pie.notifier.notify **
+  //
   // Show a notification or notifications.
   // Messages can be a string or an array of messages.
   // You can choose to close a notification automatically by providing `true` as the third arg.

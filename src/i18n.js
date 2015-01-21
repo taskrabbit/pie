@@ -141,6 +141,8 @@ pie.i18n = pie.model.extend('i18n', {
 
   keyCheck: /^\.(.+)$/,
 
+  // ** pie.i18n.attempt **
+  //
   // If the provided `key` looks like a translation key, prepended with a ".",
   // try to look it up. If it does not or the provided key does not exist, return
   // the provided key.
@@ -153,6 +155,8 @@ pie.i18n = pie.model.extend('i18n', {
     return this.t(m[1], {default: key});
   },
 
+  // ** pie.i18n.load **
+  //
   // Load translations into this instance.
   // By default, a deep merge will occur, provide `false` for `shallow`
   // if you would like a shallow merge to occur.
@@ -164,6 +168,8 @@ pie.i18n = pie.model.extend('i18n', {
     f.call(null, this.data, data);
   },
 
+  // ** pie.i18n.translate (pie.i18n.t) **
+  //
   // Given a `path`, look up a translation.
   // If the second argument `data` is provided, the `data` will be
   // interpolated into the translation before returning.
@@ -211,6 +217,8 @@ pie.i18n = pie.model.extend('i18n', {
     return translation;
   },
 
+  // ** pie.i18n.timeago **
+  //
   // Return a human representation of the time since the provided time `t`.
   // You can also pass an alternate "relative to" time as the second argument.
   // ```
@@ -258,6 +266,8 @@ pie.i18n = pie.model.extend('i18n', {
     }
   },
 
+  // ** pie.i18n.strftime (pie.i18n.l) **
+  //
   // Given a `date`, format it based on the format `f`.
   // The format can be:
   //   * A named format, existing at app.time.formats.X
@@ -324,7 +334,7 @@ pie.i18n = pie.model.extend('i18n', {
   },
 });
 
-// Aliases
+/* Aliases */
 pie.i18n.prototype.t = pie.i18n.prototype.translate;
 pie.i18n.prototype.l = pie.i18n.prototype.strftime;
 

@@ -13,7 +13,8 @@ pie.list = pie.model.extend('list', {
     this._super({items: array}, options);
   },
 
-
+  // ** pie.list._normalizeIndex **
+  //
   // Converts a potential index into the numeric form.
   // If the index is negative, it should represent the index from the end of the current list.
   // ```
@@ -28,7 +29,8 @@ pie.list = pie.model.extend('list', {
     return wanted;
   },
 
-
+  // ** pie.list._trackMutations **
+  //
   // Track changes to the array which occur during `fn`'s execution.
   _trackMutations: function(options, fn) {
     var oldLength = this.data.items.length,
@@ -52,13 +54,15 @@ pie.list = pie.model.extend('list', {
   },
 
 
-
+  // ** pie.list.forEach **
+  //
   // Iterate the list, calling `f` with each item.
   forEach: function(f) {
     return this.get('items').forEach(f);
   },
 
-
+  // ** pie.list.get **
+  //
   // Get an item at a specific index.
   // `key` can be any valid input to `_normalizeIndex`.
   get: function(key) {
@@ -70,14 +74,16 @@ pie.list = pie.model.extend('list', {
     return pie.model.prototype.get.call(this, path);
   },
 
-
+  // ** pie.list.indexOf **
+  //
   // Find the index of a specific value.
   // Uses the standard array equality check for indexOf.
   indexOf: function(value) {
     return this.get('items').indexOf(value);
   },
 
-
+  // ** pie.list.insert **
+  //
   // Insert `value` at the index specified by `key`.
   // Returns the list.
   insert: function(key, value, options) {
@@ -98,11 +104,15 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
+  // ** pie.list.length **
+  //
   // The length of the list.
   length: function() {
     return this.get('items.length');
   },
 
+  // ** pie.list.pop **
+  //
   // Pop an item off the end of the list.
   // Returns the item.
   pop: function(options) {
@@ -126,6 +136,8 @@ pie.list = pie.model.extend('list', {
     return value;
   },
 
+  // ** pie.list.push **
+  //
   // Add an item to the end of the list.
   // Returns the list.
   push: function(value, options) {
@@ -144,6 +156,8 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
+  // ** pie.list.remove **
+  //
   // Remove a specific index from the list.
   // Returns the removed item.
   remove: function(key, options) {
@@ -168,6 +182,8 @@ pie.list = pie.model.extend('list', {
     return value;
   },
 
+  // ** pie.list.set **
+  //
   // Set an attribute or an index based on `key` to `value`.
   set: function(key, value, options) {
     var idx = this._normalizedIndex(key);
@@ -190,12 +206,16 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
-  // Pop an item off the front of the list.
+  // ** pie.list.shift **
+  //
+  // Shift an item off the front of the list.
   // Returns the removed item.
   shift: function(options) {
     return this.remove(0, options);
   },
 
+  // ** pie.list.unshift **
+  //
   // Insert an item at the beginning of the list.
   unshift: function(value, options) {
     return this.insert(0, value, options);

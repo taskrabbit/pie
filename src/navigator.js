@@ -9,6 +9,8 @@ pie.navigator = pie.model.extend('navigator', {
     this._super({});
   },
 
+  // ** pie.navigator.go **
+  //
   // Go to `path`, appending `params`.
   // If `replace` is true replaceState will be used in favor of pushState.
   // If no changes are made, nothing will happen.
@@ -33,6 +35,8 @@ pie.navigator = pie.model.extend('navigator', {
     window.historyObserver();
   },
 
+  // ** pie.navigator.start **
+  //
   // Setup the navigator and initialize the data.
   start: function() {
     /* we can only have one per browser. Multiple apps should observe pieHistoryChang on the body */
@@ -52,6 +56,8 @@ pie.navigator = pie.model.extend('navigator', {
     return this.setDataFromLocation();
   },
 
+  // ** pie.navigator.setDataFromLocation **
+  //
   // Look at `window.location` and transform it into stuff we care about.
   // Set the data on this navigator object.
   setDataFromLocation: function() {

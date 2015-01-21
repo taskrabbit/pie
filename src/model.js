@@ -81,7 +81,8 @@ pie.model = pie.base.extend('model', {
     this.deliveringRecords = 0;
   },
 
-
+  // ** pie.model.compute **
+  //
   // Register a computed property which is accessible via `name` and defined by `fn`.
   // Provide all properties which invalidate the definition.
   // If the definition of the property is defined by a function of the same name, the function can be ommitted.
@@ -112,8 +113,9 @@ pie.model = pie.base.extend('model', {
     this.set(name, fn.call(this));
   },
 
-
-  /* After updates have been made we deliver our change records to our observers */
+  // ** pie.model.compute **
+  //
+  // After updates have been made we deliver our change records to our observers
   deliverChangeRecords: function() {
     if(!this.changeRecords.length) return this;
     if(this.deliveringRecords) return this;
@@ -161,6 +163,8 @@ pie.model = pie.base.extend('model', {
 
   },
 
+  // ** pie.model.get **
+  //
   // Access the value stored at data[key]
   // Key can be multiple levels deep by providing a dot separated key.
   // ```
@@ -173,6 +177,8 @@ pie.model = pie.base.extend('model', {
     return pie.object.getPath(this.data, key);
   },
 
+  // ** pie.model.getOrSet **
+  //
   // Retrieve or set a key within the model.
   // The `defaultValue` will only be used if the value at `key` is `== null`.
   // ```
@@ -189,6 +195,8 @@ pie.model = pie.base.extend('model', {
     return this.get(key);
   },
 
+  // ** pie.model.gets **
+  //
   // Retrieve multiple values at once.
   // Returns an object of names & values.
   // Path keys will be transformed into objects.
@@ -209,6 +217,8 @@ pie.model = pie.base.extend('model', {
     return o;
   },
 
+  // ** pie.model.has **
+  //
   // Determines whether a path exists in our data.
   // ```
   // model.has('foo.bar')
@@ -218,6 +228,8 @@ pie.model = pie.base.extend('model', {
     return !!pie.object.hasPath(this.data, path);
   },
 
+  // ** pie.model.observe **
+  //
   // Register an observer and optionally filter by key.
   // If no keys are provided, any change will result in the observer being triggered.
   // ```
@@ -248,6 +260,8 @@ pie.model = pie.base.extend('model', {
     return this;
   },
 
+  // ** pie.model.reset **
+  //
   // Reset a model to it's empty state, without affecting the `_version` attribute.
   // Optionally, you can pass any options which are valid to `sets`.
   // ```
@@ -264,6 +278,8 @@ pie.model = pie.base.extend('model', {
     return this.sets(o, options);
   },
 
+  // ** pie.model.set **
+  //
   // Set a `value` on the model at the specified `key`.
   // Valid options are:
   // * skipObservers - when true, observers will not be triggered.
@@ -353,6 +369,8 @@ pie.model = pie.base.extend('model', {
     return this.deliverChangeRecords();
   },
 
+  // ** pie.model.sets **
+  //
   // Set a bunch of stuff at once.
   // Change records will not be delivered until all keys have been set.
   // ```
@@ -367,13 +385,16 @@ pie.model = pie.base.extend('model', {
     return this.deliverChangeRecords();
   },
 
+  // ** pie.model.trackVersion **
+  //
   // Increment the `_version` of this model.
   // Observers are skipped since this is invoked while change records are delivered.
   trackVersion: function() {
     this.set('_version', this.get('_version') + 1, {skipObservers: true});
   },
 
-
+  // ** pie.model.unobserve **
+  //
   // Unregister an observer. Optionally for specific keys.
   // If a subset of the original keys are provided it will only unregister
   // for those provided.

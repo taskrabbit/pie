@@ -43,6 +43,7 @@ clean:
 
 document: $(debug)
 	docco -o docs/annotated/ $(debug)
+	node docs/docco-index.js
 
 watch: $(source_files) $(guide_source_files) $(spec_source_files)
 	fswatch -o $^ | xargs -n1 -I{} make

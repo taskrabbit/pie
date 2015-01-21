@@ -1,9 +1,10 @@
-// pie namespace;
+// # Pie
+// The top level namespace of the framework.
 var pie = window.pie = {
 
   apps: {},
 
-  // native extensions
+  /* native extensions */
   array: {},
   browser: {},
   date: {},
@@ -13,13 +14,15 @@ var pie = window.pie = {
   object: {},
   string: {},
 
-  // extensions to be used within pie apps.
+  /* extensions to be used within pie apps. */
   mixins: {},
 
   pieId: 1,
 
 
-
+  // ** pie.guid **
+  //
+  // Generate a globally unique id.
   guid: function() {
     var r, v;
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -29,31 +32,58 @@ var pie = window.pie = {
     });
   },
 
-  ns: function(path) {
-    return pie.object.getPath(window, path) || pie.object.setPath(window, path, {});
+  // ** pie.ns **
+  //
+  // If it's not already present, build a path on `base`.
+  // By default, `base` is the global `window`.
+  // The deepest namespace object is returned so you can immediately use it.
+  // ```
+  // pie.ns('lib.foo.bar').baz = function(){};
+  // //=> generates { lib: { foo: { bar: { baz: function(){} } } } }
+  // ```
+  ns: function(path, base) {
+    base = base || window;
+    return pie.object.getPath(base, path) || pie.object.setPath(base, path, {});
   },
 
+  // ** pie.qs **
+  //
+  // Alias for `document.querySelector`
   qs: function() {
     return document.querySelector.apply(document, arguments);
   },
 
+  // ** pie.qsa **
+  //
+  // Alias for `document.querySelectorAll`
   qsa: function() {
     return document.querySelectorAll.apply(document, arguments);
   },
 
+  // ** pie.setUid **
+  //
+  // Set the `pieId` of `obj` if it isn't already present.
   setUid: function(obj) {
     return obj.pieId = obj.pieId || pie.unique();
   },
 
+  // ** pie.unique **
+  //
+  // Provide a unique integer not yet used by pie.
+  // This is good for unique local ids.
   unique: function() {
     return String(pie.pieId++);
   },
 
-  // provide a util object for your app which utilizes pie's features.
+  // ** pie.util **
+  //
+  // Provide a util object for your app which utilizes pie's features.
+  // ```
   // window._ = pie.util();
   // _.a.detect(/* .. */);
   // _.o.merge(a, b);
   // _.unique(); //=> '95'
+  // ```
   util: function() {
     var o = {};
 
@@ -67,8 +97,11 @@ var pie = window.pie = {
     o.s   = pie.string;
     o.x   = pie.mixins;
 
-    o.unique  = pie.unique;
-    o.setUid  = pie.setUid;
+    for(var i in pie) {
+      if(pie.object.isFunction(pie[i]) && i !== 'util') {
+        o[i] = pie[i];
+      }
+    }
 
     return o;
   }
