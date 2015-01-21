@@ -1,3 +1,41 @@
+pie.fn.ease = function(cb, o) {
+  o = pie.object.merge({
+    name: 'linear',
+    duration: 250,
+    from: 0,
+    to: 1
+  }, o);
+
+  if(o.name === 'none') {
+    cb(o.to, 1);
+    return;
+  }
+
+  o.steps = o.steps || Math.max(o.duration / 16, 12);
+
+  /* the easing function */
+  var fn = pie.math.easing[o.name],
+  // the current "time" 0 to 1.
+  t = 0,
+  delta = (o.to - o.from),
+  dt = (1 / o.steps),
+  dy,
+  y,
+  pid,
+  runner = function(){
+    dy = fn(t);
+    y = o.from + (dy * delta);
+    cb(y, t);
+    if(t >= 1) clearInterval(pid);
+    else t += dt;
+    if(t > 1) t = 1;
+    // return ourself so we can invoke as part of setInterval
+    return runner;
+  };
+
+  pid = setInterval(runner(), o.duration / o.steps);
+  return pid;
+};
 
 pie.fn.async = function(fns, cb, counterObserver) {
 

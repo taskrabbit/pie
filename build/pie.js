@@ -914,6 +914,44 @@ pie.dom.trigger = function(el, e, forceEvent) {
   event.initEvent(e, true, true);
   return el.dispatchEvent(event);
 };
+pie.fn.ease = function(cb, o) {
+  o = pie.object.merge({
+    name: 'linear',
+    duration: 250,
+    from: 0,
+    to: 1
+  }, o);
+
+  if(o.name === 'none') {
+    cb(o.to, 1);
+    return;
+  }
+
+  o.steps = o.steps || Math.max(o.duration / 16, 12);
+
+  /* the easing function */
+  var fn = pie.math.easing[o.name],
+  // the current "time" 0 to 1.
+  t = 0,
+  delta = (o.to - o.from),
+  dt = (1 / o.steps),
+  dy,
+  y,
+  pid,
+  runner = function(){
+    dy = fn(t);
+    y = o.from + (dy * delta);
+    cb(y, t);
+    if(t >= 1) clearInterval(pid);
+    else t += dt;
+    if(t > 1) t = 1;
+    // return ourself so we can invoke as part of setInterval
+    return runner;
+  };
+
+  pid = setInterval(runner(), o.duration / o.steps);
+  return pid;
+};
 
 pie.fn.async = function(fns, cb, counterObserver) {
 
@@ -975,6 +1013,37 @@ pie.fn.valueFrom = function(f, binding, args) {
 };
 pie.math.precision = function(number, places) {
   return Math.round(number * Math.pow(10, places)) / Math.pow(10, places);
+};
+
+pie.math.easing = {
+  // no easing, no acceleration
+  linear: function (t) { return t; },
+  // just get us to the end.
+  none: function(t){ return 1; },
+  // accelerating from zero velocity
+  easeInQuad: function (t) { return t*t; },
+  // decelerating to zero velocity
+  easeOutQuad: function (t) { return t*(2-t); },
+  // acceleration until halfway, then deceleration
+  easeInOutQuad: function (t) { return t<.5 ? 2*t*t : -1+(4-2*t)*t; },
+  // accelerating from zero velocity
+  easeInCubic: function (t) { return t*t*t; },
+  // decelerating to zero velocity
+  easeOutCubic: function (t) { return (--t)*t*t+1; },
+  // acceleration until halfway, then deceleration
+  easeInOutCubic: function (t) { return t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1; },
+  // accelerating from zero velocity
+  easeInQuart: function (t) { return t*t*t*t; },
+  // decelerating to zero velocity
+  easeOutQuart: function (t) { return 1-(--t)*t*t*t; },
+  // acceleration until halfway, then deceleration
+  easeInOutQuart: function (t) { return t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t; },
+  // accelerating from zero velocity
+  easeInQuint: function (t) { return t*t*t*t*t; },
+  // decelerating to zero velocity
+  easeOutQuint: function (t) { return 1+(--t)*t*t*t*t; },
+  // acceleration until halfway, then deceleration
+  easeInOutQuint: function (t) { return t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t; }
 };
 // deletes all undefined and null values.
 // returns a new object less any empty key/values.
