@@ -2532,7 +2532,8 @@ This mixin should be used with a pie view.</p>
             <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span>(binding.dataType === <span class="hljs-string">'array'</span>) {
           <span class="hljs-keyword">var</span> i = index(value, elValue);
           <span class="hljs-keyword">return</span> el.checked = !!~i;
-        } <span class="hljs-keyword">else</span> {</pre></div></div>
+        } <span class="hljs-keyword">else</span> {
+          <span class="hljs-keyword">var</span> caster = typeCaster(binding.dataType);</pre></div></div>
             
         </li>
         
@@ -2547,8 +2548,7 @@ This mixin should be used with a pie view.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>          <span class="hljs-comment">/* jslint eqeq:true */</span>
-          <span class="hljs-keyword">return</span> el.checked = elValue == value;
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">return</span> el.checked = caster(elValue) === caster(value);
         }
       }
     };
@@ -2593,10 +2593,11 @@ Otherwise, return the existing value.</p>
             
             <div class="content"><div class='highlight'><pre>    setValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
       <span class="hljs-keyword">var</span> value = binding.model.get(binding.attr),
-      elValue = el.value;
+      elValue = el.value,
+      caster = typeCaster(binding.dataType);
 
       <span class="hljs-comment">/* jslint eqeq:true */</span>
-      <span class="hljs-keyword">return</span> el.checked = elValue == <span class="hljs-built_in">String</span>(value);
+      <span class="hljs-keyword">return</span> el.checked = caster(elValue) === caster(value);
     }
 
   };</pre></div></div>
@@ -7367,7 +7368,7 @@ FormViews make use of bindings &amp; validations to simplify the input, validati
     {
       name: <span class="hljs-string">'terms_of_service'</span>,
       binding: {
-        type: <span class="hljs-string">'checkbox'</span>,
+        type: <span class="hljs-string">'check'</span>,
         dataType: <span class="hljs-string">'boolean'</span>
       },
       validates: {

@@ -1598,9 +1598,10 @@ pie.mixins.bindings = (function(){
           var i = index(value, elValue);
           return el.checked = !!~i;
         } else {
+          var caster = typeCaster(binding.dataType);
+
           // Otherwise we check for equality
-          /* jslint eqeq:true */
-          return el.checked = elValue == value;
+          return el.checked = caster(elValue) === caster(value);
         }
       }
     };
@@ -1621,10 +1622,11 @@ pie.mixins.bindings = (function(){
     // Check a radio button if the value matches.
     setValue: function(el, binding) {
       var value = binding.model.get(binding.attr),
-      elValue = el.value;
+      elValue = el.value,
+      caster = typeCaster(binding.dataType);
 
       /* jslint eqeq:true */
-      return el.checked = elValue == String(value);
+      return el.checked = caster(elValue) === caster(value);
     }
 
   };
@@ -4189,7 +4191,7 @@ pie.errorHandler = pie.model.extend('errorHandler', {
 //     {
 //       name: 'terms_of_service',
 //       binding: {
-//         type: 'checkbox',
+//         type: 'check',
 //         dataType: 'boolean'
 //       },
 //       validates: {

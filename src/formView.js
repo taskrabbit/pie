@@ -14,7 +14,7 @@
 //     {
 //       name: 'terms_of_service',
 //       binding: {
-//         type: 'checkbox',
+//         type: 'check',
 //         dataType: 'boolean'
 //       },
 //       validates: {
