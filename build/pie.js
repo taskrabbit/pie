@@ -1020,7 +1020,7 @@ pie.math.easing = {
   // no easing, no acceleration
   linear: function (t) { return t; },
   // just get us to the end.
-  none: function(t){ return 1; },
+  none: function(/* t */){ return 1; },
   // accelerating from zero velocity
   easeInQuad: function (t) { return t*t; },
   // decelerating to zero velocity
@@ -1603,7 +1603,7 @@ pie.mixins.bindings = (function(){
 
   // Bind
   integrations['class'] = {
-    getValue: function(el, binding) {
+    getValue: function(/* el, binding */) {
       throw new Error("class bindings can only be from the model to the view. Please declare toModel: false");
     },
 
@@ -1631,7 +1631,7 @@ pie.mixins.bindings = (function(){
   integrations.value = {
 
     // Simple value extraction
-    getValue: function(el, binding) {
+    getValue: function(el /*, binding */) {
       return el.value;
     },
 
@@ -1729,7 +1729,7 @@ pie.mixins.bindings = (function(){
   // Set the innerTEXT of an element based on the model's value.
   integrations.text = {
 
-    getValue: function(el, binding) {
+    getValue: function(el /*, binding */) {
       return el.textContent;
     },
 
@@ -1746,7 +1746,7 @@ pie.mixins.bindings = (function(){
   // Set the innerHTML of an element based on the model's value.
   integrations.html = {
 
-    getValue: function(el, binding) {
+    getValue: function(el /*, binding */) {
       return el.innerHTML;
     },
 
@@ -2624,7 +2624,7 @@ pie.app = pie.base.extend('app', {
   // app.go('/test-url', true, 'Thanks for your interest') // replaces state with /test-url and shows the provided notification
   // app.go('/test-url', 'Thanks for your interest') // navigates to /test-url and shows the provided notification
   go: function(){
-    var args = pie.array.from(arguments), path, notificationArgs, replaceState, query;
+    var args = pie.array.from(arguments), path, notificationArgs, replaceState;
 
     path = args.shift();
 
@@ -2698,8 +2698,7 @@ pie.app = pie.base.extend('app', {
   // We always remove the current before instantiating the next. this ensures are views can prepare
   // Context's in removedFromParent before the constructor of the next view is invoked.
   navigationChanged: function() {
-    var current  = this.getChild('currentView'),
-        transition;
+    var current  = this.getChild('currentView');
 
     // Let the router determine our new url
     this.previousUrl = this.parsedUrl;
@@ -2747,7 +2746,7 @@ pie.app = pie.base.extend('app', {
 
       // Use the view key of the parsedUrl to find the viewClass.
       // At this point we've already verified the view option exists, so we don't have to check it.
-      var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
+      viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view);
       // The instance to be added. If the class is not defined, this could and should blow up.
       child = new viewClass({ app: this });
 
@@ -3651,8 +3650,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     verb = this.get('verb'),
     data = this.get('data'),
     tracker = this.get('tracker'),
-    self = this,
-    d;
+    self = this;
 
     if(verb === this.VERBS.get && data) {
       url = pie.string.urlConcat(url, pie.object.serialize(data));
@@ -4414,14 +4412,14 @@ pie.formView = pie.activeView.extend('formView', {
   },
 
   /* the process of applying form data to the model. */
-  applyFieldsToModel: function(form) {
+  applyFieldsToModel: function(/* form */) {
     this.readBoundFields();
   },
 
   // ** pie.formView.onInvalid **
   //
   // For the inheriting class to override.
-  onInvalid: function(form) {},
+  onInvalid: function(/* form */) {},
 
 
   // ** pie.formView.onValid **
@@ -4471,10 +4469,10 @@ pie.formView = pie.activeView.extend('formView', {
   },
 
   /* for the inheriting class to override. */
-  onFailure: function(resonse, xhr) {},
+  onFailure: function(/* response, xhr */) {},
 
   /* for the inheriting class to override. */
-  onSuccess: function(response, xhr) {},
+  onSuccess: function(/* response, xhr */) {},
 
   // ** pie.formView.prepareSubmissionData **
   //
@@ -4504,7 +4502,7 @@ pie.formView = pie.activeView.extend('formView', {
   // begin the validation process via `validateModel`. If the model validates,
   // we invoke our `onValid` function, otherwise the `onInvalid` function.
   validateAndSubmitForm: function(e) {
-    e.preventDefault();
+    this.consumeEvent(e);
 
     var form = e.delegateTarget;
 
@@ -5429,7 +5427,7 @@ pie.resources = pie.model.extend('resources', {
   // ```
   init: function(app, srcMap) {
     this._super({
-      srcMap: {},
+      srcMap: srcMap || {},
       loaded: {}
     }, {
       app: app
@@ -6096,7 +6094,7 @@ pie.validator = pie.base.extend('validator', (function(){
     },
 
 
-    chosen: function(value, options){
+    chosen: function(value /* , options */){
       if(Array.isArray(value)) {
         return !!value.length;
       }

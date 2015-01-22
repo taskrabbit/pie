@@ -6,7 +6,7 @@ pie.math.easing = {
   // no easing, no acceleration
   linear: function (t) { return t; },
   // just get us to the end.
-  none: function(t){ return 1; },
+  none: function(/* t */){ return 1; },
   // accelerating from zero velocity
   easeInQuad: function (t) { return t*t; },
   // decelerating to zero velocity

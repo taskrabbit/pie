@@ -21,7 +21,7 @@ pie.resources = pie.model.extend('resources', {
   // ```
   init: function(app, srcMap) {
     this._super({
-      srcMap: {},
+      srcMap: srcMap || {},
       loaded: {}
     }, {
       app: app

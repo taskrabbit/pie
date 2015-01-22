@@ -1554,7 +1554,7 @@ pie.math.easing = {</pre></div></div>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  none: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t)</span></span>{ <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>; },</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  none: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* t */</span>)</span></span>{ <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>; },</pre></div></div>
             
         </li>
         
@@ -2637,7 +2637,7 @@ This mixin should be used with a pie view.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  integrations[<span class="hljs-string">'class'</span>] = {
-    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
+    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* el, binding */</span>)</span> </span>{
       <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"class bindings can only be from the model to the view. Please declare toModel: false"</span>);
     },
 
@@ -2677,7 +2677,7 @@ This mixin should be used with a pie view.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
+            <div class="content"><div class='highlight'><pre>    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el <span class="hljs-comment">/*, binding */</span>)</span> </span>{
       <span class="hljs-keyword">return</span> el.value;
     },</pre></div></div>
             
@@ -2920,7 +2920,7 @@ Otherwise, return the existing value.</p>
             
             <div class="content"><div class='highlight'><pre>  integrations.text = {
 
-    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
+    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el <span class="hljs-comment">/*, binding */</span>)</span> </span>{
       <span class="hljs-keyword">return</span> el.textContent;
     },
 
@@ -2949,7 +2949,7 @@ Otherwise, return the existing value.</p>
             
             <div class="content"><div class='highlight'><pre>  integrations.html = {
 
-    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
+    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el <span class="hljs-comment">/*, binding */</span>)</span> </span>{
       <span class="hljs-keyword">return</span> el.innerHTML;
     },
 
@@ -4888,7 +4888,7 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
             </div>
             
             <div class="content"><div class='highlight'><pre>  go: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-    <span class="hljs-keyword">var</span> args = pie.array.from(<span class="hljs-built_in">arguments</span>), path, notificationArgs, replaceState, query;
+    <span class="hljs-keyword">var</span> args = pie.array.from(<span class="hljs-built_in">arguments</span>), path, notificationArgs, replaceState;
 
     path = args.shift();</pre></div></div>
             
@@ -5113,8 +5113,7 @@ Context’s in removedFromParent before the constructor of the next view is invo
             </div>
             
             <div class="content"><div class='highlight'><pre>  navigationChanged: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> current  = <span class="hljs-keyword">this</span>.getChild(<span class="hljs-string">'currentView'</span>),
-        transition;</pre></div></div>
+    <span class="hljs-keyword">var</span> current  = <span class="hljs-keyword">this</span>.getChild(<span class="hljs-string">'currentView'</span>);</pre></div></div>
             
         </li>
         
@@ -5234,7 +5233,7 @@ At this point we’ve already verified the view option exists, so we don’t hav
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">var</span> viewClass = pie.object.getPath(<span class="hljs-built_in">window</span>, <span class="hljs-keyword">this</span>.options.viewNamespace + <span class="hljs-string">'.'</span> + <span class="hljs-keyword">this</span>.parsedUrl.view), child;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      viewClass = pie.object.getPath(<span class="hljs-built_in">window</span>, <span class="hljs-keyword">this</span>.options.viewNamespace + <span class="hljs-string">'.'</span> + <span class="hljs-keyword">this</span>.parsedUrl.view);</pre></div></div>
             
         </li>
         
@@ -6549,8 +6548,7 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
     verb = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'verb'</span>),
     data = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'data'</span>),
     tracker = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'tracker'</span>),
-    self = <span class="hljs-keyword">this</span>,
-    d;
+    self = <span class="hljs-keyword">this</span>;
 
     <span class="hljs-keyword">if</span>(verb === <span class="hljs-keyword">this</span>.VERBS.get &amp;&amp; data) {
       url = pie.string.urlConcat(url, pie.object.serialize(data));
@@ -7806,7 +7804,7 @@ If you’re overriding formView behavior, here’s the general process which is 
   },
 
   <span class="hljs-comment">/* the process of applying form data to the model. */</span>
-  applyFieldsToModel: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{
+  applyFieldsToModel: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* form */</span>)</span> </span>{
     <span class="hljs-keyword">this</span>.readBoundFields();
   },</pre></div></div>
             
@@ -7824,7 +7822,7 @@ If you’re overriding formView behavior, here’s the general process which is 
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  onInvalid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{},</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  onInvalid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* form */</span>)</span> </span>{},</pre></div></div>
             
         </li>
         
@@ -7893,10 +7891,10 @@ a signature of <code>cb(success?, responseData)</code></p>
   },
 
   <span class="hljs-comment">/* for the inheriting class to override. */</span>
-  onFailure: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(resonse, xhr)</span> </span>{},
+  onFailure: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* response, xhr */</span>)</span> </span>{},
 
   <span class="hljs-comment">/* for the inheriting class to override. */</span>
-  onSuccess: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(response, xhr)</span> </span>{},</pre></div></div>
+  onSuccess: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* response, xhr */</span>)</span> </span>{},</pre></div></div>
             
         </li>
         
@@ -7959,7 +7957,7 @@ we invoke our <code>onValid</code> function, otherwise the <code>onInvalid</code
             </div>
             
             <div class="content"><div class='highlight'><pre>  validateAndSubmitForm: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span> </span>{
-    e.preventDefault();
+    <span class="hljs-keyword">this</span>.consumeEvent(e);
 
     <span class="hljs-keyword">var</span> form = e.delegateTarget;
 
@@ -9209,7 +9207,7 @@ resources.load(<span class="hljs-string">'googleMaps'</span>, <span class="hljs-
             
             <div class="content"><div class='highlight'><pre>  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, srcMap)</span> </span>{
     <span class="hljs-keyword">this</span>._super({
-      srcMap: {},
+      srcMap: srcMap || {},
       loaded: {}
     }, {
       app: app
@@ -10147,7 +10145,7 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
     },
 
 
-    chosen: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
+    chosen: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value <span class="hljs-comment">/* , options */</span>)</span></span>{
       <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(value)) {
         <span class="hljs-keyword">return</span> !!value.length;
       }

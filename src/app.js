@@ -138,7 +138,7 @@ pie.app = pie.base.extend('app', {
   // app.go('/test-url', true, 'Thanks for your interest') // replaces state with /test-url and shows the provided notification
   // app.go('/test-url', 'Thanks for your interest') // navigates to /test-url and shows the provided notification
   go: function(){
-    var args = pie.array.from(arguments), path, notificationArgs, replaceState, query;
+    var args = pie.array.from(arguments), path, notificationArgs, replaceState;
 
     path = args.shift();
 
@@ -212,8 +212,7 @@ pie.app = pie.base.extend('app', {
   // We always remove the current before instantiating the next. this ensures are views can prepare
   // Context's in removedFromParent before the constructor of the next view is invoked.
   navigationChanged: function() {
-    var current  = this.getChild('currentView'),
-        transition;
+    var current  = this.getChild('currentView');
 
     // Let the router determine our new url
     this.previousUrl = this.parsedUrl;
@@ -261,7 +260,7 @@ pie.app = pie.base.extend('app', {
 
       // Use the view key of the parsedUrl to find the viewClass.
       // At this point we've already verified the view option exists, so we don't have to check it.
-      var viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view), child;
+      viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view);
       // The instance to be added. If the class is not defined, this could and should blow up.
       child = new viewClass({ app: this });
 

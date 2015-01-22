@@ -31,7 +31,7 @@ pie.mixins.bindings = (function(){
 
   // Bind
   integrations['class'] = {
-    getValue: function(el, binding) {
+    getValue: function(/* el, binding */) {
       throw new Error("class bindings can only be from the model to the view. Please declare toModel: false");
     },
 
@@ -59,7 +59,7 @@ pie.mixins.bindings = (function(){
   integrations.value = {
 
     // Simple value extraction
-    getValue: function(el, binding) {
+    getValue: function(el /*, binding */) {
       return el.value;
     },
 
@@ -157,7 +157,7 @@ pie.mixins.bindings = (function(){
   // Set the innerTEXT of an element based on the model's value.
   integrations.text = {
 
-    getValue: function(el, binding) {
+    getValue: function(el /*, binding */) {
       return el.textContent;
     },
 
@@ -174,7 +174,7 @@ pie.mixins.bindings = (function(){
   // Set the innerHTML of an element based on the model's value.
   integrations.html = {
 
-    getValue: function(el, binding) {
+    getValue: function(el /*, binding */) {
       return el.innerHTML;
     },
 

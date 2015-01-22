@@ -133,14 +133,14 @@ pie.formView = pie.activeView.extend('formView', {
   },
 
   /* the process of applying form data to the model. */
-  applyFieldsToModel: function(form) {
+  applyFieldsToModel: function(/* form */) {
     this.readBoundFields();
   },
 
   // ** pie.formView.onInvalid **
   //
   // For the inheriting class to override.
-  onInvalid: function(form) {},
+  onInvalid: function(/* form */) {},
 
 
   // ** pie.formView.onValid **
@@ -190,10 +190,10 @@ pie.formView = pie.activeView.extend('formView', {
   },
 
   /* for the inheriting class to override. */
-  onFailure: function(resonse, xhr) {},
+  onFailure: function(/* response, xhr */) {},
 
   /* for the inheriting class to override. */
-  onSuccess: function(response, xhr) {},
+  onSuccess: function(/* response, xhr */) {},
 
   // ** pie.formView.prepareSubmissionData **
   //
@@ -223,7 +223,7 @@ pie.formView = pie.activeView.extend('formView', {
   // begin the validation process via `validateModel`. If the model validates,
   // we invoke our `onValid` function, otherwise the `onInvalid` function.
   validateAndSubmitForm: function(e) {
-    e.preventDefault();
+    this.consumeEvent(e);
 
     var form = e.delegateTarget;
 

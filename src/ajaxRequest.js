@@ -164,8 +164,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     verb = this.get('verb'),
     data = this.get('data'),
     tracker = this.get('tracker'),
-    self = this,
-    d;
+    self = this;
 
     if(verb === this.VERBS.get && data) {
       url = pie.string.urlConcat(url, pie.object.serialize(data));

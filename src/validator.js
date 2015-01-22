@@ -80,7 +80,7 @@ pie.validator = pie.base.extend('validator', (function(){
     },
 
 
-    chosen: function(value, options){
+    chosen: function(value /* , options */){
       if(Array.isArray(value)) {
         return !!value.length;
       }
