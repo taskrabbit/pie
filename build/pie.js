@@ -1119,6 +1119,10 @@ pie.object.deletePath = function(obj, path, propagate) {
 
 };
 
+pie.object.dup = function(obj, deep) {
+  return pie.object[deep ? 'deepMerge' : 'merge']({}, obj);
+};
+
 pie.object.flatten = function(a, object, prefix) {
   var b = object || {};
   prefix = prefix || '';
@@ -1513,7 +1517,7 @@ pie.string.pluralize = function(str, count) {
 // string templating via John Resig
 pie.string.template = function(str, varString) {
   return new Function("data",
-    "var p=[];" + (varString || "") + ";with(data){p.push('" +
+    "var __p=[];" + (varString || "") + ";with(data){__p.push('" +
     str.replace(/[\r\t\n]/g, " ")
        .replace(/'(?=[^%]*%\])/g,"\t")
        .split("'").join("\\'")
@@ -1521,8 +1525,8 @@ pie.string.template = function(str, varString) {
        .replace(/\[%=(.+?)%\]/g, "',$1,'")
        .replace(/\[%-(.+?)%\]/g, "',pie.string.escape($1),'")
        .split("[%").join("');")
-       .split("%]").join("p.push('") +
-       "');}return p.join('');"
+       .split("%]").join("__p.push('") +
+       "');}return __p.join('');"
   );
 };
 

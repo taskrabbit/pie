@@ -71,6 +71,10 @@ pie.object.deletePath = function(obj, path, propagate) {
 
 };
 
+pie.object.dup = function(obj, deep) {
+  return pie.object[deep ? 'deepMerge' : 'merge']({}, obj);
+};
+
 pie.object.flatten = function(a, object, prefix) {
   var b = object || {};
   prefix = prefix || '';

@@ -1868,6 +1868,10 @@ pie.object.except({foo: ‘bar’, biz: ‘baz’}, ‘biz’) =&gt; {‘foo’:
 
 };
 
+pie.object.dup = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj, deep)</span> </span>{
+  <span class="hljs-keyword">return</span> pie.object[deep ? <span class="hljs-string">'deepMerge'</span> : <span class="hljs-string">'merge'</span>]({}, obj);
+};
+
 pie.object.flatten = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, object, prefix)</span> </span>{
   <span class="hljs-keyword">var</span> b = object || {};
   prefix = prefix || <span class="hljs-string">''</span>;
@@ -2475,7 +2479,7 @@ pie.string.pluralize = <span class="hljs-function"><span class="hljs-keyword">fu
             
             <div class="content"><div class='highlight'><pre>pie.string.template = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, varString)</span> </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(<span class="hljs-string">"data"</span>,
-    <span class="hljs-string">"var p=[];"</span> + (varString || <span class="hljs-string">""</span>) + <span class="hljs-string">";with(data){p.push('"</span> +
+    <span class="hljs-string">"var __p=[];"</span> + (varString || <span class="hljs-string">""</span>) + <span class="hljs-string">";with(data){__p.push('"</span> +
     str.replace(<span class="hljs-regexp">/[\r\t\n]/g</span>, <span class="hljs-string">" "</span>)
        .replace(<span class="hljs-regexp">/'(?=[^%]*%\])/g</span>,<span class="hljs-string">"\t"</span>)
        .split(<span class="hljs-string">"'"</span>).join(<span class="hljs-string">"\\'"</span>)
@@ -2483,8 +2487,8 @@ pie.string.pluralize = <span class="hljs-function"><span class="hljs-keyword">fu
        .replace(<span class="hljs-regexp">/\[%=(.+?)%\]/g</span>, <span class="hljs-string">"',$1,'"</span>)
        .replace(<span class="hljs-regexp">/\[%-(.+?)%\]/g</span>, <span class="hljs-string">"',pie.string.escape($1),'"</span>)
        .split(<span class="hljs-string">"[%"</span>).join(<span class="hljs-string">"');"</span>)
-       .split(<span class="hljs-string">"%]"</span>).join(<span class="hljs-string">"p.push('"</span>) +
-       <span class="hljs-string">"');}return p.join('');"</span>
+       .split(<span class="hljs-string">"%]"</span>).join(<span class="hljs-string">"__p.push('"</span>) +
+       <span class="hljs-string">"');}return __p.join('');"</span>
   );
 };
 
