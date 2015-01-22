@@ -20,7 +20,6 @@ pie.app = pie.base.extend('app', {
     this.options = pie.object.deepMerge({
       uiTarget: 'body',
       viewNamespace: 'lib.views',
-      templateSelector: 'script[type="text/pie-template"]',
       unsupportedPath: '/browser/unsupported',
       verifySupport: true
     }, options);

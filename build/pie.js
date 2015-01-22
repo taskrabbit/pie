@@ -2526,7 +2526,6 @@ pie.app = pie.base.extend('app', {
     this.options = pie.object.deepMerge({
       uiTarget: 'body',
       viewNamespace: 'lib.views',
-      templateSelector: 'script[type="text/pie-template"]',
       unsupportedPath: '/browser/unsupported',
       verifySupport: true
     }, options);
@@ -2906,7 +2905,7 @@ pie.app = pie.base.extend('app', {
 // user.observe(o, 'first_name');
 // user.sets({first_name: 'first', last_name: 'last'});
 // // => o is called and the following is logged:
-// [{
+// [{...}, {
 //   name: 'first_name',
 //   type: 'new',
 //   oldValue:
@@ -2915,6 +2914,8 @@ pie.app = pie.base.extend('app', {
 //   object: {...}
 // }]
 // ```
+//
+// Note that the changes are extended with the `pie.mixin.changeSet` functionality, so check that out too.
 //
 // ### Computed Properties
 //
@@ -2931,7 +2932,7 @@ pie.app = pie.base.extend('app', {
 // user.observe(function(changes){ console.log(changes); }, 'full_name');
 // user.set('first_name', 'Douglas');
 // // => the observer is invoked and console.log provides:
-// [{
+// [{..}, {
 //   name: 'full_name',
 //   oldValue: 'Doug Wilson',
 //   value: 'Douglas Wilson',
@@ -4552,15 +4553,18 @@ pie.formView = pie.activeView.extend('formView', {
 // ```
 // Now, in your templates you'll be able to use these helpers:
 // ```
-// <h1>[%= upcase(data.fullName) %]</h1>
-// <p>[%= reverse(data.jibberish) %]</p>
+// <h1>[%= h.upcase(data.fullName) %]</h1>
+// <p>[%= h.reverse(data.jibberish) %]</p>
 // ```
 // Note: these do not become global functions but rather are local to each template.
 pie.helpers = pie.model.extend('helpers', {
 
-  init: function(app) {
-    this._super({}, {
-      app: app
+  init: function(app, options) {
+    this._super({
+      fns: {}
+    }, {
+      app: app,
+      variableName: 'h'
     });
 
     var i18n = this.app.i18n;
@@ -4574,13 +4578,17 @@ pie.helpers = pie.model.extend('helpers', {
 
   /* Register a function to be available in templates. */
   register: function(name, fn) {
-    if(!this[name]) this[name] = fn;
-    return this.set(name, fn);
+    return this.set('fns.' + name, fn);
   },
 
   /* Provide the functions which should be available in templates. */
-  provide: function() {
-    return this.data;
+  functions: function() {
+    return this.get('fns');
+  },
+
+  provideVariables: function() {
+    return "var " + this.options.variableName + " = pie.apps[" + this.app.pieId + "].helpers.functions();";
+
   }
 
 });
@@ -5965,46 +5973,87 @@ pie.router = pie.model.extend('router', {
     }.bind(this));
   }
 });
+// # Pie Templates
+// A container for a collection of templates. It knows how to read, compile, and invoke template functions.
+// ```
+// templates.registerTemplate('plainOld', "Just plain old string content: [%= data.id %]");
+// templates.render('plainOld', {id: 'fooBar'});
+// //=> "Just plain old string content: fooBar"
+// ```
+//
+// Templates can be declared in two ways:
+// 1. **script tag content** - tags matching the `templateSelector` class option can be given an id attribute which maps to the templates name.
+// If a template by that name is requested and has not yet been compiled, the tag's content will be parsed and a template function will be generated.
+// 2. **script tag data-src** - The same process as `1.` is followed but if a `data-src` attribute is present a `text/html` ajax request will take place to fetch the template content.
+// After fetch, the content will be parsed and a template will be generated. This method is inherently async and is only checked if `templates#renderAsync` is used.
 pie.templates = pie.model.extend('templates', {
 
-  init: function(app) {
-    this._super({}, {
-      app: app
-    });
+  init: function(app, options) {
+    this._super({}, pie.object.merge({
+      app: app,
+      templateSelector: 'script[type="text/pie-template"]'
+    }, options));
   },
 
   _node: function(name) {
-    return pie.qs(this.app.options.templateSelector + '[id="' + name + '"]');
+    return pie.qs(this.options.templateSelector + '[id="' + name + '"]');
   },
 
+  // **pie.templates.registerTemplate**
+  //
+  // Register a template containing the `content` by the `name`.
+  // The resulting function will be one produced by `pie.string.template` but will
+  // have any registered helpers available via the `pie.helpers` `variableName` option.
+  //
+  // So the following template would function fine, given the default helper methods as defined by `pie.helpers`
+  // ```
+  // <h1>[%= h.t("account.hello") %], [%= h.get(data, "firstName") %]</h1>
+  // ```
   registerTemplate: function(name, content) {
     this.app.debug('Compiling and storing template: ' + name);
-    var vars = "var h = pie.apps[" + this.app.pieId + "].helpers.provide();";
-    vars += "var get = function(p){ return pie.object.getPath(data, p); };";
-    Object.keys(this.app.helpers.provide()).forEach(function(k){
-      vars += "var " + k + " = h." + k + ";";
+
+    this.set(name, pie.string.template(content, this.app.helpers.provideVariables()));
+  },
+
+  // **pie.templates.load**
+  //
+  // Load a template from an external source, register it, then invoke the callback.
+  // ```
+  // templates.load('fooBar', {url: '/foo-bar.html'}, function(){
+  //   template.render('fooBar', {});
+  // });
+  // ```
+  load: function(name, ajaxOptions, cb) {
+    ajaxOptions = pie.object.merge({
+      verb: 'get',
+      accept: 'text/html'
+    }, ajaxOptions);
+
+    var req = this.app.ajax.ajax(ajaxOptions);
+
+    req.dataSuccess(function(content) {
+      this.registerTemplate(name, content);
+    }).error(function(){
+      throw new Error("[PIE] Template fetch error: " + name);
+    }).complete(function() {
+      cb();
     });
-    this.set(name, pie.string.template(content, vars));
-  },
-
-  load: function(name, cb) {
-    var node = this._node(name),
-    src = node && node.getAttribute('data-src') || name;
-
-    this.app.resources.load({
-      type: 'ajax',
-      accept: 'text/html',
-      src: src,
-      dataSuccess: function(content) {
-        this.registerTemplate(name, content);
-      }.bind(this),
-      error: function() {
-        throw new Error("[PIE] Template fetch error: " + name);
-      }
-    }, cb);
 
   },
 
+  // **pie.templates.render**
+  //
+  // Synchronously render a template named `name` with `data`.
+  // This will compile and register a template if it's never been seen before.
+  // ```
+  // <script id="fooBar" type="text/pie-template">
+  //   Hi, [%= data.name %]
+  // </script>
+  // <script>
+  //   templates.render('fooBar', {name: 'Doug'});
+  //   //=> "Hi, Doug"
+  // </script>
+  // ```
   render: function(name, data) {
     if(!this.get(name)) {
 
@@ -6020,16 +6069,41 @@ pie.templates = pie.model.extend('templates', {
     return this.get(name)(data || {});
   },
 
+  // **pie.templates.renderAsync**
+  //
+  // Render a template asynchronously. That is, attempt to extract the content from the associated `<script>` but
+  // if it declares a `data-src` attribute, fetch the content from there instead. When the template is available
+  // and rendered, invoke the callback `cb` with the content.
+  // ```
+  // <script id="fooBar" type="text/pie-template" data-src="/foo-bar.html"></script>
+  // <script>
+  //   templates.renderAsync('fooBar', {name: 'Doug'}, function(content){
+  //     //=> "Hi, Doug"
+  //   });
+  // </script>
+  // ```
   renderAsync: function(name, data, cb) {
+
+    var content, node, src;
+
     if(this.get(name)) {
-      var content = this.render(name, data);
+      content = this.render(name, data);
       cb(content);
       return;
     }
 
-    this.load(name, function(){
-      this.renderAsync(name, data, cb);
-    }.bind(this));
+    node = this._node(name);
+    src = node && node.getAttribute('data-src');
+
+    if(src) {
+      this.load(name, {url: src}, function(){
+        this.renderAsync(name, data, cb);
+      });
+    } else {
+      content = this.render(name, data);
+      cb(content);
+      return;
+    }
   },
 });
 pie.validator = pie.base.extend('validator', (function(){

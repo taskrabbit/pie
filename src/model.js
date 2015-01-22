@@ -32,7 +32,7 @@
 // user.observe(o, 'first_name');
 // user.sets({first_name: 'first', last_name: 'last'});
 // // => o is called and the following is logged:
-// [{
+// [{...}, {
 //   name: 'first_name',
 //   type: 'new',
 //   oldValue:
@@ -41,6 +41,8 @@
 //   object: {...}
 // }]
 // ```
+//
+// Note that the changes are extended with the `pie.mixin.changeSet` functionality, so check that out too.
 //
 // ### Computed Properties
 //
@@ -57,7 +59,7 @@
 // user.observe(function(changes){ console.log(changes); }, 'full_name');
 // user.set('first_name', 'Douglas');
 // // => the observer is invoked and console.log provides:
-// [{
+// [{..}, {
 //   name: 'full_name',
 //   oldValue: 'Doug Wilson',
 //   value: 'Douglas Wilson',

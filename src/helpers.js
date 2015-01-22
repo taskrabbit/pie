@@ -10,15 +10,18 @@
 // ```
 // Now, in your templates you'll be able to use these helpers:
 // ```
-// <h1>[%= upcase(data.fullName) %]</h1>
-// <p>[%= reverse(data.jibberish) %]</p>
+// <h1>[%= h.upcase(data.fullName) %]</h1>
+// <p>[%= h.reverse(data.jibberish) %]</p>
 // ```
 // Note: these do not become global functions but rather are local to each template.
 pie.helpers = pie.model.extend('helpers', {
 
-  init: function(app) {
-    this._super({}, {
-      app: app
+  init: function(app, options) {
+    this._super({
+      fns: {}
+    }, {
+      app: app,
+      variableName: 'h'
     });
 
     var i18n = this.app.i18n;
@@ -32,13 +35,17 @@ pie.helpers = pie.model.extend('helpers', {
 
   /* Register a function to be available in templates. */
   register: function(name, fn) {
-    if(!this[name]) this[name] = fn;
-    return this.set(name, fn);
+    return this.set('fns.' + name, fn);
   },
 
   /* Provide the functions which should be available in templates. */
-  provide: function() {
-    return this.data;
+  functions: function() {
+    return this.get('fns');
+  },
+
+  provideVariables: function() {
+    return "var " + this.options.variableName + " = pie.apps[" + this.app.pieId + "].helpers.functions();";
+
   }
 
 });
