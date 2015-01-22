@@ -1065,9 +1065,9 @@ pie.object.deepMerge = function() {
 
   function fn(k) {
 
-    if(pie.object.has(targ, k) && pie.object.isObject(targ[k])) {
+    if(pie.object.has(targ, k) && pie.object.isPlainObject(targ[k])) {
       targ[k] = pie.object.deepMerge({}, targ[k], obj[k]);
-    } else if(pie.object.isObject(obj[k])) {
+    } else if(pie.object.isPlainObject(obj[k])) {
       targ[k] = pie.object.deepMerge({}, obj[k]);
     } else {
       targ[k] = obj[k];
@@ -1123,7 +1123,7 @@ pie.object.flatten = function(a, object, prefix) {
   prefix = prefix || '';
 
   pie.object.forEach(a, function(k,v) {
-    if(pie.object.isObject(v)) {
+    if(pie.object.isPlainObject(v)) {
       pie.object.flatten(v, b, k + '.');
     } else {
       b[prefix + k] = v;
@@ -1133,8 +1133,33 @@ pie.object.flatten = function(a, object, prefix) {
   return b;
 };
 
-// thanks, underscore
-['Object','Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
+pie.object.isWindow = function(obj) {
+  return obj && typeof obj === "object" && "setInterval" in obj;
+};
+
+
+/* From jQuery */
+pie.object.isPlainObject = function(obj) {
+
+  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) ) {
+    return false;
+  }
+
+  if ( obj.constructor &&
+    !pie.object.has(obj, "constructor") &&
+    !pie.object.has(obj.constructor.prototype, "isPrototypeOf") ) {
+    return false;
+  }
+
+  // Own properties are enumerated firstly, so to speed up,
+  // if last one is own, then all properties are own.
+  var key;
+  for ( key in obj ) {}
+  return key === undefined || pie.object.has(obj, key);
+},
+
+
+['Object', 'Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
   pie.object['is' + name] = function(obj) {
     return Object.prototype.toString.call(obj) === '[object ' + name + ']';
   };
@@ -1259,7 +1284,7 @@ pie.object.serialize = function(obj, removeEmpty) {
       o.forEach(function(v) {
         build(prefix + '[]', v, append);
       });
-    } else if(pie.object.isObject(o)) {
+    } else if(pie.object.isPlainObject(o)) {
       Object.keys(o).sort().forEach(function(k){
         build(prefix + '[' + k + ']', o[k], append);
       });
@@ -3495,6 +3520,10 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this.emitter.fire('dataSuccess', data);
   },
 
+  _onSetModel: function(data) {
+    this.emitter.fire('setModel', data);
+  },
+
   _onSuccess: function(data, xhr) {
     this.emitter.fire('success', data, xhr);
   },
@@ -3521,7 +3550,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     options = pie.object.merge({}, options);
 
-    ['setup', 'complete', 'dataSuccess', 'error', 'extraError', 'progress', 'success', 'uploadProgress'].forEach(function(n){
+    ['setup', 'complete', 'dataSuccess', 'error', 'extraError', 'progress', 'success', 'uploadProgress', 'setModel'].forEach(function(n){
       if(options[n]) {
 
         pie.array.from(options[n]).forEach(function(fn){
@@ -3651,6 +3680,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
       if(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
         self._onDataSuccess(self.response);
+        self._onSetModel(self.response);
         self._onSuccess(self.response, xhr);
       } else {
         self._onError(xhr);
@@ -3735,6 +3765,11 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     return this;
   },
 
+  setModel: function() {
+    var fns = pie.array.from(arguments).map(function(m){ return m.sets.bind(m); });
+    this._append('setModel', fns, true);
+  },
+
   // Register a callback when the request succeeds.
   // Callbacks are invoked with the parsed response & the xhr object.
   success: function() {
@@ -3752,7 +3787,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   uploadProgress: function() {
     this._append('uploadProgress', arguments, false);
     return this;
-  }
+  },
 
 }, pie.mixins.validatable);
 pie.ajax = pie.base.extend('ajax', {

@@ -18,9 +18,9 @@ pie.object.deepMerge = function() {
 
   function fn(k) {
 
-    if(pie.object.has(targ, k) && pie.object.isObject(targ[k])) {
+    if(pie.object.has(targ, k) && pie.object.isPlainObject(targ[k])) {
       targ[k] = pie.object.deepMerge({}, targ[k], obj[k]);
-    } else if(pie.object.isObject(obj[k])) {
+    } else if(pie.object.isPlainObject(obj[k])) {
       targ[k] = pie.object.deepMerge({}, obj[k]);
     } else {
       targ[k] = obj[k];
@@ -76,7 +76,7 @@ pie.object.flatten = function(a, object, prefix) {
   prefix = prefix || '';
 
   pie.object.forEach(a, function(k,v) {
-    if(pie.object.isObject(v)) {
+    if(pie.object.isPlainObject(v)) {
       pie.object.flatten(v, b, k + '.');
     } else {
       b[prefix + k] = v;
@@ -86,8 +86,33 @@ pie.object.flatten = function(a, object, prefix) {
   return b;
 };
 
-// thanks, underscore
-['Object','Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
+pie.object.isWindow = function(obj) {
+  return obj && typeof obj === "object" && "setInterval" in obj;
+};
+
+
+/* From jQuery */
+pie.object.isPlainObject = function(obj) {
+
+  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) ) {
+    return false;
+  }
+
+  if ( obj.constructor &&
+    !pie.object.has(obj, "constructor") &&
+    !pie.object.has(obj.constructor.prototype, "isPrototypeOf") ) {
+    return false;
+  }
+
+  // Own properties are enumerated firstly, so to speed up,
+  // if last one is own, then all properties are own.
+  var key;
+  for ( key in obj ) {}
+  return key === undefined || pie.object.has(obj, key);
+},
+
+
+['Object', 'Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
   pie.object['is' + name] = function(obj) {
     return Object.prototype.toString.call(obj) === '[object ' + name + ']';
   };
@@ -212,7 +237,7 @@ pie.object.serialize = function(obj, removeEmpty) {
       o.forEach(function(v) {
         build(prefix + '[]', v, append);
       });
-    } else if(pie.object.isObject(o)) {
+    } else if(pie.object.isPlainObject(o)) {
       Object.keys(o).sort().forEach(function(k){
         build(prefix + '[' + k + ']', o[k], append);
       });

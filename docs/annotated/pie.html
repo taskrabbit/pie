@@ -1779,9 +1779,9 @@ returns a new object less any empty key/values.</p>
 
   <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">fn</span><span class="hljs-params">(k)</span> </span>{
 
-    <span class="hljs-keyword">if</span>(pie.object.has(targ, k) &amp;&amp; pie.object.isObject(targ[k])) {
+    <span class="hljs-keyword">if</span>(pie.object.has(targ, k) &amp;&amp; pie.object.isPlainObject(targ[k])) {
       targ[k] = pie.object.deepMerge({}, targ[k], obj[k]);
-    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isObject(obj[k])) {
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isPlainObject(obj[k])) {
       targ[k] = pie.object.deepMerge({}, obj[k]);
     } <span class="hljs-keyword">else</span> {
       targ[k] = obj[k];
@@ -1872,7 +1872,7 @@ pie.object.flatten = <span class="hljs-function"><span class="hljs-keyword">func
   prefix = prefix || <span class="hljs-string">''</span>;
 
   pie.object.forEach(a, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,v)</span> </span>{
-    <span class="hljs-keyword">if</span>(pie.object.isObject(v)) {
+    <span class="hljs-keyword">if</span>(pie.object.isPlainObject(v)) {
       pie.object.flatten(v, b, k + <span class="hljs-string">'.'</span>);
     } <span class="hljs-keyword">else</span> {
       b[prefix + k] = v;
@@ -1880,7 +1880,25 @@ pie.object.flatten = <span class="hljs-function"><span class="hljs-keyword">func
   });
 
   <span class="hljs-keyword">return</span> b;
-};</pre></div></div>
+};
+
+pie.object.isWindow = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
+  <span class="hljs-keyword">return</span> obj &amp;&amp; <span class="hljs-keyword">typeof</span> obj === <span class="hljs-string">"object"</span> &amp;&amp; <span class="hljs-string">"setInterval"</span> <span class="hljs-keyword">in</span> obj;
+};
+
+
+<span class="hljs-comment">/* From jQuery */</span>
+pie.object.isPlainObject = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
+
+  <span class="hljs-keyword">if</span> ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) ) {
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+  }
+
+  <span class="hljs-keyword">if</span> ( obj.constructor &amp;&amp;
+    !pie.object.has(obj, <span class="hljs-string">"constructor"</span>) &amp;&amp;
+    !pie.object.has(obj.constructor.prototype, <span class="hljs-string">"isPrototypeOf"</span>) ) {
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+  }</pre></div></div>
             
         </li>
         
@@ -1891,11 +1909,18 @@ pie.object.flatten = <span class="hljs-function"><span class="hljs-keyword">func
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-67">&#182;</a>
               </div>
-              <p>thanks, underscore</p>
+              <p>Own properties are enumerated firstly, so to speed up,
+if last one is own, then all properties are own.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>[<span class="hljs-string">'Object'</span>,<span class="hljs-string">'Arguments'</span>, <span class="hljs-string">'Function'</span>, <span class="hljs-string">'String'</span>, <span class="hljs-string">'Number'</span>, <span class="hljs-string">'Date'</span>, <span class="hljs-string">'RegExp'</span>, <span class="hljs-string">'Boolean'</span>].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> key;
+  <span class="hljs-keyword">for</span> ( key <span class="hljs-keyword">in</span> obj ) {}
+  <span class="hljs-keyword">return</span> key === <span class="hljs-literal">undefined</span> || pie.object.has(obj, key);
+},
+
+
+[<span class="hljs-string">'Object'</span>, <span class="hljs-string">'Arguments'</span>, <span class="hljs-string">'Function'</span>, <span class="hljs-string">'String'</span>, <span class="hljs-string">'Number'</span>, <span class="hljs-string">'Date'</span>, <span class="hljs-string">'RegExp'</span>, <span class="hljs-string">'Boolean'</span>].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
   pie.object[<span class="hljs-string">'is'</span> + name] = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
     <span class="hljs-keyword">return</span> <span class="hljs-built_in">Object</span>.prototype.toString.call(obj) === <span class="hljs-string">'[object '</span> + name + <span class="hljs-string">']'</span>;
   };
@@ -2078,7 +2103,7 @@ pie.object.reverseMerge = <span class="hljs-function"><span class="hljs-keyword"
       o.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(v)</span> </span>{
         build(prefix + <span class="hljs-string">'[]'</span>, v, append);
       });
-    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isObject(o)) {
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isPlainObject(o)) {
       <span class="hljs-built_in">Object</span>.keys(o).sort().forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k)</span></span>{
         build(prefix + <span class="hljs-string">'['</span> + k + <span class="hljs-string">']'</span>, o[k], append);
       });
@@ -6367,6 +6392,10 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
     <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'dataSuccess'</span>, data);
   },
 
+  _onSetModel: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data)</span> </span>{
+    <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'setModel'</span>, data);
+  },
+
   _onSuccess: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, xhr)</span> </span>{
     <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'success'</span>, data, xhr);
   },
@@ -6393,7 +6422,7 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
     options = pie.object.merge({}, options);
 
-    [<span class="hljs-string">'setup'</span>, <span class="hljs-string">'complete'</span>, <span class="hljs-string">'dataSuccess'</span>, <span class="hljs-string">'error'</span>, <span class="hljs-string">'extraError'</span>, <span class="hljs-string">'progress'</span>, <span class="hljs-string">'success'</span>, <span class="hljs-string">'uploadProgress'</span>].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(n)</span></span>{
+    [<span class="hljs-string">'setup'</span>, <span class="hljs-string">'complete'</span>, <span class="hljs-string">'dataSuccess'</span>, <span class="hljs-string">'error'</span>, <span class="hljs-string">'extraError'</span>, <span class="hljs-string">'progress'</span>, <span class="hljs-string">'success'</span>, <span class="hljs-string">'uploadProgress'</span>, <span class="hljs-string">'setModel'</span>].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(n)</span></span>{
       <span class="hljs-keyword">if</span>(options[n]) {
 
         pie.array.from(options[n]).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span></span>{
@@ -6549,6 +6578,7 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
       <span class="hljs-keyword">if</span>(xhr.status &gt;= <span class="hljs-number">200</span> &amp;&amp; xhr.status &lt; <span class="hljs-number">300</span> || xhr.status === <span class="hljs-number">304</span>) {
         self._onDataSuccess(self.response);
+        self._onSetModel(self.response);
         self._onSuccess(self.response, xhr);
       } <span class="hljs-keyword">else</span> {
         self._onError(xhr);
@@ -6739,6 +6769,11 @@ If you would like the default &amp; your error callback, use extraError.</p>
             <div class="content"><div class='highlight'><pre>  extraError: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>._append(<span class="hljs-string">'extraError'</span>, <span class="hljs-built_in">arguments</span>, <span class="hljs-literal">true</span>);
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },
+
+  setModel: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> fns = pie.array.from(<span class="hljs-built_in">arguments</span>).map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span></span>{ <span class="hljs-keyword">return</span> m.sets.bind(m); });
+    <span class="hljs-keyword">this</span>._append(<span class="hljs-string">'setModel'</span>, fns, <span class="hljs-literal">true</span>);
   },</pre></div></div>
             
         </li>
@@ -6794,7 +6829,7 @@ Callbacks are invoked with the parsed response &amp; the xhr object.</p>
             <div class="content"><div class='highlight'><pre>  uploadProgress: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>._append(<span class="hljs-string">'uploadProgress'</span>, <span class="hljs-built_in">arguments</span>, <span class="hljs-literal">false</span>);
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-  }
+  },
 
 }, pie.mixins.validatable);
 pie.ajax = pie.base.extend(<span class="hljs-string">'ajax'</span>, {

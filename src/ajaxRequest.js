@@ -33,6 +33,10 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this.emitter.fire('dataSuccess', data);
   },
 
+  _onSetModel: function(data) {
+    this.emitter.fire('setModel', data);
+  },
+
   _onSuccess: function(data, xhr) {
     this.emitter.fire('success', data, xhr);
   },
@@ -59,7 +63,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     options = pie.object.merge({}, options);
 
-    ['setup', 'complete', 'dataSuccess', 'error', 'extraError', 'progress', 'success', 'uploadProgress'].forEach(function(n){
+    ['setup', 'complete', 'dataSuccess', 'error', 'extraError', 'progress', 'success', 'uploadProgress', 'setModel'].forEach(function(n){
       if(options[n]) {
 
         pie.array.from(options[n]).forEach(function(fn){
@@ -189,6 +193,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
       if(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
         self._onDataSuccess(self.response);
+        self._onSetModel(self.response);
         self._onSuccess(self.response, xhr);
       } else {
         self._onError(xhr);
@@ -273,6 +278,11 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     return this;
   },
 
+  setModel: function() {
+    var fns = pie.array.from(arguments).map(function(m){ return m.sets.bind(m); });
+    this._append('setModel', fns, true);
+  },
+
   // Register a callback when the request succeeds.
   // Callbacks are invoked with the parsed response & the xhr object.
   success: function() {
@@ -290,6 +300,6 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   uploadProgress: function() {
     this._append('uploadProgress', arguments, false);
     return this;
-  }
+  },
 
 }, pie.mixins.validatable);
