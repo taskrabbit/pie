@@ -29,32 +29,52 @@ pie.mixins.bindings = (function(){
     };
   })();
 
-  // Bind
-  integrations['class'] = {
-    getValue: function(/* el, binding */) {
-      throw new Error("class bindings can only be from the model to the view. Please declare toModel: false");
-    },
+  integrations['class'] = (function(){
 
-    setValue: function(el, binding) {
-      var className = binding.options.className;
+    /* will handle strings and arrays of strings */
+    var getClassNames = function(string) {
+      if(!string) return [];
+      string = String(string);
+      return pie.array.compact(pie.array.map(string.split(/[\,\s]/), 'trim', true), true);
+    };
 
-      if(className === '_value_') {
-        var change = binding.lastChange;
-        if(change) {
-          if(change.oldValue) el.classList.remove(change.oldValue);
-          if(change.value) {
-            el.classList.add(change.value);
-            return change.value;
+    return {
+      getValue: function(/* el, binding */) {
+        throw new Error("class bindings can only be from the model to the view. Please declare toModel: false");
+      },
+
+      setValue: function(el, binding) {
+        var className = binding.options.className;
+
+        if(className === '_value_') {
+          var change = binding.lastChange;
+          if(change) {
+            if(change.oldValue) {
+              getClassNames(change.oldValue).forEach(function(c) {
+                el.classList.remove(c);
+              });
+            }
+
+            if(change.value) {
+              getClassNames(change.value).forEach(function(c) {
+                el.classList.add(c);
+              });
+              return change.value;
+            }
           }
+        } else {
+          var value = binding.model.get(binding.attr);
+          className = className || binding.attr;
+
+          getClassNames(className).forEach(function(c){
+            el.classList[!!value ? 'add' : 'remove'](c);
+          });
+
+          return className;
         }
-      } else {
-        var value = binding.model.get(binding.attr);
-        className = className || binding.attr;
-        el.classList[!!value ? 'add' : 'remove'](className);
-        return className;
       }
-    }
-  };
+    };
+  })();
 
   integrations.value = {
 
