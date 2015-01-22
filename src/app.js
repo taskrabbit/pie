@@ -21,7 +21,6 @@ pie.app = pie.base.extend('app', {
       uiTarget: 'body',
       viewNamespace: 'lib.views',
       templateSelector: 'script[type="text/pie-template"]',
-      root: '/',
       unsupportedPath: '/browser/unsupported',
       verifySupport: true
     }, options);

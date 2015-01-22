@@ -2987,6 +2987,19 @@ describe("pie.router", function(){
     expect(o.path).toEqual('/unrecognized/path');
     expect(o.fullPath).toEqual('/unrecognized/path');
   });
+
+  it("should correctly sort the routes", function() {
+    var routes = this.router.get('routes').map(function(r){ return r.get('pathTemplate'); });
+    expect(routes).toEqual([
+      '/t/unique/b',
+      '/api/a.json',
+      '/t/a',
+      '/api/:id/a.json',
+      '/t/:id/a',
+      '/t/:id/b',
+      '/t/:parent_id/b/:id'
+    ]);
+  });
 });
 describe("pie.validator", function() {
 

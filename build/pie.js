@@ -98,11 +98,12 @@ var pie = window.pie = {
     o.s   = pie.string;
     o.x   = pie.mixins;
 
-    for(var i in pie) {
-      if(pie.object.isFunction(pie[i]) && i !== 'util') {
-        o[i] = pie[i];
-      }
-    }
+    o.guid    = pie.guid;
+    o.ns      = pie.ns;
+    o.qs      = pie.qs;
+    o.qsa     = pie.qsa;
+    o.setUid  = pie.setUid;
+    o.unique  = pie.unique;
 
     return o;
   }
@@ -2506,7 +2507,6 @@ pie.app = pie.base.extend('app', {
       uiTarget: 'body',
       viewNamespace: 'lib.views',
       templateSelector: 'script[type="text/pie-template"]',
-      root: '/',
       unsupportedPath: '/browser/unsupported',
       verifySupport: true
     }, options);
@@ -5406,15 +5406,38 @@ pie.notifier = pie.base.extend('notifier', {
     }
   }
 });
+// # Pie Resources
+//
+// An external resource loader. It specializes in retrieving scripts, stylesheets, and generic ajax content.
+// Upon load of the external resource a callback can be fired. Resources can be registered beforehand to make
+// development a bit easier and more standardized.
+// ```
+// resources.define('googleMaps', '//maps.google.com/.../js');
+// resources.define('templates', {src: '/my-templates.html', dataSuccess: parseTemplates});
+//
+// resources.load('googleMaps', 'templates', 'customI18n', function(){
+//   google.Maps.doStuff();
+// });
+// ```
 pie.resources = pie.model.extend('resources', {
 
+  // ** pie.resources.init **
+  //
+  // Provide an app and a source map (shortcut all the `resources.define()` calls).
+  // ```
+  // new pie.resources(app, {googleMaps: '//maps.google.com/.../js'});
+  // ```
   init: function(app, srcMap) {
     this._super({
-      srcMap: srcMap || {},
+      srcMap: {},
       loaded: {}
     }, {
       app: app
     });
+
+    pie.object.forEach(function(k,v) {
+      this.define(k, v);
+    }.bind(this));
   },
 
   _appendNode: function(node) {
@@ -5434,23 +5457,39 @@ pie.resources = pie.model.extend('resources', {
     return options;
   },
 
+  // **pie.resources.\_loadajax**
+  //
+  // Conduct an ajax request and invoke the `resourceOnload` function when complete
+  //
+  // Options:
+  // * **src** - the url of the request
+  // * ** * ** - any valid ajax options
   _loadajax: function(options, resourceOnload) {
     var ajaxOptions = pie.object.merge({
       verb: 'GET',
       url: options.src
-    }, options, {
-      success: resourceOnload
-    });
+    }, options);
 
-    this.app.ajax.ajax(ajaxOptions);
+    var request = this.app.ajax.ajax(ajaxOptions);
+    request.success(resourceOnload);
   },
 
+  // **pie.resources.\_loadscript**
+  //
+  // Adds a `<script>` tag to the dom if the "type" is "script"
+  //
+  // Options:
+  // * **src** - the url of the script.
+  // * **callbackName** - _(optional)_ the global callback name the loading library will invoke
+  // * **noAsync** - _(optional)_ if true, the script will be loaded synchronously.
   _loadscript: function(options, resourceOnload) {
 
     var script = document.createElement('script');
 
     if(options.noAsync) script.async = false;
 
+    /* If options.callbackName is present, the invoking method self-references itself so it can clean itself up. */
+    /* Because of this, we don't need to invoke the onload */
     if(!options.callbackName) {
       script.onload = resourceOnload;
     }
@@ -5460,6 +5499,17 @@ pie.resources = pie.model.extend('resources', {
 
   },
 
+  // **pie.resources.\_loadlink**
+  //
+  // Adds a `<link>` tag to the dom if the "type" of the resource is "link".
+  //
+  // Options:
+  // * **src** - the url of the resource
+  // * **media** - _(optional)_ defaulting to `screen`, it's the media attribute of the `<link>`
+  // * **rel** - _(optional)_ defaulting to `stylesheet`, it's the rel attribute of the `<link>`
+  // * **contentType** - _(optional)_ defaulting to `text/css`, it's the type attribute of the `<link>`
+  //
+  // _Note that since `<link>` tags don't provide a callback, the onload happens immediately._
   _loadlink: function(options, resourceOnload) {
     var link = document.createElement('link');
 
@@ -5470,16 +5520,33 @@ pie.resources = pie.model.extend('resources', {
 
     this._appendNode(link);
 
-    // need to record that we added this thing.
-    // the resource may not actually be present yet.
+    /* Need to record that we added this thing. */
+    /* The resource may not actually be present yet. */
     resourceOnload();
   },
 
+  // ** pie.resources.define **
+  //
+  // Define a resource by human readable `name`. `srcOrOptions` is a url or
+  // an options hash as described by the relevant `_load` function.
+  // ```
+  // resources.define('googleMaps', '//maps.google.com/.../js');
+  // ```
   define: function(name, srcOrOptions) {
     var options = this._normalizeSrc(srcOrOptions);
     this.set('srcMap.' + name, options);
   },
 
+  // ** pie.resources.load **
+  //
+  // Load resources defined by each argument.
+  // If the last argument is a function it will be invoked after all resources have loaded.
+  // ```
+  // resources.load('foo', 'bar', function callback(){});
+  // resources.load(['foo', 'bar'], function(){});
+  // resources.load('//maps.google.com/.../js');
+  // resources.load({src: '/templates.html', dataSuccess: parseTemplates}, function callback(){});
+  // ```
   load: function(/* src1, src2, src3, onload */) {
     var sources = pie.array.change(arguments, 'from', 'flatten', 'compact'),
     onload = pie.object.isFunction(pie.array.last(sources)) ? sources.pop() : function(){},
@@ -5487,48 +5554,86 @@ pie.resources = pie.model.extend('resources', {
 
     sources = sources.map(this._normalizeSrc.bind(this));
 
+    /* we generate a series of functions to be invoked by pie.fn.async */
+    /* each function's responsibility is to invoke the provided callback when the resource is loaded */
     fns = sources.map(function(options){
+
+      /* we could be dealing with an alias, so make sure to grab the real source */
       options = this.get('srcMap.' + options.src) || options;
 
+      /* we cache the status of the resource in our `loaded` object. */
       var src = options.src,
       loadedKey = 'loaded.' + src;
 
+      /* the pie.fn.async function */
       return function(cb) {
-        if(this.get(loadedKey) === true) {
+        var loadedVal = this.get(loadedKey);
+
+        /* if the loadedKey's value is true, we've already loaded this resource */
+        if(loadedVal === true) {
           cb();
           return true;
         }
 
-        if(this.get(loadedKey)) {
-          this.get(loadedKey).push(cb);
+        /* otherwise, if it's present, it's an array of callbacks to be invoked when the resource is loaded (fifo) */
+        if(loadedVal) {
+          loadedVal.push(cb);
           return false;
         }
 
+        /* holy balls, this is the first time. set the array up */
         this.set(loadedKey, [cb]);
 
+        /* determine the type of resource to be loaded */
         var type = options.type || this._inferredResourceType(options.src),
+
+        /* upon load, we invoke all the registered callbacks for the resource */
         resourceOnload = function() {
 
           this.get(loadedKey).forEach(function(fn) { if(fn) fn(); });
+
+          /* make sure we set the loadedKey to true so we know we don't have to do this again */
           this.set(loadedKey, true);
 
+          /* if we set up a global callbackName we make sure it's removed */
           if(options.callbackName) delete window[options.callbackName];
         }.bind(this);
 
+        /* if a global callback name is desired, set it to our onload handler */
         if(options.callbackName) {
           window[options.callbackName] = resourceOnload;
         }
 
-
+        /* start the resource */
         this['_load' + type](options, resourceOnload);
 
         return false;
       }.bind(this);
     }.bind(this));
 
+    /* now start loading all the resources */
     pie.fn.async(fns, onload);
   }
 });
+// # Pie Route
+//
+// Represents a route used by the router.
+// Routes understand if they match string paths, they know how to extract interpolations from a path,
+// and know how to generate a path given some data.
+// ```
+// r = new pie.route('/foo/:id');
+//
+// r.isDirectMatch('/foo/bar')
+// //=> false
+// r.isMatch('/foo/bar')
+// //=> true
+//
+// r.interpolations('/foo/bar')
+// //=> {id: 'bar'}
+//
+// r.path({id: 'baz', page: 2})
+// //=> '/foo/baz?page=2'
+// ```
 pie.route = pie.model.extend('route', {
 
   init: function(path, options) {
@@ -5539,18 +5644,45 @@ pie.route = pie.model.extend('route', {
     this.name = this.options.name;
 
     this.compute('splitPathTemplate', 'pathTemplate');
+    this.compute('interpolationsCount', 'pathTemplate');
     this.compute('pathRegex', 'pathTemplate');
   },
 
+  // **pie.route.splitPathTemplate**
+  //
+  // The pathTemplate split into segments.
+  // Since this is a computed property, we only ever have to do this once.
   splitPathTemplate: function() {
     return this.get('pathTemplate').split('/');
   },
 
+  // **pie.route.interpolationsCount**
+  //
+  // The number of interpolations this route has.
+  // Since this is a computed property, we only ever have to do this once.
+  interpolationsCount: function() {
+    var m = this.get('pathTemplate').match(/:/g);
+    return m && m.length || 0;
+  },
+
+  // **pie.route.pathRegex**
+  //
+  // A RegExp representing the path.
+  // Since this is a computed property, we only ever have to do this once.
   pathRegex: function() {
     return new RegExp('^' + this.get('pathTemplate').replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
   },
 
-  // assume path is already normalized and we've "matched" it.
+  // **pie.route.interpolations**
+  //
+  // Under the assumption that the path is already normalized and we've "matched" it,
+  // extract the interpolations from `path`. If `parseValues` is true, the values will
+  // be parsed based on `pie.string.deserialize`'s implementation.
+  // ```
+  // r = new pie.route('/foo/:id');
+  // r.interolations('/foo/bar');
+  // //=> {id: 'bar'}
+  // ```
   interpolations: function(path, parseValues) {
     var splitPaths = path.split('/'),
     tmpls = this.get('splitPathTemplate'),
@@ -5572,14 +5704,33 @@ pie.route = pie.model.extend('route', {
     return interpolations;
   },
 
+  // **pie.route.isDirectMatch**
+  //
+  // Is the provided `path` a direct match to our definition?
   isDirectMatch: function(path) {
     return path === this.get('pathTemplate');
   },
 
+  // **pie.route.isMatch**
+  //
+  // is the provided `path` a match based on our `pathRegex`.
   isMatch: function(path) {
     return this.get('pathRegex').test(path);
   },
 
+  // **pie.route.path**
+  //
+  // Generate a path based on our template & the provided `data`. If `interpolateOnly` is true,
+  // a query string will not be appended, even if there are extra items provided by `data`.
+  // ```
+  // r = new pie.route('/foo/:id');
+  // r.path({id: 'bar'})
+  // //=> '/foo/bar'
+  // r.path({id: 'baz', page: 2});
+  // //=> '/foo/baz?page=2'
+  // r.path({id: 'qux', page: 2}, true);
+  // //=> '/foo/qux'
+  // ```
   path: function(data, interpolateOnly) {
     var usedKeys = [],
     s = this.get('pathTemplate'),
@@ -5609,49 +5760,81 @@ pie.route = pie.model.extend('route', {
   }
 
 });
+// # Pie Router
+//
+// An interface for declaring, processing, and determing a collection of routes.
 pie.router = pie.model.extend('router', {
 
-  init: function(app) {
+  // **pie.router.init**
+  //
+  // Initialize a new router given an `app` and a set of options.
+  // Options:
+  // * **root** - the root to be prepended to all constructed routes. Defaults to `'/'`.
+  init: function(app, options) {
     this._super({
       routes: [],
       routeNames: {},
-      root: app.options.root || '/',
-      cache: {}
-    }, {
+      root: options && options.root || '/'
+    }, pie.object.merge({
       app: app
-    });
+    }, options));
 
-
+    this.cache = new pie.cache();
     this.compute('rootRegex', 'root');
   },
 
+  // **pie.router.rootRegex**
+  //
+  // A regex for testing whether a path starts with the declared root
   rootRegex: function() {
     return new RegExp('^' + this.get('root'));
   },
 
-  // get a url based on the current one but with the changes provided.
-  // this will even catch interpolated values.
-  // Given a named route: /things/page/:page.json
-  // And the current path == /things/page/1.json?q=test
+  // **pie.router.changedUrl**
+  //
+  // Get a url based on the app's current one but with the changes provided.
+  // This will even catch interpolated values.
+  // ```
+  // // Given a route of `/things/page/:page.json`
+  // // and the current path == `/things/page/1.json?q=test`
   // app.router.changedUrl({page: 3, q: 'newQuery'});
-  // => /things/page/3.json?q=newQuery
+  // //=> /things/page/3.json?q=newQuery
+  // ```
   changedUrl: function(changes) {
     var current = this.app.parsedUrl;
     return this.path(current.route && current.route.name || current.path, pie.object.merge({}, current.data, changes));
   },
 
-
+  // **pie.router.findRoute**
+  //
+  // Find the most relevant route based on `nameOrPath`.
+  // Direct matches match first, then the most relevant pattern match comes next.
   findRoute: function(nameOrPath) {
     var route = this.get('routeNames.' + nameOrPath);
+    /* if a direct match is present, we return that */
     route = route || pie.array.detect(this.get('routes'), function(r){ return r.isDirectMatch(nameOrPath); });
+    /* otherwise, we look for a pattern match */
     route = route || pie.array.detect(this.get('routes'), function(r){ return r.isMatch(nameOrPath); });
     return route;
   },
 
 
-  // invoke to add routes to the routers routeset.
-  // routes objects which contain a "name" key will be added as a name lookup.
-  // you can pass a set of defaults which will be extended into each route object.
+  // **pie.router.route**
+  //
+  // Add routes to this router.
+  // Routes objects which contain a "name" key will be added as a name lookup.
+  // You can pass a set of defaults which will be extended into each route object.
+  // ```
+  // router.route({
+  //
+  //   '/foo/:id' : {subView: 'foo',  name: 'foo'},
+  //   '/bars'    : {subView: 'bars', name: 'bars'},
+  //
+  //   'api.whatever' : '/api/whatever.json'
+  // }, {
+  //   view: 'sublayout'
+  // });
+  // ```
   route: function(routes, defaults){
     defaults = defaults || {};
 
@@ -5677,9 +5860,15 @@ pie.router = pie.model.extend('router', {
     this.set('cache', {});
   },
 
-  // will return the named path. if there is no path with that name it will return itself.
-  // you can optionally pass a data hash and it will build the path with query params or
-  // with path interpolation path("/foo/bar/:id", {id: '44', q: 'search'}) => "/foo/bar/44?q=search"
+  // **pie.router.path**
+  //
+  // Will return the named path. If there is no path with that name it will return itself.
+  // You can optionally pass a data hash and it will build the path with query params or
+  // with path interpolation.
+  // ```
+  // router.path("/foo/bar/:id", {id: '44', q: 'search'})
+  // //=> "/foo/bar/44?q=search"
+  // ```
   path: function(nameOrPath, data, interpolateOnly) {
     var r = this.findRoute(nameOrPath) || new pie.route(nameOrPath),
     path;
@@ -5696,56 +5885,66 @@ pie.router = pie.model.extend('router', {
     return path;
   },
 
-  // sorts the routes to be the most exact to the most generic
+  // **pie.router.sortRoutes**
+  //
+  // Sorts the routes to be the most exact to the most generic.
+  // * prefers fewer interpolations to more
+  // * prefers more segments to less
+  // * prefers more characters to less
   sortRoutes: function() {
-    var ac, bc, c, d = Array(0);
+    var ac, bc, c;
 
     this.get('routes').sort(function(a,b) {
-      a = a.get('pathTemplate');
-      b = b.get('pathTemplate');
-
-      ac = (a.match(/:/g) || d).length;
-      bc = (b.match(/:/g) || d).length;
+      ac = a.get('interpolationsCount');
+      bc = b.get('interpolationsCount');
       c = ac - bc;
-      c = c || (b.length - a.length);
-      c = c || (ac < bc ? 1 : (ac > bc ? -1 : 0));
+      c = c || (b.get('splitPathTemplate').length - a.get('splitPathTemplate').length);
+      c = c || (b.get('pathTemplate').length - a.get('pathTemplate').length);
       return c;
     });
   },
 
-  // look at the path and determine the route which this matches.
+  // **pie.router.parseUrl**
+  //
+  // Given a `path`, generate an object representing the matching route.
+  // The result will  have the following attributes:
+  // * **path** - a normalized version of the matching path.
+  // * **fullPath** - the normalized path including the query string.
+  // * **interpolations** - an object representing the interpolations within the path.
+  // * **query** - an object representing the query string.
+  // * **data** - an object combining the interpolations and the query
+  // * **route** - the matching route object.
+  // * ** * ** - all the information passed into the router for the matching route.
   parseUrl: function(path, parseQuery) {
-    var result = this.get('cache')[path];
-    if(result) return result;
+    return this.cache.getOrSet(path, function(){
 
-    var pieces, query, match, fullPath, interpolations;
+      var result, pieces, query, match, fullPath, interpolations;
 
-    pieces = path.split('?');
+      pieces = path.split('?');
 
-    path = pieces.shift();
-    path = path.replace(this.get('rootRegex'), '');
-    path = pie.string.normalizeUrl(path);
+      path = pieces.shift();
+      path = path.replace(this.get('rootRegex'), '');
+      path = pie.string.normalizeUrl(path);
 
-    query = pieces.join('&') || '';
+      query = pieces.join('&') || '';
 
-    match = this.findRoute(path);
+      match = this.findRoute(path);
 
-    query = pie.string.deserialize(query, parseQuery);
-    fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
-    interpolations = match && match.interpolations(path, parseQuery);
+      query = pie.string.deserialize(query, parseQuery);
+      fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
+      interpolations = match && match.interpolations(path, parseQuery);
 
-    result = pie.object.merge({
-      path: path,
-      fullPath: fullPath,
-      interpolations: interpolations || {},
-      query: query,
-      data: pie.object.merge({}, interpolations, query),
-      route: match
-    }, match && match.options);
+      result = pie.object.merge({
+        path: path,
+        fullPath: fullPath,
+        interpolations: interpolations || {},
+        query: query,
+        data: pie.object.merge({}, interpolations, query),
+        route: match
+      }, match && match.options);
 
-    this.get('cache')[path] = result;
-    return result;
-
+      return result;
+    }.bind(this));
   }
 });
 pie.templates = pie.model.extend('templates', {

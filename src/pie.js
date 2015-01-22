@@ -97,11 +97,12 @@ var pie = window.pie = {
     o.s   = pie.string;
     o.x   = pie.mixins;
 
-    for(var i in pie) {
-      if(pie.object.isFunction(pie[i]) && i !== 'util') {
-        o[i] = pie[i];
-      }
-    }
+    o.guid    = pie.guid;
+    o.ns      = pie.ns;
+    o.qs      = pie.qs;
+    o.qsa     = pie.qsa;
+    o.setUid  = pie.setUid;
+    o.unique  = pie.unique;
 
     return o;
   }
