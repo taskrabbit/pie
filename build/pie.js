@@ -2484,7 +2484,7 @@ pie.base._wrap = (function() {
     };
   };
 })();
-// # pie.app
+// # Pie App
 // The app class is the entry point of your application. It acts as container in charge of managing the page's context.
 // It provides access to application utilities, routing, templates, i18n, etc.
 // It observes navigation and changes the page's context automatically.
