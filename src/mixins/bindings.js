@@ -124,8 +124,9 @@ pie.mixins.bindings = (function(){
           }
 
           return existing;
+        } else if(binding.dataType === 'boolean'){
+          return el.checked;
         } else {
-
           // Otherwise, we return the el's value if it's checked.
           return el.checked ? el.value : null;
         }
@@ -241,6 +242,7 @@ pie.mixins.bindings = (function(){
       var reg = /^(1|true|yes|t|ok|on)$/;
 
       return function(raw) {
+        if(raw == null) return raw;
         return !!(raw && reg.test(String(raw)));
       };
 

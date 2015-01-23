@@ -1700,8 +1700,9 @@ pie.mixins.bindings = (function(){
           }
 
           return existing;
+        } else if(binding.dataType === 'boolean'){
+          return el.checked;
         } else {
-
           // Otherwise, we return the el's value if it's checked.
           return el.checked ? el.value : null;
         }
@@ -1817,6 +1818,7 @@ pie.mixins.bindings = (function(){
       var reg = /^(1|true|yes|t|ok|on)$/;
 
       return function(raw) {
+        if(raw == null) return raw;
         return !!(raw && reg.test(String(raw)));
       };
 
@@ -2151,7 +2153,7 @@ pie.mixins.container = {
       obj = obj.parent;
     }
 
-    if(obj) obj[fname].apply(obj, args);
+    if(obj) return obj[fname].apply(obj, args);
   },
 
   removeChild: function(obj) {
@@ -4585,6 +4587,19 @@ pie.helpers = pie.model.extend('helpers', {
     return this.set('fns.' + name, fn);
   },
 
+  /* Fetch a helper function */
+  fetch: function(name) {
+    return this.get('fns.' + name);
+  },
+
+  /* Call a helper function */
+  call: function(/* name, ..args */) {
+    var args = pie.array.from(arguments),
+    name = args.shift();
+
+    return this.fetch(name).apply(null, args);
+  },
+
   /* Provide the functions which should be available in templates. */
   functions: function() {
     return this.get('fns');
@@ -6260,8 +6275,9 @@ pie.validator = pie.base.extend('validator', (function(){
     inclusion: function(value, options) {
       options = options || {};
       return this.withStandardChecks(value, options, function() {
-        var list = pie.fn.valueFrom(options['in']);
-        return !list || !list.length || !!~list.indexOf(value);
+        var inVal = pie.fn.valueFrom(options['in']);
+        if(Array.isArray(inVal)) return !!~inVal.indexOf(value);
+        return inVal === value;
       });
     },
 

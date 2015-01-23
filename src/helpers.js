@@ -38,6 +38,19 @@ pie.helpers = pie.model.extend('helpers', {
     return this.set('fns.' + name, fn);
   },
 
+  /* Fetch a helper function */
+  fetch: function(name) {
+    return this.get('fns.' + name);
+  },
+
+  /* Call a helper function */
+  call: function(/* name, ..args */) {
+    var args = pie.array.from(arguments),
+    name = args.shift();
+
+    return this.fetch(name).apply(null, args);
+  },
+
   /* Provide the functions which should be available in templates. */
   functions: function() {
     return this.get('fns');

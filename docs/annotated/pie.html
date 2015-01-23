@@ -2795,6 +2795,8 @@ This mixin should be used with a pie view.</p>
           }
 
           <span class="hljs-keyword">return</span> existing;
+        } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(binding.dataType === <span class="hljs-string">'boolean'</span>){
+          <span class="hljs-keyword">return</span> el.checked;
         } <span class="hljs-keyword">else</span> {</pre></div></div>
             
         </li>
@@ -3066,6 +3068,7 @@ Otherwise, return the existing value.</p>
             <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">var</span> reg = <span class="hljs-regexp">/^(1|true|yes|t|ok|on)$/</span>;
 
       <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(raw)</span> </span>{
+        <span class="hljs-keyword">if</span>(raw == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span> raw;
         <span class="hljs-keyword">return</span> !!(raw &amp;&amp; reg.test(<span class="hljs-built_in">String</span>(raw)));
       };
 
@@ -3797,7 +3800,7 @@ pie.mixins.container = {
       obj = obj.parent;
     }
 
-    <span class="hljs-keyword">if</span>(obj) obj[fname].apply(obj, args);
+    <span class="hljs-keyword">if</span>(obj) <span class="hljs-keyword">return</span> obj[fname].apply(obj, args);
   },
 
   removeChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
@@ -8036,6 +8039,19 @@ helpers.register(<span class="hljs-string">'reverse'</span>, <span class="hljs-f
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'fns.'</span> + name, fn);
   },
 
+  <span class="hljs-comment">/* Fetch a helper function */</span>
+  fetch: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'fns.'</span> + name);
+  },
+
+  <span class="hljs-comment">/* Call a helper function */</span>
+  call: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* name, ..args */</span>)</span> </span>{
+    <span class="hljs-keyword">var</span> args = pie.array.from(<span class="hljs-built_in">arguments</span>),
+    name = args.shift();
+
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fetch(name).apply(<span class="hljs-literal">null</span>, args);
+  },
+
   <span class="hljs-comment">/* Provide the functions which should be available in templates. */</span>
   functions: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'fns'</span>);
@@ -10356,8 +10372,9 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
     inclusion: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
       options = options || {};
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-        <span class="hljs-keyword">var</span> list = pie.fn.valueFrom(options[<span class="hljs-string">'in'</span>]);
-        <span class="hljs-keyword">return</span> !list || !list.length || !!~list.indexOf(value);
+        <span class="hljs-keyword">var</span> inVal = pie.fn.valueFrom(options[<span class="hljs-string">'in'</span>]);
+        <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(inVal)) <span class="hljs-keyword">return</span> !!~inVal.indexOf(value);
+        <span class="hljs-keyword">return</span> inVal === value;
       });
     },</pre></div></div>
             

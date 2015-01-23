@@ -60,7 +60,7 @@ pie.mixins.container = {
       obj = obj.parent;
     }
 
-    if(obj) obj[fname].apply(obj, args);
+    if(obj) return obj[fname].apply(obj, args);
   },
 
   removeChild: function(obj) {

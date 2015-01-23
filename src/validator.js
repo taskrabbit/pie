@@ -148,8 +148,9 @@ pie.validator = pie.base.extend('validator', (function(){
     inclusion: function(value, options) {
       options = options || {};
       return this.withStandardChecks(value, options, function() {
-        var list = pie.fn.valueFrom(options['in']);
-        return !list || !list.length || !!~list.indexOf(value);
+        var inVal = pie.fn.valueFrom(options['in']);
+        if(Array.isArray(inVal)) return !!~inVal.indexOf(value);
+        return inVal === value;
       });
     },
 
