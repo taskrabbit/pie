@@ -43,7 +43,7 @@
 
       this.innerHTML = "<code><pre>" + lines.join("\n") + "</pre></code>";
 
-      hljs.configure({useBr: true, language: file.language || ['javascript', 'json']});
+      hljs.configure({useBr: true, language: file.language || ['javascript', 'json', 'html']});
       hljs.highlightBlock(this.querySelector('pre'));
 
     }.bind(this));
