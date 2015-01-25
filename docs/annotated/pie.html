@@ -5428,11 +5428,10 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  showStoredNotifications: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> encoded = <span class="hljs-keyword">this</span>.retrieve(<span class="hljs-keyword">this</span>.notifier.storageKey), decoded;
+    <span class="hljs-keyword">var</span> messages = <span class="hljs-keyword">this</span>.retrieve(<span class="hljs-keyword">this</span>.notifier.storageKey);
 
-    <span class="hljs-keyword">if</span>(encoded) {
-      decoded = <span class="hljs-built_in">JSON</span>.parse(encoded);
-      <span class="hljs-keyword">this</span>.notifier.notify.apply(<span class="hljs-keyword">this</span>.notifier, decoded);
+    <span class="hljs-keyword">if</span>(messages &amp;&amp; messages.length) {
+      <span class="hljs-keyword">this</span>.notifier.notify.apply(<span class="hljs-keyword">this</span>.notifier, messages);
     }
   },</pre></div></div>
             

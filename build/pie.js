@@ -2843,11 +2843,10 @@ pie.app = pie.base.extend('app', {
 
   // Show any notification which have been preserved via local storage.
   showStoredNotifications: function() {
-    var encoded = this.retrieve(this.notifier.storageKey), decoded;
+    var messages = this.retrieve(this.notifier.storageKey);
 
-    if(encoded) {
-      decoded = JSON.parse(encoded);
-      this.notifier.notify.apply(this.notifier, decoded);
+    if(messages && messages.length) {
+      this.notifier.notify.apply(this.notifier, messages);
     }
   },
 
