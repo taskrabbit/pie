@@ -85,7 +85,7 @@ app.emitter.once('beforeStart', function() {
 
 
 // set up our page routes.
-app.router.route({
+app.router.map({
   '/' : {view: 'page', name: 'root'},
   '/about' : {view: 'about', name: 'about'},
   '/:page' : {view: 'page', name: 'page'},
@@ -95,5 +95,11 @@ app.router.route({
 
 app.i18n.load({
   project: 'pie.js',
+  ns: 'pie',
   gist: '994b656c26b16d5c2c77'
+});
+
+app.helpers.register('gist', function(filename, gistId) {
+  gistId = gistId || app.i18n.t('gist');
+  return '<x-gist gist="' + gistId + '" filename="' + filename + '"></x-gist>';
 });

@@ -49,7 +49,12 @@ pie.app = pie.base.extend('app', {
       var k = this.options[key] || _default,
       opt = this.options[key + 'Options'] || {};
 
-      return new k(this, opt);
+      if(pie.object.isFunction(k)) {
+        return new k(this, opt);
+      } else {
+        k.app = this;
+        return k;
+      }
     }.bind(this);
 
     // `app.cache` is a centralized cache store to be used by anyone.

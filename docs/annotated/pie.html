@@ -4572,7 +4572,12 @@ but we don’t want a reference to another app within this app.</p>
       <span class="hljs-keyword">var</span> k = <span class="hljs-keyword">this</span>.options[key] || _default,
       opt = <span class="hljs-keyword">this</span>.options[key + <span class="hljs-string">'Options'</span>] || {};
 
-      <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> k(<span class="hljs-keyword">this</span>, opt);
+      <span class="hljs-keyword">if</span>(pie.object.isFunction(k)) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> k(<span class="hljs-keyword">this</span>, opt);
+      } <span class="hljs-keyword">else</span> {
+        k.app = <span class="hljs-keyword">this</span>;
+        <span class="hljs-keyword">return</span> k;
+      }
     }.bind(<span class="hljs-keyword">this</span>);</pre></div></div>
             
         </li>
@@ -6109,6 +6114,7 @@ pie.view.reopen({
 
 
   navigationUpdated: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'navigationUpdated'</span>);
     <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span></span>{
       <span class="hljs-keyword">if</span>(pie.object.has(c, <span class="hljs-string">'navigationUpdated'</span>, <span class="hljs-literal">true</span>)) c.navigationUpdated();
     });
@@ -6917,6 +6923,10 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
 
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, options)</span> </span>{
     <span class="hljs-keyword">this</span>._super(data, options);
+  },
+
+  clear: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">this</span>.reset();
   },
 
   del: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{
@@ -9831,11 +9841,11 @@ Direct matches match first, then the most relevant pattern match comes next.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-348">&#182;</a>
               </div>
-              <p><strong>pie.router.route</strong></p>
+              <p><strong>pie.router.map</strong></p>
 <p>Add routes to this router.
 Routes objects which contain a “name” key will be added as a name lookup.
 You can pass a set of defaults which will be extended into each route object.</p>
-<pre><code>router.route({
+<pre><code>router.map({
 
   <span class="hljs-string">'/foo/:id'</span> : {subView: <span class="hljs-string">'foo'</span>,  name: <span class="hljs-string">'foo'</span>},
   <span class="hljs-string">'/bars'</span>    : {subView: <span class="hljs-string">'bars'</span>, name: <span class="hljs-string">'bars'</span>},
@@ -9847,29 +9857,31 @@ You can pass a set of defaults which will be extended into each route object.</p
 </code></pre>
             </div>
             
-            <div class="content"><div class='highlight'><pre>  route: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(routes, defaults)</span></span>{
+            <div class="content"><div class='highlight'><pre>  map: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(routes, defaults)</span></span>{
     defaults = defaults || {};
 
     <span class="hljs-keyword">var</span> path, config, route;
 
     pie.object.forEach(routes, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,r)</span> </span>{
+
       <span class="hljs-keyword">if</span>(pie.object.isObject(r)) {
         path = k;
         config = r;
+        <span class="hljs-keyword">if</span>(defaults) config = pie.object.merge({}, defaults, config);
       } <span class="hljs-keyword">else</span> {
         path = r;
         config = {name: k};
       }
 
-      <span class="hljs-keyword">if</span>(defaults) config = pie.object.merge({}, defaults, config);
-
       route = <span class="hljs-keyword">new</span> pie.route(path, config);
+
       <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'routes'</span>).push(route);
       <span class="hljs-keyword">if</span>(route.name) <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'routeNames.'</span> + route.name, route);
+
     }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">this</span>.sortRoutes();
-    <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'cache'</span>, {});
+    <span class="hljs-keyword">this</span>.cache.clear();
   },</pre></div></div>
             
         </li>
@@ -10372,8 +10384,8 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
       options = options || {};
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
         <span class="hljs-keyword">var</span> inVal = pie.fn.valueFrom(options[<span class="hljs-string">'in'</span>]);
-        <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(inVal)) <span class="hljs-keyword">return</span> !!~inVal.indexOf(value);
-        <span class="hljs-keyword">return</span> inVal === value;
+        <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(inVal)) <span class="hljs-keyword">return</span> !inVal.length || !!~inVal.indexOf(value);
+        <span class="hljs-keyword">return</span> inVal == <span class="hljs-literal">null</span> || inVal === value;
       });
     },</pre></div></div>
             

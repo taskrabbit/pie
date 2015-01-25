@@ -4,6 +4,10 @@ pie.cache = pie.model.extend('cache', {
     this._super(data, options);
   },
 
+  clear: function() {
+    this.reset();
+  },
+
   del: function(path) {
     this.set(path, undefined);
   },

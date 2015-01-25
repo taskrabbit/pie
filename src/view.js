@@ -50,6 +50,7 @@ pie.view.reopen({
 
 
   navigationUpdated: function() {
+    this.emitter.fire('navigationUpdated');
     this.children.forEach(function(c){
       if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated();
     });

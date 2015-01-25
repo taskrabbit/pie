@@ -57,13 +57,13 @@ pie.router = pie.model.extend('router', {
   },
 
 
-  // **pie.router.route**
+  // **pie.router.map**
   //
   // Add routes to this router.
   // Routes objects which contain a "name" key will be added as a name lookup.
   // You can pass a set of defaults which will be extended into each route object.
   // ```
-  // router.route({
+  // router.map({
   //
   //   '/foo/:id' : {subView: 'foo',  name: 'foo'},
   //   '/bars'    : {subView: 'bars', name: 'bars'},
@@ -73,29 +73,31 @@ pie.router = pie.model.extend('router', {
   //   view: 'sublayout'
   // });
   // ```
-  route: function(routes, defaults){
+  map: function(routes, defaults){
     defaults = defaults || {};
 
     var path, config, route;
 
     pie.object.forEach(routes, function(k,r) {
+
       if(pie.object.isObject(r)) {
         path = k;
         config = r;
+        if(defaults) config = pie.object.merge({}, defaults, config);
       } else {
         path = r;
         config = {name: k};
       }
 
-      if(defaults) config = pie.object.merge({}, defaults, config);
-
       route = new pie.route(path, config);
+
       this.get('routes').push(route);
       if(route.name) this.set('routeNames.' + route.name, route);
+
     }.bind(this));
 
     this.sortRoutes();
-    this.set('cache', {});
+    this.cache.clear();
   },
 
   // **pie.router.path**

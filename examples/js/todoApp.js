@@ -25,7 +25,7 @@ app.i18n.load({
 });
 
 // Routes
-app.router.route({
+app.router.map({
   '/examples/todo.html' : { view: 'layout' }
 });
 

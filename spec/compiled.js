@@ -546,13 +546,13 @@ describe("Object extension", function() {
 
     });
 
-    it('should blow up if a non-object is provided', function() {
+    it('should not blow up if a non-object is provided', function() {
       var a = {'foo' : 'bar'},
       b = "thing";
 
       expect(function(){
         pie.object.merge(a, b);
-      }).toThrowError();
+      }).not.toThrowError();
     });
 
   });
@@ -2894,7 +2894,7 @@ describe("pie.router", function(){
     var r = new pie.router({options: {root: '/'}, parsedUrl: {}});
     this.router = r;
 
-    this.router.route({
+    this.router.map({
       '/t/a'                : {view: 'a', name: 'aRoute'},
       '/t/:id/a'            : {view: 'a', name: 'aSpecificRoute'},
       '/t/:id/b'            : {view: 'b', name: 'bSpecificRoute'},

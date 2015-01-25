@@ -15,7 +15,7 @@ Docco style used in http://jashkenas.github.com/docco/ converted by Simon Madine
 .hljs-comment,
 .diff .hljs-header,
 .hljs-javadoc {
-  color: #408080;
+  color: #cccccc;
   font-style: italic;
 }
 

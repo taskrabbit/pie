@@ -4,7 +4,7 @@ window.app = new pie.app({
 });
 
 
-app.router.route({
+app.router.map({
   '/examples/form-views.html' : {view: 'layout'}
 });
 

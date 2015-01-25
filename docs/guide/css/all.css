@@ -180,6 +180,14 @@ code, code * {
   margin-bottom: 2em;
 }
 
+.copy ul, .copy ol {
+  padding-left: 20px;
+}
+
+.copy li {
+  list-style-position: inside;
+}
+
 
 .page-nav.nav-active {
   left: 0;

@@ -2561,7 +2561,12 @@ pie.app = pie.base.extend('app', {
       var k = this.options[key] || _default,
       opt = this.options[key + 'Options'] || {};
 
-      return new k(this, opt);
+      if(pie.object.isFunction(k)) {
+        return new k(this, opt);
+      } else {
+        k.app = this;
+        return k;
+      }
     }.bind(this);
 
     // `app.cache` is a centralized cache store to be used by anyone.
@@ -3355,6 +3360,7 @@ pie.view.reopen({
 
 
   navigationUpdated: function() {
+    this.emitter.fire('navigationUpdated');
     this.children.forEach(function(c){
       if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated();
     });
@@ -3875,6 +3881,10 @@ pie.cache = pie.model.extend('cache', {
 
   init: function(data, options) {
     this._super(data, options);
+  },
+
+  clear: function() {
+    this.reset();
   },
 
   del: function(path) {
@@ -5863,13 +5873,13 @@ pie.router = pie.model.extend('router', {
   },
 
 
-  // **pie.router.route**
+  // **pie.router.map**
   //
   // Add routes to this router.
   // Routes objects which contain a "name" key will be added as a name lookup.
   // You can pass a set of defaults which will be extended into each route object.
   // ```
-  // router.route({
+  // router.map({
   //
   //   '/foo/:id' : {subView: 'foo',  name: 'foo'},
   //   '/bars'    : {subView: 'bars', name: 'bars'},
@@ -5879,29 +5889,31 @@ pie.router = pie.model.extend('router', {
   //   view: 'sublayout'
   // });
   // ```
-  route: function(routes, defaults){
+  map: function(routes, defaults){
     defaults = defaults || {};
 
     var path, config, route;
 
     pie.object.forEach(routes, function(k,r) {
+
       if(pie.object.isObject(r)) {
         path = k;
         config = r;
+        if(defaults) config = pie.object.merge({}, defaults, config);
       } else {
         path = r;
         config = {name: k};
       }
 
-      if(defaults) config = pie.object.merge({}, defaults, config);
-
       route = new pie.route(path, config);
+
       this.get('routes').push(route);
       if(route.name) this.set('routeNames.' + route.name, route);
+
     }.bind(this));
 
     this.sortRoutes();
-    this.set('cache', {});
+    this.cache.clear();
   },
 
   // **pie.router.path**
@@ -6275,8 +6287,8 @@ pie.validator = pie.base.extend('validator', (function(){
       options = options || {};
       return this.withStandardChecks(value, options, function() {
         var inVal = pie.fn.valueFrom(options['in']);
-        if(Array.isArray(inVal)) return !!~inVal.indexOf(value);
-        return inVal === value;
+        if(Array.isArray(inVal)) return !inVal.length || !!~inVal.indexOf(value);
+        return inVal == null || inVal === value;
       });
     },
 

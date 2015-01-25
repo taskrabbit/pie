@@ -58,7 +58,7 @@ slideApp = new pie.app({
 
 [basicApp, fadeApp, loadingApp, slideApp].forEach(function(app) {
   if(app) {
-    app.router.route({
+    app.router.map({
       '/examples/transitions/a.html' : {view: 'viewA', name: 'a'},
       '/examples/transitions/b.html' : {view: 'viewB', name: 'b'}
     });

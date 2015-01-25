@@ -149,8 +149,8 @@ pie.validator = pie.base.extend('validator', (function(){
       options = options || {};
       return this.withStandardChecks(value, options, function() {
         var inVal = pie.fn.valueFrom(options['in']);
-        if(Array.isArray(inVal)) return !!~inVal.indexOf(value);
-        return inVal === value;
+        if(Array.isArray(inVal)) return !inVal.length || !!~inVal.indexOf(value);
+        return inVal == null || inVal === value;
       });
     },
 
