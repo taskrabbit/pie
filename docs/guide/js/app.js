@@ -14,13 +14,13 @@ lib.views.nav = pie.activeView.extend('nav', {
   },
 
   setup: function() {
-    this.onChange(app.navigator, this.navigationChanged.bind(this), 'path');
+    app.emitter.on('urlChanged', this.navigationChanged.bind(this));
     this.on('click', '.nav-toggle', this.toggleNav.bind(this));
     this._super();
   },
 
   navigationChanged: function() {
-    var path = app.navigator.get('path'),
+    var path = app.parsedUrl.pathWithRoot,
     target = this.qs('ul li a[href="' + path + '"]');
 
     pie.dom.all(this.qsa('li.is-active'), 'classList.remove', 'is-active');

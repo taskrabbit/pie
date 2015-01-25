@@ -5974,7 +5974,7 @@ pie.router = pie.model.extend('router', {
   parseUrl: function(path, parseQuery) {
     return this.cache.getOrSet(path, function(){
 
-      var result, pieces, query, match, fullPath, interpolations;
+      var result, pieces, query, match, fullPath, pathWithRoot, interpolations;
 
       pieces = path.split('?');
 
@@ -5988,11 +5988,13 @@ pie.router = pie.model.extend('router', {
 
       query = pie.string.deserialize(query, parseQuery);
       fullPath = pie.array.compact([path, pie.object.serialize(query)], true).join('?');
+      pathWithRoot = pie.string.normalizeUrl(this.get('root') + path);
       interpolations = match && match.interpolations(path, parseQuery);
 
       result = pie.object.merge({
         path: path,
         fullPath: fullPath,
+        pathWithRoot: pathWithRoot,
         interpolations: interpolations || {},
         query: query,
         data: pie.object.merge({}, interpolations, query),

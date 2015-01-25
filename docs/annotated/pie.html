@@ -9989,7 +9989,7 @@ The result will  have the following attributes:</p>
             <div class="content"><div class='highlight'><pre>  parseUrl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, parseQuery)</span> </span>{
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.cache.getOrSet(path, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
 
-      <span class="hljs-keyword">var</span> result, pieces, query, match, fullPath, interpolations;
+      <span class="hljs-keyword">var</span> result, pieces, query, match, fullPath, pathWithRoot, interpolations;
 
       pieces = path.split(<span class="hljs-string">'?'</span>);
 
@@ -10003,11 +10003,13 @@ The result will  have the following attributes:</p>
 
       query = pie.string.deserialize(query, parseQuery);
       fullPath = pie.array.compact([path, pie.object.serialize(query)], <span class="hljs-literal">true</span>).join(<span class="hljs-string">'?'</span>);
+      pathWithRoot = pie.string.normalizeUrl(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'root'</span>) + path);
       interpolations = match &amp;&amp; match.interpolations(path, parseQuery);
 
       result = pie.object.merge({
         path: path,
         fullPath: fullPath,
+        pathWithRoot: pathWithRoot,
         interpolations: interpolations || {},
         query: query,
         data: pie.object.merge({}, interpolations, query),
