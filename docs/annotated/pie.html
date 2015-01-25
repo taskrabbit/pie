@@ -6469,7 +6469,7 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
     <span class="hljs-keyword">this</span>.validateAll(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(bool)</span></span>{
       <span class="hljs-keyword">if</span>(!bool) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-built_in">JSON</span>.stringify(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'validationErrors'</span>)));
       cb();
-    });
+    }.bind(<span class="hljs-keyword">this</span>));
   },
 
   _applyHeaders: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
@@ -10095,7 +10095,7 @@ have any registered helpers available via the <code>pie.helpers</code> <code>var
 
     req.dataSuccess(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(content)</span> </span>{
       <span class="hljs-keyword">this</span>.registerTemplate(name, content);
-    }).error(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+    }.bind(<span class="hljs-keyword">this</span>)).error(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
       <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"[PIE] Template fetch error: "</span> + name);
     }).complete(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
       cb();

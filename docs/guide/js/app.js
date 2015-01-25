@@ -38,28 +38,31 @@ lib.views.nav = pie.activeView.extend('nav', {
 
 
 lib.views.page = pie.activeView.extend('page', {
+  init: function() {
+    this._super({
+      renderOnSetup: true
+    });
+  },
 
   setup: function(){
+    this.emitter.on('aroundRender', this.loadTemplate.bind(this));
     this._super();
-    this.retrieveTemplateAndRender();
+  },
+
+  loadTemplate: function(cb) {
+    app.templates.load(this.templateName(), {url: this.templateUrl()}, cb);
   },
 
   navigationUpdated: function() {
-    this.retrieveTemplateAndRender();
-  },
-
-  pageName: function() {
-    return app.parsedUrl.data.page || 'getting-started';
-  },
-
-  retrieveTemplateAndRender: function() {
-    app.templates.load(this.templateName(), function() {
-      this.render();
-    }.bind(this));
+    this.render();
   },
 
   templateName: function() {
-    return app.router.path('pageApi', {page: this.pageName()});
+    return app.parsedUrl.data.page || 'getting-started';
+  },
+
+  templateUrl: function() {
+    return app.router.path('pageApi', {page: this.templateName()});
   }
 
 });
@@ -67,7 +70,10 @@ lib.views.page = pie.activeView.extend('page', {
 
 window.app = new pie.app({
   uiTarget: '.page',
-  root: '/docs/guide'
+  navigationContainer: 'body',
+  routerOptions: {
+    root: '/docs/guide'
+  }
 });
 
 // get a "nav" view in there. this is "outside" of the normal routed application since it's always present.

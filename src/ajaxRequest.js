@@ -84,7 +84,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this.validateAll(function(bool){
       if(!bool) throw new Error(JSON.stringify(this.get('validationErrors')));
       cb();
-    });
+    }.bind(this));
   },
 
   _applyHeaders: function(xhr) {

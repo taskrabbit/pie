@@ -3596,7 +3596,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this.validateAll(function(bool){
       if(!bool) throw new Error(JSON.stringify(this.get('validationErrors')));
       cb();
-    });
+    }.bind(this));
   },
 
   _applyHeaders: function(xhr) {
@@ -6051,7 +6051,7 @@ pie.templates = pie.model.extend('templates', {
 
     req.dataSuccess(function(content) {
       this.registerTemplate(name, content);
-    }).error(function(){
+    }.bind(this)).error(function(){
       throw new Error("[PIE] Template fetch error: " + name);
     }).complete(function() {
       cb();
