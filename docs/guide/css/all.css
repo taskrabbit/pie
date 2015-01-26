@@ -36,7 +36,7 @@ html, body {
   font-family: 'HelveticaNeueLight', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;;
 }
 
-h1,h2,h3,h4,h5,h6,strong,.heavy {
+h1,h2,h3,h4,h5,h6,strong,.heavy, em {
   font-weight: 600;
   font-family: 'HelveticaNeueHeavy', 'HelveticaNeue-Heavy', 'Helvetica Neue Heavy', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -64,10 +64,13 @@ a {
   text-decoration: none;
 }
 
-
-
 strong, b {
   font-weight: bold;
+}
+
+em {
+  font-weight: 600;
+  font-style: normal;
 }
 
 del {
@@ -134,15 +137,27 @@ code, code * {
   font-size: 1.5em;
   display: block;
   font-weight: bold;
+  padding: 0.5rem 1rem 1rem 50px;
+  line-height: 30px;
+  vertical-align: middle;
+  background-image: url('/docs/guide/images/logo.svg');
+  background-size: 30px 30px;
+  background-repeat: no-repeat;
+  background-position: 10px 8px;
 }
 
 .nav-toggle {
   position: absolute;
-  top: 0;
+  top: 8px;
   left: 16px;
-  font-size: 1.5em;
+  width: 30px;
+  height: 30px;
   z-index: 2;
-  transition: background-color 0.33s;
+  transition: background-color 0.33s, transform 0.33s, left 0.33s ease-in-out;
+  background-image: url('/docs/guide/images/logo.svg');
+  background-size: 30px 30px;
+  background-repeat: no-repeat;
+  transform: rotate(0deg);
 }
 
 .page-container {
@@ -160,7 +175,7 @@ code, code * {
   min-width: 320px;
 }
 
-.page-nav, .page-container, .nav-toggle {
+.page-nav, .page-container {
   transition: left 0.33s ease-in-out;
 }
 
@@ -204,9 +219,8 @@ body.nav-active {
 
 .nav-active .nav-toggle {
   left: 266px;
-  width: 100%;
-  height: 100%;
   background-color: rgba(255,255,255,0.6);
+  transform: rotate(954deg);
 }
 
 .next-page {
@@ -232,7 +246,7 @@ body.nav-active {
   }
 
   .page {
-    padding: 2em;
+    padding: 1em 2em 2em;
   }
 
   .nav-toggle {

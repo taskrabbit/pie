@@ -18,6 +18,8 @@ lib.views.nav = pie.view.extend('nav', {
     this.emitter.on('afterSetup', this.render.bind(this));
 
     this.on('click', '.nav-toggle', this.toggleNav.bind(this));
+    this.on('click', '.page', this.hideNav.bind(this));
+
     this._super();
   },
 
@@ -37,6 +39,10 @@ lib.views.nav = pie.view.extend('nav', {
 
   toggleNav: function() {
     this.el.classList.toggle('nav-active');
+  },
+
+  hideNav: function() {
+    this.el.classList.remove('nav-active');
   }
 
 });

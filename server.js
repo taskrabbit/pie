@@ -6,7 +6,7 @@ var express = require("express");
 
 var app = express();
 
-app.get(/^\/docs\/guide\/(css|js|pages)\//, function(request, response) {
+app.get(/^\/docs\/guide\/(css|js|pages|images)\//, function(request, response) {
   response.sendFile(__dirname + request.path);
 });
 
