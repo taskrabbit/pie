@@ -26,7 +26,7 @@ describe("pie.formView", function() {
       this.view = new example({ setup: true });
       expect(this.view instanceof example).toEqual(true);
       expect(this.view.emitter.hasEvent('afterSetup')).toEqual(true);
-    })
+    });
   });
 
 });

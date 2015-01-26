@@ -32,13 +32,12 @@ time, mark, audio, video {
 
 html, body {
   height: 100%;
-  background-color: #FFFAF8;
   color: #291000;
   font-family: 'HelveticaNeueLight', 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;;
 }
 
 h1,h2,h3,h4,h5,h6,strong,.heavy {
-  font-weight: normal;
+  font-weight: 600;
   font-family: 'HelveticaNeueHeavy', 'HelveticaNeue-Heavy', 'Helvetica Neue Heavy', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
@@ -103,13 +102,13 @@ code, code * {
 
 .page-nav {
   width: 250px;
-  position: absolute;
-  left: -250px;
+  position: fixed;
+  left: -100px;
   top: 0;
   bottom: 0;
   padding: 1em 0;
   background-color: white;
-  z-index: 1;
+  z-index: 0;
 }
 
 .page-nav-inner {
@@ -131,7 +130,8 @@ code, code * {
 }
 
 .page-nav .home {
-  padding: 1em;
+  padding: 1rem;
+  font-size: 1.5em;
   display: block;
   font-weight: bold;
 }
@@ -139,17 +139,19 @@ code, code * {
 .nav-toggle {
   position: absolute;
   top: 0;
-  left: 266px;
+  left: 16px;
   font-size: 1.5em;
+  z-index: 2;
+  transition: background-color 0.33s;
 }
 
 .page-container {
-  position: absolute;
+  position: relative;
   left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  overflow: auto;
+  width: 100%;
+  min-height: 100%;
+  z-index:1;
+  background-color: #FFFAF8;
 }
 
 .page {
@@ -158,8 +160,8 @@ code, code * {
   min-width: 320px;
 }
 
-.page-nav, .page-container {
-  transition: left 0.15s ease-in-out;
+.page-nav, .page-container, .nav-toggle {
+  transition: left 0.33s ease-in-out;
 }
 
 .copy p, .copy li {
@@ -188,15 +190,36 @@ code, code * {
   list-style-position: inside;
 }
 
+body.nav-active {
+  overflow: hidden;
+}
 
-.page-nav.nav-active {
+.nav-active .page-nav{
   left: 0;
 }
 
-.page-nav.nav-active ~ .page-container {
+.nav-active .page-container {
   left: 250px;
 }
 
+.nav-active .nav-toggle {
+  left: 266px;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255,255,255,0.6);
+}
+
+.next-page {
+  font-size: 2em;
+  text-align: right;
+  display: block;
+  padding: 0.25em;
+  background-color: white;
+}
+
+.next-page:hover {
+  text-decoration: underline;
+}
 
 @media all and (min-width: 731px) {
 

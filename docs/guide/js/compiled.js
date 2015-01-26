@@ -2,35 +2,41 @@
 
 pie.ns('lib.views');
 
-lib.views.nav = pie.activeView.extend('nav', {
+lib.views.nav = pie.view.extend('nav', {
 
   init: function(el) {
     this._super({
       renderOnSetup: true,
       template: 'nav',
       setup: true,
-      uiTarget: document.body
+      el: document.body,
     });
   },
 
   setup: function() {
     app.emitter.on('urlChanged', this.navigationChanged.bind(this));
+    this.emitter.on('afterSetup', this.render.bind(this));
+
     this.on('click', '.nav-toggle', this.toggleNav.bind(this));
     this._super();
   },
 
+  render: function() {
+    this.qs('.page-nav').innerHTML = app.templates.render('nav');
+  },
+
   navigationChanged: function() {
     var path = app.parsedUrl.pathWithRoot,
-    target = this.qs('ul li a[href="' + path + '"]');
+    target = this.qs('.page-nav ul li a[href="' + path + '"]');
 
-    pie.dom.all(this.qsa('li.is-active'), 'classList.remove', 'is-active');
+    pie.dom.all(this.qsa('.page-nav li.is-active'), 'classList.remove', 'is-active');
 
     if(target) target.parentNode.classList.add('is-active');
-    this.qs('.page-nav').classList.remove('nav-active');
+    this.el.classList.remove('nav-active');
   },
 
   toggleNav: function() {
-    this.qs('.page-nav').classList.toggle('nav-active');
+    this.el.classList.toggle('nav-active');
   }
 
 });
@@ -66,7 +72,6 @@ lib.views.page = pie.activeView.extend('page', {
   }
 
 });
-
 
 window.app = new pie.app({
   uiTarget: '.page',

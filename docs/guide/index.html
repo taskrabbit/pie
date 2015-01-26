@@ -4,46 +4,48 @@
     <title>Pie.js</title>
     <link rel="stylesheet" media="all" href="/docs/guide/css/all.css" />
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
   </head>
   <body>
+    <div class="page-nav"></div>
 
     <div class="page-container">
       <div class="page"></div>
     </div>
 
+    <a href="#" class="nav-toggle">
+      <i class="fa fa-bars"></i>
+    </a>
+
     <script type="text/pie-template" id="nav">
-      <div class="page-nav">
-        <div class="page-nav-inner">
-          <a href="#" class="nav-toggle">
-            <i class="fa fa-bars"></i>
-          </a>
+      <div class="page-nav-inner">
 
-          <a href="[%= app.router.path('root') %]" class="home">Pie.js</a>
-          <ul>
-            <li>
-              <a href="[%= app.router.path('root') %]">Getting Started</a>
-            </li>
-            <li>
-              <a href="[%= app.router.path('page', {page: 'object-model'}) %]">Object Model</a>
-            </li>
-            <li>
-              <a href="[%= app.router.path('page', {page: 'models'}) %]">Models</a>
-            </li>
-            <li>
-              <a href="[%= app.router.path('page', {page: 'views'}) %]">Views</a>
-            </li>
-            <li>
-              <a href="[%= app.router.path('page', {page: 'utils'}) %]">Utils</a>
-            </li>
-          </ul>
+        <a href="[%= app.router.path('root') %]" class="home">Pie.js</a>
+        <ul>
+          <li>
+            <a href="[%= app.router.path('root') %]">Getting Started</a>
+          </li>
+          <li>
+            <a href="[%= app.router.path('page', {page: 'object-model'}) %]">Object Model</a>
+          </li>
+          <li>
+            <a href="[%= app.router.path('page', {page: 'models'}) %]">Models</a>
+          </li>
+          <li>
+            <a href="[%= app.router.path('page', {page: 'views'}) %]">Views</a>
+          </li>
+          <li>
+            <a href="[%= app.router.path('page', {page: 'utils'}) %]">Utils</a>
+          </li>
+        </ul>
 
 
-          <ul class="secondary-nav">
-            <li>
-              <a href="../annotated/pie.html">Annotated Source</a>
-            </li>
-          </ul>
-        </div>
+        <ul class="secondary-nav">
+          <li>
+            <a href="../annotated/pie.html">Annotated Source</a>
+          </li>
+        </ul>
       </div>
     </script>
 

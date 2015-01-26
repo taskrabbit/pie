@@ -29,15 +29,6 @@ describe("Object extension", function() {
 
     });
 
-    it('should blow up if a non-object is provided', function() {
-      var a = {'foo' : 'bar'},
-      b = "thing";
-
-      expect(function(){
-        pie.object.merge(a, b);
-      }).toThrowError();
-    });
-
   });
 
   describe('#serialize', function() {

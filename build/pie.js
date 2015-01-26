@@ -1513,6 +1513,12 @@ pie.string.pluralize = function(str, count) {
   return str;
 };
 
+// todo: i18n
+pie.string.possessive = function(str) {
+  if(/s$/i.test(str)) return str + "'";
+  return str + "'s";
+};
+
 
 // string templating via John Resig
 pie.string.template = function(str, varString) {
@@ -2403,24 +2409,29 @@ pie.base = function() {
 pie.base.prototype.init = function(){};
 
 pie.base.prototype.reopen = function() {
-  var extensions = pie.array.change(arguments, 'from', 'flatten');
+  var extensions = pie.array.change(arguments, 'from', 'flatten'),
+  extender = function(k,fn) {
+    this[k] = pie.base._wrap(fn, this[k]);
+  }.bind(this);
+
   extensions.forEach(function(e) {
-    pie.object.merge(this, pie.object.except(e, 'init'));
-    if(e.init) e.init.call(this);
-  }.bind(this));
+    pie.object.forEach(pie.object.except(e, 'init'), extender);
+  });
+
   return this;
 };
 
+pie.base.subClasses = [];
 
 pie.base.extend = function() {
-  return pie.base._extend(pie.base.prototype, arguments);
+  return pie.base._extend(pie.base, arguments);
 };
 
 pie.base.reopen = function() {
-  return pie.base._reopen(pie.base.prototype, arguments);
+  return pie.base._reopen(pie.base, arguments);
 };
 
-pie.base._extend = function(parentProto, extensions) {
+pie.base._extend = function(parentClass, extensions) {
   extensions = pie.array.change(extensions, 'from', 'flatten');
 
   var oldLength = extensions.length;
@@ -2454,17 +2465,21 @@ pie.base._extend = function(parentProto, extensions) {
     "return f;"
   )();
 
+
+
+  child.className  = name;
+
   // We don't set the constructor of the prototype since it would cause
   // an infinite loop upon instantiation of our object. (due to the constructor.apply(this) & multiple levels of inheritance.)
-  child.prototype = Object.create(parentProto);
+  child.prototype = Object.create(parentClass.prototype);
   child.prototype.className = name;
 
   child.extend = function() {
-    return pie.base._extend(child.prototype, arguments);
+    return pie.base._extend(child, arguments);
   };
 
   child.reopen = function() {
-    return pie.base._reopen(child.prototype, arguments);
+    return pie.base._reopen(child, arguments);
   };
 
   if(extensions.length) child.reopen(extensions);
@@ -2472,11 +2487,11 @@ pie.base._extend = function(parentProto, extensions) {
   return child;
 };
 
-pie.base._reopen = function(proto, extensions) {
+pie.base._reopen = function(klass, extensions) {
   extensions = pie.array.change(extensions, 'from', 'flatten', 'compact');
   extensions.forEach(function(ext) {
     pie.object.forEach(ext, function(k,v) {
-      proto[k] = pie.base._wrap(v, proto[k]);
+      klass.prototype[k] = pie.base._wrap(v, klass.prototype[k]);
     });
   });
 };
@@ -2568,6 +2583,7 @@ pie.app = pie.base.extend('app', {
         return k;
       }
     }.bind(this);
+
 
     // `app.cache` is a centralized cache store to be used by anyone.
     this.cache = new pie.cache();

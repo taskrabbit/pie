@@ -173,6 +173,12 @@ pie.string.pluralize = function(str, count) {
   return str;
 };
 
+// todo: i18n
+pie.string.possessive = function(str) {
+  if(/s$/i.test(str)) return str + "'";
+  return str + "'s";
+};
+
 
 // string templating via John Resig
 pie.string.template = function(str, varString) {

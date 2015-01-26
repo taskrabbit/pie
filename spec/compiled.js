@@ -546,15 +546,6 @@ describe("Object extension", function() {
 
     });
 
-    it('should not blow up if a non-object is provided', function() {
-      var a = {'foo' : 'bar'},
-      b = "thing";
-
-      expect(function(){
-        pie.object.merge(a, b);
-      }).not.toThrowError();
-    });
-
   });
 
   describe('#serialize', function() {
@@ -1799,7 +1790,7 @@ describe("pie.formView", function() {
       this.view = new example({ setup: true });
       expect(this.view instanceof example).toEqual(true);
       expect(this.view.emitter.hasEvent('afterSetup')).toEqual(true);
-    })
+    });
   });
 
 });

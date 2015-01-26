@@ -57,6 +57,7 @@ pie.app = pie.base.extend('app', {
       }
     }.bind(this);
 
+
     // `app.cache` is a centralized cache store to be used by anyone.
     this.cache = new pie.cache();
 
