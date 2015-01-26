@@ -137,13 +137,13 @@ code, code * {
   font-size: 1.5em;
   display: block;
   font-weight: bold;
-  padding: 0.5rem 1rem 1rem 50px;
+  padding: 0.5rem 1rem 1rem 59px;
   line-height: 30px;
   vertical-align: middle;
   background-image: url('/docs/guide/images/logo.svg');
   background-size: 30px 30px;
   background-repeat: no-repeat;
-  background-position: 10px 8px;
+  background-position: 19px 8px;
 }
 
 .nav-toggle {
