@@ -7431,6 +7431,9 @@ Any callbacks associated with that event will be invoked with the arguments supp
     <span class="hljs-comment">/* show that this event was triggered if we're debugging */</span>
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.isDebugging) <span class="hljs-keyword">this</span>.app.debug(event);
 
+    <span class="hljs-comment">/* increment our trigger counters */</span>
+    <span class="hljs-keyword">this</span>._reportTrigger(event);
+
     <span class="hljs-keyword">if</span>(callbacks) {
       callbacks.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb, i)</span> </span>{
         <span class="hljs-comment">/* invoke the function for the callback */</span>
@@ -7445,9 +7448,6 @@ Any callbacks associated with that event will be invoked with the arguments supp
 
     <span class="hljs-comment">/* if we removed callbacks, clean up */</span>
     <span class="hljs-keyword">if</span>(compactNeeded) <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'eventCallbacks.'</span> + event, pie.array.compact(callbacks));
-
-    <span class="hljs-comment">/* increment our trigger counters */</span>
-    <span class="hljs-keyword">this</span>._reportTrigger(event);
   },</pre></div></div>
             
         </li>

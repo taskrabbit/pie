@@ -159,6 +159,9 @@ pie.emitter = pie.model.extend('emitter', {
     /* show that this event was triggered if we're debugging */
     if(this.isDebugging) this.app.debug(event);
 
+    /* increment our trigger counters */
+    this._reportTrigger(event);
+
     if(callbacks) {
       callbacks.forEach(function(cb, i) {
         /* invoke the function for the callback */
@@ -173,9 +176,6 @@ pie.emitter = pie.model.extend('emitter', {
 
     /* if we removed callbacks, clean up */
     if(compactNeeded) this.set('eventCallbacks.' + event, pie.array.compact(callbacks));
-
-    /* increment our trigger counters */
-    this._reportTrigger(event);
   },
 
   // ** pie.emitter.fireSequence **
