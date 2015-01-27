@@ -2415,8 +2415,9 @@ pie.base.prototype.reopen = function() {
   }.bind(this);
 
   extensions.forEach(function(e) {
-    pie.object.forEach(pie.object.except(e, 'init'), extender);
-  });
+    pie.object.forEach(e, extender);
+    if(e.init) e.init.call(this);
+  }.bind(this));
 
   return this;
 };

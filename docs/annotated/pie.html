@@ -4282,8 +4282,9 @@ pie.base.prototype.reopen = <span class="hljs-function"><span class="hljs-keywor
   }.bind(<span class="hljs-keyword">this</span>);
 
   extensions.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span> </span>{
-    pie.object.forEach(pie.object.except(e, <span class="hljs-string">'init'</span>), extender);
-  });
+    pie.object.forEach(e, extender);
+    <span class="hljs-keyword">if</span>(e.init) e.init.call(<span class="hljs-keyword">this</span>);
+  }.bind(<span class="hljs-keyword">this</span>));
 
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
 };

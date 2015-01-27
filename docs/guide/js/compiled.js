@@ -123,18 +123,13 @@ app.helpers.register('gist', function(filename, gistId) {
   var proto = Object.create(HTMLElement.prototype);
 
   proto.externalResources = function(){
-    return [app.router.path('/css/highlight.css'), app.router.path('/js/highlight.js')];
+    return [app.router.path('/js/highlight.js')];
   },
-
-  proto.createdCallback = function() {
-    // prefetch as much as possible.
-    app.resources.load(this.externalResources());
-  };
 
   proto.contentCallback = function(data) {
     var filename = this.getAttribute('filename') || Object.keys(data.files)[0],
     file = data.files[filename],
-    content = pie.string.escape(file.content);
+    content = file && pie.string.escape(file.content) || 'NOT FOUND';
 
     var lines = content.split("\n");
 
@@ -159,7 +154,7 @@ app.helpers.register('gist', function(filename, gistId) {
 
       this.innerHTML = "<code><pre>" + lines.join("\n") + "</pre></code>";
 
-      hljs.configure({useBr: true, language: file.language || ['javascript', 'json', 'html']});
+      hljs.configure({useBr: true, language: file && file.language || ['javascript', 'json', 'html']});
       hljs.highlightBlock(this.querySelector('pre'));
 
     }.bind(this));
@@ -169,6 +164,7 @@ app.helpers.register('gist', function(filename, gistId) {
     var gistId = this.getAttribute('gist'),
     path = 'https://api.github.com/gists/' + gistId;
 
+    this.innerHTML = '<code><pre class="hljs">Loading...</pre></code>';
     this.classList.add('gist-loading');
 
     app.resources.load({

@@ -6,7 +6,7 @@
   <h1>The Object Model</h1>
   <p>If you've used Ember, Base2, or Prototype, etc, [%= possess %] object model should feel familiar. It's essentially based on <a target="_blank" href="http://ejohn.org/blog/simple-javascript-inheritance/">John Resig's thoughts on simple inheritance</a>. [%= pie.string.capitalize(project) %] tries to behave in the most obvious, expected way possible (POLA). [%= project %] attempts to provide an interface which can easily be replaced with ES6's inheritance implementation once it's fully adopted.</p>
 
-  <h3>[%= ns %].base</h3>
+  <h3>Inheritance</h3>
 
   <p>[%= ns %].base is the base-level class implementation used in [%= project %]. All classes inherit from [%= ns %].base, though not necessarily directly. So, how do you create a new class?</p>
 
@@ -20,9 +20,25 @@
 
   <p>First, we're creating a subclass of [%= ns %].model by using <em>[%= ns %].model.extend</em>. Assuming the class is an ancestor of [%= ns %].base, you're able to subclass via the <em>extend</em> function. So, if I wanted to inherit from the User class, I would simply use <em>User.extend(...)</em>. The first argument provided to extend() is an optional string which is the name of the constructor. By providing this unique string it makes it much easier to debug in most browsers. If supplied, it will also be provided to both the class and instances of the class as the <em>className</em> attribute. The next N arguments are the extensions to the class' prototype.</p>
 
-  <h3>Inheritance and _super</h3>
+  <h3>Extensions and _super</h3>
 
-  <p>These extensions are evaluated against the existing prototype which is how all the <em>_super</em> functions are created. They are evaluated in the order in which they're provided meaning every extension can override the previous. For instance, in the example above, the <em>lib.mixins.validatable</em> mixin can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on. All that to say, a reference to an existing function is provided to the new function via <em>_super</em>.</p>
+  <p>The extensions provided to a class either via <em>extend()</em> or <em>reopen()</em> are evaluated against the existing prototype which is how all the <em>_super</em> functions are created. They are evaluated in the order in which they're provided meaning every extension can override the previous. For instance, in the example above, the <em>lib.mixins.validatable</em> mixin can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on. All that to say, a reference to an existing function is provided to the new function via <em>_super</em>.</p>
 
   [%= h.gist('_super.js') %]
+
+  <p>Until ES6 rolls out, all <em>_super</em> implementations are a bit hacky. Here's how [%= possess %] works. When an extension is added to a prototype, each key in the extension is evaluated. For each key, [%= ns %] checks to see if there is an existing function on the prototype. If there is, a wrapper function is created around the new function which sets <em>this._super</em> to the old function. After execution of the new function, this._super is reset to it's previous value.</p>
+
+  <h3>_super Gotchas</h3>
+
+  <p>If you invoke another function belonging to your object which accepts a callback, you cannot assume this._super will be present within the callback. For example:</p>
+
+  [%= h.gist('_superGotcha.js') %]
+
+  <h3>Reopening</h3>
+
+  <p>Both classes and instances can be <em>reopened</em>, allowing new function definitions with all the same _super functionality.</p>
+
+  [%= h.gist('reopen.js') %]
+
+  <p>You'll notice in the example above that even though the User class is reopened after the `u` instance is instantiated, the `u` instance receives the updates. However, when the `u` instance is reopened other instances do not gain the changes.</p>
 </div>
