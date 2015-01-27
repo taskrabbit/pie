@@ -43,7 +43,7 @@ pie.emitter = pie.model.extend('emitter', {
   //
   // Has the event `eventName` been triggered by this emitter yet?
   hasEvent: function(eventName) {
-    return !!this.get('triggeredEvents')[eventName];
+    return !!this.firedCount(eventName);
   },
 
   // ** pie.emitter.hasCallback **
@@ -52,6 +52,13 @@ pie.emitter = pie.model.extend('emitter', {
   hasCallback: function(eventName) {
     var cbs = this.get('eventCallbacks.' + eventName);
     return !!(cbs && cbs.length);
+  },
+
+  // ** pie.emitter.firedCount **
+  //
+  // Count the number of times an event has been triggered
+  firedCount: function(eventName) {
+    return this.get('triggeredEvents')[eventName] || 0;
   },
 
   // #### Event Observation

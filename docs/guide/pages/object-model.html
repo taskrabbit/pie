@@ -22,7 +22,7 @@
 
   <h3>Inheritance and _super</h3>
 
-  <p>These extensions are evaluated against the existing prototype which is how all the <em>_super</em> functions are created. They are evaluated in the order in which they're provided meaning every extension can override the previous. For instance, in the example above, the <em>lib.mixins.validatable</em> can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on. All that to say, a reference to an existing function is provided to the new function via <em>_super</em>.</p>
+  <p>These extensions are evaluated against the existing prototype which is how all the <em>_super</em> functions are created. They are evaluated in the order in which they're provided meaning every extension can override the previous. For instance, in the example above, the <em>lib.mixins.validatable</em> mixin can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on. All that to say, a reference to an existing function is provided to the new function via <em>_super</em>.</p>
 
   [%= h.gist('_super.js') %]
 </div>
