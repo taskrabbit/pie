@@ -67,6 +67,7 @@ lib.views.page = pie.activeView.extend('page', {
 
   navigationUpdated: function() {
     this.render();
+    window.scrollTo(0,0);
   },
 
   templateName: function() {

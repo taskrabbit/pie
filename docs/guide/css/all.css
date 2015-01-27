@@ -232,7 +232,12 @@ body.nav-active {
 .nav-active .nav-toggle {
   left: 266px;
   background-color: rgba(255,255,255,0.6);
+  /* (drawer-width / (3.14159 * .nav-toggle.width)) * 360 */
   transform: rotate(954deg);
+}
+
+.nav-active pre {
+  overflow: hidden;
 }
 
 .next-page {
