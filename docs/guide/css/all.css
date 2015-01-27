@@ -64,6 +64,10 @@ a {
   text-decoration: none;
 }
 
+a:hover {
+  text-decoration: underline;
+}
+
 strong, b {
   font-weight: bold;
 }
@@ -231,10 +235,6 @@ body.nav-active {
   background-color: white;
 }
 
-.next-page:hover {
-  text-decoration: underline;
-}
-
 @media all and (min-width: 731px) {
 
   .page-nav {
@@ -243,6 +243,7 @@ body.nav-active {
 
   .page-container {
     left: 250px;
+    border-left: 1px solid #eee;
   }
 
   .page {
