@@ -14,4 +14,23 @@ describe("Pie Function Extensions", function() {
     });
   });
 
+  describe("#once", function() {
+
+    it("should only ever invoke the provided function once", function() {
+      var count = 0,
+      fn = function(){ return ++count; };
+
+      fn = pie.fn.once(fn);
+
+      fn();
+      fn();
+      var r = fn();
+
+      expect(count).toEqual(1);
+      expect(r).toEqual(1);
+
+    });
+
+  });
+
 });
