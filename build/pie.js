@@ -5197,12 +5197,31 @@ pie.i18n.defaultTranslations = {
 //   * Specific indexes
 //   * Length of the list
 //   * Any other key not related to the list.
-
+// Optionally, a list can provide a `cast` option which it will use
+// to cast plain object index values into. `castOptions` can also be supplied
+// which will be provided as the second argument to the cast' constructor.
 pie.list = pie.model.extend('list', {
 
   init: function(array, options) {
     array = array || [];
-    this._super({items: array}, options);
+    this._super({}, options);
+    this.data.items = array.map(this._cast.bind(this));
+  },
+
+  // ** pie.list._cast **
+  //
+  // Casts a `value` to the option-provided `cast`.
+  // The first argument provided to the cast is the object itself, the
+  // second is the options-provided castOptions.
+  _cast: function(value) {
+    var klass = this.options.cast;
+    if(klass === true) klass = pie.model;
+
+    if(klass && pie.object.isPlainObject(value)) {
+      value = new klass(value, this.options.castOptions);
+    }
+
+    return value;
   },
 
   // ** pie.list._normalizeIndex **
@@ -5281,6 +5300,8 @@ pie.list = pie.model.extend('list', {
   insert: function(key, value, options) {
     return this._trackMutations(options, function(){
 
+      value = this._cast(value);
+
       var idx = this._normalizedIndex(key),
       change = {
         name: String(idx),
@@ -5334,6 +5355,9 @@ pie.list = pie.model.extend('list', {
   // Returns the list.
   push: function(value, options) {
     return this._trackMutations(options, function(){
+
+      value = this._cast(value);
+
       var change = {
         name: String(this.data.items.length),
         object: this.data.items,
@@ -5391,6 +5415,8 @@ pie.list = pie.model.extend('list', {
         type: 'update',
         oldValue: this.data.items[idx]
       };
+
+      value = this._cast(value);
 
       this.data.items[idx] = change.value = value;
 

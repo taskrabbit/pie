@@ -2248,6 +2248,23 @@ describe("pie.list", function() {
     expect(this.items.get('foo')).toEqual('bar');
   });
 
+  it("should allow values to be cast into the desired casting class", function() {
+    var items = new pie.list([{foo: 'bar'}, {baz: 'bar'}], {cast: true});
+    var m = items.get(0);
+
+    expect(m.className).toEqual('model');
+    expect(m.get('foo')).toEqual('bar');
+
+    m = items.get(1);
+    expect(m.className).toEqual('model');
+    expect(m.get('baz')).toEqual('bar');
+
+    items.push({tar: 'ball'});
+    m = items.get(2);
+    expect(m.className).toEqual('model');
+    expect(m.get('tar')).toEqual('ball');
+  });
+
   describe("data manipulation via", function() {
 
     beforeEach(function(){
