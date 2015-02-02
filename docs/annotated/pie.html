@@ -6637,13 +6637,15 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
       headers[<span class="hljs-string">'Accept'</span>] = accept;
     }
 
-    <span class="hljs-keyword">if</span>(contentType) {
-      headers[<span class="hljs-string">'Content-Type'</span>] = contentType;
-    }
+    <span class="hljs-keyword">if</span>(contentType !== <span class="hljs-literal">false</span>) {
 
-    <span class="hljs-keyword">if</span>(!headers[<span class="hljs-string">'Content-Type'</span>]) {
-      <span class="hljs-keyword">if</span>(pie.object.isString(data)) {
-        headers[<span class="hljs-string">'Content-Type'</span>] = <span class="hljs-string">'application/x-www-form-urlencoded'</span>;</pre></div></div>
+      <span class="hljs-keyword">if</span>(contentType) {
+        headers[<span class="hljs-string">'Content-Type'</span>] = contentType;
+      }
+
+      <span class="hljs-keyword">if</span>(!headers[<span class="hljs-string">'Content-Type'</span>]) {
+        <span class="hljs-keyword">if</span>(pie.object.isString(data) || <span class="hljs-built_in">window</span>.formData &amp;&amp; data <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.FormData) {
+          headers[<span class="hljs-string">'Content-Type'</span>] = <span class="hljs-string">'application/x-www-form-urlencoded'</span>;</pre></div></div>
             
         </li>
         
@@ -6658,9 +6660,11 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      } <span class="hljs-keyword">else</span> {
-        headers[<span class="hljs-string">'Content-Type'</span>] = <span class="hljs-string">'application/json'</span>;
+            <div class="content"><div class='highlight'><pre>        } <span class="hljs-keyword">else</span> {
+          headers[<span class="hljs-string">'Content-Type'</span>] = <span class="hljs-string">'application/json'</span>;
+        }
       }
+
     }
 
     pie.object.forEach(headers, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,v)</span> </span>{
@@ -6800,10 +6804,22 @@ By passing <code>skipSend = false</code> you can manage the <code>send()</code> 
     <span class="hljs-keyword">var</span> data = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'data'</span>), d;
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'verb'</span>) !== <span class="hljs-keyword">this</span>.VERBS.get) {
-      d = data ? (pie.object.isString(data) ? data : <span class="hljs-built_in">JSON</span>.stringify(pie.object.compact(data))) : <span class="hljs-literal">undefined</span>;
+
+      <span class="hljs-keyword">if</span>(data) {
+        <span class="hljs-keyword">if</span>(pie.object.isString(data)) {
+          d = data;
+        } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-built_in">window</span>.FormData &amp;&amp; data <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.FormData) {
+          d = data;
+        } <span class="hljs-keyword">else</span> {
+          d = <span class="hljs-built_in">JSON</span>.stringify(pie.object.compact(data));
+        }
+      } <span class="hljs-keyword">else</span> {
+        d = <span class="hljs-literal">undefined</span>;
+      }
     }
 
     <span class="hljs-keyword">this</span>.xhr.send(d);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },</pre></div></div>
             
         </li>

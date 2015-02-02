@@ -100,17 +100,21 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       headers['Accept'] = accept;
     }
 
-    if(contentType) {
-      headers['Content-Type'] = contentType;
-    }
+    if(contentType !== false) {
 
-    if(!headers['Content-Type']) {
-      if(pie.object.isString(data)) {
-        headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      // if we aren't already sending a string, we will encode to json.
-      } else {
-        headers['Content-Type'] = 'application/json';
+      if(contentType) {
+        headers['Content-Type'] = contentType;
       }
+
+      if(!headers['Content-Type']) {
+        if(pie.object.isString(data) || window.formData && data instanceof window.FormData) {
+          headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        // if we aren't already sending a string, we will encode to json.
+        } else {
+          headers['Content-Type'] = 'application/json';
+        }
+      }
+
     }
 
     pie.object.forEach(headers, function(k,v) {
@@ -226,10 +230,22 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     var data = this.get('data'), d;
 
     if(this.get('verb') !== this.VERBS.get) {
-      d = data ? (pie.object.isString(data) ? data : JSON.stringify(pie.object.compact(data))) : undefined;
+
+      if(data) {
+        if(pie.object.isString(data)) {
+          d = data;
+        } else if(window.FormData && data instanceof window.FormData) {
+          d = data;
+        } else {
+          d = JSON.stringify(pie.object.compact(data));
+        }
+      } else {
+        d = undefined;
+      }
     }
 
     this.xhr.send(d);
+    return this;
   },
 
   // Check if a callback is registered for a specific event.
