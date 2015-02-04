@@ -3584,8 +3584,12 @@ pie.activeView = pie.view.extend('activeView', {
     var templateName = this.templateName();
 
     if(templateName) {
-      var content = this.app.templates.render(templateName, this.renderData());
-      this.el.innerHTML = content;
+      this.app.templates.renderAsync(templateName, this.renderData(), function(content){
+        this.el.innerHTML = content;
+        this.emitter.fire('afterRender');
+      }.bind(this));
+    } else {
+      this.emitter.fire('afterRender');
     }
   },
 
@@ -3598,7 +3602,12 @@ pie.activeView = pie.view.extend('activeView', {
   },
 
   render: function() {
-    this.emitter.fireSequence('render');
+    this.emitter.fire('beforeRender');
+    this.emitter.fireAround('aroundRender', function(){
+      // afterRender should be fired by the render implementation.
+      // There's the possibility that a template needs to be fetched from a remote source.
+      this.emitter.fire('render');
+    }.bind(this));
   },
 
   templateName: function() {
@@ -5476,7 +5485,7 @@ pie.navigator = pie.model.extend('navigator', {
   // //=> pushState: '/foo/bar?page=2'
   // ```
   go: function(path, params, replace) {
-    var url = path;
+    var url = path, state;
 
     params = params || {};
 
@@ -5488,8 +5497,25 @@ pie.navigator = pie.model.extend('navigator', {
       url = pie.string.urlConcat(url, pie.object.serialize(params));
     }
 
-    window.history[replace ? 'replaceState' : 'pushState']({}, document.title, url);
+    state = this.stateObject(path, params, replace);
+    window.history[replace ? 'replaceState' : 'pushState'](state, document.title, url);
     window.historyObserver();
+  },
+
+  // ** pie.navigator.setDataFromLocation **
+  //
+  // Look at `window.location` and transform it into stuff we care about.
+  // Set the data on this navigator object.
+  setDataFromLocation: function() {
+    var stringQuery = window.location.search.slice(1),
+    query = pie.string.deserialize(stringQuery);
+
+    this.sets({
+      url: window.location.href,
+      path: window.location.pathname,
+      fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
+      query: query
+    });
   },
 
   // ** pie.navigator.start **
@@ -5513,20 +5539,22 @@ pie.navigator = pie.model.extend('navigator', {
     return this.setDataFromLocation();
   },
 
-  // ** pie.navigator.setDataFromLocation **
-  //
-  // Look at `window.location` and transform it into stuff we care about.
-  // Set the data on this navigator object.
-  setDataFromLocation: function() {
-    var stringQuery = window.location.search.slice(1),
-    query = pie.string.deserialize(stringQuery);
+  stateObject: function(newPath, newQuery, replace) {
+    var state = {
+      navigator: {
+        path: newPath,
+        query: newQuery
+      }
+    };
 
-    this.sets({
-      url: window.location.href,
-      path: window.location.pathname,
-      fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
-      query: query
-    });
+    if(replace) {
+      pie.object.deepMerge(state, window.history.state);
+    } else {
+      state.navigator.referringPath = this.get('path');
+      state.navigator.referringQuery = this.get('query');
+    }
+
+    return state;
   }
 });
 // # Pie Notifier
@@ -6269,7 +6297,7 @@ pie.templates = pie.model.extend('templates', {
     if(src) {
       this.load(name, {url: src}, function(){
         this.renderAsync(name, data, cb);
-      });
+      }.bind(this));
     } else {
       content = this.render(name, data);
       cb(content);

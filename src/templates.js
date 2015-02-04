@@ -123,7 +123,7 @@ pie.templates = pie.model.extend('templates', {
     if(src) {
       this.load(name, {url: src}, function(){
         this.renderAsync(name, data, cb);
-      });
+      }.bind(this));
     } else {
       content = this.render(name, data);
       cb(content);

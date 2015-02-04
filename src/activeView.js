@@ -21,8 +21,12 @@ pie.activeView = pie.view.extend('activeView', {
     var templateName = this.templateName();
 
     if(templateName) {
-      var content = this.app.templates.render(templateName, this.renderData());
-      this.el.innerHTML = content;
+      this.app.templates.renderAsync(templateName, this.renderData(), function(content){
+        this.el.innerHTML = content;
+        this.emitter.fire('afterRender');
+      }.bind(this));
+    } else {
+      this.emitter.fire('afterRender');
     }
   },
 
@@ -35,7 +39,12 @@ pie.activeView = pie.view.extend('activeView', {
   },
 
   render: function() {
-    this.emitter.fireSequence('render');
+    this.emitter.fire('beforeRender');
+    this.emitter.fireAround('aroundRender', function(){
+      // afterRender should be fired by the render implementation.
+      // There's the possibility that a template needs to be fetched from a remote source.
+      this.emitter.fire('render');
+    }.bind(this));
   },
 
   templateName: function() {

@@ -56,15 +56,6 @@ lib.views.page = pie.activeView.extend('page', {
     });
   },
 
-  setup: function(){
-    this.emitter.on('aroundRender', this.loadTemplate.bind(this));
-    this._super();
-  },
-
-  loadTemplate: function(cb) {
-    app.templates.load(this.templateName(), {url: this.templateUrl()}, cb);
-  },
-
   navigationUpdated: function() {
     this.render();
     window.scrollTo(0,0);
@@ -72,10 +63,6 @@ lib.views.page = pie.activeView.extend('page', {
 
   templateName: function() {
     return app.parsedUrl.data.page || 'getting-started';
-  },
-
-  templateUrl: function() {
-    return app.router.path('pageApi', {page: this.templateName()});
   }
 
 });

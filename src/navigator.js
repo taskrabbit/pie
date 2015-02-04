@@ -19,7 +19,7 @@ pie.navigator = pie.model.extend('navigator', {
   // //=> pushState: '/foo/bar?page=2'
   // ```
   go: function(path, params, replace) {
-    var url = path;
+    var url = path, state;
 
     params = params || {};
 
@@ -31,8 +31,25 @@ pie.navigator = pie.model.extend('navigator', {
       url = pie.string.urlConcat(url, pie.object.serialize(params));
     }
 
-    window.history[replace ? 'replaceState' : 'pushState']({}, document.title, url);
+    state = this.stateObject(path, params, replace);
+    window.history[replace ? 'replaceState' : 'pushState'](state, document.title, url);
     window.historyObserver();
+  },
+
+  // ** pie.navigator.setDataFromLocation **
+  //
+  // Look at `window.location` and transform it into stuff we care about.
+  // Set the data on this navigator object.
+  setDataFromLocation: function() {
+    var stringQuery = window.location.search.slice(1),
+    query = pie.string.deserialize(stringQuery);
+
+    this.sets({
+      url: window.location.href,
+      path: window.location.pathname,
+      fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
+      query: query
+    });
   },
 
   // ** pie.navigator.start **
@@ -56,19 +73,21 @@ pie.navigator = pie.model.extend('navigator', {
     return this.setDataFromLocation();
   },
 
-  // ** pie.navigator.setDataFromLocation **
-  //
-  // Look at `window.location` and transform it into stuff we care about.
-  // Set the data on this navigator object.
-  setDataFromLocation: function() {
-    var stringQuery = window.location.search.slice(1),
-    query = pie.string.deserialize(stringQuery);
+  stateObject: function(newPath, newQuery, replace) {
+    var state = {
+      navigator: {
+        path: newPath,
+        query: newQuery
+      }
+    };
 
-    this.sets({
-      url: window.location.href,
-      path: window.location.pathname,
-      fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
-      query: query
-    });
+    if(replace) {
+      pie.object.deepMerge(state, window.history.state);
+    } else {
+      state.navigator.referringPath = this.get('path');
+      state.navigator.referringQuery = this.get('query');
+    }
+
+    return state;
   }
 });
