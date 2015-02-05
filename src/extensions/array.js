@@ -13,6 +13,7 @@
 // //=> !!(o1.computed && o2.computed)
 // ```
 pie.array.areAll = function(a, f) {
+  a = pie.array.from(a);
   var i = 0;
   for(;i < a.length; i++) {
     if(!pie.object.getValue(a[i], f)) return false;
@@ -32,6 +33,7 @@ pie.array.areAll = function(a, f) {
 // // => !!(o1.computed || o2.computed)
 // ```
 pie.array.areAny = function(a, f) {
+  a = pie.array.from(a);
   var i = 0;
   for(;i < a.length; i++) {
     if(pie.object.getValue(a[i], f)) return true;
@@ -68,6 +70,7 @@ pie.array.change = function() {
 // //=> 3.8333
 // ```
 pie.array.avg = function(a) {
+  a = pie.array.from(a);
   var s = pie.array.sum(a), l = a.length;
   return l ? (s / l) : 0;
 };
@@ -84,6 +87,7 @@ pie.array.avg = function(a) {
 // //=> [true, 1]
 // ```
 pie.array.compact = function(a, removeAllFalsy){
+  a = pie.array.from(a);
   return a.filter(function(i){
     /* jslint eqeq:true */
     return removeAllFalsy ? !!i : (i != null);
@@ -103,6 +107,7 @@ pie.array.compact = function(a, removeAllFalsy){
 // //=> {baz: 'foo'}
 // ```
 pie.array.detect = function(a, f) {
+  a = pie.array.from(a);
   var i = 0, l = a.length;
   for(;i<l;i++) {
     if(pie.object.getValue(a[i], f)) {
@@ -124,6 +129,7 @@ pie.array.detect = function(a, f) {
 // //=> {baz: 'foo'}
 // ```
 pie.array.detectLast = function(a, f) {
+  a = pie.array.from(a);
   var i = a.length-1, l = 0;
   for(;i>=l;i--) {
     if(pie.object.getValue(a[i], f)) {
@@ -136,7 +142,7 @@ pie.array.detectLast = function(a, f) {
 //
 // Return a new array containing the same values of the provided array `a`.
 pie.array.dup = function(a) {
-  return a.slice(0);
+  return pie.array.from(a).slice(0);
 };
 
 
@@ -213,6 +219,7 @@ pie.array.from = function(value) {
 // //=> ['b', 'c', 'd']
 // ```
 pie.array.get = function(arr, startIdx, endIdx) {
+  arr = pie.array.from(arr);
   if(startIdx < 0) startIdx += arr.length;
 
   if(endIdx !== undefined) {
@@ -232,7 +239,7 @@ pie.array.get = function(arr, startIdx, endIdx) {
 // //=> ['foo', 'too', 'too']
 // ```
 pie.array.grep = function(arr, regex) {
-  return arr.filter(function(a){ return regex.test(String(a)); });
+  return pie.array.from(arr).filter(function(a){ return regex.test(String(a)); });
 };
 
 
@@ -248,7 +255,7 @@ pie.array.grep = function(arr, regex) {
 // ```
 pie.array.groupBy = function(arr, groupingF) {
   var h = {}, g;
-  arr.forEach(function(a){
+  pie.array.from(arr).forEach(function(a){
 
     g = pie.object.getValue(a, groupingF);
 
@@ -271,6 +278,7 @@ pie.array.groupBy = function(arr, groupingF) {
 // pie.array.indexOf(arr, 'foo')
 // //=> 0
 pie.array.indexOf = function(a, f) {
+  a = pie.array.from(a);
   var i = 0, l = a.length;
   for(;i<l;i++) {
     if(pie.object.getValue(a[i], f)) {
@@ -291,7 +299,7 @@ pie.array.indexOf = function(a, f) {
 // //=> [0, 2, 4]
 // ```
 pie.array.intersect = function(a, b) {
-  return a.filter(function(i) { return ~b.indexOf(i); });
+  return pie.array.from(a).filter(function(i) { return ~b.indexOf(i); });
 };
 
 
@@ -299,6 +307,7 @@ pie.array.intersect = function(a, b) {
 //
 // Retrieve the last item of the array.
 pie.array.last = function(arr) {
+  arr = arr && pie.array.from(arr);
   if(arr && arr.length) return arr[arr.length - 1];
 };
 
@@ -337,7 +346,7 @@ pie.array.map = function(a, f, callInternalFunction){
     callingF = f;
   }
 
-  return a.map(function(e){ return callingF(e); });
+  return pie.array.from(a).map(function(e){ return callingF(e); });
 };
 
 
@@ -349,6 +358,7 @@ pie.array.map = function(a, f, callInternalFunction){
 // pie.array.remove(a, 0)
 // //=> [1, 3, 5, 2, 4]
 pie.array.remove = function(a, o) {
+  a = pie.array.from(a);
   var idx;
   while(~(idx = a.indexOf(o))) {
     a.splice(idx, 1);
@@ -366,7 +376,7 @@ pie.array.remove = function(a, o) {
 // pie.array.subtract(a, b)
 // //=> [1, 3]
 pie.array.subtract = function(a, b) {
-  return a.filter(function(i) { return !~b.indexOf(i); });
+  return pie.array.from(a).filter(function(i) { return !~b.indexOf(i); });
 };
 
 // ** pie.array.sum **
@@ -378,9 +388,7 @@ pie.array.subtract = function(a, b) {
 // //=> 8.0
 // ```
 pie.array.sum = function(a) {
-  var s = 0;
-  a.forEach(function(i){ s += parseFloat(i); });
-  return s;
+  return pie.array.from(a).reduce(function(a,b){ return a + parseFloat(b); }, 0);
 };
 
 // ** pie.array.sortBy **
@@ -394,7 +402,7 @@ pie.array.sum = function(a) {
 // ```
 pie.array.sortBy = function(arr, sortF){
   var aVal, bVal;
-  return arr.sort(function(a, b) {
+  return pie.array.from(arr).sort(function(a, b) {
     aVal = pie.object.getValue(a, sortF);
     bVal = pie.object.getValue(b, sortF);
     if(aVal === bVal) return 0;
@@ -419,6 +427,7 @@ pie.array.sortBy = function(arr, sortF){
 // "foo, bar and baz"
 // ```
 pie.array.toSentence = function(arr, options) {
+  arr = pie.array.from(arr);
   if(!arr.length) return '';
 
   options = pie.object.merge({
@@ -464,6 +473,5 @@ pie.array.union = function() {
 // [0, 1, 3, 2, 4]
 // ```
 pie.array.unique = function(arr) {
-  return arr.filter(function(e, i){ return arr.indexOf(e) === i; });
+  return pie.array.from(arr).filter(function(e, i){ return arr.indexOf(e) === i; });
 };
-

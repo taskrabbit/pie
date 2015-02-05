@@ -222,7 +222,7 @@ pie.string.template = function(str, varString) {
   strFunc = "var __p='', __s = function(v, e){ return v == null ? '' : (e ? pie.string.escapeHtml(v) : v); };\n" ;
   if(varString) strFunc += varString + ";\n";
   strFunc += "__p += '";
-  strFunc += str.replace(/\n/g, "\\\n")
+  strFunc += str.replace(/\n/g, "\\\n") // preserve format by allowing multiline strings.
                 .replace(conf.interpLookahead, conf.splitter) // replace all interpolation single quotes with a unique identifier.
                 .replace(/'/g, "\\'") // now replace all quotes with an escaped quote.
                 .replace(conf.splitterRegex, "'") // and reapply the single quotes in the interpolated content.

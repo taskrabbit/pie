@@ -262,6 +262,7 @@ pie.array.areAll([o1,o2], <span class="hljs-string">'computed'</span>)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.areAll = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, f)</span> </span>{
+  a = pie.array.from(a);
   <span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>;
   <span class="hljs-keyword">for</span>(;i &lt; a.length; i++) {
     <span class="hljs-keyword">if</span>(!pie.object.getValue(a[i], f)) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
@@ -290,6 +291,7 @@ pie.array.areAny([o1,o2], <span class="hljs-string">'computed'</span>)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.areAny = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, f)</span> </span>{
+  a = pie.array.from(a);
   <span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>;
   <span class="hljs-keyword">for</span>(;i &lt; a.length; i++) {
     <span class="hljs-keyword">if</span>(pie.object.getValue(a[i], f)) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
@@ -344,6 +346,7 @@ arr = pie.array.unique(arr);
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.avg = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a)</span> </span>{
+  a = pie.array.from(a);
   <span class="hljs-keyword">var</span> s = pie.array.sum(a), l = a.length;
   <span class="hljs-keyword">return</span> l ? (s / l) : <span class="hljs-number">0</span>;
 };</pre></div></div>
@@ -369,6 +372,7 @@ pie.array.compact([<span class="hljs-literal">true</span>, <span class="hljs-lit
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.compact = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, removeAllFalsy)</span></span>{
+  a = pie.array.from(a);
   <span class="hljs-keyword">return</span> a.filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(i)</span></span>{
     <span class="hljs-comment">/* jslint eqeq:true */</span>
     <span class="hljs-keyword">return</span> removeAllFalsy ? !!i : (i != <span class="hljs-literal">null</span>);
@@ -396,6 +400,7 @@ pie.array.detect([{foo: <span class="hljs-string">'bar'</span>}, {baz: <span cla
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.detect = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, f)</span> </span>{
+  a = pie.array.from(a);
   <span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>, l = a.length;
   <span class="hljs-keyword">for</span>(;i&lt;l;i++) {
     <span class="hljs-keyword">if</span>(pie.object.getValue(a[i], f)) {
@@ -426,6 +431,7 @@ pie.array.detectLast([{foo: <span class="hljs-string">'bar'</span>}, {baz: <span
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.detectLast = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, f)</span> </span>{
+  a = pie.array.from(a);
   <span class="hljs-keyword">var</span> i = a.length-<span class="hljs-number">1</span>, l = <span class="hljs-number">0</span>;
   <span class="hljs-keyword">for</span>(;i&gt;=l;i--) {
     <span class="hljs-keyword">if</span>(pie.object.getValue(a[i], f)) {
@@ -449,7 +455,7 @@ pie.array.detectLast([{foo: <span class="hljs-string">'bar'</span>}, {baz: <span
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.dup = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a)</span> </span>{
-  <span class="hljs-keyword">return</span> a.slice(<span class="hljs-number">0</span>);
+  <span class="hljs-keyword">return</span> pie.array.from(a).slice(<span class="hljs-number">0</span>);
 };</pre></div></div>
             
         </li>
@@ -550,6 +556,7 @@ pie.array.get(arr, <span class="hljs-number">1</span>, -<span class="hljs-number
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.get = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr, startIdx, endIdx)</span> </span>{
+  arr = pie.array.from(arr);
   <span class="hljs-keyword">if</span>(startIdx &lt; <span class="hljs-number">0</span>) startIdx += arr.length;
 
   <span class="hljs-keyword">if</span>(endIdx !== <span class="hljs-literal">undefined</span>) {
@@ -578,7 +585,7 @@ pie.array.grep(arr, <span class="hljs-regexp">/oo/</span>)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.grep = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr, regex)</span> </span>{
-  <span class="hljs-keyword">return</span> arr.filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a)</span></span>{ <span class="hljs-keyword">return</span> regex.test(<span class="hljs-built_in">String</span>(a)); });
+  <span class="hljs-keyword">return</span> pie.array.from(arr).filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a)</span></span>{ <span class="hljs-keyword">return</span> regex.test(<span class="hljs-built_in">String</span>(a)); });
 };</pre></div></div>
             
         </li>
@@ -602,7 +609,7 @@ pie.array.groupBy(arr, fn)
             
             <div class="content"><div class='highlight'><pre>pie.array.groupBy = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr, groupingF)</span> </span>{
   <span class="hljs-keyword">var</span> h = {}, g;
-  arr.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a)</span></span>{
+  pie.array.from(arr).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a)</span></span>{
 
     g = pie.object.getValue(a, groupingF);
 
@@ -636,6 +643,7 @@ pie.array.indexOf(arr, ‘foo’)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.indexOf = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, f)</span> </span>{
+  a = pie.array.from(a);
   <span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>, l = a.length;
   <span class="hljs-keyword">for</span>(;i&lt;l;i++) {
     <span class="hljs-keyword">if</span>(pie.object.getValue(a[i], f)) {
@@ -665,7 +673,7 @@ pie.array.intersect(a, b)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.intersect = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, b)</span> </span>{
-  <span class="hljs-keyword">return</span> a.filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(i)</span> </span>{ <span class="hljs-keyword">return</span> ~b.indexOf(i); });
+  <span class="hljs-keyword">return</span> pie.array.from(a).filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(i)</span> </span>{ <span class="hljs-keyword">return</span> ~b.indexOf(i); });
 };</pre></div></div>
             
         </li>
@@ -683,6 +691,7 @@ pie.array.intersect(a, b)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.last = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr)</span> </span>{
+  arr = arr &amp;&amp; pie.array.from(arr);
   <span class="hljs-keyword">if</span>(arr &amp;&amp; arr.length) <span class="hljs-keyword">return</span> arr[arr.length - <span class="hljs-number">1</span>];
 };</pre></div></div>
             
@@ -729,7 +738,7 @@ pie.array.map([<span class="hljs-number">0</span>,<span class="hljs-number">1</s
     callingF = f;
   }
 
-  <span class="hljs-keyword">return</span> a.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span></span>{ <span class="hljs-keyword">return</span> callingF(e); });
+  <span class="hljs-keyword">return</span> pie.array.from(a).map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span></span>{ <span class="hljs-keyword">return</span> callingF(e); });
 };</pre></div></div>
             
         </li>
@@ -751,6 +760,7 @@ pie.array.remove(a, 0)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.remove = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, o)</span> </span>{
+  a = pie.array.from(a);
   <span class="hljs-keyword">var</span> idx;
   <span class="hljs-keyword">while</span>(~(idx = a.indexOf(o))) {
     a.splice(idx, <span class="hljs-number">1</span>);
@@ -778,7 +788,7 @@ pie.array.subtract(a, b)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.subtract = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, b)</span> </span>{
-  <span class="hljs-keyword">return</span> a.filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(i)</span> </span>{ <span class="hljs-keyword">return</span> !~b.indexOf(i); });
+  <span class="hljs-keyword">return</span> pie.array.from(a).filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(i)</span> </span>{ <span class="hljs-keyword">return</span> !~b.indexOf(i); });
 };</pre></div></div>
             
         </li>
@@ -799,9 +809,7 @@ pie.array.sum(arr)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.sum = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a)</span> </span>{
-  <span class="hljs-keyword">var</span> s = <span class="hljs-number">0</span>;
-  a.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(i)</span></span>{ s += <span class="hljs-built_in">parseFloat</span>(i); });
-  <span class="hljs-keyword">return</span> s;
+  <span class="hljs-keyword">return</span> pie.array.from(a).reduce(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a,b)</span></span>{ <span class="hljs-keyword">return</span> a + <span class="hljs-built_in">parseFloat</span>(b); }, <span class="hljs-number">0</span>);
 };</pre></div></div>
             
         </li>
@@ -824,7 +832,7 @@ pie.array.sortBy(arr, <span class="hljs-string">'name'</span>)
             
             <div class="content"><div class='highlight'><pre>pie.array.sortBy = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr, sortF)</span></span>{
   <span class="hljs-keyword">var</span> aVal, bVal;
-  <span class="hljs-keyword">return</span> arr.sort(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, b)</span> </span>{
+  <span class="hljs-keyword">return</span> pie.array.from(arr).sort(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, b)</span> </span>{
     aVal = pie.object.getValue(a, sortF);
     bVal = pie.object.getValue(b, sortF);
     <span class="hljs-keyword">if</span>(aVal === bVal) <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
@@ -858,6 +866,7 @@ pie.array.toSentence(words)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.toSentence = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr, options)</span> </span>{
+  arr = pie.array.from(arr);
   <span class="hljs-keyword">if</span>(!arr.length) <span class="hljs-keyword">return</span> <span class="hljs-string">''</span>;
 
   options = pie.object.merge({
@@ -921,9 +930,8 @@ pie.array.unique(arr)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.unique = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr)</span> </span>{
-  <span class="hljs-keyword">return</span> arr.filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e, i)</span></span>{ <span class="hljs-keyword">return</span> arr.indexOf(e) === i; });
+  <span class="hljs-keyword">return</span> pie.array.from(arr).filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e, i)</span></span>{ <span class="hljs-keyword">return</span> arr.indexOf(e) === i; });
 };
-
 <span class="hljs-comment">/* From old jQuery */</span>
 pie.browser.agent = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
   <span class="hljs-keyword">if</span>(pie.browser.__agent) <span class="hljs-keyword">return</span> pie.browser.__agent;
@@ -2655,7 +2663,7 @@ pie.string.setTemplateSettings(<span class="hljs-string">'[%'</span>, <span clas
   strFunc = <span class="hljs-string">"var __p='', __s = function(v, e){ return v == null ? '' : (e ? pie.string.escapeHtml(v) : v); };\n"</span> ;
   <span class="hljs-keyword">if</span>(varString) strFunc += varString + <span class="hljs-string">";\n"</span>;
   strFunc += <span class="hljs-string">"__p += '"</span>;
-  strFunc += str.replace(<span class="hljs-regexp">/\n/g</span>, <span class="hljs-string">"\\\n"</span>)
+  strFunc += str.replace(<span class="hljs-regexp">/\n/g</span>, <span class="hljs-string">"\\\n"</span>) <span class="hljs-comment">// preserve format by allowing multiline strings.</span>
                 .replace(conf.interpLookahead, conf.splitter) <span class="hljs-comment">// replace all interpolation single quotes with a unique identifier.</span>
                 .replace(<span class="hljs-regexp">/'/g</span>, <span class="hljs-string">"\\'"</span>) <span class="hljs-comment">// now replace all quotes with an escaped quote.</span>
                 .replace(conf.splitterRegex, <span class="hljs-string">"'"</span>) <span class="hljs-comment">// and reapply the single quotes in the interpolated content.</span>
