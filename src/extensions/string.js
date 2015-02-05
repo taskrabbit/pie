@@ -95,7 +95,7 @@ pie.string.downcase = function(str) {
 };
 
 // Escapes a string for HTML interpolation
-pie.string.escape = (function(){
+pie.string.escapeHtml = (function(){
   var encReg = /[<>&"'\x00]/g;
   var encMap = {
     "<"   : "&lt;",
@@ -111,6 +111,10 @@ pie.string.escape = (function(){
     return ("" + str).replace(encReg, function(c) { return encMap[c] || ""; });
   };
 })();
+
+pie.string.escapeRegex = function(str) {
+  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
 
 pie.string.endsWith = function(str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;
@@ -180,20 +184,53 @@ pie.string.possessive = function(str) {
 };
 
 
+pie.string.setTemplateSettings = function(begin, end, escape, interp, evalr, splitter) {
+  splitter = splitter || '~~pie-interp~~';
+  escape = escape || '-';
+  interp = interp || '=';
+  evalr = evalr || '';
+
+  var escapedBegin = pie.string.escapeRegex(begin),
+  escapedEnd = pie.string.escapeRegex(end),
+  escapedEndFirstChar = pie.string.escapeRegex(end[0]),
+  escapedInterp = pie.string.escapeRegex(interp),
+  escapedEscape = pie.string.escapeRegex(escape),
+  escapedEvalr = pie.string.escapeRegex(evalr),
+  escapedSplitter = pie.string.escapeRegex(splitter);
+
+  pie.string._templateSettings = {
+    begin: begin,
+    end: end,
+    interp: interp,
+    escape: escape,
+    splitter: splitter,
+    beginRegex:       new RegExp(escapedBegin, 'g'),
+    endRegex:         new RegExp(escapedEnd, 'g'),
+    interpRegex:      new RegExp(escapedBegin + escapedInterp + '(.+?)' + escapedEnd, 'g'),
+    escapeRegex:      new RegExp(escapedBegin + escapedEscape + '(.+?)' + escapedEnd, 'g'),
+    evalRegex:        new RegExp(escapedBegin + escapedEvalr + '(.+?)' + escapedEnd, 'g'),
+    interpLookahead:  new RegExp("'(?=[^" + escapedEndFirstChar + "]*" + escapedEnd + ")", 'g'),
+    splitterRegex:    new RegExp(escapedSplitter, 'g'),
+  };
+};
+
+pie.string.setTemplateSettings('[%', '%]', '-', '=', '');
+
 // string templating via John Resig
 pie.string.template = function(str, varString) {
-  var strFunc = "var __p='', __t;" ;
-  strFunc += (varString || "") + ";";
+  var conf = pie.string._templateSettings,
+  strFunc = "var __p='', __s = function(v, e){ return v == null ? '' : (e ? pie.string.escapeHtml(v) : v); };\n" ;
+  if(varString) strFunc += varString + ";\n";
   strFunc += "__p += '";
-  strFunc += str.replace(/[\r\t\n]/g," ") // remove all returns and tabs.
-                .replace(/'(?=[^%]*%\])/g,"\t") // replace all interpolation single quotes with a tab.
-                .split("'").join("\\'") // now replace all quotes with an escaped quote.
-                .split("\t").join("'") // and reapply the single quotes in the interpolated content.
-                .replace(/\[%-(.+?)%\]/g, "';\n__p+=((__t=($1))==null ? '' : pie.string.escape(__t));\n__p+='") // html escape the interpolation
-                .replace(/\[%=(.+?)%\]/g, "';\n__p+=((__t=($1))==null ? '' : __t);\n__p+='") // interpolate
-                .replace(/\[%(.+?)%\]/g, "';\n$1;\n__p+='") // evaluation
-                .split('[%').join("';") // create string endings.
-                .split('%]').join("\n__p+='"); // create string concatenations.
+  strFunc += str.replace(/\n/g, "\\\n")
+                .replace(conf.interpLookahead, conf.splitter) // replace all interpolation single quotes with a unique identifier.
+                .replace(/'/g, "\\'") // now replace all quotes with an escaped quote.
+                .replace(conf.splitterRegex, "'") // and reapply the single quotes in the interpolated content.
+                .replace(conf.escapeRegex, "' + __s($1, true) + '") // html escape the interpolation
+                .replace(conf.interpRegex, "' + __s($1) + '") // interpolate
+                .replace(conf.evalRegex, "'; $1; __p+='") // evaluation
+                .replace(conf.beginRegex, "';") // create string endings.
+                .replace(conf.endRegex, "\n__p+='"); // create string concatenations.
   strFunc += "';"; // final ending.
   strFunc += "return __p;"; // final result.
 

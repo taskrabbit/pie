@@ -2456,7 +2456,7 @@ pie.string.downcase = <span class="hljs-function"><span class="hljs-keyword">fun
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.string.escape = (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+            <div class="content"><div class='highlight'><pre>pie.string.escapeHtml = (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
   <span class="hljs-keyword">var</span> encReg = <span class="hljs-regexp">/[&lt;&gt;&amp;"'\x00]/g</span>;
   <span class="hljs-keyword">var</span> encMap = {
     <span class="hljs-string">"&lt;"</span>   : <span class="hljs-string">"&amp;lt;"</span>,
@@ -2472,6 +2472,10 @@ pie.string.downcase = <span class="hljs-function"><span class="hljs-keyword">fun
     <span class="hljs-keyword">return</span> (<span class="hljs-string">""</span> + str).replace(encReg, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span> </span>{ <span class="hljs-keyword">return</span> encMap[c] || <span class="hljs-string">""</span>; });
   };
 })();
+
+pie.string.escapeRegex = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
+  <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/[-\/\\^$*+?.()|[\]{}]/g</span>, <span class="hljs-string">'\\$&amp;'</span>);
+};
 
 pie.string.endsWith = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, suffix)</span> </span>{
   <span class="hljs-keyword">return</span> str.indexOf(suffix, str.length - suffix.length) !== -<span class="hljs-number">1</span>;
@@ -2598,7 +2602,40 @@ pie.string.pluralize = <span class="hljs-function"><span class="hljs-keyword">fu
             <div class="content"><div class='highlight'><pre>pie.string.possessive = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
   <span class="hljs-keyword">if</span>(<span class="hljs-regexp">/s$/i</span>.test(str)) <span class="hljs-keyword">return</span> str + <span class="hljs-string">"'"</span>;
   <span class="hljs-keyword">return</span> str + <span class="hljs-string">"'s"</span>;
-};</pre></div></div>
+};
+
+
+pie.string.setTemplateSettings = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(begin, end, escape, interp, evalr, splitter)</span> </span>{
+  splitter = splitter || <span class="hljs-string">'~~pie-interp~~'</span>;
+  <span class="hljs-built_in">escape</span> = <span class="hljs-built_in">escape</span> || <span class="hljs-string">'-'</span>;
+  interp = interp || <span class="hljs-string">'='</span>;
+  evalr = evalr || <span class="hljs-string">''</span>;
+
+  <span class="hljs-keyword">var</span> escapedBegin = pie.string.escapeRegex(begin),
+  escapedEnd = pie.string.escapeRegex(end),
+  escapedEndFirstChar = pie.string.escapeRegex(end[<span class="hljs-number">0</span>]),
+  escapedInterp = pie.string.escapeRegex(interp),
+  escapedEscape = pie.string.escapeRegex(<span class="hljs-built_in">escape</span>),
+  escapedEvalr = pie.string.escapeRegex(evalr),
+  escapedSplitter = pie.string.escapeRegex(splitter);
+
+  pie.string._templateSettings = {
+    begin: begin,
+    end: end,
+    interp: interp,
+    <span class="hljs-built_in">escape</span>: <span class="hljs-built_in">escape</span>,
+    splitter: splitter,
+    beginRegex:       <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin, <span class="hljs-string">'g'</span>),
+    endRegex:         <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedEnd, <span class="hljs-string">'g'</span>),
+    interpRegex:      <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin + escapedInterp + <span class="hljs-string">'(.+?)'</span> + escapedEnd, <span class="hljs-string">'g'</span>),
+    escapeRegex:      <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin + escapedEscape + <span class="hljs-string">'(.+?)'</span> + escapedEnd, <span class="hljs-string">'g'</span>),
+    evalRegex:        <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin + escapedEvalr + <span class="hljs-string">'(.+?)'</span> + escapedEnd, <span class="hljs-string">'g'</span>),
+    interpLookahead:  <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(<span class="hljs-string">"'(?=[^"</span> + escapedEndFirstChar + <span class="hljs-string">"]*"</span> + escapedEnd + <span class="hljs-string">")"</span>, <span class="hljs-string">'g'</span>),
+    splitterRegex:    <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedSplitter, <span class="hljs-string">'g'</span>),
+  };
+};
+
+pie.string.setTemplateSettings(<span class="hljs-string">'[%'</span>, <span class="hljs-string">'%]'</span>, <span class="hljs-string">'-'</span>, <span class="hljs-string">'='</span>, <span class="hljs-string">''</span>);</pre></div></div>
             
         </li>
         
@@ -2614,18 +2651,19 @@ pie.string.pluralize = <span class="hljs-function"><span class="hljs-keyword">fu
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.string.template = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, varString)</span> </span>{
-  <span class="hljs-keyword">var</span> strFunc = <span class="hljs-string">"var __p='', __t;"</span> ;
-  strFunc += (varString || <span class="hljs-string">""</span>) + <span class="hljs-string">";"</span>;
+  <span class="hljs-keyword">var</span> conf = pie.string._templateSettings,
+  strFunc = <span class="hljs-string">"var __p='', __s = function(v, e){ return v == null ? '' : (e ? pie.string.escapeHtml(v) : v); };\n"</span> ;
+  <span class="hljs-keyword">if</span>(varString) strFunc += varString + <span class="hljs-string">";\n"</span>;
   strFunc += <span class="hljs-string">"__p += '"</span>;
-  strFunc += str.replace(<span class="hljs-regexp">/[\r\t\n]/g</span>,<span class="hljs-string">" "</span>) <span class="hljs-comment">// remove all returns and tabs.</span>
-                .replace(<span class="hljs-regexp">/'(?=[^%]*%\])/g</span>,<span class="hljs-string">"\t"</span>) <span class="hljs-comment">// replace all interpolation single quotes with a tab.</span>
-                .split(<span class="hljs-string">"'"</span>).join(<span class="hljs-string">"\\'"</span>) <span class="hljs-comment">// now replace all quotes with an escaped quote.</span>
-                .split(<span class="hljs-string">"\t"</span>).join(<span class="hljs-string">"'"</span>) <span class="hljs-comment">// and reapply the single quotes in the interpolated content.</span>
-                .replace(<span class="hljs-regexp">/\[%-(.+?)%\]/g</span>, <span class="hljs-string">"';\n__p+=((__t=($1))==null ? '' : pie.string.escape(__t));\n__p+='"</span>) <span class="hljs-comment">// html escape the interpolation</span>
-                .replace(<span class="hljs-regexp">/\[%=(.+?)%\]/g</span>, <span class="hljs-string">"';\n__p+=((__t=($1))==null ? '' : __t);\n__p+='"</span>) <span class="hljs-comment">// interpolate</span>
-                .replace(<span class="hljs-regexp">/\[%(.+?)%\]/g</span>, <span class="hljs-string">"';\n$1;\n__p+='"</span>) <span class="hljs-comment">// evaluation</span>
-                .split(<span class="hljs-string">'[%'</span>).join(<span class="hljs-string">"';"</span>) <span class="hljs-comment">// create string endings.</span>
-                .split(<span class="hljs-string">'%]'</span>).join(<span class="hljs-string">"\n__p+='"</span>); <span class="hljs-comment">// create string concatenations.</span>
+  strFunc += str.replace(<span class="hljs-regexp">/\n/g</span>, <span class="hljs-string">"\\\n"</span>)
+                .replace(conf.interpLookahead, conf.splitter) <span class="hljs-comment">// replace all interpolation single quotes with a unique identifier.</span>
+                .replace(<span class="hljs-regexp">/'/g</span>, <span class="hljs-string">"\\'"</span>) <span class="hljs-comment">// now replace all quotes with an escaped quote.</span>
+                .replace(conf.splitterRegex, <span class="hljs-string">"'"</span>) <span class="hljs-comment">// and reapply the single quotes in the interpolated content.</span>
+                .replace(conf.escapeRegex, <span class="hljs-string">"' + __s($1, true) + '"</span>) <span class="hljs-comment">// html escape the interpolation</span>
+                .replace(conf.interpRegex, <span class="hljs-string">"' + __s($1) + '"</span>) <span class="hljs-comment">// interpolate</span>
+                .replace(conf.evalRegex, <span class="hljs-string">"'; $1; __p+='"</span>) <span class="hljs-comment">// evaluation</span>
+                .replace(conf.beginRegex, <span class="hljs-string">"';"</span>) <span class="hljs-comment">// create string endings.</span>
+                .replace(conf.endRegex, <span class="hljs-string">"\n__p+='"</span>); <span class="hljs-comment">// create string concatenations.</span>
   strFunc += <span class="hljs-string">"';"</span>; <span class="hljs-comment">// final ending.</span>
   strFunc += <span class="hljs-string">"return __p;"</span>; <span class="hljs-comment">// final result.</span>
 

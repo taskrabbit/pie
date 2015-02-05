@@ -13,7 +13,7 @@
   proto.contentCallback = function(data) {
     var filename = this.getAttribute('filename') || Object.keys(data.files)[0],
     file = data.files[filename],
-    content = file && pie.string.escape(file.content) || 'NOT FOUND';
+    content = file && pie.string.escapeHtml(file.content) || 'NOT FOUND';
 
     var lines = content.split("\n");
 
