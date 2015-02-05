@@ -1595,18 +1595,22 @@ pie.string.possessive = function(str) {
 
 // string templating via John Resig
 pie.string.template = function(str, varString) {
-  return new Function("data",
-    "var __p=[];" + (varString || "") + ";with(data){__p.push('" +
-    str.replace(/[\r\t\n]/g, " ")
-       .replace(/'(?=[^%]*%\])/g,"\t")
-       .split("'").join("\\'")
-       .split("\t").join("'")
-       .replace(/\[%=(.+?)%\]/g, "',$1,'")
-       .replace(/\[%-(.+?)%\]/g, "',pie.string.escape($1),'")
-       .split("[%").join("');")
-       .split("%]").join("__p.push('") +
-       "');}return __p.join('');"
-  );
+  var strFunc = "var __p='', __t;" ;
+  strFunc += (varString || "") + ";";
+  strFunc += "__p += '";
+  strFunc += str.replace(/[\r\t\n]/g," ") // remove all returns and tabs.
+                .replace(/'(?=[^%]*%\])/g,"\t") // replace all interpolation single quotes with a tab.
+                .split("'").join("\\'") // now replace all quotes with an escaped quote.
+                .split("\t").join("'") // and reapply the single quotes in the interpolated content.
+                .replace(/\[%-(.+?)%\]/g, "';\n__p+=((__t=($1))==null ? '' : pie.string.escape(__t));\n__p+='") // html escape the interpolation
+                .replace(/\[%=(.+?)%\]/g, "';\n__p+=((__t=($1))==null ? '' : __t);\n__p+='") // interpolate
+                .replace(/\[%(.+?)%\]/g, "';\n$1;\n__p+='") // evaluation
+                .split('[%').join("';") // create string endings.
+                .split('%]').join("\n__p+='"); // create string concatenations.
+  strFunc += "';"; // final ending.
+  strFunc += "return __p;"; // final result.
+
+  return new Function("data", strFunc);
 };
 
 pie.string.titleize = function(str) {

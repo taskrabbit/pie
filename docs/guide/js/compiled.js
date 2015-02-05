@@ -155,16 +155,17 @@ app.helpers.register('gist', function(filename, gistId) {
     this.innerHTML = '<code><pre class="hljs">Loading...</pre></code>';
     this.classList.add('gist-loading');
 
-    app.resources.load({
-      src: path,
-      dataSuccess: function(content){
-        gistCache[gistId] = content;
-      }
-    }, function() {
-      this.contentCallback(gistCache[gistId]);
-      this.classList.remove('gist-loading');
-    }.bind(this));
-
+    setTimeout(function(){
+      app.resources.load({
+        src: path,
+        dataSuccess: function(content){
+          gistCache[gistId] = content;
+        }
+      }, function() {
+        this.contentCallback(gistCache[gistId]);
+        this.classList.remove('gist-loading');
+      }.bind(this));
+    }.bind(this), 1);
   };
 
   // register element as x-gist

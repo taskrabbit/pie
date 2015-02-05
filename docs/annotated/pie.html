@@ -2614,18 +2614,22 @@ pie.string.pluralize = <span class="hljs-function"><span class="hljs-keyword">fu
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.string.template = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, varString)</span> </span>{
-  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(<span class="hljs-string">"data"</span>,
-    <span class="hljs-string">"var __p=[];"</span> + (varString || <span class="hljs-string">""</span>) + <span class="hljs-string">";with(data){__p.push('"</span> +
-    str.replace(<span class="hljs-regexp">/[\r\t\n]/g</span>, <span class="hljs-string">" "</span>)
-       .replace(<span class="hljs-regexp">/'(?=[^%]*%\])/g</span>,<span class="hljs-string">"\t"</span>)
-       .split(<span class="hljs-string">"'"</span>).join(<span class="hljs-string">"\\'"</span>)
-       .split(<span class="hljs-string">"\t"</span>).join(<span class="hljs-string">"'"</span>)
-       .replace(<span class="hljs-regexp">/\[%=(.+?)%\]/g</span>, <span class="hljs-string">"',$1,'"</span>)
-       .replace(<span class="hljs-regexp">/\[%-(.+?)%\]/g</span>, <span class="hljs-string">"',pie.string.escape($1),'"</span>)
-       .split(<span class="hljs-string">"[%"</span>).join(<span class="hljs-string">"');"</span>)
-       .split(<span class="hljs-string">"%]"</span>).join(<span class="hljs-string">"__p.push('"</span>) +
-       <span class="hljs-string">"');}return __p.join('');"</span>
-  );
+  <span class="hljs-keyword">var</span> strFunc = <span class="hljs-string">"var __p='', __t;"</span> ;
+  strFunc += (varString || <span class="hljs-string">""</span>) + <span class="hljs-string">";"</span>;
+  strFunc += <span class="hljs-string">"__p += '"</span>;
+  strFunc += str.replace(<span class="hljs-regexp">/[\r\t\n]/g</span>,<span class="hljs-string">" "</span>) <span class="hljs-comment">// remove all returns and tabs.</span>
+                .replace(<span class="hljs-regexp">/'(?=[^%]*%\])/g</span>,<span class="hljs-string">"\t"</span>) <span class="hljs-comment">// replace all interpolation single quotes with a tab.</span>
+                .split(<span class="hljs-string">"'"</span>).join(<span class="hljs-string">"\\'"</span>) <span class="hljs-comment">// now replace all quotes with an escaped quote.</span>
+                .split(<span class="hljs-string">"\t"</span>).join(<span class="hljs-string">"'"</span>) <span class="hljs-comment">// and reapply the single quotes in the interpolated content.</span>
+                .replace(<span class="hljs-regexp">/\[%-(.+?)%\]/g</span>, <span class="hljs-string">"';\n__p+=((__t=($1))==null ? '' : pie.string.escape(__t));\n__p+='"</span>) <span class="hljs-comment">// html escape the interpolation</span>
+                .replace(<span class="hljs-regexp">/\[%=(.+?)%\]/g</span>, <span class="hljs-string">"';\n__p+=((__t=($1))==null ? '' : __t);\n__p+='"</span>) <span class="hljs-comment">// interpolate</span>
+                .replace(<span class="hljs-regexp">/\[%(.+?)%\]/g</span>, <span class="hljs-string">"';\n$1;\n__p+='"</span>) <span class="hljs-comment">// evaluation</span>
+                .split(<span class="hljs-string">'[%'</span>).join(<span class="hljs-string">"';"</span>) <span class="hljs-comment">// create string endings.</span>
+                .split(<span class="hljs-string">'%]'</span>).join(<span class="hljs-string">"\n__p+='"</span>); <span class="hljs-comment">// create string concatenations.</span>
+  strFunc += <span class="hljs-string">"';"</span>; <span class="hljs-comment">// final ending.</span>
+  strFunc += <span class="hljs-string">"return __p;"</span>; <span class="hljs-comment">// final result.</span>
+
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(<span class="hljs-string">"data"</span>, strFunc);
 };
 
 pie.string.titleize = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
