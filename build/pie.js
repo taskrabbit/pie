@@ -1663,23 +1663,57 @@ pie.string.setTemplateSettings = function(begin, end, escape, interp, evalr, spl
 
 pie.string.setTemplateSettings('[%', '%]', '-', '=', '');
 
-// string templating via John Resig
+//**pie.string.template**
+//
+// Resig style microtemplating. Preserves whitespace, and only uses string manipulation.
+// There is no array construction. Allows an optional variables string `varString` which enables
+// custom variable definition inside of the templating function.
+//
+// ```
+// var template = pie.string.template("Hi, [%= data.first_name %]. You have [%= data.count %] [%= pie.string.pluralize('messages', data.count) %].");
+// template({first_name: 'John', count: 4});
+// //=> "Hi, John. You have 4 messages."
+// ```
 pie.string.template = function(str, varString) {
   var conf = pie.string._templateSettings,
   strFunc = "var __p='', __s = function(v, e){ return v == null ? '' : (e ? pie.string.escapeHtml(v) : v); };\n" ;
   if(varString) strFunc += varString + ";\n";
   strFunc += "__p += '";
-  strFunc += str.replace(/\n/g, "\\\n") // preserve format by allowing multiline strings.
-                .replace(conf.interpLookahead, conf.splitter) // replace all interpolation single quotes with a unique identifier.
-                .replace(/'/g, "\\'") // now replace all quotes with an escaped quote.
-                .replace(conf.splitterRegex, "'") // and reapply the single quotes in the interpolated content.
-                .replace(conf.escapeRegex, "' + __s($1, true) + '") // html escape the interpolation
-                .replace(conf.interpRegex, "' + __s($1) + '") // interpolate
-                .replace(conf.evalRegex, "'; $1; __p+='") // evaluation
-                .replace(conf.beginRegex, "';") // create string endings.
-                .replace(conf.endRegex, "\n__p+='"); // create string concatenations.
-  strFunc += "';"; // final ending.
-  strFunc += "return __p;"; // final result.
+
+  /**** preserve format by allowing multiline strings. ****/
+  strFunc += str.replace(/\n/g, "\\\n")
+  /**** EX: "... __p += '[% data.foo = 1 %]text's content[%- data.foo %]more text[%= data['foo'] + 1 %]" ****/
+
+  /**** replace all interpolation single quotes with a unique identifier. ****/
+  .replace(conf.interpLookahead, conf.splitter)
+  /**** EX: "... __p += '[% data.foo = 1 %]text's content[%- data.foo %]more text[%= data[~~pie-interp~~foo~~pie-interp~~] + 1 %]" ****/
+
+  /**** now replace all quotes with an escaped quote. ****/
+  .replace(/'/g, "\\'")
+  /**** EX: "... __p += '[% data.foo = 1 %]text\'s content[%- data.foo %]more text[%= data[~~pie-interp~~foo~~pie-interp~~] + 1 %]" ****/
+
+  /**** and reapply the single quotes in the interpolated content. ****/
+  .replace(conf.splitterRegex, "'")
+  /**** EX: "... __p += '[% data.foo = 1 %]text\'s content[%- data.foo %]more text[%= data['foo'] + 1 %]" ****/
+
+  /**** html escape the interpolation ****/
+  .replace(conf.escapeRegex, "' + __s($1, true) + '")
+  /**** EX: "... __p += '[% data.foo = 1 %]text\'s content' + __s(data.foo, true) + 'more text[%= data['foo'] + 1 %]" ****/
+
+  /**** interpolate ****/
+  .replace(conf.interpRegex, "' + __s($1) + '")
+  /**** EX: "... __p += '[% data.foo = 1 %]text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/
+
+  /**** evaluation ****/
+  .replace(conf.evalRegex, "'; $1; __p+='");
+  /**** EX: "... __p +=''; data.foo = 1; __p+='text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/
+
+  /**** terminate the string ****/
+  strFunc += "';";
+  /**** EX: "... __p +=''; data.foo = 1; __p+='text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '';" ****/
+
+  /**** final result. ****/
+  strFunc += "return __p;";
 
   return new Function("data", strFunc);
 };

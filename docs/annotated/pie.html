@@ -2680,8 +2680,14 @@ pie.string.setTemplateSettings(<span class="hljs-string">'[%'</span>, <span clas
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-90">&#182;</a>
               </div>
-              <p>string templating via John Resig</p>
-
+              <p><strong>pie.string.template</strong></p>
+<p>Resig style microtemplating. Preserves whitespace, and only uses string manipulation.
+There is no array construction. Allows an optional variables string <code>varString</code> which enables
+custom variable definition inside of the templating function.</p>
+<pre><code><span class="hljs-keyword">var</span> template = pie.string.template(<span class="hljs-string">"Hi, [%= data.first_name %]. You have [%= data.count %] [%= pie.string.pluralize('messages', data.count) %]."</span>);
+template({first_name: <span class="hljs-string">'John'</span>, count: <span class="hljs-number">4</span>});
+<span class="hljs-comment">//=&gt; "Hi, John. You have 4 messages."</span>
+</code></pre>
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.string.template = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, varString)</span> </span>{
@@ -2689,17 +2695,41 @@ pie.string.setTemplateSettings(<span class="hljs-string">'[%'</span>, <span clas
   strFunc = <span class="hljs-string">"var __p='', __s = function(v, e){ return v == null ? '' : (e ? pie.string.escapeHtml(v) : v); };\n"</span> ;
   <span class="hljs-keyword">if</span>(varString) strFunc += varString + <span class="hljs-string">";\n"</span>;
   strFunc += <span class="hljs-string">"__p += '"</span>;
-  strFunc += str.replace(<span class="hljs-regexp">/\n/g</span>, <span class="hljs-string">"\\\n"</span>) <span class="hljs-comment">// preserve format by allowing multiline strings.</span>
-                .replace(conf.interpLookahead, conf.splitter) <span class="hljs-comment">// replace all interpolation single quotes with a unique identifier.</span>
-                .replace(<span class="hljs-regexp">/'/g</span>, <span class="hljs-string">"\\'"</span>) <span class="hljs-comment">// now replace all quotes with an escaped quote.</span>
-                .replace(conf.splitterRegex, <span class="hljs-string">"'"</span>) <span class="hljs-comment">// and reapply the single quotes in the interpolated content.</span>
-                .replace(conf.escapeRegex, <span class="hljs-string">"' + __s($1, true) + '"</span>) <span class="hljs-comment">// html escape the interpolation</span>
-                .replace(conf.interpRegex, <span class="hljs-string">"' + __s($1) + '"</span>) <span class="hljs-comment">// interpolate</span>
-                .replace(conf.evalRegex, <span class="hljs-string">"'; $1; __p+='"</span>) <span class="hljs-comment">// evaluation</span>
-                .replace(conf.beginRegex, <span class="hljs-string">"';"</span>) <span class="hljs-comment">// create string endings.</span>
-                .replace(conf.endRegex, <span class="hljs-string">"\n__p+='"</span>); <span class="hljs-comment">// create string concatenations.</span>
-  strFunc += <span class="hljs-string">"';"</span>; <span class="hljs-comment">// final ending.</span>
-  strFunc += <span class="hljs-string">"return __p;"</span>; <span class="hljs-comment">// final result.</span>
+
+  <span class="hljs-comment">/**** preserve format by allowing multiline strings. ****/</span>
+  strFunc += str.replace(<span class="hljs-regexp">/\n/g</span>, <span class="hljs-string">"\\\n"</span>)
+  <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text's content[%- data.foo %]more text[%= data['foo'] + 1 %]" ****/</span>
+
+  <span class="hljs-comment">/**** replace all interpolation single quotes with a unique identifier. ****/</span>
+  .replace(conf.interpLookahead, conf.splitter)
+  <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text's content[%- data.foo %]more text[%= data[~~pie-interp~~foo~~pie-interp~~] + 1 %]" ****/</span>
+
+  <span class="hljs-comment">/**** now replace all quotes with an escaped quote. ****/</span>
+  .replace(<span class="hljs-regexp">/'/g</span>, <span class="hljs-string">"\\'"</span>)
+  <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text\'s content[%- data.foo %]more text[%= data[~~pie-interp~~foo~~pie-interp~~] + 1 %]" ****/</span>
+
+  <span class="hljs-comment">/**** and reapply the single quotes in the interpolated content. ****/</span>
+  .replace(conf.splitterRegex, <span class="hljs-string">"'"</span>)
+  <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text\'s content[%- data.foo %]more text[%= data['foo'] + 1 %]" ****/</span>
+
+  <span class="hljs-comment">/**** html escape the interpolation ****/</span>
+  .replace(conf.escapeRegex, <span class="hljs-string">"' + __s($1, true) + '"</span>)
+  <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text\'s content' + __s(data.foo, true) + 'more text[%= data['foo'] + 1 %]" ****/</span>
+
+  <span class="hljs-comment">/**** interpolate ****/</span>
+  .replace(conf.interpRegex, <span class="hljs-string">"' + __s($1) + '"</span>)
+  <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/</span>
+
+  <span class="hljs-comment">/**** evaluation ****/</span>
+  .replace(conf.evalRegex, <span class="hljs-string">"'; $1; __p+='"</span>);
+  <span class="hljs-comment">/**** EX: "... __p +=''; data.foo = 1; __p+='text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/</span>
+
+  <span class="hljs-comment">/**** terminate the string ****/</span>
+  strFunc += <span class="hljs-string">"';"</span>;
+  <span class="hljs-comment">/**** EX: "... __p +=''; data.foo = 1; __p+='text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '';" ****/</span>
+
+  <span class="hljs-comment">/**** final result. ****/</span>
+  strFunc += <span class="hljs-string">"return __p;"</span>;
 
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(<span class="hljs-string">"data"</span>, strFunc);
 };
