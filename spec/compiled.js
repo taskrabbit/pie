@@ -893,6 +893,85 @@ describe("String extensions", function() {
 
     });
   });
+
+
+  describe("#template", function() {
+
+    var simpleTemplate = "[% var foo = data.foo; %]Hi, [%- data.first_name %]. Welcome to [%= foo.name %].";
+    var quoteTemplate = "Do you know 'Doug' from [%- data['a'] %] company or \"John\" from [%= data[\"b\"] %] company?";
+    var loopTemplate = "[% var i = 0; j = 0; %][% while(i < 4){ %][% for(j = 0; j < i; j++){ %][%= i %] - [%= j %] | [% } %][% i++ %][% } %]";
+
+    var resetSettings = function() {
+      pie.string.setTemplateSettings("[%", "%]", "-", "=", "");
+    };
+
+    beforeEach(function() {
+      resetSettings();
+
+      this.simple = pie.string.template(simpleTemplate);
+      this.quote = pie.string.template(quoteTemplate);
+      this.loop = pie.string.template(loopTemplate);
+    });
+
+    afterEach(resetSettings);
+
+    it("should create a function which accepts a single argument, data", function() {
+      expect(typeof this.simple).toEqual('function');
+      expect(this.simple.length).toEqual(1); // arity check.
+    });
+
+    it("should be able to evaluate sections without appending any content", function() {
+      var output = this.simple({foo: {}});
+      expect(output.match(/^Hi/)).toBeTruthy();
+    });
+
+    it("should be able to evaluate sections without escaping", function() {
+      var output = this.simple({foo: {name: '<h1>Site</h1>'}});
+      expect(output.match(/h1>\.$/)).toBeTruthy();
+    });
+
+    it("should be able to escape html content", function() {
+      var output = this.simple({first_name: '<h1>Doug</h1>', foo: {}});
+      expect(output.match(/&lt;/)).toBeTruthy();
+    });
+
+    it("should not leak variables", function() {
+      var foo;
+      this.simple({foo: {name: 'bar'}, first_name: 'Doug'});
+      expect(window.foo).toEqual(undefined);
+      expect(foo).toEqual(undefined);
+    });
+
+    it("should know how to interpolate things", function() {
+      var output = this.simple({foo: {name: '<strong>Site</strong>'}, first_name: '<strong>Doug</strong>'});
+      expect(output).toEqual("Hi, &lt;strong&gt;Doug&lt;/strong&gt;. Welcome to <strong>Site</strong>.");
+    });
+
+    it("should properly handle quotes inside and outside of interpolations", function() {
+      var output = this.quote({a: "foo's", b: "bar's"});
+      expect(output).toEqual("Do you know 'Doug' from foo&#39;s company or \"John\" from bar's company?");
+    });
+
+    it("should be fine with loops", function() {
+      var output = this.loop();
+      expect(output).toEqual("1 - 0 | 2 - 0 | 2 - 1 | 3 - 0 | 3 - 1 | 3 - 2 | ");
+    });
+
+    it("should allow other variable declarations to be made", function() {
+      var tmpl = pie.string.template("Hi, [%= doug %]", "var doug = 'Doug'");
+      var output = tmpl();
+      expect(output).toEqual("Hi, Doug");
+    });
+
+    it("should allow a different syntax", function() {
+      pie.string.setTemplateSettings("<#", "#>", "~", "+", "!");
+
+      var tmpl = pie.string.template("<#! var foo = 2; #>Hi, <#~ data.bar #>. You have <#+ foo #> messages.");
+      var output = tmpl({bar: '<i>Doug</i>'});
+      expect(output).toEqual("Hi, &lt;i&gt;Doug&lt;/i&gt;. You have 2 messages.");
+    });
+
+  });
 });
 describe("View Binding Integration", function() {
 
