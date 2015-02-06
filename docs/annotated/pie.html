@@ -1220,6 +1220,12 @@ Example usage:</p>
             
             <div class="content"><div class='highlight'><pre>pie.dom.all = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* nodeList, methodName[, arg1, arg2, ...] */</span>)</span> </span>{
   <span class="hljs-keyword">return</span> pie.dom._all(<span class="hljs-built_in">arguments</span>, <span class="hljs-literal">false</span>);
+};
+
+pie.dom.closest = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, sel)</span> </span>{
+  <span class="hljs-keyword">while</span>((el = el.parentNode) &amp;&amp; !pie.dom.isDocument(el)) {
+    <span class="hljs-keyword">if</span>(pie.dom.matches(el, sel)) <span class="hljs-keyword">return</span> el;
+  }
 };</pre></div></div>
             
         </li>
@@ -1230,27 +1236,6 @@ Example usage:</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-42">&#182;</a>
-              </div>
-              <p>Has the same method signature of <code>pie.dom.all</code> but returns the values of the result
-Example usage:</p>
-<ul>
-<li>pie.dom.getAll(nodeList, ‘clicked’) //=&gt; [true, true, false]</li>
-</ul>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>pie.dom.getAll = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-  <span class="hljs-keyword">return</span> pie.dom._all(<span class="hljs-built_in">arguments</span>, <span class="hljs-literal">true</span>);
-};</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-43">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-43">&#182;</a>
               </div>
               <p>create an element based on the content provided.</p>
 
@@ -1265,14 +1250,50 @@ Example usage:</p>
 pie.dom.cache = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
   pie.elementCache = pie.elementCache || <span class="hljs-keyword">new</span> pie.cache();
   <span class="hljs-keyword">return</span> pie.elementCache;
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
+              <p>Has the same method signature of <code>pie.dom.all</code> but returns the values of the result
+Example usage:</p>
+<ul>
+<li>pie.dom.getAll(nodeList, ‘clicked’) //=&gt; [true, true, false]</li>
+</ul>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>pie.dom.getAll = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">return</span> pie.dom._all(<span class="hljs-built_in">arguments</span>, <span class="hljs-literal">true</span>);
 };
 
-pie.dom.remove = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
-  pie.setUid(el);
-  pie.dom.cache().del(<span class="hljs-string">'element-'</span> + el.pieId);
-  <span class="hljs-keyword">if</span>(el.parentNode) el.parentNode.removeChild(el);
+pie.dom.isDocument = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
+  <span class="hljs-keyword">return</span> el &amp;&amp; el.nodeType === el.DOCUMENT_NODE;
 };
 
+pie.dom.isWindow = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
+  <span class="hljs-keyword">return</span> el === <span class="hljs-built_in">window</span>;
+};
+
+pie.dom.matches = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, sel)</span> </span>{
+  <span class="hljs-keyword">if</span>(el.matches) <span class="hljs-keyword">return</span> el.matches(sel);
+
+  <span class="hljs-keyword">var</span> parent = el.parentNode || el.document;
+  <span class="hljs-keyword">if</span>(!parent || !parent.querySelectorAll) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+
+  <span class="hljs-keyword">var</span> matches = parent.querySelectorAll(sel);
+  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; matches.length; i++) {
+    <span class="hljs-keyword">if</span>(matches[i] === el) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+  }
+
+  <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+};
 
 pie.dom.off = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, event, fn, selector, cap)</span> </span>{
   <span class="hljs-keyword">var</span> eventSplit = event.split(<span class="hljs-string">'.'</span>),
@@ -1293,11 +1314,10 @@ pie.dom.off = <span class="hljs-function"><span class="hljs-keyword">function</s
         <span class="hljs-keyword">delete</span> ary[i];
       }
 
-      events[k] = pie.array.compact(pie.array.from(events[k]));
+      events[k] = pie.array.compact(events[k]);
     });
   });
 };
-
 
 pie.dom.on = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, event, fn, selector, capture)</span> </span>{
   <span class="hljs-keyword">var</span> eventSplit = event.split(<span class="hljs-string">'.'</span>),
@@ -1383,6 +1403,12 @@ pie.dom.parseForm = <span class="hljs-function"><span class="hljs-keyword">funct
   });
 
   <span class="hljs-keyword">return</span> o;
+};
+
+pie.dom.remove = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
+  pie.setUid(el);
+  pie.dom.cache().del(<span class="hljs-string">'element-'</span> + el.pieId);
+  <span class="hljs-keyword">if</span>(el.parentNode) el.parentNode.removeChild(el);
 };
 
 pie.dom.trigger = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, e, forceEvent)</span> </span>{

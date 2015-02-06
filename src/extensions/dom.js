@@ -39,11 +39,10 @@ pie.dom.all = function(/* nodeList, methodName[, arg1, arg2, ...] */) {
   return pie.dom._all(arguments, false);
 };
 
-// Has the same method signature of `pie.dom.all` but returns the values of the result
-// Example usage:
-// * pie.dom.getAll(nodeList, 'clicked') //=> [true, true, false]
-pie.dom.getAll = function() {
-  return pie.dom._all(arguments, true);
+pie.dom.closest = function(el, sel) {
+  while((el = el.parentNode) && !pie.dom.isDocument(el)) {
+    if(pie.dom.matches(el, sel)) return el;
+  }
 };
 
 // create an element based on the content provided.
@@ -58,12 +57,34 @@ pie.dom.cache = function() {
   return pie.elementCache;
 };
 
-pie.dom.remove = function(el) {
-  pie.setUid(el);
-  pie.dom.cache().del('element-' + el.pieId);
-  if(el.parentNode) el.parentNode.removeChild(el);
+// Has the same method signature of `pie.dom.all` but returns the values of the result
+// Example usage:
+// * pie.dom.getAll(nodeList, 'clicked') //=> [true, true, false]
+pie.dom.getAll = function() {
+  return pie.dom._all(arguments, true);
 };
 
+pie.dom.isDocument = function(el) {
+  return el && el.nodeType === el.DOCUMENT_NODE;
+};
+
+pie.dom.isWindow = function(el) {
+  return el === window;
+};
+
+pie.dom.matches = function(el, sel) {
+  if(el.matches) return el.matches(sel);
+
+  var parent = el.parentNode || el.document;
+  if(!parent || !parent.querySelectorAll) return false;
+
+  var matches = parent.querySelectorAll(sel);
+  for(var i = 0; i < matches.length; i++) {
+    if(matches[i] === el) return true;
+  }
+
+  return false;
+};
 
 pie.dom.off = function(el, event, fn, selector, cap) {
   var eventSplit = event.split('.'),
@@ -84,11 +105,10 @@ pie.dom.off = function(el, event, fn, selector, cap) {
         delete ary[i];
       }
 
-      events[k] = pie.array.compact(pie.array.from(events[k]));
+      events[k] = pie.array.compact(events[k]);
     });
   });
 };
-
 
 pie.dom.on = function(el, event, fn, selector, capture) {
   var eventSplit = event.split('.'),
@@ -162,6 +182,12 @@ pie.dom.parseForm = function() {
   });
 
   return o;
+};
+
+pie.dom.remove = function(el) {
+  pie.setUid(el);
+  pie.dom.cache().del('element-' + el.pieId);
+  if(el.parentNode) el.parentNode.removeChild(el);
 };
 
 pie.dom.trigger = function(el, e, forceEvent) {
