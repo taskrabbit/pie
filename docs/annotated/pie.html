@@ -2684,7 +2684,7 @@ pie.string.setTemplateSettings(<span class="hljs-string">'[%'</span>, <span clas
 <p>Resig style microtemplating. Preserves whitespace, and only uses string manipulation.
 There is no array construction. Allows an optional variables string <code>varString</code> which enables
 custom variable definition inside of the templating function.</p>
-<pre><code><span class="hljs-keyword">var</span> template = pie.string.template(<span class="hljs-string">"Hi, [%= data.first_name %]. You have [%= data.count %] [%= pie.string.pluralize('messages', data.count) %]."</span>);
+<pre><code><span class="hljs-keyword">var</span> template = pie.string.template(<span class="hljs-string">"Hi, [%= data.first_name %]. You have [%= data.count %] [%= pie.string.pluralize('messages', data.count) %]"</span>);
 template({first_name: <span class="hljs-string">'John'</span>, count: <span class="hljs-number">4</span>});
 <span class="hljs-comment">//=&gt; "Hi, John. You have 4 messages."</span>
 </code></pre>

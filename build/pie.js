@@ -1670,7 +1670,7 @@ pie.string.setTemplateSettings('[%', '%]', '-', '=', '');
 // custom variable definition inside of the templating function.
 //
 // ```
-// var template = pie.string.template("Hi, [%= data.first_name %]. You have [%= data.count %] [%= pie.string.pluralize('messages', data.count) %].");
+// var template = pie.string.template("Hi, [%= data.first_name %]. You have [%= data.count %] [%= pie.string.pluralize('messages', data.count) %]");
 // template({first_name: 'John', count: 4});
 // //=> "Hi, John. You have 4 messages."
 // ```
