@@ -2534,8 +2534,7 @@ pie.string.endsWith = <span class="hljs-function"><span class="hljs-keyword">fun
             
             <div class="content"><div class='highlight'><pre>pie.string.expand = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, data)</span> </span>{
   data = data || {};
-  <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/\%\{(.+?)\}/g</span>,
-    <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, key)</span> </span>{<span class="hljs-keyword">return</span> data[key];});
+  <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/\%\{(.+?)\}/g</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, key)</span> </span>{ <span class="hljs-keyword">return</span> data[key]; });
 };
 
 
@@ -2654,7 +2653,7 @@ pie.string.setTemplateSettings = <span class="hljs-function"><span class="hljs-k
   escapedEndFirstChar = pie.string.escapeRegex(end[<span class="hljs-number">0</span>]),
   escapedInterp = pie.string.escapeRegex(interp),
   escapedEscape = pie.string.escapeRegex(<span class="hljs-built_in">escape</span>),
-  escapedEvalr = pie.string.escapeRegex(evalr),
+  escapedEvalr  = pie.string.escapeRegex(evalr),
   escapedSplitter = pie.string.escapeRegex(splitter);
 
   pie.string._templateSettings = {
@@ -2662,12 +2661,9 @@ pie.string.setTemplateSettings = <span class="hljs-function"><span class="hljs-k
     end: end,
     interp: interp,
     <span class="hljs-built_in">escape</span>: <span class="hljs-built_in">escape</span>,
+    <span class="hljs-built_in">eval</span>: evalr,
     splitter: splitter,
-    beginRegex:       <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin, <span class="hljs-string">'g'</span>),
-    endRegex:         <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedEnd, <span class="hljs-string">'g'</span>),
-    interpRegex:      <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin + escapedInterp + <span class="hljs-string">'(.+?)'</span> + escapedEnd, <span class="hljs-string">'g'</span>),
-    escapeRegex:      <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin + escapedEscape + <span class="hljs-string">'(.+?)'</span> + escapedEnd, <span class="hljs-string">'g'</span>),
-    evalRegex:        <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin + escapedEvalr + <span class="hljs-string">'(.+?)'</span> + escapedEnd, <span class="hljs-string">'g'</span>),
+    interpRegex:      <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedBegin + <span class="hljs-string">'(['</span> + pie.array.compact([escapedInterp, escapedEscape, escapedEvalr], <span class="hljs-literal">true</span>).join(<span class="hljs-string">''</span>) + <span class="hljs-string">']?)(.+?)'</span> + escapedEnd, <span class="hljs-string">'g'</span>),
     interpLookahead:  <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(<span class="hljs-string">"'(?=[^"</span> + escapedEndFirstChar + <span class="hljs-string">"]*"</span> + escapedEnd + <span class="hljs-string">")"</span>, <span class="hljs-string">'g'</span>),
     splitterRegex:    <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(escapedSplitter, <span class="hljs-string">'g'</span>),
   };
@@ -2716,17 +2712,18 @@ template({first_name: <span class="hljs-string">'John'</span>, count: <span clas
   .replace(conf.splitterRegex, <span class="hljs-string">"'"</span>)
   <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text\'s content[%- data.foo %]more text[%= data['foo'] + 1 %]" ****/</span>
 
-  <span class="hljs-comment">/**** html escape the interpolation ****/</span>
-  .replace(conf.escapeRegex, <span class="hljs-string">"' + __s($1, true) + '"</span>)
-  <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text\'s content' + __s(data.foo, true) + 'more text[%= data['foo'] + 1 %]" ****/</span>
-
-  <span class="hljs-comment">/**** interpolate ****/</span>
-  .replace(conf.interpRegex, <span class="hljs-string">"' + __s($1) + '"</span>)
-  <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/</span>
-
-  <span class="hljs-comment">/**** evaluation ****/</span>
-  .replace(conf.evalRegex, <span class="hljs-string">"'; $1; __p+='"</span>);
-  <span class="hljs-comment">/**** EX: "... __p +=''; data.foo = 1; __p+='text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/</span>
+  <span class="hljs-comment">/**** escape, interpolate, and evaluate ****/</span>
+  .replace(conf.interpRegex, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, action, content)</span> </span>{
+    action = action || <span class="hljs-string">''</span>;
+    <span class="hljs-keyword">if</span>(action === conf.escape) {
+      <span class="hljs-keyword">return</span> <span class="hljs-string">"' + __s("</span> + content + <span class="hljs-string">", true) + '"</span>;
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (action === conf.interp) {
+      <span class="hljs-keyword">return</span> <span class="hljs-string">"' + __s("</span> + content + <span class="hljs-string">", false) + '"</span>;
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (action === conf.eval) {
+      <span class="hljs-keyword">return</span> <span class="hljs-string">"'; "</span> + content + <span class="hljs-string">"; __p+='"</span>;
+    }
+  });
+  <span class="hljs-comment">/**** EX: "... __p += ''; data.foo = 1; __p+='text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/</span>
 
   <span class="hljs-comment">/**** terminate the string ****/</span>
   strFunc += <span class="hljs-string">"';"</span>;

@@ -127,8 +127,7 @@ pie.string.endsWith = function(str, suffix) {
 // designed to be used with the "%{expression}" placeholders
 pie.string.expand = function(str, data) {
   data = data || {};
-  return str.replace(/\%\{(.+?)\}/g,
-    function(match, key) {return data[key];});
+  return str.replace(/\%\{(.+?)\}/g, function(match, key) { return data[key]; });
 };
 
 
@@ -199,7 +198,7 @@ pie.string.setTemplateSettings = function(begin, end, escape, interp, evalr, spl
   escapedEndFirstChar = pie.string.escapeRegex(end[0]),
   escapedInterp = pie.string.escapeRegex(interp),
   escapedEscape = pie.string.escapeRegex(escape),
-  escapedEvalr = pie.string.escapeRegex(evalr),
+  escapedEvalr  = pie.string.escapeRegex(evalr),
   escapedSplitter = pie.string.escapeRegex(splitter);
 
   pie.string._templateSettings = {
@@ -207,12 +206,9 @@ pie.string.setTemplateSettings = function(begin, end, escape, interp, evalr, spl
     end: end,
     interp: interp,
     escape: escape,
+    eval: evalr,
     splitter: splitter,
-    beginRegex:       new RegExp(escapedBegin, 'g'),
-    endRegex:         new RegExp(escapedEnd, 'g'),
-    interpRegex:      new RegExp(escapedBegin + escapedInterp + '(.+?)' + escapedEnd, 'g'),
-    escapeRegex:      new RegExp(escapedBegin + escapedEscape + '(.+?)' + escapedEnd, 'g'),
-    evalRegex:        new RegExp(escapedBegin + escapedEvalr + '(.+?)' + escapedEnd, 'g'),
+    interpRegex:      new RegExp(escapedBegin + '([' + pie.array.compact([escapedInterp, escapedEscape, escapedEvalr], true).join('') + ']?)(.+?)' + escapedEnd, 'g'),
     interpLookahead:  new RegExp("'(?=[^" + escapedEndFirstChar + "]*" + escapedEnd + ")", 'g'),
     splitterRegex:    new RegExp(escapedSplitter, 'g'),
   };
@@ -253,17 +249,18 @@ pie.string.template = function(str, varString) {
   .replace(conf.splitterRegex, "'")
   /**** EX: "... __p += '[% data.foo = 1 %]text\'s content[%- data.foo %]more text[%= data['foo'] + 1 %]" ****/
 
-  /**** html escape the interpolation ****/
-  .replace(conf.escapeRegex, "' + __s($1, true) + '")
-  /**** EX: "... __p += '[% data.foo = 1 %]text\'s content' + __s(data.foo, true) + 'more text[%= data['foo'] + 1 %]" ****/
-
-  /**** interpolate ****/
-  .replace(conf.interpRegex, "' + __s($1) + '")
-  /**** EX: "... __p += '[% data.foo = 1 %]text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/
-
-  /**** evaluation ****/
-  .replace(conf.evalRegex, "'; $1; __p+='");
-  /**** EX: "... __p +=''; data.foo = 1; __p+='text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/
+  /**** escape, interpolate, and evaluate ****/
+  .replace(conf.interpRegex, function(match, action, content) {
+    action = action || '';
+    if(action === conf.escape) {
+      return "' + __s(" + content + ", true) + '";
+    } else if (action === conf.interp) {
+      return "' + __s(" + content + ", false) + '";
+    } else if (action === conf.eval) {
+      return "'; " + content + "; __p+='";
+    }
+  });
+  /**** EX: "... __p += ''; data.foo = 1; __p+='text\'s content' + __s(data.foo, true) + 'more text' + __s(data['foo'] + 1) + '" ****/
 
   /**** terminate the string ****/
   strFunc += "';";
