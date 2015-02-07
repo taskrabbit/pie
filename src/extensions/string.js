@@ -94,9 +94,13 @@ pie.string.downcase = function(str) {
   return str.toLowerCase();
 };
 
+
+pie.string.escapeRegex = function(str) {
+  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
+
 // Escapes a string for HTML interpolation
 pie.string.escapeHtml = (function(){
-  var encReg = /[<>&"'\x00]/g;
   var encMap = {
     "<"   : "&lt;",
     ">"   : "&gt;",
@@ -104,17 +108,17 @@ pie.string.escapeHtml = (function(){
     "\""  : "&quot;",
     "'"   : "&#39;"
   };
+  var encReg = new RegExp("[" + pie.string.escapeRegex(Object.keys(encMap).join('')) + "]", 'g');
+  var replacer = function(c){
+    return encMap[c] || "";
+  };
 
   return function(str) {
     /* jslint eqnull: true */
     if(str == null) return str;
-    return ("" + str).replace(encReg, function(c) { return encMap[c] || ""; });
+    return ("" + str).replace(encReg, replacer);
   };
 })();
-
-pie.string.escapeRegex = function(str) {
-  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-};
 
 pie.string.endsWith = function(str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;

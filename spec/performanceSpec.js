@@ -32,18 +32,26 @@ describe("pie performance", function() {
          .split("'").join("\\'")
          .split("\t").join("'")
          .replace(/\[%=(.+?)%\]/g, "',$1,'")
+         .replace(/\[%-(.+?)%\]/g, "',pie.string.escapeHtml($1),'")
          .split("[%").join("');")
          .split("%]").join("p.push('") + "');return p.join('');";
 
       return new Function("data", strFunc);
     };
 
-    var source = "[% for(var i = 0; i < 2; i++) { %]<span>[%= data.foo + i %]</span>[% } %]";
-    var kendoSource = "<# for(var i = 0; i < 2; i++) { #><span><#= data.foo + i #></span><# } #>";
-    var _Source = "<% for(var i = 0; i < 2; i++) { %><span><%= obj.foo + i %></span><% } %>";
-    var ejsSource = "<% for(var i = 0; i < 2; i++) { %><span><%= foo + i %></span><% } %>";
+    // pie / resig:: escape: [%- %], interpolate: [%= %], evaluate: [% %]
+    var source = "[%- '<h1>Hi</h1>' %][% for(var i = 0; i < 2; i++) { %]<span>[%= data.foo + i %]</span>[% } %]";
 
-    it("should perform better than EVERYONE", function(done) {
+    // kendo:: escape: #: #, interpolate: #= #, evaluate: # #
+    var kendoSource = "#: '<h1>Hi</h1>' ## for(var i = 0; i < 2; i++) { #<span>#= data.foo + i #</span># } #";
+
+    // underscore:: escape: <%- %>, interpolate: <%= %>, evaluate: <% %>
+    var _Source = "<%- '<h1>Hi</h1>' %><% for(var i = 0; i < 2; i++) { %><span><%= obj.foo + i %></span><% } %>";
+
+    // ejs:: escape: :(, interpolate: <%= %>, evaluate: <% %>
+    var ejsSource = "<%= pie.string.escapeHtml('<h1>Hi</h1>') %><% for(var i = 0; i < 2; i++) { %><span><%= foo + i %></span><% } %>";
+
+    it("it should perform better than EVERYONE", function(done) {
 
       if(!app.navigator.get('query.bm')) {
         expect(1).toEqual(1);
@@ -52,7 +60,7 @@ describe("pie performance", function() {
 
       app.resources.load(
         'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js',
-        'http://cdn.kendostatic.com/2011.2.804/js/kendo.all.min.js',
+        'http://cdn.kendostatic.com/2014.1.318/js/kendo.all.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js',
         '/vendor/ejs.js', function(){
 
@@ -62,7 +70,7 @@ describe("pie performance", function() {
         var kendoTmpl = kendo.template(expand(kendoSource));
         var _Tmpl = _.template(expand(_Source));
 
-        var ejsTmpl = new EJS({text: expand(ejsSource)});
+        var ejsTmpl = new EJS({text: expand(ejsSource), escape: 'html'});
         ejsTmpl = ejsTmpl.render.bind(ejsTmpl);
 
         var d = {foo: 4};
@@ -75,10 +83,10 @@ describe("pie performance", function() {
           ejs: function() { return ejsTmpl(d); }
         };
 
-        var expectedOutput = expand('<span>4</span><span>5</span>');
+        var expectedOutput = expand('&lt;h1&gt;Hi&lt;/h1&gt;<span>4</span><span>5</span>');
 
         pie.object.forEach(cases, function(k,v) {
-          expect(v()).toEqual(expectedOutput);
+          expect(k + ': ' + v()).toEqual(k + ': ' + expectedOutput);
           suite.add(k, v);
         });
 

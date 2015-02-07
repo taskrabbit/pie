@@ -2475,6 +2475,11 @@ foo[]=thing&amp;foo[]=bar
 
 pie.string.downcase = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
   <span class="hljs-keyword">return</span> str.toLowerCase();
+};
+
+
+pie.string.escapeRegex = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
+  <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/[-\/\\^$*+?.()|[\]{}]/g</span>, <span class="hljs-string">'\\$&amp;'</span>);
 };</pre></div></div>
             
         </li>
@@ -2491,7 +2496,6 @@ pie.string.downcase = <span class="hljs-function"><span class="hljs-keyword">fun
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.string.escapeHtml = (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-  <span class="hljs-keyword">var</span> encReg = <span class="hljs-regexp">/[&lt;&gt;&amp;"'\x00]/g</span>;
   <span class="hljs-keyword">var</span> encMap = {
     <span class="hljs-string">"&lt;"</span>   : <span class="hljs-string">"&amp;lt;"</span>,
     <span class="hljs-string">"&gt;"</span>   : <span class="hljs-string">"&amp;gt;"</span>,
@@ -2499,17 +2503,17 @@ pie.string.downcase = <span class="hljs-function"><span class="hljs-keyword">fun
     <span class="hljs-string">"\""</span>  : <span class="hljs-string">"&amp;quot;"</span>,
     <span class="hljs-string">"'"</span>   : <span class="hljs-string">"&amp;#39;"</span>
   };
+  <span class="hljs-keyword">var</span> encReg = <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(<span class="hljs-string">"["</span> + pie.string.escapeRegex(<span class="hljs-built_in">Object</span>.keys(encMap).join(<span class="hljs-string">''</span>)) + <span class="hljs-string">"]"</span>, <span class="hljs-string">'g'</span>);
+  <span class="hljs-keyword">var</span> replacer = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span></span>{
+    <span class="hljs-keyword">return</span> encMap[c] || <span class="hljs-string">""</span>;
+  };
 
   <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
     <span class="hljs-comment">/* jslint eqnull: true */</span>
     <span class="hljs-keyword">if</span>(str == <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span> str;
-    <span class="hljs-keyword">return</span> (<span class="hljs-string">""</span> + str).replace(encReg, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span> </span>{ <span class="hljs-keyword">return</span> encMap[c] || <span class="hljs-string">""</span>; });
+    <span class="hljs-keyword">return</span> (<span class="hljs-string">""</span> + str).replace(encReg, replacer);
   };
 })();
-
-pie.string.escapeRegex = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
-  <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/[-\/\\^$*+?.()|[\]{}]/g</span>, <span class="hljs-string">'\\$&amp;'</span>);
-};
 
 pie.string.endsWith = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, suffix)</span> </span>{
   <span class="hljs-keyword">return</span> str.indexOf(suffix, str.length - suffix.length) !== -<span class="hljs-number">1</span>;
