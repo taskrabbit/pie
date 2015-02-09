@@ -184,6 +184,10 @@ pie.dom.parseForm = function() {
   return o;
 };
 
+pie.dom.prependChild = function(el, child) {
+  el.insertBefore(child, el.firstChild);
+};
+
 pie.dom.remove = function(el) {
   pie.setUid(el);
   pie.dom.cache().del('element-' + el.pieId);

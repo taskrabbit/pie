@@ -22,7 +22,9 @@ pie.fn.async = function(fns, cb, counterObserver) {
   completed = 0,
   counter = function() {
     if(counterObserver) counterObserver.apply(null, arguments);
-    if(++completed === completeCount) cb();
+    if(++completed === completeCount) {
+      if(cb) cb();
+    }
   };
 
   fns.forEach(function(fn) { fn(counter); });

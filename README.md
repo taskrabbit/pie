@@ -25,13 +25,13 @@ Build pie locally, as you develop.
 ```bash
 > npm install -g uglify-js
 > npm install -g docco
-> make test
 > make watch
 ```
 
 Run the specs / example app.
 
 ```base
-> npm install -g http-server
-> http-server ./
+> node server.js
+> open http://localhost:5000/specRunner.html
+> open http://localhost:5000/docs/guide
 ```

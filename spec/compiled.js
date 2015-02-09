@@ -1681,6 +1681,176 @@ describe("pie.cache", function() {
   });
 
 });
+describe("pie.emitter", function() {
+
+  beforeEach(function() {
+    this.e = new pie.emitter();
+  });
+
+  it("should allow a callback of an event to be registered", function() {
+    var f = function(){};
+    this.e.on('ping', f);
+    expect(this.e.get('eventCallbacks.ping')).toEqual([{fn: f}]);
+  });
+
+  it("should allow an event to be cleared", function() {
+    var f = function(){};
+    this.e.on('ping', f);
+    expect(this.e.get('eventCallbacks.ping.length')).toEqual(1);
+
+    this.e.clear('ping');
+    expect(this.e.get('eventCallbacks.ping')).toEqual(undefined);
+  });
+
+  it("should determine if an event has been called", function() {
+    expect(this.e.hasEvent('ping')).toEqual(false);
+    this.e.fire('ping');
+    expect(this.e.hasEvent('ping')).toEqual(true);
+  });
+
+  it("should determine if an event has a callback", function() {
+    expect(this.e.hasCallback('ping')).toEqual(false);
+    this.e.on('ping', function(){});
+    expect(this.e.hasCallback('ping')).toEqual(true);
+  });
+
+  it("should count the number of times an event is called", function() {
+    this.e.fire('ping');
+    this.e.fire('pong');
+    this.e.fire('ping');
+
+    expect(this.e.firedCount('ping')).toEqual(2);
+    expect(this.e.firedCount('pong')).toEqual(1);
+  });
+
+  it("should allow a callback to wait until multiple events are fired", function(done) {
+    var pingCalled = false, pongCalled = false, gnopCalled = false;
+
+    this.e.on('ping', function() {
+      pingCalled = true;
+    });
+
+    this.e.on('pong', function() {
+      pongCalled = true;
+    });
+
+    this.e.on('gnop', function() {
+      gnopCalled = true;
+    });
+
+    var cb = function() {
+      expect(pingCalled).toEqual(true);
+      expect(pongCalled).toEqual(true);
+      expect(gnopCalled).toEqual(true);
+      done();
+    };
+
+    this.e.fire('gnop');
+    this.e.waitUntil('ping', 'pong', 'gnop', cb);
+
+    this.e.fire('ping');
+    expect(gnopCalled).toEqual(true);
+    expect(pingCalled).toEqual(true);
+    expect(pongCalled).toEqual(false);
+    this.e.fire('pong');
+
+  });
+
+  it("should not allow around* events for waitUntil", function() {
+    expect(function(){
+      this.e.waitUntil('aroundRender', function(){});
+    }.bind(this)).toThrowError("aroundRender is not supported by waitUntil.");
+  });
+
+  it("should allow a callback to be registered for all subsequent occurrences of an event via `on`", function() {
+    var called = 0;
+    var fn = function() {
+      called++;
+    };
+    this.e.fire('ping');
+    this.e.on('ping', fn);
+    expect(called).toEqual(0);
+    this.e.fire('ping');
+    expect(called).toEqual(1);
+    this.e.fire('ping');
+    expect(called).toEqual(2);
+  });
+
+  it("should allow a callback to be registered for all subsequent occurrences of an event as well as one for any existing events via `on` with `immediate:true`", function() {
+    var called = 0;
+    var fn = function() {
+      called++;
+    };
+    this.e.fire('ping');
+    this.e.on('ping', fn, {immediate: true});
+    expect(called).toEqual(1);
+    this.e.fire('ping');
+    expect(called).toEqual(2);
+    this.e.fire('ping');
+    expect(called).toEqual(3);
+  });
+
+  it("should allow a callback to be registered for the next occurrence of an event via `once`", function() {
+    var called = 0;
+    var fn = function() {
+      called++;
+    };
+    this.e.fire('ping');
+    this.e.once('ping', fn);
+    expect(called).toEqual(0);
+    this.e.fire('ping');
+    expect(called).toEqual(1);
+    this.e.fire('ping');
+    expect(called).toEqual(1);
+  });
+
+
+  it("should allow a callback to be registered for a single occurrence of an event, including events already emmitted via `once` with `immediate:true`", function() {
+    var called = 0;
+    var fn = function() {
+      called++;
+    };
+    this.e.fire('ping');
+    this.e.once('ping', fn, {immediate: true});
+    expect(called).toEqual(1);
+    this.e.fire('ping');
+    expect(called).toEqual(1);
+  });
+
+  it("should allow an event to be fired, and if any callbacks are onceOnly it should remove them", function() {
+    this.e.on('ping', function(){});
+    this.e.once('ping', function(){});
+
+    expect(this.e.get('eventCallbacks.ping.length')).toEqual(2);
+    this.e.fire('ping');
+    expect(this.e.get('eventCallbacks.ping.length')).toEqual(1);
+  });
+
+  it("should allow an around event to be fired, and if any callbacks are onceOnly it should remove them", function() {
+    this.e.on('aroundPing', function(cb){ cb(); });
+    this.e.once('aroundPing', function(cb){ cb(); });
+
+    expect(this.e.get('eventCallbacks.aroundPing.length')).toEqual(2);
+    this.e.fireAround('aroundPing');
+    expect(this.e.get('eventCallbacks.aroundPing.length')).toEqual(1);
+  });
+
+  it("should allow a sequence of events to be fired", function(){
+    var called = {};
+    this.e.on('beforePing', function(){ called.beforePing = true; });
+    this.e.on('aroundPing', function(cb){ called.aroundPing = true; cb(); });
+    this.e.on('ping', function(){ called.ping = true; });
+    this.e.on('afterPing', function(){ called.afterPing = true; });
+
+    this.e.fireSequence('ping');
+
+    expect(called.beforePing).toEqual(true);
+    expect(called.aroundPing).toEqual(true);
+    expect(called.ping).toEqual(true);
+    expect(called.afterPing).toEqual(true);
+  });
+
+});
 describe('pie.errorHandler', function() {
 
   beforeEach(function(){
@@ -3004,7 +3174,7 @@ describe("pie performance", function() {
 
     beforeEach(function() {
       originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 45000;
     });
 
     afterEach(function() {
@@ -3050,50 +3220,47 @@ describe("pie performance", function() {
     it("it should perform better than EVERYONE", function(done) {
 
       if(!app.navigator.get('query.bm')) {
-        expect(1).toEqual(1);
+        pending();
         return done();
       }
 
-      app.resources.load(
-        'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js',
-        'http://cdn.kendostatic.com/2014.1.318/js/kendo.all.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js',
-        '/vendor/ejs.js', function(){
-
-        var suite = new Benchmark.Suite();
-        var resigTmpl = resig(expand(source));
-        var pieTmpl = pie.string.template(expand(source));
-        var kendoTmpl = kendo.template(expand(kendoSource));
-        var _Tmpl = _.template(expand(_Source));
+      app.resources.load( 'benchmark', 'jquery', 'kendo', 'underscore', 'ejs', function(){
 
         var ejsTmpl = new EJS({text: expand(ejsSource), escape: 'html'});
-        ejsTmpl = ejsTmpl.render.bind(ejsTmpl);
 
         var d = {foo: 4};
 
         var cases = {
-          resig: function() { return resigTmpl(d); },
-          pie: function() { return pieTmpl(d); },
-          underscore: function() { return _Tmpl(d); },
-          kendo: function() { return kendoTmpl(d); },
-          ejs: function() { return ejsTmpl(d); }
+          resig: resig(expand(source)),
+          pie: pie.string.template(expand(source)),
+          underscore: _.template(expand(_Source)),
+          kendo: kendo.template(expand(kendoSource)),
+          ejs: ejsTmpl.render.bind(ejsTmpl)
         };
 
         var expectedOutput = expand('&lt;h1&gt;Hi&lt;/h1&gt;<span>4</span><span>5</span>');
 
+        var suite = new Benchmark.Suite();
         pie.object.forEach(cases, function(k,v) {
-          expect(k + ': ' + v()).toEqual(k + ': ' + expectedOutput);
-          suite.add(k, v);
+          expect(k + ': ' + v(d)).toEqual(k + ': ' + expectedOutput);
+          suite.add(k, function(){
+            v(d);
+          });
         });
 
+        var output = pie.dom.createElement('<div><h4>Templating Benchmark</h4><ul></ul></div>');
+        pie.dom.prependChild(document.body, output);
+        output = output.querySelector('ul');
+
         suite.on('cycle', function(event, bench) {
-          console.log(String(event.target));
+          output.appendChild(pie.dom.createElement('<li>' + String(event.target) + '</li>'));
+          output.getBoundingClientRect();
         });
 
         suite.on('complete', function() {
           var winner = this.filter('fastest').pluck('name');
           expect(~winner.indexOf('pie')).toBeTruthy();
-          console.log('Winner: ' + winner);
+          output.appendChild(pie.dom.createElement('<li><strong>Winner: ' + winner + '</strong></li>'));
           done();
         });
 

@@ -8,7 +8,7 @@ describe("pie performance", function() {
 
     beforeEach(function() {
       originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 45000;
     });
 
     afterEach(function() {
@@ -54,50 +54,47 @@ describe("pie performance", function() {
     it("it should perform better than EVERYONE", function(done) {
 
       if(!app.navigator.get('query.bm')) {
-        expect(1).toEqual(1);
+        pending();
         return done();
       }
 
-      app.resources.load(
-        'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js',
-        'http://cdn.kendostatic.com/2014.1.318/js/kendo.all.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js',
-        '/vendor/ejs.js', function(){
-
-        var suite = new Benchmark.Suite();
-        var resigTmpl = resig(expand(source));
-        var pieTmpl = pie.string.template(expand(source));
-        var kendoTmpl = kendo.template(expand(kendoSource));
-        var _Tmpl = _.template(expand(_Source));
+      app.resources.load( 'benchmark', 'jquery', 'kendo', 'underscore', 'ejs', function(){
 
         var ejsTmpl = new EJS({text: expand(ejsSource), escape: 'html'});
-        ejsTmpl = ejsTmpl.render.bind(ejsTmpl);
 
         var d = {foo: 4};
 
         var cases = {
-          resig: function() { return resigTmpl(d); },
-          pie: function() { return pieTmpl(d); },
-          underscore: function() { return _Tmpl(d); },
-          kendo: function() { return kendoTmpl(d); },
-          ejs: function() { return ejsTmpl(d); }
+          resig: resig(expand(source)),
+          pie: pie.string.template(expand(source)),
+          underscore: _.template(expand(_Source)),
+          kendo: kendo.template(expand(kendoSource)),
+          ejs: ejsTmpl.render.bind(ejsTmpl)
         };
 
         var expectedOutput = expand('&lt;h1&gt;Hi&lt;/h1&gt;<span>4</span><span>5</span>');
 
+        var suite = new Benchmark.Suite();
         pie.object.forEach(cases, function(k,v) {
-          expect(k + ': ' + v()).toEqual(k + ': ' + expectedOutput);
-          suite.add(k, v);
+          expect(k + ': ' + v(d)).toEqual(k + ': ' + expectedOutput);
+          suite.add(k, function(){
+            v(d);
+          });
         });
 
+        var output = pie.dom.createElement('<div><h4>Templating Benchmark</h4><ul></ul></div>');
+        pie.dom.prependChild(document.body, output);
+        output = output.querySelector('ul');
+
         suite.on('cycle', function(event, bench) {
-          console.log(String(event.target));
+          output.appendChild(pie.dom.createElement('<li>' + String(event.target) + '</li>'));
+          output.getBoundingClientRect();
         });
 
         suite.on('complete', function() {
           var winner = this.filter('fastest').pluck('name');
           expect(~winner.indexOf('pie')).toBeTruthy();
-          console.log('Winner: ' + winner);
+          output.appendChild(pie.dom.createElement('<li><strong>Winner: ' + winner + '</strong></li>'));
           done();
         });
 

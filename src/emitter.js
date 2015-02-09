@@ -61,6 +61,32 @@ pie.emitter = pie.model.extend('emitter', {
     return this.get('triggeredEvents')[eventName] || 0;
   },
 
+  // ** pie.emitter.waitUntil **
+  //
+  // Wait until all `eventNames` have been fired before invoking `fn`.
+  // ```
+  // emitter.waitUntil('afterSetup', 'afterRender', this.highlightNav.bind(this));
+  // ```
+  waitUntil: (function(){
+
+    var invalidEventNameRegex = /^around/;
+
+    return function(/* eventNames, fn */) {
+      var eventNames = pie.array.from(arguments),
+      fn = eventNames.pop(),
+      observers;
+
+      observers = eventNames.map(function(event){
+        if(invalidEventNameRegex.test(event)) throw new Error(event + " is not supported by waitUntil.");
+        return function(cb) {
+          this.once(event, cb, {immediate: true});
+        }.bind(this);
+      }.bind(this));
+
+      pie.fn.async(observers, fn);
+    };
+  })(),
+
   // #### Event Observation
 
   // ** pie.emitter._on **
@@ -224,7 +250,7 @@ pie.emitter = pie.model.extend('emitter', {
       fns = callbacks.map(function(cb, i) {
         if(cb.onceOnly) {
           compactNeeded = true;
-          cb[i] = undefined;
+          callbacks[i] = undefined;
         }
         return cb.fn;
       });

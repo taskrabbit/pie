@@ -11,7 +11,6 @@
     <script type="text/javascript" src="vendor/jasmine-2.0.2/jasmine-html.js"></script>
     <script type="text/javascript" src="vendor/jasmine-2.0.2/boot.js"></script>
     <script type="text/javascript" src="vendor/jasmine-2.0.2/mock-ajax.js"></script>
-    <script type="text/javascript" src="vendor/benchmark.js"></script>
 
     <!-- include source files here... -->
     <script type="text/javascript" src="build/pie.js"></script>
@@ -56,6 +55,13 @@
 
         'listApi' : '/api/pie/list.json'
       });
+
+
+      app.resources.define('benchmark', '/vendor/benchmark.js');
+      app.resources.define('jquery', 'https://code.jquery.com/jquery-1.11.2.js');
+      app.resources.define('kendo', 'http://cdn.kendostatic.com/2014.1.318/js/kendo.all.min.js');
+      app.resources.define('underscore', 'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js');
+      app.resources.define('ejs', '/vendor/ejs.js');
 
       pie.ns('lib.views');
 
