@@ -142,6 +142,21 @@ describe("pie.ajax", function() {
       expect(request.data).toEqual('<span>foo</span>');
     });
 
+    it("should allow a promise-style request to be conducted", function() {
+      var response, xhr, request = this.ajax.get('/get-path');
+
+      request.dataSuccess(function(d) {
+        response = d;
+      });
+
+      request.success(function(d, x) {
+        xhr = x;
+      });
+
+      expect(response).toEqual({get: 'response'});
+      expect(xhr).toEqual(request.xhr);
+    });
+
   });
 
 

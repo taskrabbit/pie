@@ -170,6 +170,24 @@ describe("Array extensions", function() {
 
   });
 
+  describe("#get", function() {
+
+    beforeEach(function() {
+      this.arr = ['a', 'b', 'c', 'd', 'e'];
+    });
+
+    it("allows an array to be accessed by positive and negative indexes", function() {
+      expect(pie.array.get(this.arr, 0)).toEqual('a');
+      expect(pie.array.get(this.arr, 1)).toEqual('b');
+      expect(pie.array.get(this.arr, 10)).toEqual(undefined);
+
+      expect(pie.array.get(this.arr, -1)).toEqual('e');
+      expect(pie.array.get(this.arr, -2)).toEqual('d');
+      expect(pie.array.get(this.arr, -10)).toEqual(undefined);
+    });
+
+  });
+
 
   describe('#grep', function() {
 
@@ -497,6 +515,183 @@ describe("Pie Dom Extension", function() {
     });
 
   });
+
+  describe("#all / #getAll", function() {
+
+    beforeEach(function() {
+      this.els = [
+        document.createElement('input'),
+        document.createElement('input'),
+        document.createElement('input')
+      ];
+
+      this.els.forEach(function(e) {
+        e.type = 'text';
+        e.value = 'foo';
+        e.foo = jasmine.createSpy();
+      });
+    });
+
+    it("should allow an action to be taken on all nodes", function() {
+
+      pie.dom.all(this.els, 'foo');
+
+      this.els.forEach(function(e) {
+        expect(e.foo).toHaveBeenCalled();
+      });
+
+    });
+
+    it("should allow a function to be invoked on all nodes", function() {
+      pie.dom.all(this.els, 'setAttribute', 'disabled', 'disabled');
+
+      this.els.forEach(function(e) {
+        expect(e.getAttribute('disabled')).toEqual('disabled');
+      });
+
+    });
+
+    it("should allow an assignment to take place on all nodes", function() {
+
+      pie.dom.all(this.els, 'value=', 'bar');
+
+      this.els.forEach(function(e) {
+        expect(e.value).toEqual('bar');
+      });
+
+    });
+
+    it("should allow invocation of nested methods", function() {
+      pie.dom.all(this.els, 'classList.add', 'foo');
+
+      this.els.forEach(function(e) {
+        expect(e.classList.contains('foo')).toEqual(true);
+      });
+
+    });
+
+    it("should allow retrieval of properties", function() {
+      this.els[1].value = 'bar';
+      this.els[2].value = 'baz';
+      var result = pie.dom.getAll(this.els, 'value');
+      expect(result).toEqual(['foo', 'bar', 'baz']);
+    });
+
+  });
+
+  describe("#matches", function() {
+
+    beforeEach(function() {
+      this.form = document.createElement('form');
+      this.form.classList.add('foo-bar-baz');
+    });
+
+    it("should determine whether a loose element matches a selector", function() {
+      expect(pie.dom.matches(this.form, '.foo-bar-baz')).toEqual(true);
+      expect(pie.dom.matches(this.form, 'form')).toEqual(true);
+      expect(pie.dom.matches(this.form, 'form.foo-bar-baz')).toEqual(true);
+      expect(pie.dom.matches(this.form, 'input.foo-bar-baz')).toEqual(false);
+      expect(pie.dom.matches(this.form, 'input')).toEqual(false);
+    });
+
+  });
+
+  describe("#on", function() {
+
+    beforeEach(function() {
+      this.node = pie.dom.createElement('<div class="foo"><h3>Title</h3><ul><li><span>First</span></li><li class="active"><span>Second</span></li><li><span>Third</span></li></ul></div>');
+      this.li1 = this.node.querySelector('li:first-child');
+      this.li2 = this.node.querySelector('li:first-child + li');
+      this.li3 = this.node.querySelector('li:first-child + li + li');
+
+      document.body.appendChild(this.node);
+    });
+
+    afterEach(function() {
+      if(this.node.parentNode) this.node.parentNode.removeChild(this.node);
+    });
+
+    it("should add an observer directly to the node", function(done) {
+
+      pie.dom.on(this.node, 'foo', function(e) {
+        expect(e.namespace).toEqual(undefined);
+        expect(e.delegateTarget).toEqual(undefined);
+        done();
+      });
+
+      pie.dom.trigger(this.node, 'foo');
+    });
+
+    it("if a selector is not provided, it should trigger due to bubbling", function(done) {
+
+      pie.dom.on(this.node, 'foo', function(e) {
+        expect(e.namespace).toEqual(undefined);
+        expect(e.delegateTarget).toEqual(undefined);
+        done();
+      });
+
+      pie.dom.trigger(this.li1, 'foo');
+    });
+
+    it("if a selector is provided and it doesn't match, it should not trigger", function() {
+      var spy = jasmine.createSpy();
+      pie.dom.on(this.node, 'foo', spy, 'li.active');
+      pie.dom.trigger(this.li1, 'foo');
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it("if a selector is provided and it is a direct match, it should trigger", function(done) {
+      var targ = this.node.querySelector('li.active');
+
+      pie.dom.on(this.node, 'foo', function(e){
+        expect(e.delegateTarget).toEqual(targ);
+        expect(e.target).toEqual(targ);
+        done();
+      }, 'li.active');
+
+      pie.dom.trigger(this.node.querySelector('li.active'), 'foo');
+    });
+
+    it("if a selector is provided and it is a parent of the target, it should trigger", function(done) {
+      var targ = this.node.querySelector('li.active');
+
+      pie.dom.on(this.node, 'foo', function(e){
+        expect(e.delegateTarget).toEqual(targ);
+        expect(e.target).toEqual(targ.querySelector('span'));
+        done();
+      }, 'li.active');
+
+      pie.dom.trigger(this.node.querySelector('li.active span'), 'foo');
+    });
+
+    it("if a selector is provided and it is a child of the target, it should not trigger", function() {
+      var spy = jasmine.createSpy();
+      pie.dom.on(this.node, 'foo', spy, 'li.active span');
+      pie.dom.trigger(this.node.querySelector('li.active'), 'foo');
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it("if a selector is provided that matches the el itself, it should be invoked", function(done) {
+      var targ = this.node;
+
+      pie.dom.on(this.node, 'foo', function(e){
+        expect(e.delegateTarget).toEqual(targ);
+        expect(e.target).toEqual(targ.querySelector('span'));
+        done();
+      }, '.foo');
+
+      pie.dom.trigger(this.node.querySelector('span'), 'foo');
+    });
+
+    it("if a selector is a sibling of the trigger, it should not be invoked", function() {
+      var spy = jasmine.createSpy();
+      pie.dom.on(this.node, 'foo', spy, 'h3');
+      pie.dom.trigger(this.node.querySelector('ul'), 'foo');
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+
+  });
 });
 describe("Pie Function Extensions", function() {
 
@@ -529,6 +724,161 @@ describe("Pie Function Extensions", function() {
       expect(count).toEqual(1);
       expect(r).toEqual(1);
 
+    });
+
+  });
+
+  describe('#debounce', function() {
+
+    beforeEach(function() {
+      pending(); // weird issue in chrome where things just randomly blow up.
+      jasmine.clock().install();
+    });
+
+    afterEach(function() {
+      jasmine.clock().tick(1000);
+      jasmine.clock().uninstall();
+    });
+
+    it("should wait for a function to stopped bing invoked for X milliseconds", function() {
+      var called = 0;
+      var fn = pie.fn.debounce(function(){ called++; }, 250);
+
+      fn();
+      fn();
+      expect(called).toEqual(0);
+
+      jasmine.clock().tick(249);
+      fn();
+      fn();
+      expect(called).toEqual(0);
+
+      jasmine.clock().tick(250);
+
+      // fire
+      expect(called).toEqual(1);
+
+      fn();
+      fn();
+      fn();
+      fn();
+
+      expect(called).toEqual(1);
+
+      jasmine.clock().tick(250);
+      // fire
+      expect(called).toEqual(2);
+
+      jasmine.clock().tick(250);
+
+      expect(called).toEqual(2);
+
+      fn();
+      jasmine.clock().tick(250);
+      // fire
+      expect(called).toEqual(3);
+    });
+
+    it("should invoke on the leading edge of the wait time but not more often than every X milliseconds if immediate=true is provided", function() {
+      var called = 0;
+      var fn = pie.fn.debounce(function(){ called++; }, 250, true);
+
+      fn();
+      // fire
+      expect(called).toEqual(1);
+
+      fn();
+      expect(called).toEqual(1);
+
+      jasmine.clock().tick(249);
+      expect(called).toEqual(1);
+
+      fn();
+      fn();
+
+      expect(called).toEqual(1);
+
+      jasmine.clock().tick(250);
+      // fire
+
+      expect(called).toEqual(1);
+
+      fn();
+      fn();
+      fn();
+      fn();
+
+      expect(called).toEqual(2);
+
+      jasmine.clock().tick(250);
+      expect(called).toEqual(2);
+
+      jasmine.clock().tick(250);
+
+      expect(called).toEqual(2);
+
+      fn();
+      jasmine.clock().tick(250);
+      expect(called).toEqual(3);
+    });
+
+  });
+
+  describe("#async", function() {
+
+    beforeEach(function() {
+      jasmine.clock().install();
+    });
+
+    afterEach(function() {
+      jasmine.clock().uninstall();
+    });
+
+    it("should work with no functions provided", function(done) {
+      pie.fn.async([], function() {
+        expect(1).toEqual(1);
+        done();
+      });
+    });
+
+    it("should work with no callback", function() {
+      var called = false;
+      pie.fn.async([function(cb){ called = true; cb(); }]);
+      expect(called).toEqual(true);
+    });
+
+    it("should wait for all functions to complete before invoking the callback", function(done) {
+      var aCalled = false, bCalled = false, cCalled = false;
+
+      var a = function(cb){ setTimeout(function(){ aCalled = true; cb(); }, 100); };
+      var b = function(cb){ bCalled = true; cb(); };
+      var c = function(cb){ cCalled = true; cb(); };
+
+      pie.fn.async([a,b,c], function() {
+        expect(aCalled).toEqual(true);
+        expect(bCalled).toEqual(true);
+        expect(cCalled).toEqual(true);
+
+        done();
+      });
+
+      expect(aCalled).toEqual(false);
+      expect(bCalled).toEqual(true);
+      expect(cCalled).toEqual(true);
+
+      jasmine.clock().tick(100);
+
+    });
+
+    it("should allow a count observer to be provided", function(done) {
+      var observes = 0;
+
+      pie.fn.async([function(cb){ cb(); }, function(cb){ cb(); }], function(){
+        expect(observes).toEqual(2);
+        done();
+      }, function() {
+        observes++;
+      });
     });
 
   });
@@ -1402,6 +1752,21 @@ describe("pie.ajax", function() {
       expect(request.data).toEqual('<span>foo</span>');
     });
 
+    it("should allow a promise-style request to be conducted", function() {
+      var response, xhr, request = this.ajax.get('/get-path');
+
+      request.dataSuccess(function(d) {
+        response = d;
+      });
+
+      request.success(function(d, x) {
+        xhr = x;
+      });
+
+      expect(response).toEqual({get: 'response'});
+      expect(xhr).toEqual(request.xhr);
+    });
+
   });
 
 
@@ -1777,17 +2142,26 @@ describe("pie.emitter", function() {
   });
 
   it("should allow a callback to be registered for all subsequent occurrences of an event as well as one for any existing events via `on` with `immediate:true`", function() {
-    var called = 0;
+    var called = 0,
+    invocations = [];
+
     var fn = function() {
       called++;
+      invocations.push(arguments);
     };
-    this.e.fire('ping');
+
+    this.e.fire('ping', 'foo');
     this.e.on('ping', fn, {immediate: true});
     expect(called).toEqual(1);
     this.e.fire('ping');
     expect(called).toEqual(2);
     this.e.fire('ping');
     expect(called).toEqual(3);
+
+    expect(invocations.length).toEqual(3);
+    expect(invocations[0].length).toEqual(1);
+    expect(invocations[0][0]).toEqual('foo');
+    expect(invocations[1].length).toEqual(0);
   });
 
   it("should allow a callback to be registered for the next occurrence of an event via `once`", function() {
@@ -1848,6 +2222,19 @@ describe("pie.emitter", function() {
     expect(called.aroundPing).toEqual(true);
     expect(called.ping).toEqual(true);
     expect(called.afterPing).toEqual(true);
+  });
+
+  it("should allow a callback to be registered, and invoked immediately via now: true", function() {
+    var called = 0;
+    this.e.on('ping', function(){ called++; }, {now: true});
+    expect(called).toEqual(1);
+  });
+
+  it("should immediately remove a callback when onceOnly and now:true are provided", function() {
+    var called = 0;
+    this.e.once('ping', function(){ called++; }, {now: true, onceOnly: true});
+    expect(called).toEqual(1);
+    expect(this.e.get('eventCallbacks.ping.length')).toBeFalsy();
   });
 
 });
@@ -3542,7 +3929,7 @@ describe("pie.view", function() {
 
       this.view.onChange(model, this.view.setup.bind(this.view));
 
-      f = this.view.changeCallbacks[0][1][0];
+      f = this.view.changeCallbacks[0].args[0];
       expect(model.observations[f.pieId]).toBeTruthy();
 
       this.view.teardown();

@@ -57,22 +57,45 @@ pie.view.reopen({
   },
 
 
-  // Events should be observed via this .on() method. Using .on() ensures the events will be
-  // unobserved when the view is removed.
-  on: function(e, sel, f, el) {
+  // **pie.view.on**
+  //
+  // Observe a dom event and invoke the provided functions.
+  // By default all events are delegated to this.el, but if you pass in an element as the last argument
+  // that will be used. If the functions are provided as strings, they will be looked up on `this`.
+  //
+  // ```
+  // view.on('click', 'a', this.handleClick.bind(this), this.trackClickEvent.bind(this));
+  // view.on('submit', 'form', 'handleSubmit');
+  // view.on('resize', null, 'onResize', window);
+  // ```
+  on: function(/* e, sel, f1, f2, f3, el */) {
+    var fns = pie.array.from(arguments),
+        events = fns.shift(),
+        sel = fns.shift(),
+        ns = this.eventNamespace(),
+        f2, el;
+
+    if(!pie.object.isFunction(pie.array.get(fns, -1))) el = fns.pop();
     el = el || this.el;
+
     if(!~this.eventedEls.indexOf(el)) this.eventedEls.push(el);
 
-    var ns = this.eventNamespace(),
-        f2 = function(e){
-          if(e.namespace === ns) {
-            return f.apply(this, arguments);
-          }
-        };
+    events = events.split(' ');
 
-    e.split(' ').forEach(function(ev) {
-      ev += "." + ns;
-      pie.dom.on(el, ev, f2, sel);
+    fns.forEach(function(fn) {
+      fn = pie.object.isString(fn) ? this[fn].bind(this) : fn;
+
+      f2 = function(e){
+        if(e.namespace === ns) {
+          return fn.apply(this, arguments);
+        }
+      };
+
+      events.forEach(function(ev) {
+        ev += "." + ns;
+        pie.dom.on(el, ev, f2, sel);
+      }.bind(this));
+
     }.bind(this));
 
     return this;
@@ -81,11 +104,25 @@ pie.view.reopen({
   // Observe changes to an observable, unobserving them when the view is removed.
   // If the object is not observable, an error will be thrown.
   onChange: function() {
-    var observable = arguments[0], args = pie.array.from(arguments).slice(1);
-    if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
 
-    this.changeCallbacks.push([observable, args]);
-    observable.observe.apply(observable, args);
+    var args = pie.array.from(arguments),
+    observables = [];
+
+    while(!pie.object.isFunction(args[0])) observables.push(args.shift());
+
+
+    observables.forEach(function(observable){
+      if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
+
+      this.changeCallbacks.push({
+        observable: observable,
+        args: args
+      });
+
+      observable.observe.apply(observable, args);
+    }.bind(this));
+
+
   },
 
 
@@ -156,7 +193,7 @@ pie.view.reopen({
     var a;
     while(this.changeCallbacks.length) {
       a = this.changeCallbacks.pop();
-      a[0].unobserve.apply(a[0], a[1]);
+      a.observable.unobserve.apply(a.observable, a.args);
     }
   }
 

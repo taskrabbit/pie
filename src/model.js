@@ -244,20 +244,25 @@ pie.model = pie.base.extend('model', {
   //   console.log(changeSet);
   // }, 'fullName');
   // ```
-  observe: function(/* fn[, key1, key2, key3] */) {
-    var keys = pie.array.change(arguments, 'from', 'flatten'),
-    fn = keys.shift();
-
-    /* Setting the uid is needed because we'll want to manage unobservation effectively. */
-    pie.setUid(fn);
-
+  observe: function(/* fn1[, fn2, fn3[, key1, key2, key3]] */) {
+    var args = pie.array.change(arguments, 'from', 'flatten'),
+    part = pie.array.partition(args, pie.object.isFunction),
+    fns = part[0],
+    keys = part[1];
 
     if(!keys.length) keys = ['_version'];
 
-    this.observations[fn.pieId] = {
-      fn: fn,
-      keys: keys
-    };
+    fns.forEach(function(fn){
+
+      /* Setting the uid is needed because we'll want to manage unobservation effectively. */
+      pie.setUid(fn);
+
+      this.observations[fn.pieId] = {
+        fn: fn,
+        keys: keys
+      };
+
+    }.bind(this));
 
     return this;
   },
@@ -400,27 +405,31 @@ pie.model = pie.base.extend('model', {
   // Unregister an observer. Optionally for specific keys.
   // If a subset of the original keys are provided it will only unregister
   // for those provided.
-  unobserve: function(/* fn[, key1, key2, key3] */) {
-    var keys = pie.array.from(arguments),
-    fn = keys.shift(),
+  unobserve: function(/* fn1[, fn2, fn3[, key1, key2, key3]] */) {
+    var args = pie.array.change(arguments, 'from', 'flatten'),
+    part = pie.array.partition(args, pie.object.isFunction),
+    fns = part[0],
+    keys = part[1],
     observation;
 
-    pie.setUid(fn);
+    fns.forEach(function(fn){
+      pie.setUid(fn);
 
-    observation = this.observations[fn.pieId];
+      observation = this.observations[fn.pieId];
+      if(!observation) return;
 
-    if(!observation) return this;
+      if(!keys.length) {
+        delete this.observations[fn.pieId];
+        return;
+      }
 
-    if(!keys.length) {
-      delete this.observations[fn.pieId];
-      return this;
-    }
+      observation.keys = pie.array.subtract(observation.keys, keys);
 
-    observation.keys = pie.array.subtract(observation.keys, keys);
-    if(!observation.keys.length) {
-      delete this.observations[fn.pieId];
-      return this;
-    }
+      if(!observation.keys.length) {
+        delete this.observations[fn.pieId];
+        return;
+      }
+    }.bind(this));
 
     return this;
   }

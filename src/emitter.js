@@ -58,7 +58,11 @@ pie.emitter = pie.model.extend('emitter', {
   //
   // Count the number of times an event has been triggered
   firedCount: function(eventName) {
-    return this.get('triggeredEvents')[eventName] || 0;
+    return this.get('triggeredEvents.' + eventName + '.count') || 0;
+  },
+
+  lastInvocation: function(eventName) {
+    return this.get('triggeredEvents.' + eventName + '.lastArgs') || [];
   },
 
   // ** pie.emitter.waitUntil **
@@ -101,9 +105,10 @@ pie.emitter = pie.model.extend('emitter', {
   // triggered, the function will be invoked and nothing will be added to the callbacks._
   _on: function(event, fn, options, meth) {
     options = options || {};
+    var lastArgs = this.lastInvocation(event);
 
-    if(options.immediate && this.hasEvent(event)) {
-      fn();
+    if(options.now || (options.immediate && this.hasEvent(event))) {
+      fn.apply(null, lastArgs);
       if(options.onceOnly) return;
     }
 
@@ -162,9 +167,11 @@ pie.emitter = pie.model.extend('emitter', {
   // ** pie.emitter._reportTrigger **
   //
   // Increment our `triggeredEvents` counter.
-  _reportTrigger: function(event) {
+  _reportTrigger: function(event, args) {
     var triggered = this.get('triggeredEvents');
-    triggered[event] = (triggered[event] || 0) + 1;
+    if(!triggered[event]) triggered[event] = {count: 0};
+    triggered[event].lastArgs = args;
+    triggered[event].count = triggered[event].count + 1;
   },
 
   // ** pie.emitter.fire **
@@ -186,7 +193,7 @@ pie.emitter = pie.model.extend('emitter', {
     if(this.isDebugging) this.app.debug(event);
 
     /* increment our trigger counters */
-    this._reportTrigger(event);
+    this._reportTrigger(event, args);
 
     if(callbacks) {
       callbacks.forEach(function(cb, i) {

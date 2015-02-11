@@ -66,7 +66,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     if(this.oldChild) this.parent.removeChild(this.oldChild);
     if(this.newChild) {
       this.parent.addChild(this.childName, this.newChild);
-      this.newChild.setup();
+      if(!this.newChild.emitter.hasEvent('beforeSetup')) this.newChild.setup();
     }
   },
 

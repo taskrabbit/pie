@@ -460,6 +460,47 @@ pie.array.map = function(a, f, callInternalFunction){
   return pie.array.from(a).map(function(e){ return callingF(e); });
 };
 
+// **pie.array.partition**
+//
+// Partition an array based on a set of functions. You will end up with an array of arrays the length of which
+// will be fns.length + 1.
+// ```
+// var arr = [0, 1, 2, 3, 4];
+// var results = pie.array.partition(arr, isOdd);
+// var odds = results[0];
+// //=> [1, 3]
+// var evens = results[1];
+// //=> [0, 2, 4]
+// ```
+// ```
+// var arr = ["a", 4, true, false, 5, "b"];
+// var results = pie.array.partition(arr, pie.object.isString, pie.object.isNumber);
+// var strings = results[0];
+// //=> ["a", "b"]
+// var numbers = results[1];
+// //=> [4, 5]
+// var others = results[2];
+// //=> [true, false]
+// ```
+pie.array.partition = function(/* a, fn1, fn2 */) {
+  var out = [], i = 0,
+  fns = pie.array.from(arguments),
+  arr = pie.array.from(fns.shift());
+
+  fns.forEach(function(fn, j){
+    out[j] = [];
+    out[j+1] = out[j+1] || [];
+    arr.forEach(function(e){
+      if(!!pie.object.getValue(e, fn)) out[j].push(e);
+      else out[j+1].push(e);
+    });
+
+    arr = pie.array.dup(out[j+1]);
+  });
+
+  return out;
+};
+
 
 // ** pie.array.remove **
 //
@@ -749,6 +790,9 @@ pie.date.timeFromISO = (function() {
   };
 
 })();
+// # Pie DOM Utilities
+// A series of helpful methods for working with DOM elements.
+
 pie.dom._all = function(originalArgs, returnValues) {
   var nodes = pie.array.from(originalArgs[0]),
   meths = originalArgs[1].split('.'),
@@ -777,69 +821,123 @@ pie.dom._all = function(originalArgs, returnValues) {
   return returnValues ? r : undefined;
 };
 
-// ###all
-// Invokes the provided method or method chain with the provided arguments to all elements in the nodeList.
-// Example usage:
-// * pie.dom.all(nodeList, 'setAttribute', 'foo', 'bar');
-// * pie.dom.all(nodeList, 'classList.add', 'active');
-// * pie.dom.all(nodeList, 'clicked=', true);
+// **pie.dom.all**
 //
+// Invokes the provided method or method chain with the provided arguments to all elements in the nodeList.
 // `nodeList` can either be a node, nodeList, or an array of nodes.
 // `methodName` can be a string representing a method name, an attribute, or a property. Can be chained with periods. Can end in a `=` to invoke an assignment.
+// ```
+// pie.dom.all(nodeList, 'setAttribute', 'foo', 'bar');
+// pie.dom.all(nodeList, 'classList.add', 'active');
+// pie.dom.all(nodeList, 'clicked=', true);
+// ```
 pie.dom.all = function(/* nodeList, methodName[, arg1, arg2, ...] */) {
   return pie.dom._all(arguments, false);
 };
 
+// **pie.dom.closest**
+//
+// Retrieve the closest ancestor of `el` which matches the provided `sel`.
+// ```
+// var form = pie.dom.closest(input, 'form');
+// form.submit();
+// ```
 pie.dom.closest = function(el, sel) {
   while((el = el.parentNode) && !pie.dom.isDocument(el)) {
     if(pie.dom.matches(el, sel)) return el;
   }
 };
 
-// create an element based on the content provided.
+// **pie.dom.createElement**
+//
+// Create an element based on the string content provided.
+// ```
+// var el = pie.dom.createElement('<div class="foo"><strong>Hi</strong>, John</div>')
+// el.innerHTML
+// //=> "<strong>Hi</strong>, John"
+// el.classList
+// //=> ['foo']
+// ```
 pie.dom.createElement = function(str) {
   var wrap = document.createElement('div');
   wrap.innerHTML = str;
   return wrap.removeChild(wrap.firstElementChild);
 };
 
+// **pie.dom.cache**
+//
+// A cache created solely for caching element specific information,
+// easier for cleanup via `pie.dom.remove()`.
 pie.dom.cache = function() {
   pie.elementCache = pie.elementCache || new pie.cache();
   return pie.elementCache;
 };
 
+// **pie.dom.getAll**
+//
 // Has the same method signature of `pie.dom.all` but returns the values of the result
-// Example usage:
-// * pie.dom.getAll(nodeList, 'clicked') //=> [true, true, false]
+// ```
+// pie.dom.getAll(nodeList, 'clicked')
+// //=> [true, true, false]
+// ```
 pie.dom.getAll = function() {
   return pie.dom._all(arguments, true);
 };
 
+// **pie.dom.isDocument**
+//
+// Determine whether the `el` is a document node.
 pie.dom.isDocument = function(el) {
   return el && el.nodeType === el.DOCUMENT_NODE;
 };
 
+// **pie.dom.isWindow**
+//
+// Determine whether the provided `el` is the `window`.
 pie.dom.isWindow = function(el) {
   return el === window;
 };
 
+// **pie.dom.matches**
+//
+// Test whether an element matches a given selector.
+// ```
+// pie.dom.matches(form, 'input');
+// //=> false
+// pie.dom.matches(form, 'form');
+// //=> true
+// ```
 pie.dom.matches = function(el, sel) {
-  if(el.matches) return el.matches(sel);
+  var fn = pie.dom.prefixed(el, 'matches');
+  if(fn) return fn(sel);
+
+  fn = pie.dom.prefixed(el, 'matchesSelector');
+  if(fn) return fn(sel);
 
   var parent = el.parentNode || el.document;
-  if(!parent || !parent.querySelectorAll) return false;
+  if(!parent || !parent.querySelector) return false;
 
-  var matches = parent.querySelectorAll(sel);
-  for(var i = 0; i < matches.length; i++) {
-    if(matches[i] === el) return true;
-  }
+  pie.setUid(el);
+  el.setAttribute('data-pie-id', el.pieId);
 
-  return false;
+  sel += '[data-pie-id="' + el.pieId + '"]';
+  return parent.querySelector(sel) === el;
 };
+
+// **pie.dom.off**
+//
+// Remove an observer from an element. The more information provided the more tests will be run to determine
+// whether the observer is a match. Support of namespaces are the same as `pie.dom.on`, however, in the case
+// of `off`, `"*"` can be provided to remove all events within a namespace.
+// ```
+// pie.dom.off(document.body, 'click');
+// pie.dom.off(document.body', 'click.fooNs');
+// pie.dom.off(document.body', '*.fooNs');
+// ```
 
 pie.dom.off = function(el, event, fn, selector, cap) {
   var eventSplit = event.split('.'),
-    namespace, all, events;
+    namespace, all, events, compactNeeded;
 
   pie.setUid(el);
   event = eventSplit.shift();
@@ -849,18 +947,46 @@ pie.dom.off = function(el, event, fn, selector, cap) {
   events = pie.dom.cache().getOrSet('element-' + el.pieId + '.dom-events', {});
 
   (all ? Object.keys(events) : [event]).forEach(function(k) {
+    compactNeeded = false;
+
     pie.array.from(events[k]).forEach(function(obj, i, ary) {
-      if(!cap && (k === 'focus' || k === 'blur') && obj.sel) cap = true;
-      if((!namespace || namespace === obj.ns) && (!fn || fn === obj.fn) && (!selector || selector === obj.sel) && (cap === obj.cap)) {
+      if(cap == null && (k === 'focus' || k === 'blur') && obj.sel) cap = true;
+      if((namespace == null || namespace === obj.ns) &&
+          (fn == null || fn === obj.fn) &&
+          (selector == null || selector === obj.sel) &&
+          (cap === obj.cap)) {
         el.removeEventListener(k, obj.cb, obj.cap);
         delete ary[i];
+        compactNeeded = true;
       }
-
-      events[k] = pie.array.compact(events[k]);
     });
+
+    if(compactNeeded) events[k] = pie.array.compact(events[k]);
+
   });
 };
 
+// **pie.dom.on**
+//
+// Observe an event on a particular `el`.
+// ```
+// var handler = function(e){
+//   var btn = e.delegateTarget;
+//   btn.classList.toggle('is-loading');
+// }
+// pie.dom.on(pie.qs('.btn'), 'click', handler);
+// // => all events on the first .btn will be observed.
+// ```
+// Optionally, the event can be filtered by a `selector`.
+// If a selector is provided, a `delegateTarget` which represents the
+// matching target as defined by `selector` will be placed
+// on the event. The event is then provided to `fn`.
+//
+// ```
+// pie.dom.on(document.body, 'click', handler, '.btn');
+// //=> all events that bubble to document.body and pass through or
+// //=> originate from a .btn, will be observed.
+// ```
 pie.dom.on = function(el, event, fn, selector, capture) {
   var eventSplit = event.split('.'),
       cb, namespace, events;
@@ -876,7 +1002,7 @@ pie.dom.on = function(el, event, fn, selector, capture) {
   events[event] = events[event] || [];
 
   cb = function(e) {
-    var targ, els;
+    var targ, els, qel;
 
     if(namespace) {
       e.namespace = namespace;
@@ -885,11 +1011,14 @@ pie.dom.on = function(el, event, fn, selector, capture) {
     if(!selector) {
       fn.call(el, e);
     } else {
-      els = pie.array.from(el.querySelectorAll(selector));
+      // if the target matches the selector, it is the delegateTarget.
+      targ = pie.dom.matches(e.target, selector) ? e.target : null;
 
-      targ = pie.array.detect(els, function(qel) {
-        return qel === e.target || qel.contains(e.target);
-      });
+      // othwerwise, try to find a parent that is a child of el which matches the selector.
+      if(!targ) {
+        qel = pie.dom.closest(e.target, selector);
+        if(qel && el.contains(qel)) targ = qel;
+      }
 
       if(targ) {
         e.delegateTarget = targ;
@@ -915,20 +1044,25 @@ pie.dom.parseForm = function() {
   form = args.shift(),
   names = pie.array.flatten(args),
   inputs = form.querySelectorAll('input[name], select[name], textarea[name]'),
-  o = {};
+  o = {},
+  origLength;
 
-  inputs = pie.array.from(inputs);
   inputs = pie.array.groupBy(inputs, 'name');
 
   pie.object.forEach(inputs, function(name,fields) {
     if(names.length && names.indexOf(name) < 0) return;
 
-    if(!(name in o)) {
-      o[name] = form.querySelectorAll('input[name="' + name + '"], select[name="' + name + '"], textarea[name="' + name + '"]').length > 1 ? [] : null;
-    }
-    fields = fields.filter(function(f){ return f.type.toLowerCase() === 'radio' || f.type.toLowerCase() === 'checkbox' ? f.checked : true; });
+    origLength = fields.length;
 
-    if(Array.isArray(o[name])) o[name] = pie.array.map(fields, 'value');
+    if(fields[0].type === 'radio') {
+      origLength = 1;
+      fields = fields.filter(function(f){ return f.checked; });
+    } else {
+      fields = fields.filter(function(f){ return f.type === 'checkbox' ? f.checked : true; });
+    }
+
+
+    if(origLength > 1) o[name] = pie.array.map(fields, 'value');
     else o[name] = fields[0] && fields[0].value;
   });
 
@@ -953,6 +1087,22 @@ pie.dom.trigger = function(el, e, forceEvent) {
   event.initEvent(e, true, true);
   return el.dispatchEvent(event);
 };
+
+pie.dom.prefixed = (function(){
+  var prefixes = ['', 'webkit', 'moz', 'ms', 'o'];
+
+  return function(el, standardName) {
+    var prefix, i = 0,
+    capd = pie.string.capitalize(standardName);
+
+    for(; i < prefixes.length; i++) {
+      prefix = prefixes[i];
+
+      if(el[prefix + standardName]) return el[prefix + standardName].bind(el);
+      if(el[prefix + capd]) return el[prefix + capd].bind(el);
+    }
+  };
+})();
 // **pie.fn.async**
 //
 // Invoke all `fns` and when they have completed their execution, invoke the callback `cb`.
@@ -3333,20 +3483,25 @@ pie.model = pie.base.extend('model', {
   //   console.log(changeSet);
   // }, 'fullName');
   // ```
-  observe: function(/* fn[, key1, key2, key3] */) {
-    var keys = pie.array.change(arguments, 'from', 'flatten'),
-    fn = keys.shift();
-
-    /* Setting the uid is needed because we'll want to manage unobservation effectively. */
-    pie.setUid(fn);
-
+  observe: function(/* fn1[, fn2, fn3[, key1, key2, key3]] */) {
+    var args = pie.array.change(arguments, 'from', 'flatten'),
+    part = pie.array.partition(args, pie.object.isFunction),
+    fns = part[0],
+    keys = part[1];
 
     if(!keys.length) keys = ['_version'];
 
-    this.observations[fn.pieId] = {
-      fn: fn,
-      keys: keys
-    };
+    fns.forEach(function(fn){
+
+      /* Setting the uid is needed because we'll want to manage unobservation effectively. */
+      pie.setUid(fn);
+
+      this.observations[fn.pieId] = {
+        fn: fn,
+        keys: keys
+      };
+
+    }.bind(this));
 
     return this;
   },
@@ -3489,27 +3644,31 @@ pie.model = pie.base.extend('model', {
   // Unregister an observer. Optionally for specific keys.
   // If a subset of the original keys are provided it will only unregister
   // for those provided.
-  unobserve: function(/* fn[, key1, key2, key3] */) {
-    var keys = pie.array.from(arguments),
-    fn = keys.shift(),
+  unobserve: function(/* fn1[, fn2, fn3[, key1, key2, key3]] */) {
+    var args = pie.array.change(arguments, 'from', 'flatten'),
+    part = pie.array.partition(args, pie.object.isFunction),
+    fns = part[0],
+    keys = part[1],
     observation;
 
-    pie.setUid(fn);
+    fns.forEach(function(fn){
+      pie.setUid(fn);
 
-    observation = this.observations[fn.pieId];
+      observation = this.observations[fn.pieId];
+      if(!observation) return;
 
-    if(!observation) return this;
+      if(!keys.length) {
+        delete this.observations[fn.pieId];
+        return;
+      }
 
-    if(!keys.length) {
-      delete this.observations[fn.pieId];
-      return this;
-    }
+      observation.keys = pie.array.subtract(observation.keys, keys);
 
-    observation.keys = pie.array.subtract(observation.keys, keys);
-    if(!observation.keys.length) {
-      delete this.observations[fn.pieId];
-      return this;
-    }
+      if(!observation.keys.length) {
+        delete this.observations[fn.pieId];
+        return;
+      }
+    }.bind(this));
 
     return this;
   }
@@ -3573,22 +3732,45 @@ pie.view.reopen({
   },
 
 
-  // Events should be observed via this .on() method. Using .on() ensures the events will be
-  // unobserved when the view is removed.
-  on: function(e, sel, f, el) {
+  // **pie.view.on**
+  //
+  // Observe a dom event and invoke the provided functions.
+  // By default all events are delegated to this.el, but if you pass in an element as the last argument
+  // that will be used. If the functions are provided as strings, they will be looked up on `this`.
+  //
+  // ```
+  // view.on('click', 'a', this.handleClick.bind(this), this.trackClickEvent.bind(this));
+  // view.on('submit', 'form', 'handleSubmit');
+  // view.on('resize', null, 'onResize', window);
+  // ```
+  on: function(/* e, sel, f1, f2, f3, el */) {
+    var fns = pie.array.from(arguments),
+        events = fns.shift(),
+        sel = fns.shift(),
+        ns = this.eventNamespace(),
+        f2, el;
+
+    if(!pie.object.isFunction(pie.array.get(fns, -1))) el = fns.pop();
     el = el || this.el;
+
     if(!~this.eventedEls.indexOf(el)) this.eventedEls.push(el);
 
-    var ns = this.eventNamespace(),
-        f2 = function(e){
-          if(e.namespace === ns) {
-            return f.apply(this, arguments);
-          }
-        };
+    events = events.split(' ');
 
-    e.split(' ').forEach(function(ev) {
-      ev += "." + ns;
-      pie.dom.on(el, ev, f2, sel);
+    fns.forEach(function(fn) {
+      fn = pie.object.isString(fn) ? this[fn].bind(this) : fn;
+
+      f2 = function(e){
+        if(e.namespace === ns) {
+          return fn.apply(this, arguments);
+        }
+      };
+
+      events.forEach(function(ev) {
+        ev += "." + ns;
+        pie.dom.on(el, ev, f2, sel);
+      }.bind(this));
+
     }.bind(this));
 
     return this;
@@ -3597,11 +3779,25 @@ pie.view.reopen({
   // Observe changes to an observable, unobserving them when the view is removed.
   // If the object is not observable, an error will be thrown.
   onChange: function() {
-    var observable = arguments[0], args = pie.array.from(arguments).slice(1);
-    if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
 
-    this.changeCallbacks.push([observable, args]);
-    observable.observe.apply(observable, args);
+    var args = pie.array.from(arguments),
+    observables = [];
+
+    while(!pie.object.isFunction(args[0])) observables.push(args.shift());
+
+
+    observables.forEach(function(observable){
+      if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
+
+      this.changeCallbacks.push({
+        observable: observable,
+        args: args
+      });
+
+      observable.observe.apply(observable, args);
+    }.bind(this));
+
+
   },
 
 
@@ -3672,7 +3868,7 @@ pie.view.reopen({
     var a;
     while(this.changeCallbacks.length) {
       a = this.changeCallbacks.pop();
-      a[0].unobserve.apply(a[0], a[1]);
+      a.observable.unobserve.apply(a.observable, a.args);
     }
   }
 
@@ -4063,12 +4259,15 @@ pie.ajax = pie.base.extend('ajax', {
     headers: {}
   },
 
+  _normalizeOptions: function(options) {
+    if(pie.object.isString(options)) options = {url: options};
+    return options;
+  },
+
   // Interface for conducting ajax requests.
   // Returns a pie.ajaxRequest object
   ajax: function(options, skipSend) {
-    if(pie.object.isString(options)) options = {url: options};
-
-    options = pie.object.deepMerge({}, this.defaultAjaxOptions, options);
+    options = pie.object.deepMerge({}, this.defaultAjaxOptions, this._normalizeOptions(options));
 
     var request = new pie.ajaxRequest({}, { app: this.app });
     request.build(options, skipSend);
@@ -4083,27 +4282,27 @@ pie.ajax = pie.base.extend('ajax', {
 
 
   del: function(options, skipSend) {
-    options = pie.object.merge({verb: 'DELETE'}, options);
+    options = pie.object.merge({verb: 'DELETE'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   },
 
   get: function(options, skipSend) {
-    options = pie.object.merge({verb: 'GET'}, options);
+    options = pie.object.merge({verb: 'GET'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   },
 
   patch: function(options, skipSend) {
-    options = pie.object.merge({verb: 'PATCH'}, options);
+    options = pie.object.merge({verb: 'PATCH'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   },
 
   post: function(options, skipSend) {
-    options = pie.object.merge({verb: 'POST'}, options);
+    options = pie.object.merge({verb: 'POST'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   },
 
   put: function(options, skipSend) {
-    options = pie.object.merge({verb: 'PUT'}, options);
+    options = pie.object.merge({verb: 'PUT'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   }
 
@@ -4249,7 +4448,11 @@ pie.emitter = pie.model.extend('emitter', {
   //
   // Count the number of times an event has been triggered
   firedCount: function(eventName) {
-    return this.get('triggeredEvents')[eventName] || 0;
+    return this.get('triggeredEvents.' + eventName + '.count') || 0;
+  },
+
+  lastInvocation: function(eventName) {
+    return this.get('triggeredEvents.' + eventName + '.lastArgs') || [];
   },
 
   // ** pie.emitter.waitUntil **
@@ -4292,9 +4495,10 @@ pie.emitter = pie.model.extend('emitter', {
   // triggered, the function will be invoked and nothing will be added to the callbacks._
   _on: function(event, fn, options, meth) {
     options = options || {};
+    var lastArgs = this.lastInvocation(event);
 
-    if(options.immediate && this.hasEvent(event)) {
-      fn();
+    if(options.now || (options.immediate && this.hasEvent(event))) {
+      fn.apply(null, lastArgs);
       if(options.onceOnly) return;
     }
 
@@ -4353,9 +4557,11 @@ pie.emitter = pie.model.extend('emitter', {
   // ** pie.emitter._reportTrigger **
   //
   // Increment our `triggeredEvents` counter.
-  _reportTrigger: function(event) {
+  _reportTrigger: function(event, args) {
     var triggered = this.get('triggeredEvents');
-    triggered[event] = (triggered[event] || 0) + 1;
+    if(!triggered[event]) triggered[event] = {count: 0};
+    triggered[event].lastArgs = args;
+    triggered[event].count = triggered[event].count + 1;
   },
 
   // ** pie.emitter.fire **
@@ -4377,7 +4583,7 @@ pie.emitter = pie.model.extend('emitter', {
     if(this.isDebugging) this.app.debug(event);
 
     /* increment our trigger counters */
-    this._reportTrigger(event);
+    this._reportTrigger(event, args);
 
     if(callbacks) {
       callbacks.forEach(function(cb, i) {
@@ -6794,7 +7000,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     if(this.oldChild) this.parent.removeChild(this.oldChild);
     if(this.newChild) {
       this.parent.addChild(this.childName, this.newChild);
-      this.newChild.setup();
+      if(!this.newChild.emitter.hasEvent('beforeSetup')) this.newChild.setup();
     }
   },
 

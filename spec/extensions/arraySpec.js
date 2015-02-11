@@ -167,6 +167,24 @@ describe("Array extensions", function() {
 
   });
 
+  describe("#get", function() {
+
+    beforeEach(function() {
+      this.arr = ['a', 'b', 'c', 'd', 'e'];
+    });
+
+    it("allows an array to be accessed by positive and negative indexes", function() {
+      expect(pie.array.get(this.arr, 0)).toEqual('a');
+      expect(pie.array.get(this.arr, 1)).toEqual('b');
+      expect(pie.array.get(this.arr, 10)).toEqual(undefined);
+
+      expect(pie.array.get(this.arr, -1)).toEqual('e');
+      expect(pie.array.get(this.arr, -2)).toEqual('d');
+      expect(pie.array.get(this.arr, -10)).toEqual(undefined);
+    });
+
+  });
+
 
   describe('#grep', function() {
 

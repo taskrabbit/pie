@@ -94,17 +94,26 @@ describe("pie.emitter", function() {
   });
 
   it("should allow a callback to be registered for all subsequent occurrences of an event as well as one for any existing events via `on` with `immediate:true`", function() {
-    var called = 0;
+    var called = 0,
+    invocations = [];
+
     var fn = function() {
       called++;
+      invocations.push(arguments);
     };
-    this.e.fire('ping');
+
+    this.e.fire('ping', 'foo');
     this.e.on('ping', fn, {immediate: true});
     expect(called).toEqual(1);
     this.e.fire('ping');
     expect(called).toEqual(2);
     this.e.fire('ping');
     expect(called).toEqual(3);
+
+    expect(invocations.length).toEqual(3);
+    expect(invocations[0].length).toEqual(1);
+    expect(invocations[0][0]).toEqual('foo');
+    expect(invocations[1].length).toEqual(0);
   });
 
   it("should allow a callback to be registered for the next occurrence of an event via `once`", function() {
@@ -165,6 +174,19 @@ describe("pie.emitter", function() {
     expect(called.aroundPing).toEqual(true);
     expect(called.ping).toEqual(true);
     expect(called.afterPing).toEqual(true);
+  });
+
+  it("should allow a callback to be registered, and invoked immediately via now: true", function() {
+    var called = 0;
+    this.e.on('ping', function(){ called++; }, {now: true});
+    expect(called).toEqual(1);
+  });
+
+  it("should immediately remove a callback when onceOnly and now:true are provided", function() {
+    var called = 0;
+    this.e.once('ping', function(){ called++; }, {now: true, onceOnly: true});
+    expect(called).toEqual(1);
+    expect(this.e.get('eventCallbacks.ping.length')).toBeFalsy();
   });
 
 });

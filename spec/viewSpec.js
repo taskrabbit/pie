@@ -63,7 +63,7 @@ describe("pie.view", function() {
 
       this.view.onChange(model, this.view.setup.bind(this.view));
 
-      f = this.view.changeCallbacks[0][1][0];
+      f = this.view.changeCallbacks[0].args[0];
       expect(model.observations[f.pieId]).toBeTruthy();
 
       this.view.teardown();

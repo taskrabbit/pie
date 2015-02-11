@@ -10,12 +10,15 @@ pie.ajax = pie.base.extend('ajax', {
     headers: {}
   },
 
+  _normalizeOptions: function(options) {
+    if(pie.object.isString(options)) options = {url: options};
+    return options;
+  },
+
   // Interface for conducting ajax requests.
   // Returns a pie.ajaxRequest object
   ajax: function(options, skipSend) {
-    if(pie.object.isString(options)) options = {url: options};
-
-    options = pie.object.deepMerge({}, this.defaultAjaxOptions, options);
+    options = pie.object.deepMerge({}, this.defaultAjaxOptions, this._normalizeOptions(options));
 
     var request = new pie.ajaxRequest({}, { app: this.app });
     request.build(options, skipSend);
@@ -30,27 +33,27 @@ pie.ajax = pie.base.extend('ajax', {
 
 
   del: function(options, skipSend) {
-    options = pie.object.merge({verb: 'DELETE'}, options);
+    options = pie.object.merge({verb: 'DELETE'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   },
 
   get: function(options, skipSend) {
-    options = pie.object.merge({verb: 'GET'}, options);
+    options = pie.object.merge({verb: 'GET'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   },
 
   patch: function(options, skipSend) {
-    options = pie.object.merge({verb: 'PATCH'}, options);
+    options = pie.object.merge({verb: 'PATCH'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   },
 
   post: function(options, skipSend) {
-    options = pie.object.merge({verb: 'POST'}, options);
+    options = pie.object.merge({verb: 'POST'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   },
 
   put: function(options, skipSend) {
-    options = pie.object.merge({verb: 'PUT'}, options);
+    options = pie.object.merge({verb: 'PUT'}, this._normalizeOptions(options));
     return this.ajax(options, skipSend);
   }
 

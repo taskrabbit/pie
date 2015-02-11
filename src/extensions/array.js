@@ -349,6 +349,47 @@ pie.array.map = function(a, f, callInternalFunction){
   return pie.array.from(a).map(function(e){ return callingF(e); });
 };
 
+// **pie.array.partition**
+//
+// Partition an array based on a set of functions. You will end up with an array of arrays the length of which
+// will be fns.length + 1.
+// ```
+// var arr = [0, 1, 2, 3, 4];
+// var results = pie.array.partition(arr, isOdd);
+// var odds = results[0];
+// //=> [1, 3]
+// var evens = results[1];
+// //=> [0, 2, 4]
+// ```
+// ```
+// var arr = ["a", 4, true, false, 5, "b"];
+// var results = pie.array.partition(arr, pie.object.isString, pie.object.isNumber);
+// var strings = results[0];
+// //=> ["a", "b"]
+// var numbers = results[1];
+// //=> [4, 5]
+// var others = results[2];
+// //=> [true, false]
+// ```
+pie.array.partition = function(/* a, fn1, fn2 */) {
+  var out = [], i = 0,
+  fns = pie.array.from(arguments),
+  arr = pie.array.from(fns.shift());
+
+  fns.forEach(function(fn, j){
+    out[j] = [];
+    out[j+1] = out[j+1] || [];
+    arr.forEach(function(e){
+      if(!!pie.object.getValue(e, fn)) out[j].push(e);
+      else out[j+1].push(e);
+    });
+
+    arr = pie.array.dup(out[j+1]);
+  });
+
+  return out;
+};
+
 
 // ** pie.array.remove **
 //
