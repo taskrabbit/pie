@@ -1250,6 +1250,12 @@ describe("String extensions", function() {
     var simpleTemplate = "[% var foo = data.foo; %]Hi, [%- data.first_name %]. Welcome to [%= foo.name %].";
     var quoteTemplate = "Do you know 'Doug' from [%- data['a'] %] company or \"John\" from [%= data[\"b\"] %] company?";
     var loopTemplate = "[% var i = 0; j = 0; %][% while(i < 4){ %][% for(j = 0; j < i; j++){ %][%= i %] - [%= j %] | [% } %][% i++ %][% } %]";
+    var modTemplate = "[%- data.count % 2 === 0 ? 'even' : 'odd' %] but not [%= data.count % 2 === 1 ? 'even' : 'odd' %]";
+
+    var simple = pie.string.template(simpleTemplate);
+    var quote = pie.string.template(quoteTemplate);
+    var loop = pie.string.template(loopTemplate);
+    var mod = pie.string.template(modTemplate);
 
     var resetSettings = function() {
       pie.string.setTemplateSettings("[%", "%]", "-", "=", "");
@@ -1257,54 +1263,55 @@ describe("String extensions", function() {
 
     beforeEach(function() {
       resetSettings();
-
-      this.simple = pie.string.template(simpleTemplate);
-      this.quote = pie.string.template(quoteTemplate);
-      this.loop = pie.string.template(loopTemplate);
     });
 
     afterEach(resetSettings);
 
     it("should create a function which accepts a single argument, data", function() {
-      expect(typeof this.simple).toEqual('function');
-      expect(this.simple.length).toEqual(1); // arity check.
+      expect(typeof simple).toEqual('function');
+      expect(simple.length).toEqual(1); // arity check.
     });
 
     it("should be able to evaluate sections without appending any content", function() {
-      var output = this.simple({foo: {}});
+      var output = simple({foo: {}});
       expect(output.match(/^Hi/)).toBeTruthy();
     });
 
     it("should be able to evaluate sections without escaping", function() {
-      var output = this.simple({foo: {name: '<h1>Site</h1>'}});
+      var output = simple({foo: {name: '<h1>Site</h1>'}});
       expect(output.match(/h1>\.$/)).toBeTruthy();
     });
 
     it("should be able to escape html content", function() {
-      var output = this.simple({first_name: '<h1>Doug</h1>', foo: {}});
+      var output = simple({first_name: '<h1>Doug</h1>', foo: {}});
       expect(output.match(/&lt;/)).toBeTruthy();
     });
 
     it("should not leak variables", function() {
       var foo;
-      this.simple({foo: {name: 'bar'}, first_name: 'Doug'});
+      simple({foo: {name: 'bar'}, first_name: 'Doug'});
       expect(window.foo).toEqual(undefined);
       expect(foo).toEqual(undefined);
     });
 
     it("should know how to interpolate things", function() {
-      var output = this.simple({foo: {name: '<strong>Site</strong>'}, first_name: '<strong>Doug</strong>'});
+      var output = simple({foo: {name: '<strong>Site</strong>'}, first_name: '<strong>Doug</strong>'});
       expect(output).toEqual("Hi, &lt;strong&gt;Doug&lt;/strong&gt;. Welcome to <strong>Site</strong>.");
     });
 
     it("should properly handle quotes inside and outside of interpolations", function() {
-      var output = this.quote({a: "foo's", b: "bar's"});
+      var output = quote({a: "foo's", b: "bar's"});
       expect(output).toEqual("Do you know 'Doug' from foo&#39;s company or \"John\" from bar's company?");
     });
 
     it("should be fine with loops", function() {
-      var output = this.loop();
+      var output = loop();
       expect(output).toEqual("1 - 0 | 2 - 0 | 2 - 1 | 3 - 0 | 3 - 1 | 3 - 2 | ");
+    });
+
+    it("should allow modulus in the evaluations", function() {
+      var output = mod({count: 5});
+      expect(output).toEqual('odd but not even');
     });
 
     it("should allow other variable declarations to be made", function() {
@@ -3551,7 +3558,7 @@ describe("pie.notifier", function(){
   });
 
 });
-/* global Benchmark, kendo, _, EJS */
+/* global Benchmark, kendo, _, EJS, doT */
 
 describe("pie performance", function() {
 
@@ -3561,7 +3568,7 @@ describe("pie performance", function() {
 
     beforeEach(function() {
       originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 45000;
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 90000;
     });
 
     afterEach(function() {
@@ -3604,6 +3611,8 @@ describe("pie performance", function() {
     // ejs:: escape: :(, interpolate: <%= %>, evaluate: <% %>
     var ejsSource = "<%= pie.string.escapeHtml('<h1>Hi</h1>') %><% for(var i = 0; i < 2; i++) { %><span><%= foo + i %></span><% } %>";
 
+    var dotSource = "{{! '<h1>Hi</h1>' }}{{ for(var i = 0; i < 2; i++) { }}<span>{{= it.foo + i }}</span>{{ } }}";
+
     it("it should perform better than EVERYONE", function(done) {
 
       if(!app.navigator.get('query.bm')) {
@@ -3611,7 +3620,7 @@ describe("pie performance", function() {
         return done();
       }
 
-      app.resources.load( 'benchmark', 'jquery', 'kendo', 'underscore', 'ejs', function(){
+      app.resources.load( 'benchmark', 'jquery', 'kendo', 'underscore', 'ejs', 'dot', function(){
 
         var ejsTmpl = new EJS({text: expand(ejsSource), escape: 'html'});
 
@@ -3622,7 +3631,8 @@ describe("pie performance", function() {
           pie: pie.string.template(expand(source)),
           underscore: _.template(expand(_Source)),
           kendo: kendo.template(expand(kendoSource)),
-          ejs: ejsTmpl.render.bind(ejsTmpl)
+          ejs: ejsTmpl.render.bind(ejsTmpl),
+          dot: doT.template(expand(dotSource))
         };
 
         var expectedOutput = expand('&lt;h1&gt;Hi&lt;/h1&gt;<span>4</span><span>5</span>');

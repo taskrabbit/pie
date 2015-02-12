@@ -1,4 +1,4 @@
-/* global Benchmark, kendo, _, EJS */
+/* global Benchmark, kendo, _, EJS, doT */
 
 describe("pie performance", function() {
 
@@ -8,7 +8,7 @@ describe("pie performance", function() {
 
     beforeEach(function() {
       originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 45000;
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 90000;
     });
 
     afterEach(function() {
@@ -51,6 +51,8 @@ describe("pie performance", function() {
     // ejs:: escape: :(, interpolate: <%= %>, evaluate: <% %>
     var ejsSource = "<%= pie.string.escapeHtml('<h1>Hi</h1>') %><% for(var i = 0; i < 2; i++) { %><span><%= foo + i %></span><% } %>";
 
+    var dotSource = "{{! '<h1>Hi</h1>' }}{{ for(var i = 0; i < 2; i++) { }}<span>{{= it.foo + i }}</span>{{ } }}";
+
     it("it should perform better than EVERYONE", function(done) {
 
       if(!app.navigator.get('query.bm')) {
@@ -58,7 +60,7 @@ describe("pie performance", function() {
         return done();
       }
 
-      app.resources.load( 'benchmark', 'jquery', 'kendo', 'underscore', 'ejs', function(){
+      app.resources.load( 'benchmark', 'jquery', 'kendo', 'underscore', 'ejs', 'dot', function(){
 
         var ejsTmpl = new EJS({text: expand(ejsSource), escape: 'html'});
 
@@ -69,7 +71,8 @@ describe("pie performance", function() {
           pie: pie.string.template(expand(source)),
           underscore: _.template(expand(_Source)),
           kendo: kendo.template(expand(kendoSource)),
-          ejs: ejsTmpl.render.bind(ejsTmpl)
+          ejs: ejsTmpl.render.bind(ejsTmpl),
+          dot: doT.template(expand(dotSource))
         };
 
         var expectedOutput = expand('&lt;h1&gt;Hi&lt;/h1&gt;<span>4</span><span>5</span>');
