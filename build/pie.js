@@ -2501,6 +2501,17 @@ pie.mixins.container = {
     if(obj) return obj[fname].apply(obj, args);
   },
 
+  sendToChildren: function(/* fnName, arg1, arg2 */) {
+    var allArgs = pie.array.change(arguments, 'from'),
+    fnName = allArgs[0],
+    args = allArgs.slice(1);
+
+    this.children.forEach(function(child){
+      if(pie.object.has(child, fnName, true)) child[fnName].apply(child, args);
+      if(pie.object.has(child, 'sendToChildren', true)) child.sendToChildren.apply(child, allArgs);
+    }.bind(this));
+  },
+
   removeChild: function(obj) {
     var child = this.getChild(obj), i;
 

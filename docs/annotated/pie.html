@@ -4301,6 +4301,17 @@ pie.mixins.container = {
     <span class="hljs-keyword">if</span>(obj) <span class="hljs-keyword">return</span> obj[fname].apply(obj, args);
   },
 
+  sendToChildren: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* fnName, arg1, arg2 */</span>)</span> </span>{
+    <span class="hljs-keyword">var</span> allArgs = pie.array.change(<span class="hljs-built_in">arguments</span>, <span class="hljs-string">'from'</span>),
+    fnName = allArgs[<span class="hljs-number">0</span>],
+    args = allArgs.slice(<span class="hljs-number">1</span>);
+
+    <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span></span>{
+      <span class="hljs-keyword">if</span>(pie.object.has(child, fnName, <span class="hljs-literal">true</span>)) child[fnName].apply(child, args);
+      <span class="hljs-keyword">if</span>(pie.object.has(child, <span class="hljs-string">'sendToChildren'</span>, <span class="hljs-literal">true</span>)) child.sendToChildren.apply(child, allArgs);
+    }.bind(<span class="hljs-keyword">this</span>));
+  },
+
   removeChild: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
     <span class="hljs-keyword">var</span> child = <span class="hljs-keyword">this</span>.getChild(obj), i;
 
