@@ -5021,7 +5021,7 @@ pie.formView = pie.activeView.extend('formView', {
   validateAndSubmitForm: function(e) {
     this.consumeEvent(e);
 
-    var form = e.delegateTarget;
+    var form = e && e.delegateTarget;
 
     this.applyFieldsToModel(form);
 
@@ -5562,6 +5562,7 @@ pie.i18n.defaultTranslations = {
       number:             "must be a number",
       phone:              "is not a valid phone number",
       presence:           "can't be blank",
+      uniqueness:         "is not unique",
       url:                "must be a valid url",
 
       range_messages: {
@@ -5628,18 +5629,21 @@ pie.list = pie.model.extend('list', {
   //
   // Track changes to the array which occur during `fn`'s execution.
   _trackMutations: function(options, fn) {
+
     var oldLength = this.data.items.length,
-    changes = [fn.call()],
+    changes = pie.array.from(fn.call()),
     newLength = this.data.items.length;
 
-    if(oldLength !== newLength) {
-      changes.push({
-        name: 'length',
-        type: 'update',
-        object: this.data.items,
-        oldValue: oldLength,
-        value: newLength
-      });
+    if(!options || !options.skipTrackMutations) {
+      if(oldLength !== newLength) {
+        changes.push({
+          name: 'length',
+          type: 'update',
+          object: this.data.items,
+          oldValue: oldLength,
+          value: newLength
+        });
+      }
     }
 
     this.changeRecords = this.changeRecords.concat(changes);
@@ -5719,7 +5723,7 @@ pie.list = pie.model.extend('list', {
 
     this._trackMutations(options, function() {
       var change = {
-        name: l,
+        name: String(l - 1),
         object: this.data.items,
         type: 'delete',
         value: undefined,
@@ -5786,6 +5790,8 @@ pie.list = pie.model.extend('list', {
   //
   // Set an attribute or an index based on `key` to `value`.
   set: function(key, value, options) {
+    if(key === 'items') return this.setItems(value, options);
+
     var idx = this._normalizedIndex(key);
 
     if(isNaN(idx)) {
@@ -5805,6 +5811,39 @@ pie.list = pie.model.extend('list', {
       this.data.items[idx] = change.value = value;
 
       return change;
+    }.bind(this));
+  },
+
+  setItems: function(arr, options) {
+    var innerOptions = pie.object.merge({}, options, {
+      skipTrackMutations: true,
+      skipObservers: true
+    });
+
+    return this._trackMutations(options, function(){
+
+      var currentLength = this.data.items.length,
+      newLength = arr.length,
+      i;
+
+      for(i = 0; i < Math.min(currentLength, newLength); i++) {
+        this.set(i, arr[i], innerOptions);
+      }
+
+      if(currentLength > newLength) {
+        i = currentLength;
+        while(i > newLength) {
+          this.pop(innerOptions);
+          i--;
+        }
+      } else if(currentLength < newLength) {
+        i = currentLength;
+        while(i < newLength) {
+          this.push(arr[i], innerOptions);
+          i++;
+        }
+      }
+
     }.bind(this));
   },
 
@@ -6746,11 +6785,13 @@ pie.validator = pie.base.extend('validator', (function(){
     },
 
 
-    chosen: function(value /* , options */){
-      if(Array.isArray(value)) {
-        return !!value.length;
-      }
-      return value != null;
+    chosen: function(value, options){
+      return this.withStandardChecks(value, options, function(){
+        if(Array.isArray(value)) {
+          return !!value.length;
+        }
+        return value != null && value !== '';
+      });
     },
 
 
@@ -6884,6 +6925,19 @@ pie.validator = pie.base.extend('validator', (function(){
       });
     },
 
+    uniqueness: function(value, options) {
+      return this.withStandardChecks(value, options, function() {
+
+        if(!options.within) return true;
+        var within = pie.fn.valueFrom(options.within), i = 0, cnt = 0;
+        for(; i < within.length; i++) {
+          if(within[i] === value) cnt++;
+          if(cnt > 1) return false;
+        }
+
+        return true;
+      });
+    },
 
     url: function(value, options) {
       return this.withStandardChecks(value, options, function() {

@@ -145,6 +145,77 @@ describe("pie.list", function() {
         expect(this.changes[0].name).toEqual('1');
       });
 
+      it("should allow the entire list to be set", function() {
+        this.items.set('items', ['e', 'f', 'g', 'h', 'i', 'j']);
+        expect(this.changes.length).toEqual(8); // 6, one for each index, 1 for the length, and 1 for the _version;
+
+        expect(this.changes[0].name).toEqual('0');
+        expect(this.changes[0].type).toEqual('update');
+
+        expect(this.changes[3].name).toEqual('3');
+        expect(this.changes[3].type).toEqual('update');
+
+        expect(this.changes[4].name).toEqual('4');
+        expect(this.changes[4].type).toEqual('add');
+
+        expect(this.changes[5].name).toEqual('5');
+        expect(this.changes[5].type).toEqual('add');
+
+        expect(this.changes[6].name).toEqual('length');
+        expect(this.changes[6].type).toEqual('update');
+        expect(this.changes[6].oldValue).toEqual(4);
+        expect(this.changes[6].value).toEqual(6);
+
+        expect(this.changes[7].name).toEqual('_version');
+        expect(this.changes[7].type).toEqual('update');
+        expect(this.changes[7].oldValue).toEqual(1);
+        expect(this.changes[7].value).toEqual(2);
+
+
+        this.items.set('items', ['m', 'n', 'o', 'x', 'y', 'z']);
+
+        expect(this.changes.length).toEqual(7); // 6, one for each index and 1 for the _version;
+
+        expect(this.changes[0].name).toEqual('0');
+        expect(this.changes[0].type).toEqual('update');
+
+        expect(this.changes[5].name).toEqual('5');
+        expect(this.changes[5].type).toEqual('update');
+
+        expect(this.changes[6].name).toEqual('_version');
+        expect(this.changes[6].type).toEqual('update');
+        expect(this.changes[6].oldValue).toEqual(2);
+        expect(this.changes[6].value).toEqual(3);
+
+
+        this.items.set('items', ['q', 'r', 's']);
+
+        expect(this.changes.length).toEqual(8); // 6, one for each index, 1 for the length, and 1 for the _version;
+
+        expect(this.changes[0].name).toEqual('0');
+        expect(this.changes[0].type).toEqual('update');
+
+        expect(this.changes[2].name).toEqual('2');
+        expect(this.changes[2].type).toEqual('update');
+
+        expect(this.changes[3].name).toEqual('3');
+        expect(this.changes[3].type).toEqual('delete');
+
+        expect(this.changes[5].name).toEqual('3');
+        expect(this.changes[5].type).toEqual('delete');
+
+        expect(this.changes[6].name).toEqual('length');
+        expect(this.changes[6].type).toEqual('update');
+        expect(this.changes[6].oldValue).toEqual(6);
+        expect(this.changes[6].value).toEqual(3);
+
+        expect(this.changes[7].name).toEqual('_version');
+        expect(this.changes[7].type).toEqual('update');
+        expect(this.changes[7].oldValue).toEqual(3);
+        expect(this.changes[7].value).toEqual(4);
+
+      });
+
     });
 
 

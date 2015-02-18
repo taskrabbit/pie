@@ -8645,7 +8645,7 @@ we invoke our <code>onValid</code> function, otherwise the <code>onInvalid</code
             <div class="content"><div class='highlight'><pre>  validateAndSubmitForm: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span> </span>{
     <span class="hljs-keyword">this</span>.consumeEvent(e);
 
-    <span class="hljs-keyword">var</span> form = e.delegateTarget;
+    <span class="hljs-keyword">var</span> form = e &amp;&amp; e.delegateTarget;
 
     <span class="hljs-keyword">this</span>.applyFieldsToModel(form);
 
@@ -9257,6 +9257,7 @@ pie.i18n.defaultTranslations = {
       number:             <span class="hljs-string">"must be a number"</span>,
       phone:              <span class="hljs-string">"is not a valid phone number"</span>,
       presence:           <span class="hljs-string">"can't be blank"</span>,
+      uniqueness:         <span class="hljs-string">"is not unique"</span>,
       url:                <span class="hljs-string">"must be a valid url"</span>,
 
       range_messages: {
@@ -9369,18 +9370,21 @@ list._normalizeIndex(-<span class="hljs-number">1</span>) <span class="hljs-comm
             </div>
             
             <div class="content"><div class='highlight'><pre>  _trackMutations: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, fn)</span> </span>{
+
     <span class="hljs-keyword">var</span> oldLength = <span class="hljs-keyword">this</span>.data.items.length,
-    changes = [fn.call()],
+    changes = pie.array.from(fn.call()),
     newLength = <span class="hljs-keyword">this</span>.data.items.length;
 
-    <span class="hljs-keyword">if</span>(oldLength !== newLength) {
-      changes.push({
-        name: <span class="hljs-string">'length'</span>,
-        type: <span class="hljs-string">'update'</span>,
-        object: <span class="hljs-keyword">this</span>.data.items,
-        oldValue: oldLength,
-        value: newLength
-      });
+    <span class="hljs-keyword">if</span>(!options || !options.skipTrackMutations) {
+      <span class="hljs-keyword">if</span>(oldLength !== newLength) {
+        changes.push({
+          name: <span class="hljs-string">'length'</span>,
+          type: <span class="hljs-string">'update'</span>,
+          object: <span class="hljs-keyword">this</span>.data.items,
+          oldValue: oldLength,
+          value: newLength
+        });
+      }
     }
 
     <span class="hljs-keyword">this</span>.changeRecords = <span class="hljs-keyword">this</span>.changeRecords.concat(changes);
@@ -9525,7 +9529,7 @@ Returns the item.</p>
 
     <span class="hljs-keyword">this</span>._trackMutations(options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
       <span class="hljs-keyword">var</span> change = {
-        name: l,
+        name: <span class="hljs-built_in">String</span>(l - <span class="hljs-number">1</span>),
         object: <span class="hljs-keyword">this</span>.data.items,
         type: <span class="hljs-string">'delete'</span>,
         value: <span class="hljs-literal">undefined</span>,
@@ -9625,6 +9629,8 @@ Returns the removed item.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  set: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value, options)</span> </span>{
+    <span class="hljs-keyword">if</span>(key === <span class="hljs-string">'items'</span>) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.setItems(value, options);
+
     <span class="hljs-keyword">var</span> idx = <span class="hljs-keyword">this</span>._normalizedIndex(key);
 
     <span class="hljs-keyword">if</span>(<span class="hljs-built_in">isNaN</span>(idx)) {
@@ -9644,6 +9650,39 @@ Returns the removed item.</p>
       <span class="hljs-keyword">this</span>.data.items[idx] = change.value = value;
 
       <span class="hljs-keyword">return</span> change;
+    }.bind(<span class="hljs-keyword">this</span>));
+  },
+
+  setItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arr, options)</span> </span>{
+    <span class="hljs-keyword">var</span> innerOptions = pie.object.merge({}, options, {
+      skipTrackMutations: <span class="hljs-literal">true</span>,
+      skipObservers: <span class="hljs-literal">true</span>
+    });
+
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._trackMutations(options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+
+      <span class="hljs-keyword">var</span> currentLength = <span class="hljs-keyword">this</span>.data.items.length,
+      newLength = arr.length,
+      i;
+
+      <span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">Math</span>.min(currentLength, newLength); i++) {
+        <span class="hljs-keyword">this</span>.set(i, arr[i], innerOptions);
+      }
+
+      <span class="hljs-keyword">if</span>(currentLength &gt; newLength) {
+        i = currentLength;
+        <span class="hljs-keyword">while</span>(i &gt; newLength) {
+          <span class="hljs-keyword">this</span>.pop(innerOptions);
+          i--;
+        }
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(currentLength &lt; newLength) {
+        i = currentLength;
+        <span class="hljs-keyword">while</span>(i &lt; newLength) {
+          <span class="hljs-keyword">this</span>.push(arr[i], innerOptions);
+          i++;
+        }
+      }
+
     }.bind(<span class="hljs-keyword">this</span>));
   },</pre></div></div>
             
@@ -11024,11 +11063,13 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
     },
 
 
-    chosen: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value <span class="hljs-comment">/* , options */</span>)</span></span>{
-      <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(value)) {
-        <span class="hljs-keyword">return</span> !!value.length;
-      }
-      <span class="hljs-keyword">return</span> value != <span class="hljs-literal">null</span>;
+    chosen: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span></span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(value)) {
+          <span class="hljs-keyword">return</span> !!value.length;
+        }
+        <span class="hljs-keyword">return</span> value != <span class="hljs-literal">null</span> &amp;&amp; value !== <span class="hljs-string">''</span>;
+      });
     },</pre></div></div>
             
         </li>
@@ -11240,6 +11281,19 @@ pie.validator = pie.base.extend(<span class="hljs-string">'validator'</span>, (<
       });
     },
 
+    uniqueness: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+
+        <span class="hljs-keyword">if</span>(!options.within) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">var</span> within = pie.fn.valueFrom(options.within), i = <span class="hljs-number">0</span>, cnt = <span class="hljs-number">0</span>;
+        <span class="hljs-keyword">for</span>(; i &lt; within.length; i++) {
+          <span class="hljs-keyword">if</span>(within[i] === value) cnt++;
+          <span class="hljs-keyword">if</span>(cnt &gt; <span class="hljs-number">1</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+        }
+
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+      });
+    },
 
     url: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value, options)</span> </span>{
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -12071,6 +12125,29 @@ when the transition is complete, invoke the callback.</p>
         
     </ul>
   </div>
+<script type="text/javascript">
+  var titles = Array.prototype.slice.call(document.querySelectorAll('[id^="section-"] h1'), 0);
+  var html = '<li class="docco-index" id="docco-index"><div class="annotation"><ul>', a = document.createElement('a');
+  a.textContent = 'Back to top';
+  a.href = '#docco-index';
+  a.style.color = '#cccccc';
+
+  titles.forEach(function(title) {
+    html += '<li><a href="#' + title.id + '">' + title.innerHTML.replace(/pie\s/i, '') + '</a></li>';
+    title.parentNode.insertBefore(a.cloneNode(true), title);
+  });
+
+  html += "</ul></div></li>";
+
+  var newEl = document.createElement('div');
+  newEl.innerHTML = html;
+  newEl = newEl.firstElementChild;
+
+  var title = document.querySelector('#title');
+  title.parentNode.insertBefore(newEl, title.nextSibling);
+
+
+</script>
 <script type="text/javascript">
   var titles = Array.prototype.slice.call(document.querySelectorAll('[id^="section-"] h1'), 0);
   var html = '<li class="docco-index" id="docco-index"><div class="annotation"><ul>', a = document.createElement('a');

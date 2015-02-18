@@ -459,6 +459,7 @@ pie.i18n.defaultTranslations = {
       number:             "must be a number",
       phone:              "is not a valid phone number",
       presence:           "can't be blank",
+      uniqueness:         "is not unique",
       url:                "must be a valid url",
 
       range_messages: {
