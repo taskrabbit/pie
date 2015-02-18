@@ -1244,6 +1244,25 @@ describe("String extensions", function() {
     });
   });
 
+  describe('#expand', function() {
+
+    it("by default should not throw an error when an interpolation is missing", function() {
+      var result = pie.string.expand('%{foo} bar');
+      expect(result).toEqual('undefined bar');
+    });
+
+    it("should raise an error on a missing interpolation if asked to", function() {
+      expect(function(){
+        pie.string.expand('%{foo} bar', {}, true);
+      }).toThrowError("Missing interpolation argument `foo` for '%{foo} bar'");
+    });
+
+    it("should properly interpolate the values", function() {
+      var result = pie.string.expand("%{foo} bar biz %{baz} -- %{foo}", {foo: 'FOO', baz: 'BAZ', bar: 'BAR'});
+      expect(result).toEqual("FOO bar biz BAZ -- FOO");
+    });
+
+  });
 
   describe("#template", function() {
 
