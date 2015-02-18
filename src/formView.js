@@ -225,7 +225,7 @@ pie.formView = pie.activeView.extend('formView', {
   validateAndSubmitForm: function(e) {
     this.consumeEvent(e);
 
-    var form = e.delegateTarget;
+    var form = e && e.delegateTarget;
 
     this.applyFieldsToModel(form);
 

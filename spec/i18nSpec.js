@@ -137,9 +137,11 @@ describe("pie.i18n", function() {
       expect(response).toEqual("Things to foo, even foo again for bar.");
     });
 
-    it("should render non-interpolated values", function() {
+    it("should not render strings which do not have the correct interpolations provided", function() {
+      var spy = spyOn(this.i18n.app.errorHandler, 'handleI18nError');
       var response = this.i18n.t("test.interpolate");
-      expect(response).toEqual("Things to undefined, even undefined again for undefined.");
+      expect(response).toEqual("");
+      expect(spy).toHaveBeenCalled();
     });
 
     it("should allow nesting of translations via ${", function() {
@@ -155,6 +157,13 @@ describe("pie.i18n", function() {
     it("should allow the changing of of the result by passing string alterations", function() {
       var response = this.i18n.t('test.changed', {foo: 'test'}, 'modularize', 'titleize');
       expect(response).toEqual("Content That IsChanged Test");
+    });
+
+    it("should report misses and return an empty string", function() {
+      var spy = spyOn(this.i18n.app.errorHandler, 'handleI18nError');
+      var response = this.i18n.t('djaslkfjalsdkfjlasf');
+      expect(response).toEqual('');
+      expect(spy).toHaveBeenCalled();
     });
 
   });

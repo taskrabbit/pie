@@ -1244,6 +1244,25 @@ describe("String extensions", function() {
     });
   });
 
+  describe('#expand', function() {
+
+    it("by default should not throw an error when an interpolation is missing", function() {
+      var result = pie.string.expand('%{foo} bar');
+      expect(result).toEqual('undefined bar');
+    });
+
+    it("should raise an error on a missing interpolation if asked to", function() {
+      expect(function(){
+        pie.string.expand('%{foo} bar', {}, true);
+      }).toThrowError("Missing interpolation argument `foo` for '%{foo} bar'");
+    });
+
+    it("should properly interpolate the values", function() {
+      var result = pie.string.expand("%{foo} bar biz %{baz} -- %{foo}", {foo: 'FOO', baz: 'BAZ', bar: 'BAR'});
+      expect(result).toEqual("FOO bar biz BAZ -- FOO");
+    });
+
+  });
 
   describe("#template", function() {
 
@@ -1381,16 +1400,32 @@ describe("pie.mixins.changeSet", function() {
   beforeEach(function() {
     this.changes = [{
       name: 'foo',
+      type: 'add',
       oldValue: undefined,
       value: 2
     }, {
-      name: 'bar'
+      name: 'bar',
+      type: 'add',
+      oldValue: undefined,
+      value: 4
     }, {
       name: 'foo',
+      type: 'update',
       oldValue: 2,
       value: 4
     }, {
-      name: 'qux'
+      name: 'qux',
+      type: 'add'
+    }, {
+      name: 'bar',
+      type: 'update',
+      oldValue: 4,
+      value: 8
+    }, {
+      name: 'foo',
+      type: 'update',
+      oldValue: 4,
+      value: 6
     }];
 
     pie.object.merge(this.changes, pie.mixins.changeSet);
@@ -1406,6 +1441,21 @@ describe("pie.mixins.changeSet", function() {
     expect(this.changes.hasAny('foo', 'bar')).toEqual(true);
     expect(this.changes.hasAny('foo', 'baz')).toEqual(true);
     expect(this.changes.hasAny('baz', 'too')).toEqual(false);
+  });
+
+  it("should allow a specific change to be retrieved", function() {
+    expect(this.changes.get('bar').value).toEqual(8);
+  });
+
+  it("should allow the changeSet to be queried for a specific name and/or type", function() {
+    expect(this.changes.query({name: 'foo', type: 'add'}).value).toEqual(2);
+    expect(this.changes.query({name: 'foo', type: 'update'}).value).toEqual(6);
+  });
+
+  it("should allow the changeSet to be queried for all types and/or names", function() {
+    expect(this.changes.queryAll({name: 'foo'}).length).toEqual(3);
+    expect(this.changes.queryAll({type: 'update'}).length).toEqual(3);
+    expect(this.changes.queryAll({type: 'update', name: 'foo'}).length).toEqual(2);
   });
 
 });
@@ -2595,9 +2645,11 @@ describe("pie.i18n", function() {
       expect(response).toEqual("Things to foo, even foo again for bar.");
     });
 
-    it("should render non-interpolated values", function() {
+    it("should not render strings which do not have the correct interpolations provided", function() {
+      var spy = spyOn(this.i18n.app.errorHandler, 'handleI18nError');
       var response = this.i18n.t("test.interpolate");
-      expect(response).toEqual("Things to undefined, even undefined again for undefined.");
+      expect(response).toEqual("");
+      expect(spy).toHaveBeenCalled();
     });
 
     it("should allow nesting of translations via ${", function() {
@@ -2613,6 +2665,13 @@ describe("pie.i18n", function() {
     it("should allow the changing of of the result by passing string alterations", function() {
       var response = this.i18n.t('test.changed', {foo: 'test'}, 'modularize', 'titleize');
       expect(response).toEqual("Content That IsChanged Test");
+    });
+
+    it("should report misses and return an empty string", function() {
+      var spy = spyOn(this.i18n.app.errorHandler, 'handleI18nError');
+      var response = this.i18n.t('djaslkfjalsdkfjlasf');
+      expect(response).toEqual('');
+      expect(spy).toHaveBeenCalled();
     });
 
   });
@@ -3006,6 +3065,77 @@ describe("pie.list", function() {
         expect(this.changes.length).toEqual(2);
         expect(this.changes[0].type).toEqual('update');
         expect(this.changes[0].name).toEqual('1');
+      });
+
+      it("should allow the entire list to be set", function() {
+        this.items.set('items', ['e', 'f', 'g', 'h', 'i', 'j']);
+        expect(this.changes.length).toEqual(8); // 6, one for each index, 1 for the length, and 1 for the _version;
+
+        expect(this.changes[0].name).toEqual('0');
+        expect(this.changes[0].type).toEqual('update');
+
+        expect(this.changes[3].name).toEqual('3');
+        expect(this.changes[3].type).toEqual('update');
+
+        expect(this.changes[4].name).toEqual('4');
+        expect(this.changes[4].type).toEqual('add');
+
+        expect(this.changes[5].name).toEqual('5');
+        expect(this.changes[5].type).toEqual('add');
+
+        expect(this.changes[6].name).toEqual('length');
+        expect(this.changes[6].type).toEqual('update');
+        expect(this.changes[6].oldValue).toEqual(4);
+        expect(this.changes[6].value).toEqual(6);
+
+        expect(this.changes[7].name).toEqual('_version');
+        expect(this.changes[7].type).toEqual('update');
+        expect(this.changes[7].oldValue).toEqual(1);
+        expect(this.changes[7].value).toEqual(2);
+
+
+        this.items.set('items', ['m', 'n', 'o', 'x', 'y', 'z']);
+
+        expect(this.changes.length).toEqual(7); // 6, one for each index and 1 for the _version;
+
+        expect(this.changes[0].name).toEqual('0');
+        expect(this.changes[0].type).toEqual('update');
+
+        expect(this.changes[5].name).toEqual('5');
+        expect(this.changes[5].type).toEqual('update');
+
+        expect(this.changes[6].name).toEqual('_version');
+        expect(this.changes[6].type).toEqual('update');
+        expect(this.changes[6].oldValue).toEqual(2);
+        expect(this.changes[6].value).toEqual(3);
+
+
+        this.items.set('items', ['q', 'r', 's']);
+
+        expect(this.changes.length).toEqual(8); // 6, one for each index, 1 for the length, and 1 for the _version;
+
+        expect(this.changes[0].name).toEqual('5');
+        expect(this.changes[0].type).toEqual('delete');
+
+        expect(this.changes[2].name).toEqual('3');
+        expect(this.changes[2].type).toEqual('delete');
+
+        expect(this.changes[3].name).toEqual('2');
+        expect(this.changes[3].type).toEqual('update');
+
+        expect(this.changes[5].name).toEqual('0');
+        expect(this.changes[5].type).toEqual('update');
+
+        expect(this.changes[6].name).toEqual('length');
+        expect(this.changes[6].type).toEqual('update');
+        expect(this.changes[6].oldValue).toEqual(6);
+        expect(this.changes[6].value).toEqual(3);
+
+        expect(this.changes[7].name).toEqual('_version');
+        expect(this.changes[7].type).toEqual('update');
+        expect(this.changes[7].oldValue).toEqual(3);
+        expect(this.changes[7].value).toEqual(4);
+
       });
 
     });

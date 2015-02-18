@@ -80,11 +80,13 @@ pie.validator = pie.base.extend('validator', (function(){
     },
 
 
-    chosen: function(value /* , options */){
-      if(Array.isArray(value)) {
-        return !!value.length;
-      }
-      return value != null;
+    chosen: function(value, options){
+      return this.withStandardChecks(value, options, function(){
+        if(Array.isArray(value)) {
+          return !!value.length;
+        }
+        return value != null && value !== '';
+      });
     },
 
 
@@ -218,6 +220,19 @@ pie.validator = pie.base.extend('validator', (function(){
       });
     },
 
+    uniqueness: function(value, options) {
+      return this.withStandardChecks(value, options, function() {
+
+        if(!options.within) return true;
+        var within = pie.fn.valueFrom(options.within), i = 0, cnt = 0;
+        for(; i < within.length; i++) {
+          if(within[i] === value) cnt++;
+          if(cnt > 1) return false;
+        }
+
+        return true;
+      });
+    },
 
     url: function(value, options) {
       return this.withStandardChecks(value, options, function() {

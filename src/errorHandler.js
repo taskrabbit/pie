@@ -67,6 +67,10 @@ pie.errorHandler = pie.model.extend('errorHandler', {
 
   },
 
+  handleI18nError: function(error) {
+    this.reportError(error, {prefix: "[caught]"});
+  },
+
   // ** pie.errorHandler.notifyErrors **
   //
   // Build errors and send them to the notifier.

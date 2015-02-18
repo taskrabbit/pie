@@ -52,18 +52,21 @@ pie.list = pie.model.extend('list', {
   //
   // Track changes to the array which occur during `fn`'s execution.
   _trackMutations: function(options, fn) {
+
     var oldLength = this.data.items.length,
-    changes = [fn.call()],
+    changes = pie.array.from(fn.call()),
     newLength = this.data.items.length;
 
-    if(oldLength !== newLength) {
-      changes.push({
-        name: 'length',
-        type: 'update',
-        object: this.data.items,
-        oldValue: oldLength,
-        value: newLength
-      });
+    if(!options || !options.skipTrackMutations) {
+      if(oldLength !== newLength) {
+        changes.push({
+          name: 'length',
+          type: 'update',
+          object: this.data.items,
+          oldValue: oldLength,
+          value: newLength
+        });
+      }
     }
 
     this.changeRecords = this.changeRecords.concat(changes);
@@ -143,7 +146,7 @@ pie.list = pie.model.extend('list', {
 
     this._trackMutations(options, function() {
       var change = {
-        name: l,
+        name: String(l - 1),
         object: this.data.items,
         type: 'delete',
         value: undefined,
@@ -210,6 +213,8 @@ pie.list = pie.model.extend('list', {
   //
   // Set an attribute or an index based on `key` to `value`.
   set: function(key, value, options) {
+    if(key === 'items') return this.setItems(value, options);
+
     var idx = this._normalizedIndex(key);
 
     if(isNaN(idx)) {
@@ -229,6 +234,48 @@ pie.list = pie.model.extend('list', {
       this.data.items[idx] = change.value = value;
 
       return change;
+    }.bind(this));
+  },
+
+  setItems: function(arr, options) {
+    var innerOptions = pie.object.merge({}, options, {
+      skipTrackMutations: true,
+      skipObservers: true
+    });
+
+    return this._trackMutations(options, function(){
+
+      var currentLength = this.data.items.length,
+      newLength = arr.length,
+      i;
+
+      /* if the old list is longer than the new, we create change records from the end to the beginning */
+      if(currentLength > newLength) {
+        i = currentLength;
+
+        while(i > newLength) {
+          this.pop(innerOptions);
+          i--;
+        }
+
+        for(i = newLength - 1; i >= 0; i--) {
+          this.set(i, arr[i], innerOptions);
+        }
+
+      /* otherwise, we create change records from the beginning to the end */
+      } else {
+
+        for(i = 0; i < currentLength; i++) {
+          this.set(i, arr[i], innerOptions);
+        }
+
+        i = currentLength;
+        while(i < newLength) {
+          this.push(arr[i], innerOptions);
+          i++;
+        }
+      }
+
     }.bind(this));
   },
 
