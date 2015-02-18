@@ -1,13 +1,11 @@
 pie.mixins.changeSet = {
 
-  has: function(name) {
-    return pie.array.areAny(this, function(change) {
-      return change.name === name;
-    });
+  get: function(name) {
+    return this.query({name: name});
   },
 
-  get: function(name) {
-    return pie.array.detectLast(this, function(change) {
+  has: function(name) {
+    return pie.array.areAny(this, function(change) {
       return change.name === name;
     });
   },
@@ -24,6 +22,24 @@ pie.mixins.changeSet = {
       if(!this.has(arguments[i])) return false;
     }
     return true;
+  },
+
+  query: function(options) {
+    return this._query('detectLast', options);
+  },
+
+  queryAll: function(options) {
+    return this._query('filter', options);
+  },
+
+  _query: function(arrayFn, options) {
+    var names = pie.array.from(options.names || options.name),
+    types = pie.array.from(options.types || options.type);
+
+    return pie.array[arrayFn](this, function(change) {
+      return (!names.length || ~names.indexOf(change.name)) &&
+             (!types.length || ~types.indexOf(change.type));
+    });
   }
 
 };

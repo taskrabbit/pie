@@ -249,17 +249,26 @@ pie.list = pie.model.extend('list', {
       newLength = arr.length,
       i;
 
-      for(i = 0; i < Math.min(currentLength, newLength); i++) {
-        this.set(i, arr[i], innerOptions);
-      }
-
+      /* if the old list is longer than the new, we create change records from the end to the beginning */
       if(currentLength > newLength) {
         i = currentLength;
+
         while(i > newLength) {
           this.pop(innerOptions);
           i--;
         }
-      } else if(currentLength < newLength) {
+
+        for(i = newLength - 1; i >= 0; i--) {
+          this.set(i, arr[i], innerOptions);
+        }
+
+      /* otherwise, we create change records from the beginning to the end */
+      } else {
+
+        for(i = 0; i < currentLength; i++) {
+          this.set(i, arr[i], innerOptions);
+        }
+
         i = currentLength;
         while(i < newLength) {
           this.push(arr[i], innerOptions);

@@ -256,6 +256,21 @@ pie.array.dup = function(a) {
   return pie.array.from(a).slice(0);
 };
 
+// ** pie.array.filter **
+//
+// Return the elements of the array that match `fn`.
+// The `fn` can be a function or attribut of the elements.
+// ```
+// var arr = ['', ' ', 'foo'];
+// pie.array.filter(arr, 'length');
+// //=> [' ', 'foo']
+// ```
+pie.array.filter = function(arr, fn) {
+  return pie.array.from(arr).filter(function(i){
+    return pie.object.getValue(i, fn);
+  });
+};
+
 
 // ** pie.array.flatten **
 //
@@ -1728,9 +1743,12 @@ pie.string.endsWith = function(str, suffix) {
 };
 
 // designed to be used with the "%{expression}" placeholders
-pie.string.expand = function(str, data) {
+pie.string.expand = function(str, data, raiseOnMiss) {
   data = data || {};
-  return str.replace(/\%\{(.+?)\}/g, function(match, key) { return data[key]; });
+  return str.replace(/\%\{(.+?)\}/g, function(match, key) {
+    if(raiseOnMiss && !pie.object.has(data, key)) throw new Error("Missing interpolation argument `" + key + "` for '" + str + "'");
+    return data[key];
+  });
 };
 
 
@@ -2409,14 +2427,12 @@ pie.mixins.bindings = (function(){
 })();
 pie.mixins.changeSet = {
 
-  has: function(name) {
-    return pie.array.areAny(this, function(change) {
-      return change.name === name;
-    });
+  get: function(name) {
+    return this.query({name: name});
   },
 
-  get: function(name) {
-    return pie.array.detectLast(this, function(change) {
+  has: function(name) {
+    return pie.array.areAny(this, function(change) {
       return change.name === name;
     });
   },
@@ -2433,6 +2449,24 @@ pie.mixins.changeSet = {
       if(!this.has(arguments[i])) return false;
     }
     return true;
+  },
+
+  query: function(options) {
+    return this._query('detectLast', options);
+  },
+
+  queryAll: function(options) {
+    return this._query('filter', options);
+  },
+
+  _query: function(arrayFn, options) {
+    var names = pie.array.from(options.names || options.name),
+    types = pie.array.from(options.types || options.type);
+
+    return pie.array[arrayFn](this, function(change) {
+      return (!names.length || ~names.indexOf(change.name)) &&
+             (!types.length || ~types.indexOf(change.type));
+    });
   }
 
 };
@@ -4741,6 +4775,10 @@ pie.errorHandler = pie.model.extend('errorHandler', {
 
   },
 
+  handleI18nError: function(error) {
+    this.reportError(error, {prefix: "[caught]"});
+  },
+
   // ** pie.errorHandler.notifyErrors **
   //
   // Build errors and send them to the notifier.
@@ -5183,6 +5221,15 @@ pie.i18n = pie.model.extend('i18n', {
     }.bind(this));
   },
 
+  _interpolateTranslation: function(t, data) {
+    try{
+      return pie.string.expand(t, data, true);
+    } catch(e) {
+      this.app.errorHandler.handleI18nError(e);
+      return "";
+    }
+  },
+
 
   /* assumes that dates either come in as dates, iso strings, or epoch timestamps */
   _normalizedDate: function(d) {
@@ -5301,7 +5348,7 @@ pie.i18n = pie.model.extend('i18n', {
       if(data && data.hasOwnProperty('default')) {
         translation = pie.fn.valueFrom(data.default);
       } else {
-        this.app.debug("Translation not found: " + path);
+        this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path));
         return "";
       }
     }
@@ -5309,7 +5356,7 @@ pie.i18n = pie.model.extend('i18n', {
 
     if(pie.object.isString(translation)) {
       translation = translation.indexOf('${') === -1 ? translation : this._nestedTranslate(translation, data);
-      translation = translation.indexOf('%{') === -1 ? translation : pie.string.expand(translation, data);
+      translation = translation.indexOf('%{') === -1 ? translation : this._interpolateTranslation(translation, data);
     }
 
     if(changes.length) {
@@ -5826,17 +5873,26 @@ pie.list = pie.model.extend('list', {
       newLength = arr.length,
       i;
 
-      for(i = 0; i < Math.min(currentLength, newLength); i++) {
-        this.set(i, arr[i], innerOptions);
-      }
-
+      /* if the old list is longer than the new, we create change records from the end to the beginning */
       if(currentLength > newLength) {
         i = currentLength;
+
         while(i > newLength) {
           this.pop(innerOptions);
           i--;
         }
-      } else if(currentLength < newLength) {
+
+        for(i = newLength - 1; i >= 0; i--) {
+          this.set(i, arr[i], innerOptions);
+        }
+
+      /* otherwise, we create change records from the beginning to the end */
+      } else {
+
+        for(i = 0; i < currentLength; i++) {
+          this.set(i, arr[i], innerOptions);
+        }
+
         i = currentLength;
         while(i < newLength) {
           this.push(arr[i], innerOptions);

@@ -145,6 +145,21 @@ pie.array.dup = function(a) {
   return pie.array.from(a).slice(0);
 };
 
+// ** pie.array.filter **
+//
+// Return the elements of the array that match `fn`.
+// The `fn` can be a function or attribut of the elements.
+// ```
+// var arr = ['', ' ', 'foo'];
+// pie.array.filter(arr, 'length');
+// //=> [' ', 'foo']
+// ```
+pie.array.filter = function(arr, fn) {
+  return pie.array.from(arr).filter(function(i){
+    return pie.object.getValue(i, fn);
+  });
+};
+
 
 // ** pie.array.flatten **
 //

@@ -125,9 +125,12 @@ pie.string.endsWith = function(str, suffix) {
 };
 
 // designed to be used with the "%{expression}" placeholders
-pie.string.expand = function(str, data) {
+pie.string.expand = function(str, data, raiseOnMiss) {
   data = data || {};
-  return str.replace(/\%\{(.+?)\}/g, function(match, key) { return data[key]; });
+  return str.replace(/\%\{(.+?)\}/g, function(match, key) {
+    if(raiseOnMiss && !pie.object.has(data, key)) throw new Error("Missing interpolation argument `" + key + "` for '" + str + "'");
+    return data[key];
+  });
 };
 
 

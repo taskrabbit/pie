@@ -80,6 +80,15 @@ pie.i18n = pie.model.extend('i18n', {
     }.bind(this));
   },
 
+  _interpolateTranslation: function(t, data) {
+    try{
+      return pie.string.expand(t, data, true);
+    } catch(e) {
+      this.app.errorHandler.handleI18nError(e);
+      return "";
+    }
+  },
+
 
   /* assumes that dates either come in as dates, iso strings, or epoch timestamps */
   _normalizedDate: function(d) {
@@ -198,7 +207,7 @@ pie.i18n = pie.model.extend('i18n', {
       if(data && data.hasOwnProperty('default')) {
         translation = pie.fn.valueFrom(data.default);
       } else {
-        this.app.debug("Translation not found: " + path);
+        this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path));
         return "";
       }
     }
@@ -206,7 +215,7 @@ pie.i18n = pie.model.extend('i18n', {
 
     if(pie.object.isString(translation)) {
       translation = translation.indexOf('${') === -1 ? translation : this._nestedTranslate(translation, data);
-      translation = translation.indexOf('%{') === -1 ? translation : pie.string.expand(translation, data);
+      translation = translation.indexOf('%{') === -1 ? translation : this._interpolateTranslation(translation, data);
     }
 
     if(changes.length) {
