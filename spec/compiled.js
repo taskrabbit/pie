@@ -2987,7 +2987,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the inserted index and the length", function() {
         this.items.insert(1, 'foo');
-        expect(this.changes.length).toEqual(3);
+        expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('add');
         expect(this.changes[0].name).toEqual('1');
@@ -3012,7 +3012,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the new index and the length", function() {
         this.items.push('foo');
-        expect(this.changes.length).toEqual(3);
+        expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('add');
         expect(this.changes[0].name).toEqual('4');
@@ -3037,7 +3037,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the removal and the length change", function() {
         this.items.remove(1);
-        expect(this.changes.length).toEqual(3);
+        expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('delete');
         expect(this.changes[0].name).toEqual('1');
@@ -3062,14 +3062,14 @@ describe("pie.list", function() {
 
       it("should notify observers of a change at the index but not a change in length", function(){
         this.items.set(1, 'foo');
-        expect(this.changes.length).toEqual(2);
+        expect(this.changes.length).toEqual(3);
         expect(this.changes[0].type).toEqual('update');
         expect(this.changes[0].name).toEqual('1');
       });
 
       it("should allow the entire list to be set", function() {
         this.items.set('items', ['e', 'f', 'g', 'h', 'i', 'j']);
-        expect(this.changes.length).toEqual(8); // 6, one for each index, 1 for the length, and 1 for the _version;
+        expect(this.changes.length).toEqual(9); // 6, one for each index, 1 for items, 1 for the length, and 1 for the _version;
 
         expect(this.changes[0].name).toEqual('0');
         expect(this.changes[0].type).toEqual('update');
@@ -3088,15 +3088,18 @@ describe("pie.list", function() {
         expect(this.changes[6].oldValue).toEqual(4);
         expect(this.changes[6].value).toEqual(6);
 
-        expect(this.changes[7].name).toEqual('_version');
+        expect(this.changes[7].name).toEqual('items');
         expect(this.changes[7].type).toEqual('update');
-        expect(this.changes[7].oldValue).toEqual(1);
-        expect(this.changes[7].value).toEqual(2);
+
+        expect(this.changes[8].name).toEqual('_version');
+        expect(this.changes[8].type).toEqual('update');
+        expect(this.changes[8].oldValue).toEqual(1);
+        expect(this.changes[8].value).toEqual(2);
 
 
         this.items.set('items', ['m', 'n', 'o', 'x', 'y', 'z']);
 
-        expect(this.changes.length).toEqual(7); // 6, one for each index and 1 for the _version;
+        expect(this.changes.length).toEqual(8); // 6, one for each index, 1 for items, and 1 for the _version;
 
         expect(this.changes[0].name).toEqual('0');
         expect(this.changes[0].type).toEqual('update');
@@ -3104,15 +3107,18 @@ describe("pie.list", function() {
         expect(this.changes[5].name).toEqual('5');
         expect(this.changes[5].type).toEqual('update');
 
-        expect(this.changes[6].name).toEqual('_version');
+        expect(this.changes[6].name).toEqual('items');
         expect(this.changes[6].type).toEqual('update');
-        expect(this.changes[6].oldValue).toEqual(2);
-        expect(this.changes[6].value).toEqual(3);
+
+        expect(this.changes[7].name).toEqual('_version');
+        expect(this.changes[7].type).toEqual('update');
+        expect(this.changes[7].oldValue).toEqual(2);
+        expect(this.changes[7].value).toEqual(3);
 
 
         this.items.set('items', ['q', 'r', 's']);
 
-        expect(this.changes.length).toEqual(8); // 6, one for each index, 1 for the length, and 1 for the _version;
+        expect(this.changes.length).toEqual(9); // 6, one for each index, 1 for items, 1 for the length, and 1 for the _version;
 
         expect(this.changes[0].name).toEqual('5');
         expect(this.changes[0].type).toEqual('delete');
@@ -3131,12 +3137,17 @@ describe("pie.list", function() {
         expect(this.changes[6].oldValue).toEqual(6);
         expect(this.changes[6].value).toEqual(3);
 
-        expect(this.changes[7].name).toEqual('_version');
+        expect(this.changes[7].name).toEqual('items');
         expect(this.changes[7].type).toEqual('update');
-        expect(this.changes[7].oldValue).toEqual(3);
-        expect(this.changes[7].value).toEqual(4);
+
+        expect(this.changes[8].name).toEqual('_version');
+        expect(this.changes[8].type).toEqual('update');
+        expect(this.changes[8].oldValue).toEqual(3);
+        expect(this.changes[8].value).toEqual(4);
 
       });
+
+
 
     });
 
@@ -3150,7 +3161,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the removal and the length change", function() {
         this.items.shift();
-        expect(this.changes.length).toEqual(3);
+        expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('delete');
         expect(this.changes[0].name).toEqual('0');
@@ -3175,7 +3186,7 @@ describe("pie.list", function() {
 
       it("should deliver a change record for the 0 index and the length", function() {
         this.items.unshift('foo');
-        expect(this.changes.length).toEqual(3);
+        expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('add');
         expect(this.changes[0].name).toEqual('0');

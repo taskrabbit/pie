@@ -67,6 +67,14 @@ pie.list = pie.model.extend('list', {
           value: newLength
         });
       }
+
+      changes.push({
+        name: 'items',
+        type: 'update',
+        object: this.data.items,
+        oldValue: this.data.items,
+        value: this.data.items
+      });
     }
 
     this.changeRecords = this.changeRecords.concat(changes);

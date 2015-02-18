@@ -34,7 +34,7 @@ pie.notifier = pie.base.extend('notifier', {
     autoRemove = this.getAutoRemoveTimeout(autoRemove);
 
     messages = pie.array.from(messages);
-    messages = messages.map(this.app.i18n.attempt.bind(this.app.i18n));
+    messages = messages.map(function(m){ return this.app.i18n.attempt(m); }.bind(this));
 
     var msg = {
       id: pie.unique(),

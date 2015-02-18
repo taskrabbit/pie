@@ -8967,10 +8967,15 @@ the provided key.</p>
 </code></pre>
             </div>
             
-            <div class="content"><div class='highlight'><pre>  attempt: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key)</span> </span>{
-    <span class="hljs-keyword">var</span> m = key &amp;&amp; key.match(<span class="hljs-keyword">this</span>.keyCheck);
+            <div class="content"><div class='highlight'><pre>  attempt: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* args */</span>)</span> </span>{
+    <span class="hljs-keyword">var</span> args = pie.array.from(<span class="hljs-built_in">arguments</span>),
+    key = args[<span class="hljs-number">0</span>],
+    m = key &amp;&amp; key.match(<span class="hljs-keyword">this</span>.keyCheck);
+
     <span class="hljs-keyword">if</span>(!m) <span class="hljs-keyword">return</span> key;
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(m[<span class="hljs-number">1</span>], {<span class="hljs-keyword">default</span>: key});
+
+    args[<span class="hljs-number">0</span>] = m[<span class="hljs-number">1</span>]; <span class="hljs-comment">/* swap out the formatted key for the real one */</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.translate.apply(<span class="hljs-keyword">this</span>, args);
   },</pre></div></div>
             
         </li>
@@ -9441,6 +9446,14 @@ list._normalizeIndex(-<span class="hljs-number">1</span>) <span class="hljs-comm
           value: newLength
         });
       }
+
+      changes.push({
+        name: <span class="hljs-string">'items'</span>,
+        type: <span class="hljs-string">'update'</span>,
+        object: <span class="hljs-keyword">this</span>.data.items,
+        oldValue: <span class="hljs-keyword">this</span>.data.items,
+        value: <span class="hljs-keyword">this</span>.data.items
+      });
     }
 
     <span class="hljs-keyword">this</span>.changeRecords = <span class="hljs-keyword">this</span>.changeRecords.concat(changes);
@@ -9997,7 +10010,7 @@ You can provide a number in milliseconds as the autoClose value as well.</p>
     autoRemove = <span class="hljs-keyword">this</span>.getAutoRemoveTimeout(autoRemove);
 
     messages = pie.array.from(messages);
-    messages = messages.map(<span class="hljs-keyword">this</span>.app.i18n.attempt.bind(<span class="hljs-keyword">this</span>.app.i18n));
+    messages = messages.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span></span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.app.i18n.attempt(m); }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">var</span> msg = {
       id: pie.unique(),

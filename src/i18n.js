@@ -158,10 +158,15 @@ pie.i18n = pie.model.extend('i18n', {
   // ```
   // i18n.attempt('.foo.bar.baz')
   // ```
-  attempt: function(key) {
-    var m = key && key.match(this.keyCheck);
+  attempt: function(/* args */) {
+    var args = pie.array.from(arguments),
+    key = args[0],
+    m = key && key.match(this.keyCheck);
+
     if(!m) return key;
-    return this.t(m[1], {default: key});
+
+    args[0] = m[1]; /* swap out the formatted key for the real one */
+    return this.translate.apply(this, args);
   },
 
   // ** pie.i18n.load **
