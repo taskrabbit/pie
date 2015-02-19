@@ -4,6 +4,7 @@ PATH  := node_modules/.bin:$(PATH)
 SHELL := /bin/bash
 
 source_files       := src/pie.js src/extensions/*.js src/mixins/*.js src/base.js src/app.js src/model.js src/view.js src/activeView.js src/ajaxRequest.js src/ajax.js src/cache.js src/emitter.js src/errorHandler.js src/formView.js src/helpers.js src/i18n.js src/list.js src/navigator.js src/notifier.js src/resources.js src/route.js src/router.js src/templates.js src/validator.js src/viewTransition.js
+amd_files          := src/amd/*.txt
 deploy             := build/pie.js.min
 debug              := build/pie.js
 
@@ -19,9 +20,9 @@ all: clean $(debug) $(specs) $(guide) $(deploy) $(guide_debug) document
 $(deploy): $(debug)
 	uglifyjs -cmo $(deploy) $(debug)
 
-$(debug): $(source_files)
+$(debug): $(source_files) $(amd_files)
 	mkdir -p build
-	cat src/amd/begin.txt $(source_files) src/amd/end.txt > $(debug)
+	cat src/amd/begin.txt $(source_files) src/amd/version.txt src/amd/end.txt > $(debug)
 
 $(guide_pie): $(debug)
 	cp $(debug) $(guide_pie)
@@ -45,6 +46,6 @@ document: $(debug)
 	docco -o docs/annotated/ $(debug)
 	node docs/docco-index.js
 
-watch: $(source_files) $(guide_source_files) $(spec_source_files)
+watch: $(source_files) $(amd_files) $(guide_source_files) $(spec_source_files)
 	fswatch -o $^ | xargs -n1 -I{} make
 
