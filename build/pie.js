@@ -1773,12 +1773,16 @@ pie.string.normalizeUrl =  function(path) {
     path = '/' + path;
   }
 
+  // normalize the path portion of a url if a query is present
   if(path.indexOf('?') > 0) {
     var split = path.split('?');
     path = pie.string.normalizeUrl(split.shift());
     split.unshift(path);
     path = split.join('?');
   }
+
+  // remove any double slashes
+  path = path.replace(/(^|[^:])\/\//g, "$1/");
 
   // remove trailing hashtags
   if(path.charAt(path.length - 1) === '#') {
