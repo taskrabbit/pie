@@ -1,7 +1,7 @@
 describe("pie.router", function(){
 
   beforeEach(function(){
-    var r = new pie.router({options: {root: '/'}, parsedUrl: {}});
+    var r = new pie.router();
     this.router = r;
 
     this.router.map({
@@ -19,18 +19,17 @@ describe("pie.router", function(){
   });
 
   it('should allow routes to be added', function(){
-    // added in beforeEach();
     var r = this.router;
 
-    expect(r.get('routes.0.options.common')).toEqual('foo');
-    expect(pie.array.last(r.get('routes')).options.common).toEqual('foo');
+    expect(r.children[0].options.common).toEqual('foo');
+    expect(pie.array.last(r.children).options.common).toEqual('foo');
 
-    expect(r.get('routeNames.apiRoute').get('pathTemplate')).toEqual('/api/a.json');
-    expect(r.get('routeNames.aRoute').get('pathTemplate')).toEqual('/t/a');
-    expect(r.get('routeNames.apiSpecificRoute').get('pathTemplate')).toEqual('/api/:id/a.json');
-    expect(r.get('routeNames.aSpecificRoute').get('pathTemplate')).toEqual('/t/:id/a');
+    expect(r.getChild('apiRoute').get('pathTemplate')).toEqual('/api/a.json');
+    expect(r.getChild('aRoute').get('pathTemplate')).toEqual('/t/a');
+    expect(r.getChild('apiSpecificRoute').get('pathTemplate')).toEqual('/api/:id/a.json');
+    expect(r.getChild('aSpecificRoute').get('pathTemplate')).toEqual('/t/:id/a');
 
-    expect(r.get('routes.length')).toEqual(7);
+    expect(r.children.length).toEqual(7);
   });
 
   it('should correctly build paths', function() {
@@ -99,7 +98,7 @@ describe("pie.router", function(){
   });
 
   it("should correctly sort the routes", function() {
-    var routes = this.router.get('routes').map(function(r){ return r.get('pathTemplate'); });
+    var routes = this.router.children.map(function(r){ return r.get('pathTemplate'); });
     expect(routes).toEqual([
       '/t/unique/b',
       '/api/a.json',

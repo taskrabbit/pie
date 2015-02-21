@@ -24,7 +24,7 @@ pie.route = pie.model.extend('route', {
       pathTemplate: pie.string.normalizeUrl(path)
     }, options);
 
-    this.name = this.options.name;
+    this.name = this.options.name || ("route-" + this.pieId);
 
     this.compute('splitPathTemplate', 'pathTemplate');
     this.compute('interpolationsCount', 'pathTemplate');

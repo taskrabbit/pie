@@ -4429,6 +4429,14 @@ pie.mixins.container = {
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },
 
+  sortChildren: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{
+    <span class="hljs-keyword">this</span>.children.sort(fn);
+    <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c, i)</span> </span>{
+      c._indexWithinParent = i;
+      <span class="hljs-keyword">this</span>.childNames[c._nameWithinParent] = i;
+    }.bind(<span class="hljs-keyword">this</span>));
+  },
+
   __tree: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(indent)</span> </span>{
     indent = indent || <span class="hljs-number">0</span>;
     <span class="hljs-keyword">var</span> pad = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(s, i)</span></span>{
@@ -10389,7 +10397,7 @@ r.path({id: <span class="hljs-string">'baz'</span>, page: <span class="hljs-numb
       pathTemplate: pie.string.normalizeUrl(path)
     }, options);
 
-    <span class="hljs-keyword">this</span>.name = <span class="hljs-keyword">this</span>.options.name;
+    <span class="hljs-keyword">this</span>.name = <span class="hljs-keyword">this</span>.options.name || (<span class="hljs-string">"route-"</span> + <span class="hljs-keyword">this</span>.pieId);
 
     <span class="hljs-keyword">this</span>.compute(<span class="hljs-string">'splitPathTemplate'</span>, <span class="hljs-string">'pathTemplate'</span>);
     <span class="hljs-keyword">this</span>.compute(<span class="hljs-string">'interpolationsCount'</span>, <span class="hljs-string">'pathTemplate'</span>);
@@ -10618,8 +10626,6 @@ Options:</p>
             
             <div class="content"><div class='highlight'><pre>  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, options)</span> </span>{
     <span class="hljs-keyword">this</span>._super({
-      routes: [],
-      routeNames: {},
       root: options &amp;&amp; options.root || <span class="hljs-string">'/'</span>
     }, pie.object.merge({
       app: app
@@ -10687,12 +10693,20 @@ Direct matches match first, then the most relevant pattern match comes next.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  findRoute: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(nameOrPath)</span> </span>{
-    <span class="hljs-keyword">var</span> route = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'routeNames.'</span> + nameOrPath);
+    <span class="hljs-keyword">var</span> route = <span class="hljs-keyword">this</span>.getChild(nameOrPath);
     <span class="hljs-comment">/* if a direct match is present, we return that */</span>
-    route = route || pie.array.detect(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'routes'</span>), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(r)</span></span>{ <span class="hljs-keyword">return</span> r.isDirectMatch(nameOrPath); });
+    route = route || <span class="hljs-keyword">this</span>.findDirectMatch(nameOrPath);
     <span class="hljs-comment">/* otherwise, we look for a pattern match */</span>
-    route = route || pie.array.detect(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'routes'</span>), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(r)</span></span>{ <span class="hljs-keyword">return</span> r.isMatch(nameOrPath); });
+    route = route || <span class="hljs-keyword">this</span>.findPatternMatch(nameOrPath);
     <span class="hljs-keyword">return</span> route;
+  },
+
+  findDirectMatch: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(nameOrPath)</span> </span>{
+    <span class="hljs-keyword">return</span> pie.array.detect(<span class="hljs-keyword">this</span>.children, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(r)</span></span>{ <span class="hljs-keyword">return</span> r.isDirectMatch(nameOrPath); });
+  },
+
+  findPatternMatch: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(nameOrPath)</span> </span>{
+    <span class="hljs-keyword">return</span> pie.array.detect(<span class="hljs-keyword">this</span>.children, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(r)</span></span>{ <span class="hljs-keyword">return</span> r.isMatch(nameOrPath); });
   },</pre></div></div>
             
         </li>
@@ -10723,7 +10737,7 @@ You can pass a set of defaults which will be extended into each route object.</p
             <div class="content"><div class='highlight'><pre>  map: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(routes, defaults)</span></span>{
     defaults = defaults || {};
 
-    <span class="hljs-keyword">var</span> path, config, route;
+    <span class="hljs-keyword">var</span> path, config, route, existing;
 
     pie.object.forEach(routes, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,r)</span> </span>{
 
@@ -10736,11 +10750,12 @@ You can pass a set of defaults which will be extended into each route object.</p
         config = {name: k};
       }
 
+      existing = <span class="hljs-keyword">this</span>.findDirectMatch(path) || (config.name || <span class="hljs-keyword">this</span>.findRoute(config.name));
+      <span class="hljs-keyword">this</span>.removeChild(existing);
+
       route = <span class="hljs-keyword">new</span> pie.route(path, config);
 
-      <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'routes'</span>).push(route);
-      <span class="hljs-keyword">if</span>(route.name) <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'routeNames.'</span> + route.name, route);
-
+      <span class="hljs-keyword">this</span>.addChild(route.name, route);
     }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">this</span>.sortRoutes();
@@ -10815,7 +10830,7 @@ with path interpolation.</p>
             <div class="content"><div class='highlight'><pre>  sortRoutes: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> ac, bc, c;
 
-    <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'routes'</span>).sort(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a,b)</span> </span>{
+    <span class="hljs-keyword">this</span>.sortChildren(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a,b)</span> </span>{
       ac = a.get(<span class="hljs-string">'interpolationsCount'</span>);
       bc = b.get(<span class="hljs-string">'interpolationsCount'</span>);
       c = ac - bc;
@@ -10882,7 +10897,7 @@ The result will  have the following attributes:</p>
       <span class="hljs-keyword">return</span> result;
     }.bind(<span class="hljs-keyword">this</span>));
   }
-});</pre></div></div>
+}, pie.mixins.container);</pre></div></div>
             
         </li>
         
@@ -12204,7 +12219,7 @@ when the transition is complete, invoke the callback.</p>
   }
 
 });
-  pie.VERSION = <span class="hljs-string">"0.0.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150220.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

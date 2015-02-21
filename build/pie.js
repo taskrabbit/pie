@@ -2584,6 +2584,14 @@ pie.mixins.container = {
     return this;
   },
 
+  sortChildren: function(fn) {
+    this.children.sort(fn);
+    this.children.forEach(function(c, i) {
+      c._indexWithinParent = i;
+      this.childNames[c._nameWithinParent] = i;
+    }.bind(this));
+  },
+
   __tree: function(indent) {
     indent = indent || 0;
     var pad = function(s, i){
@@ -6333,7 +6341,7 @@ pie.route = pie.model.extend('route', {
       pathTemplate: pie.string.normalizeUrl(path)
     }, options);
 
-    this.name = this.options.name;
+    this.name = this.options.name || ("route-" + this.pieId);
 
     this.compute('splitPathTemplate', 'pathTemplate');
     this.compute('interpolationsCount', 'pathTemplate');
@@ -6464,8 +6472,6 @@ pie.router = pie.model.extend('router', {
   // * **root** - the root to be prepended to all constructed routes. Defaults to `'/'`.
   init: function(app, options) {
     this._super({
-      routes: [],
-      routeNames: {},
       root: options && options.root || '/'
     }, pie.object.merge({
       app: app
@@ -6502,12 +6508,20 @@ pie.router = pie.model.extend('router', {
   // Find the most relevant route based on `nameOrPath`.
   // Direct matches match first, then the most relevant pattern match comes next.
   findRoute: function(nameOrPath) {
-    var route = this.get('routeNames.' + nameOrPath);
+    var route = this.getChild(nameOrPath);
     /* if a direct match is present, we return that */
-    route = route || pie.array.detect(this.get('routes'), function(r){ return r.isDirectMatch(nameOrPath); });
+    route = route || this.findDirectMatch(nameOrPath);
     /* otherwise, we look for a pattern match */
-    route = route || pie.array.detect(this.get('routes'), function(r){ return r.isMatch(nameOrPath); });
+    route = route || this.findPatternMatch(nameOrPath);
     return route;
+  },
+
+  findDirectMatch: function(nameOrPath) {
+    return pie.array.detect(this.children, function(r){ return r.isDirectMatch(nameOrPath); });
+  },
+
+  findPatternMatch: function(nameOrPath) {
+    return pie.array.detect(this.children, function(r){ return r.isMatch(nameOrPath); });
   },
 
 
@@ -6530,7 +6544,7 @@ pie.router = pie.model.extend('router', {
   map: function(routes, defaults){
     defaults = defaults || {};
 
-    var path, config, route;
+    var path, config, route, existing;
 
     pie.object.forEach(routes, function(k,r) {
 
@@ -6543,11 +6557,12 @@ pie.router = pie.model.extend('router', {
         config = {name: k};
       }
 
+      existing = this.findDirectMatch(path) || (config.name || this.findRoute(config.name));
+      this.removeChild(existing);
+
       route = new pie.route(path, config);
 
-      this.get('routes').push(route);
-      if(route.name) this.set('routeNames.' + route.name, route);
-
+      this.addChild(route.name, route);
     }.bind(this));
 
     this.sortRoutes();
@@ -6588,7 +6603,7 @@ pie.router = pie.model.extend('router', {
   sortRoutes: function() {
     var ac, bc, c;
 
-    this.get('routes').sort(function(a,b) {
+    this.sortChildren(function(a,b) {
       ac = a.get('interpolationsCount');
       bc = b.get('interpolationsCount');
       c = ac - bc;
@@ -6642,7 +6657,7 @@ pie.router = pie.model.extend('router', {
       return result;
     }.bind(this));
   }
-});
+}, pie.mixins.container);
 // # Pie Templates
 // A container for a collection of templates. It knows how to read, compile, and invoke template functions.
 // ```
@@ -7530,7 +7545,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.1";
+  pie.VERSION = "0.0.20150220.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

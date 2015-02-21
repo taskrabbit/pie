@@ -108,6 +108,14 @@ pie.mixins.container = {
     return this;
   },
 
+  sortChildren: function(fn) {
+    this.children.sort(fn);
+    this.children.forEach(function(c, i) {
+      c._indexWithinParent = i;
+      this.childNames[c._nameWithinParent] = i;
+    }.bind(this));
+  },
+
   __tree: function(indent) {
     indent = indent || 0;
     var pad = function(s, i){
