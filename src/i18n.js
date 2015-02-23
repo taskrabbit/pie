@@ -40,7 +40,21 @@ pie.i18n = pie.model.extend('i18n', {
 
   init: function(app, options) {
     var data = pie.object.merge({}, pie.i18n.defaultTranslations);
-    options = pie.object.merge(options || {}, {app: app});
+    options = pie.object.deepMerge({
+      settings: {
+        interpolationStart: '%{',
+        interpolationEnd: '}',
+        nestedStart: '${',
+        nestedEnd: '}'
+      }
+    }, options || {}, {app: app});
+
+
+    var escapedInterpEnd = pie.string.escapeRegex(options.settings.interpolationEnd),
+    escapedNestedEnd = pie.string.escapeRegex(options.settings.nestedEnd);
+
+    options.settings.interpolationRegex = new RegExp(pie.string.escapeRegex(options.settings.interpolationStart) + '([^' + escapedNestedEnd + ']+)' + escapedInterpEnd, 'g');
+    options.settings.nestedRegex = new RegExp(pie.string.escapeRegex(options.settings.nestedStart) + '([^' + escapedNestedEnd + ']+)' + escapedNestedEnd, 'g');
 
     this._super(data, options);
   },
@@ -75,14 +89,25 @@ pie.i18n = pie.model.extend('i18n', {
 
 
   _nestedTranslate: function(t, data) {
-    return t.replace(/\$\{([^\}]+)\}/, function(match, path) {
+    return this._expand(t, this.options.settings.nestedRegex, function(match, path) {
       return this.translate(path, data);
     }.bind(this));
   },
 
   _interpolateTranslation: function(t, data) {
+    return this._expand(t, this.options.settings.interpolationRegex, function(match, key) {
+      return pie.object.getPath(data, key);
+    });
+  },
+
+  _expand: function(t, regex, fn) {
     try{
-      return pie.string.expand(t, data, true);
+      var val;
+      return t.replace(regex, function(match, key) {
+        val = fn(match, key);
+        if(val === undefined) throw new Error("Missing interpolation argument `" + key + "` for '" + t + "'");
+        return val;
+      });
     } catch(e) {
       this.app.errorHandler.handleI18nError(e);
       return "";
@@ -219,8 +244,8 @@ pie.i18n = pie.model.extend('i18n', {
 
 
     if(pie.object.isString(translation)) {
-      translation = translation.indexOf('${') === -1 ? translation : this._nestedTranslate(translation, data);
-      translation = translation.indexOf('%{') === -1 ? translation : this._interpolateTranslation(translation, data);
+      translation = translation.indexOf(this.options.settings.nestedStart) === -1 ? translation : this._nestedTranslate(translation, data);
+      translation = translation.indexOf(this.options.settings.interpolationStart) === -1 ? translation : this._interpolateTranslation(translation, data);
     }
 
     if(changes.length) {

@@ -8876,7 +8876,21 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
 
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, options)</span> </span>{
     <span class="hljs-keyword">var</span> data = pie.object.merge({}, pie.i18n.defaultTranslations);
-    options = pie.object.merge(options || {}, {app: app});
+    options = pie.object.deepMerge({
+      settings: {
+        interpolationStart: <span class="hljs-string">'%{'</span>,
+        interpolationEnd: <span class="hljs-string">'}'</span>,
+        nestedStart: <span class="hljs-string">'${'</span>,
+        nestedEnd: <span class="hljs-string">'}'</span>
+      }
+    }, options || {}, {app: app});
+
+
+    <span class="hljs-keyword">var</span> escapedInterpEnd = pie.string.escapeRegex(options.settings.interpolationEnd),
+    escapedNestedEnd = pie.string.escapeRegex(options.settings.nestedEnd);
+
+    options.settings.interpolationRegex = <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(pie.string.escapeRegex(options.settings.interpolationStart) + <span class="hljs-string">'([^'</span> + escapedNestedEnd + <span class="hljs-string">']+)'</span> + escapedInterpEnd, <span class="hljs-string">'g'</span>);
+    options.settings.nestedRegex = <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(pie.string.escapeRegex(options.settings.nestedStart) + <span class="hljs-string">'([^'</span> + escapedNestedEnd + <span class="hljs-string">']+)'</span> + escapedNestedEnd, <span class="hljs-string">'g'</span>);
 
     <span class="hljs-keyword">this</span>._super(data, options);
   },
@@ -8911,14 +8925,25 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
 
 
   _nestedTranslate: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t, data)</span> </span>{
-    <span class="hljs-keyword">return</span> t.replace(<span class="hljs-regexp">/\$\{([^\}]+)\}/</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, path)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._expand(t, <span class="hljs-keyword">this</span>.options.settings.nestedRegex, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, path)</span> </span>{
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.translate(path, data);
     }.bind(<span class="hljs-keyword">this</span>));
   },
 
   _interpolateTranslation: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t, data)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._expand(t, <span class="hljs-keyword">this</span>.options.settings.interpolationRegex, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, key)</span> </span>{
+      <span class="hljs-keyword">return</span> pie.object.getPath(data, key);
+    });
+  },
+
+  _expand: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(t, regex, fn)</span> </span>{
     <span class="hljs-keyword">try</span>{
-      <span class="hljs-keyword">return</span> pie.string.expand(t, data, <span class="hljs-literal">true</span>);
+      <span class="hljs-keyword">var</span> val;
+      <span class="hljs-keyword">return</span> t.replace(regex, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, key)</span> </span>{
+        val = fn(match, key);
+        <span class="hljs-keyword">if</span>(val === <span class="hljs-literal">undefined</span>) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Missing interpolation argument `"</span> + key + <span class="hljs-string">"` for '"</span> + t + <span class="hljs-string">"'"</span>);
+        <span class="hljs-keyword">return</span> val;
+      });
     } <span class="hljs-keyword">catch</span>(e) {
       <span class="hljs-keyword">this</span>.app.errorHandler.handleI18nError(e);
       <span class="hljs-keyword">return</span> <span class="hljs-string">""</span>;
@@ -9082,8 +9107,8 @@ i18n.t(<span class="hljs-string">'foo.path'</span>, {name: <span class="hljs-str
 
 
     <span class="hljs-keyword">if</span>(pie.object.isString(translation)) {
-      translation = translation.indexOf(<span class="hljs-string">'${'</span>) === -<span class="hljs-number">1</span> ? translation : <span class="hljs-keyword">this</span>._nestedTranslate(translation, data);
-      translation = translation.indexOf(<span class="hljs-string">'%{'</span>) === -<span class="hljs-number">1</span> ? translation : <span class="hljs-keyword">this</span>._interpolateTranslation(translation, data);
+      translation = translation.indexOf(<span class="hljs-keyword">this</span>.options.settings.nestedStart) === -<span class="hljs-number">1</span> ? translation : <span class="hljs-keyword">this</span>._nestedTranslate(translation, data);
+      translation = translation.indexOf(<span class="hljs-keyword">this</span>.options.settings.interpolationStart) === -<span class="hljs-number">1</span> ? translation : <span class="hljs-keyword">this</span>._interpolateTranslation(translation, data);
     }
 
     <span class="hljs-keyword">if</span>(changes.length) {
