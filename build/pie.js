@@ -2534,7 +2534,7 @@ pie.mixins.container = {
     }.bind(this));
   },
 
-  getChild: function(obj) {
+  getChild: function(obj, recurse) {
     /* jslint eqeq:true */
     if(obj == null) return;
     if(obj._nameWithinParent) return obj;
@@ -2542,13 +2542,17 @@ pie.mixins.container = {
     var idx = this.childNames[obj];
     if(idx == null) idx = obj;
 
+    if(recurse === undefined) recurse = true;
+
     // It's a path.
-    if(String(idx).match(/\./)) {
+    if(recurse && String(idx).match(/\./)) {
       var steps = idx.split('.'),
-      step, child = this;
+      child = this, step;
       while(step = steps.shift()) {
         child = child.getChild(step);
         if(!child) return undefined;
+        /* dig as far as we can go, if we have non-container child we're done */
+        if(steps.length && !child.getChild) return undefined;
       }
 
       return child;
@@ -6561,7 +6565,7 @@ pie.router = pie.model.extend('router', {
   // Find the most relevant route based on `nameOrPath`.
   // Direct matches match first, then the most relevant pattern match comes next.
   findRoute: function(nameOrPath) {
-    var route = this.getChild(nameOrPath);
+    var route = this.getChild(nameOrPath, false);
     /* if a direct match is present, we return that */
     route = route || this.findDirectMatch(nameOrPath);
     /* otherwise, we look for a pattern match */

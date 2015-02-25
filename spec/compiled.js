@@ -3823,8 +3823,8 @@ describe("pie.router", function(){
       '/t/unique/b'         : {view: 'b', name: 'bUniqueRoute'},
       '/t/:parent_id/b/:id' : {view: 'b', name: 'bParentRoute'},
 
-      'apiRoute'          : '/api/a.json',
-      'apiSpecificRoute'  : '/api/:id/a.json'
+      'api.route'          : '/api/a.json',
+      'api.specificRoute'  : '/api/:id/a.json'
     }, {
       common: 'foo'
     });
@@ -3836,9 +3836,9 @@ describe("pie.router", function(){
     expect(r.children[0].options.common).toEqual('foo');
     expect(pie.array.last(r.children).options.common).toEqual('foo');
 
-    expect(r.getChild('apiRoute').get('pathTemplate')).toEqual('/api/a.json');
+    expect(r.getChild('api.route').get('pathTemplate')).toEqual('/api/a.json');
     expect(r.getChild('aRoute').get('pathTemplate')).toEqual('/t/a');
-    expect(r.getChild('apiSpecificRoute').get('pathTemplate')).toEqual('/api/:id/a.json');
+    expect(r.getChild('api.specificRoute').get('pathTemplate')).toEqual('/api/:id/a.json');
     expect(r.getChild('aSpecificRoute').get('pathTemplate')).toEqual('/t/:id/a');
 
     expect(r.children.length).toEqual(7);
@@ -3847,14 +3847,14 @@ describe("pie.router", function(){
   it('should correctly build paths', function() {
     var r = this.router, p;
 
-    p = r.path('apiRoute', {"p" : 0, "s" : 1});
+    p = r.path('api.route', {"p" : 0, "s" : 1});
     expect(p).toEqual('/api/a.json?p=0&s=1');
 
-    p = r.path('apiSpecificRoute', {id: 4, "s" : 1});
+    p = r.path('api.specificRoute', {id: 4, "s" : 1});
     expect(p).toEqual('/api/4/a.json?s=1');
 
     expect(function(){
-      r.path('apiSpecificRoute', {"s" : 1});
+      r.path('api.specificRoute', {"s" : 1});
     }).toThrowError("[PIE] missing route interpolation: :id");
 
     p = r.path('aRoute');

@@ -46,7 +46,7 @@ pie.router = pie.model.extend('router', {
   // Find the most relevant route based on `nameOrPath`.
   // Direct matches match first, then the most relevant pattern match comes next.
   findRoute: function(nameOrPath) {
-    var route = this.getChild(nameOrPath);
+    var route = this.getChild(nameOrPath, false);
     /* if a direct match is present, we return that */
     route = route || this.findDirectMatch(nameOrPath);
     /* otherwise, we look for a pattern match */
