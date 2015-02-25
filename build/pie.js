@@ -498,7 +498,7 @@ pie.array.map = function(a, f, callInternalFunction){
 // //=> [true, false]
 // ```
 pie.array.partition = function(/* a, fn1, fn2 */) {
-  var out = [], i = 0,
+  var out = [],
   fns = pie.array.from(arguments),
   arr = pie.array.from(fns.shift());
 
@@ -514,6 +514,25 @@ pie.array.partition = function(/* a, fn1, fn2 */) {
   });
 
   return out;
+};
+
+// **pie.array.partitionAt**
+//
+// Split an array up at the first occurrence where fn evaluates to true.
+// ```
+// arr = [a(), b(), "string", "string", c()]
+// pie.array.partitionAt(arr, pie.object.isNotFunction)
+// //=> [ [a(), b()], ["string", "string", c()] ]
+// ```
+pie.array.partitionAt = function(arr, fn) {
+  var a = [], b = [], stillA = true;
+
+  pie.array.from(arr).forEach(function(i){
+    if(stillA && !!pie.object.getValue(i, fn)) stillA = false;
+    (stillA ? a : b).push(i);
+  });
+
+  return [a, b];
 };
 
 
@@ -1439,12 +1458,20 @@ pie.object.isPlainObject = function(obj) {
   var key;
   for ( key in obj ) {}
   return key === undefined || pie.object.has(obj, key);
-},
+};
+
+pie.object.isNotPlainObject = function(obj) {
+  return !pie.object.isPlainObject(obj);
+};
 
 
 ['Object', 'Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
   pie.object['is' + name] = function(obj) {
     return Object.prototype.toString.call(obj) === '[object ' + name + ']';
+  };
+
+  pie.object['isNot' + name] = function(obj) {
+    return !pie.object['is' + name](obj);
   };
 });
 
@@ -1458,6 +1485,9 @@ pie.object.isPlainObject = function(obj) {
 
 pie.object.isUndefined = function(obj) {
   return obj === void 0;
+};
+pie.object.isNotUndefined = function(obj) {
+  return !pie.object.isUndefined();
 };
 
 // shallow merge
@@ -3837,11 +3867,9 @@ pie.view.reopen({
   // If the object is not observable, an error will be thrown.
   onChange: function() {
 
-    var args = pie.array.from(arguments),
-    observables = [];
-
-    while(!pie.object.isFunction(args[0])) observables.push(args.shift());
-
+    var parts = pie.array.partitionAt(arguments, pie.object.isFunction),
+    observables = parts[0],
+    args = parts[1];
 
     observables.forEach(function(observable){
       if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
@@ -7570,7 +7598,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150223.1";
+  pie.VERSION = "0.0.20150225.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

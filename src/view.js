@@ -105,11 +105,9 @@ pie.view.reopen({
   // If the object is not observable, an error will be thrown.
   onChange: function() {
 
-    var args = pie.array.from(arguments),
-    observables = [];
-
-    while(!pie.object.isFunction(args[0])) observables.push(args.shift());
-
+    var parts = pie.array.partitionAt(arguments, pie.object.isFunction),
+    observables = parts[0],
+    args = parts[1];
 
     observables.forEach(function(observable){
       if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");

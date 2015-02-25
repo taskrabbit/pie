@@ -113,12 +113,20 @@ pie.object.isPlainObject = function(obj) {
   var key;
   for ( key in obj ) {}
   return key === undefined || pie.object.has(obj, key);
-},
+};
+
+pie.object.isNotPlainObject = function(obj) {
+  return !pie.object.isPlainObject(obj);
+};
 
 
 ['Object', 'Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
   pie.object['is' + name] = function(obj) {
     return Object.prototype.toString.call(obj) === '[object ' + name + ']';
+  };
+
+  pie.object['isNot' + name] = function(obj) {
+    return !pie.object['is' + name](obj);
   };
 });
 
@@ -132,6 +140,9 @@ pie.object.isPlainObject = function(obj) {
 
 pie.object.isUndefined = function(obj) {
   return obj === void 0;
+};
+pie.object.isNotUndefined = function(obj) {
+  return !pie.object.isUndefined();
 };
 
 // shallow merge
