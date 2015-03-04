@@ -5180,6 +5180,7 @@ but we don’t want a reference to another app within this app.</p>
       uiTarget: <span class="hljs-string">'body'</span>,
       viewNamespace: <span class="hljs-string">'lib.views'</span>,
       unsupportedPath: <span class="hljs-string">'/browser/unsupported'</span>,
+      notificationStorageKey: <span class="hljs-string">'js-alerts'</span>,
       verifySupport: <span class="hljs-literal">true</span>
     }, options);
 
@@ -5644,7 +5645,7 @@ since we could lose the translation when we move.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>        notificationArgs[<span class="hljs-number">0</span>] = <span class="hljs-keyword">this</span>.i18n.attempt(notificationArgs[<span class="hljs-number">0</span>]);
-        <span class="hljs-keyword">this</span>.store(<span class="hljs-keyword">this</span>.notifier.storageKey, notificationArgs);
+        <span class="hljs-keyword">this</span>.store(<span class="hljs-keyword">this</span>.options.notificationStorageKey, notificationArgs);
       }
 
       <span class="hljs-built_in">window</span>.location.href = path;
@@ -6092,7 +6093,7 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  showStoredNotifications: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> messages = <span class="hljs-keyword">this</span>.retrieve(<span class="hljs-keyword">this</span>.notifier.storageKey);
+    <span class="hljs-keyword">var</span> messages = <span class="hljs-keyword">this</span>.retrieve(<span class="hljs-keyword">this</span>.options.notificationStorageKey);
 
     <span class="hljs-keyword">if</span>(messages &amp;&amp; messages.length) {
       <span class="hljs-keyword">this</span>.notifier.notify.apply(<span class="hljs-keyword">this</span>.notifier, messages);

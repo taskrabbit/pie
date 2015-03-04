@@ -21,6 +21,7 @@ pie.app = pie.base.extend('app', {
       uiTarget: 'body',
       viewNamespace: 'lib.views',
       unsupportedPath: '/browser/unsupported',
+      notificationStorageKey: 'js-alerts',
       verifySupport: true
     }, options);
 
@@ -181,7 +182,7 @@ pie.app = pie.base.extend('app', {
         // the first argument is the message content, we make sure it's evaluated in our current context
         // since we could lose the translation when we move.
         notificationArgs[0] = this.i18n.attempt(notificationArgs[0]);
-        this.store(this.notifier.storageKey, notificationArgs);
+        this.store(this.options.notificationStorageKey, notificationArgs);
       }
 
       window.location.href = path;
@@ -340,7 +341,7 @@ pie.app = pie.base.extend('app', {
 
   // Show any notification which have been preserved via local storage.
   showStoredNotifications: function() {
-    var messages = this.retrieve(this.notifier.storageKey);
+    var messages = this.retrieve(this.options.notificationStorageKey);
 
     if(messages && messages.length) {
       this.notifier.notify.apply(this.notifier, messages);
