@@ -168,10 +168,10 @@ describe('pie.errorHandler', function() {
 
       var e1 = {"message" : "New Error", "name" : "Error Name"}, e2 = {"message" : "Some Error"};
 
-      this.handler.reportError(e1, {"prefix" : "[caught]"});
+      this.handler.reportError(e1, {"info" : "[caught]"});
       this.handler.reportError(e2);
 
-      expect(this.handler._reportError).toHaveBeenCalledWith({"message" : "[caught] New Error", "name" : "[caught] Error Name"}, {"prefix" : "[caught]"});
+      expect(this.handler._reportError).toHaveBeenCalledWith({"message" : "New Error", "name" : "Error Name"}, {"info" : "[caught]"});
       expect(this.handler._reportError).toHaveBeenCalledWith({"message" : "Some Error"}, {});
     });
   });

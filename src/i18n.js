@@ -275,10 +275,14 @@ pie.i18n = pie.model.extend('i18n', {
   // //=> "2 days ago"
   // ```
   timeago: function(t, now, scope) {
+    var tD = t,
+    nowD = now,
+    diff, c;
+
     t = this._normalizedDate(t).getTime()  / 1000;
     now = this._normalizedDate(now || new Date()).getTime() / 1000;
 
-    var diff = now - t, c;
+    diff = now - t;
 
     scope = scope || 'app';
 
@@ -293,11 +297,13 @@ pie.i18n = pie.model.extend('i18n', {
     } else if (diff < 86400 * 7) { // less than a week (
       c = Math.floor(diff / 86400);
       return this.t(scope + '.timeago.days', {count: c});
-    } else if (diff < 86400 * 30) { // less than a month
+    } else if (diff < 86400 * 30.4368) { // less than a month
       c = Math.floor(diff / (86400 * 7));
       return this.t(scope + '.timeago.weeks', {count: c});
     } else if (diff < 86500 * 365.25) { // less than a year
-      c = Math.floor(diff / (86400 * 365.25 / 12));
+      c = (nowD.getFullYear() - tD.getFullYear()) * 12;
+      c -= tD.getMonth();
+      c += nowD.getMonth();
       return this.t(scope + '.timeago.months', {count: c});
     } else {
       c = Math.floor(diff / (86400 * 365.25));

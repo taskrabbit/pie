@@ -7,8 +7,10 @@ pie.date.dateFromISO = function(isoDateString) {
 
 
 // current timestamp
-pie.date.now = function() {
-  return new Date().getTime();
+pie.date.now = function(secondsPlease) {
+  var t = new Date().getTime();
+  if(secondsPlease) t = parseInt(t / 1000, 10);
+  return t;
 };
 
 /**

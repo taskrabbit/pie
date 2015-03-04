@@ -772,8 +772,10 @@ pie.date.dateFromISO = function(isoDateString) {
 
 
 // current timestamp
-pie.date.now = function() {
-  return new Date().getTime();
+pie.date.now = function(secondsPlease) {
+  var t = new Date().getTime();
+  if(secondsPlease) t = parseInt(t / 1000, 10);
+  return t;
 };
 
 /**
@@ -3136,6 +3138,9 @@ pie.app = pie.base.extend('app', {
     } else {
 
       if(notificationArgs && notificationArgs.length) {
+        // the first argument is the message content, we make sure it's evaluated in our current context
+        // since we could lose the translation when we move.
+        notificationArgs[0] = this.i18n.attempt(notificationArgs[0]);
         this.store(this.notifier.storageKey, notificationArgs);
       }
 
@@ -3273,7 +3278,7 @@ pie.app = pie.base.extend('app', {
       encoded = window.localStorage.getItem(key);
       decoded = encoded ? JSON.parse(encoded) : undefined;
     }catch(err){
-      this.errorHandler.reportError(err, {prefix: "[caught] app#retrieve/getItem:"});
+      this.errorHandler.reportError(err, {info: "Caught in pie.app#retrieve/getItem"});
     }
 
     try{
@@ -3281,7 +3286,7 @@ pie.app = pie.base.extend('app', {
         window.localStorage.removeItem(key);
       }
     }catch(err){
-      this.errorHandler.reportError(err, {prefix: "[caught] app#retrieve/removeItem:"});
+      this.errorHandler.reportError(err, {info: "Caught in pie.app#retrieve/removeItem"});
     }
 
     return decoded;
@@ -3312,7 +3317,7 @@ pie.app = pie.base.extend('app', {
     try{
       window.localStorage.setItem(key, JSON.stringify(data));
     }catch(err){
-      this.errorHandler.reportError(err, {prefix: "[caught] app#store:"});
+      this.errorHandler.reportError(err, {info: "Caught in pie.app#store"});
     }
   },
 
@@ -4820,7 +4825,7 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   },
 
   handleI18nError: function(error) {
-    this.reportError(error, {prefix: "[caught]"});
+    this.reportError(error, {info: "Caught in pie.i18n"});
   },
 
   // ** pie.errorHandler.notifyErrors **
@@ -4858,22 +4863,14 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   reportError: function(err, options) {
     options = options || {};
 
-    if(options.prefix && pie.object.has(err, 'message')) {
-      err.message = options.prefix + ' ' + err.message;
-    }
-
-    if(options.prefix && pie.object.has(err, 'name')) {
-      err.name = options.prefix + ' ' + err.name;
-    }
-
     this._reportError(err, options);
   },
 
   // ** pie.errorHandler._reportError **
   //
   // Hook in your own error reporting service. bugsnag, airbrake, etc.
-  _reportError: function(err) {
-    this.app.debug(err);
+  _reportError: function(err, options) {
+    this.app.debug(String(err) + " | " + JSON.stringify(options));
   }
 });
 // # Pie FormView
@@ -5460,10 +5457,14 @@ pie.i18n = pie.model.extend('i18n', {
   // //=> "2 days ago"
   // ```
   timeago: function(t, now, scope) {
+    var tD = t,
+    nowD = now,
+    diff, c;
+
     t = this._normalizedDate(t).getTime()  / 1000;
     now = this._normalizedDate(now || new Date()).getTime() / 1000;
 
-    var diff = now - t, c;
+    diff = now - t;
 
     scope = scope || 'app';
 
@@ -5478,11 +5479,13 @@ pie.i18n = pie.model.extend('i18n', {
     } else if (diff < 86400 * 7) { // less than a week (
       c = Math.floor(diff / 86400);
       return this.t(scope + '.timeago.days', {count: c});
-    } else if (diff < 86400 * 30) { // less than a month
+    } else if (diff < 86400 * 30.4368) { // less than a month
       c = Math.floor(diff / (86400 * 7));
       return this.t(scope + '.timeago.weeks', {count: c});
     } else if (diff < 86500 * 365.25) { // less than a year
-      c = Math.floor(diff / (86400 * 365.25 / 12));
+      c = (nowD.getFullYear() - tD.getFullYear()) * 12;
+      c -= tD.getMonth();
+      c += nowD.getMonth();
       return this.t(scope + '.timeago.months', {count: c});
     } else {
       c = Math.floor(diff / (86400 * 365.25));

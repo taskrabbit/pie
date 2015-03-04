@@ -2465,10 +2465,10 @@ describe('pie.errorHandler', function() {
 
       var e1 = {"message" : "New Error", "name" : "Error Name"}, e2 = {"message" : "Some Error"};
 
-      this.handler.reportError(e1, {"prefix" : "[caught]"});
+      this.handler.reportError(e1, {"info" : "[caught]"});
       this.handler.reportError(e2);
 
-      expect(this.handler._reportError).toHaveBeenCalledWith({"message" : "[caught] New Error", "name" : "[caught] Error Name"}, {"prefix" : "[caught]"});
+      expect(this.handler._reportError).toHaveBeenCalledWith({"message" : "New Error", "name" : "Error Name"}, {"info" : "[caught]"});
       expect(this.handler._reportError).toHaveBeenCalledWith({"message" : "Some Error"}, {});
     });
   });
@@ -2819,11 +2819,19 @@ describe("pie.i18n", function() {
         expect(response).toEqual('3 weeks ago');
       });
 
-      it("should return month results", function() {
-        this.then.setMonth(this.then.getMonth() - 8);
+      [2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach(function(i){
+        it("should return month results", function() {
+          this.then.setMonth(this.then.getMonth() - i);
+          var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+          expect(response).toEqual(i + ' months ago');
 
-        var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
-        expect(response).toEqual('8 months ago');
+          this.now.setDate(this.now.getDate() + 20);
+          this.then.setDate(this.then.getDate() + 20);
+
+          response = this.i18n.timeago(this.then, this.now, 'timeagotest');
+          expect(response).toEqual(i + ' months ago');
+
+        });
       });
 
       it("should return year results", function() {

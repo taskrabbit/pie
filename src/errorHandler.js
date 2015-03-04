@@ -68,7 +68,7 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   },
 
   handleI18nError: function(error) {
-    this.reportError(error, {prefix: "[caught]"});
+    this.reportError(error, {info: "Caught in pie.i18n"});
   },
 
   // ** pie.errorHandler.notifyErrors **
@@ -106,21 +106,13 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   reportError: function(err, options) {
     options = options || {};
 
-    if(options.prefix && pie.object.has(err, 'message')) {
-      err.message = options.prefix + ' ' + err.message;
-    }
-
-    if(options.prefix && pie.object.has(err, 'name')) {
-      err.name = options.prefix + ' ' + err.name;
-    }
-
     this._reportError(err, options);
   },
 
   // ** pie.errorHandler._reportError **
   //
   // Hook in your own error reporting service. bugsnag, airbrake, etc.
-  _reportError: function(err) {
-    this.app.debug(err);
+  _reportError: function(err, options) {
+    this.app.debug(String(err) + " | " + JSON.stringify(options));
   }
 });

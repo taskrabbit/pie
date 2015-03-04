@@ -178,6 +178,9 @@ pie.app = pie.base.extend('app', {
     } else {
 
       if(notificationArgs && notificationArgs.length) {
+        // the first argument is the message content, we make sure it's evaluated in our current context
+        // since we could lose the translation when we move.
+        notificationArgs[0] = this.i18n.attempt(notificationArgs[0]);
         this.store(this.notifier.storageKey, notificationArgs);
       }
 
@@ -315,7 +318,7 @@ pie.app = pie.base.extend('app', {
       encoded = window.localStorage.getItem(key);
       decoded = encoded ? JSON.parse(encoded) : undefined;
     }catch(err){
-      this.errorHandler.reportError(err, {prefix: "[caught] app#retrieve/getItem:"});
+      this.errorHandler.reportError(err, {info: "Caught in pie.app#retrieve/getItem"});
     }
 
     try{
@@ -323,7 +326,7 @@ pie.app = pie.base.extend('app', {
         window.localStorage.removeItem(key);
       }
     }catch(err){
-      this.errorHandler.reportError(err, {prefix: "[caught] app#retrieve/removeItem:"});
+      this.errorHandler.reportError(err, {info: "Caught in pie.app#retrieve/removeItem"});
     }
 
     return decoded;
@@ -354,7 +357,7 @@ pie.app = pie.base.extend('app', {
     try{
       window.localStorage.setItem(key, JSON.stringify(data));
     }catch(err){
-      this.errorHandler.reportError(err, {prefix: "[caught] app#store:"});
+      this.errorHandler.reportError(err, {info: "Caught in pie.app#store"});
     }
   },
 
