@@ -315,19 +315,26 @@ pie.app = pie.base.extend('app', {
   retrieve: function(key, clear) {
     var encoded, decoded;
 
-    try{
+    try {
       encoded = window.localStorage.getItem(key);
       decoded = encoded ? JSON.parse(encoded) : undefined;
-    }catch(err){
-      this.errorHandler.reportError(err, {info: "Caught in pie.app#retrieve/getItem"});
+    } catch(err) {
+      this.errorHandler.reportError(err, {
+        handledBy: "pie.app#retrieve/getItem",
+        key: key
+      });
     }
 
-    try{
+    try {
       if(clear || clear === undefined){
         window.localStorage.removeItem(key);
       }
-    }catch(err){
-      this.errorHandler.reportError(err, {info: "Caught in pie.app#retrieve/removeItem"});
+    } catch(err) {
+      this.errorHandler.reportError(err, {
+        handledBy: "pie.app#retrieve/removeItem",
+        key: key,
+        clear: clear
+      });
     }
 
     return decoded;
@@ -355,10 +362,16 @@ pie.app = pie.base.extend('app', {
 
   // Safely access localStorage, passing along any errors for reporting.
   store: function(key, data) {
-    try{
-      window.localStorage.setItem(key, JSON.stringify(data));
-    }catch(err){
-      this.errorHandler.reportError(err, {info: "Caught in pie.app#store"});
+    var str;
+    try {
+      str = JSON.stringify(data);
+      window.localStorage.setItem(key, str);
+    } catch(err) {
+      this.errorHandler.reportError(err, {
+        handledBy: "pie.app#store",
+        key: key,
+        data: str
+      });
     }
   },
 

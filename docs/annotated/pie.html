@@ -6043,19 +6043,26 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
             <div class="content"><div class='highlight'><pre>  retrieve: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, clear)</span> </span>{
     <span class="hljs-keyword">var</span> encoded, decoded;
 
-    <span class="hljs-keyword">try</span>{
+    <span class="hljs-keyword">try</span> {
       encoded = <span class="hljs-built_in">window</span>.localStorage.getItem(key);
       decoded = encoded ? <span class="hljs-built_in">JSON</span>.parse(encoded) : <span class="hljs-literal">undefined</span>;
-    }<span class="hljs-keyword">catch</span>(err){
-      <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {info: <span class="hljs-string">"Caught in pie.app#retrieve/getItem"</span>});
+    } <span class="hljs-keyword">catch</span>(err) {
+      <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {
+        handledBy: <span class="hljs-string">"pie.app#retrieve/getItem"</span>,
+        key: key
+      });
     }
 
-    <span class="hljs-keyword">try</span>{
+    <span class="hljs-keyword">try</span> {
       <span class="hljs-keyword">if</span>(clear || clear === <span class="hljs-literal">undefined</span>){
         <span class="hljs-built_in">window</span>.localStorage.removeItem(key);
       }
-    }<span class="hljs-keyword">catch</span>(err){
-      <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {info: <span class="hljs-string">"Caught in pie.app#retrieve/removeItem"</span>});
+    } <span class="hljs-keyword">catch</span>(err) {
+      <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {
+        handledBy: <span class="hljs-string">"pie.app#retrieve/removeItem"</span>,
+        key: key,
+        clear: clear
+      });
     }
 
     <span class="hljs-keyword">return</span> decoded;
@@ -6131,10 +6138,16 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  store: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, data)</span> </span>{
-    <span class="hljs-keyword">try</span>{
-      <span class="hljs-built_in">window</span>.localStorage.setItem(key, <span class="hljs-built_in">JSON</span>.stringify(data));
-    }<span class="hljs-keyword">catch</span>(err){
-      <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {info: <span class="hljs-string">"Caught in pie.app#store"</span>});
+    <span class="hljs-keyword">var</span> str;
+    <span class="hljs-keyword">try</span> {
+      str = <span class="hljs-built_in">JSON</span>.stringify(data);
+      <span class="hljs-built_in">window</span>.localStorage.setItem(key, str);
+    } <span class="hljs-keyword">catch</span>(err) {
+      <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {
+        handledBy: <span class="hljs-string">"pie.app#store"</span>,
+        key: key,
+        data: str
+      });
     }
   },
 
@@ -8384,8 +8397,8 @@ It will look for an “error”, “errors”, or “errors.message” response 
 
   },
 
-  handleI18nError: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(error)</span> </span>{
-    <span class="hljs-keyword">this</span>.reportError(error, {info: <span class="hljs-string">"Caught in pie.i18n"</span>});
+  handleI18nError: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(error, info)</span> </span>{
+    <span class="hljs-keyword">this</span>.reportError(error, info);
   },</pre></div></div>
             
         </li>
@@ -8997,7 +9010,11 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
         <span class="hljs-keyword">return</span> val;
       });
     } <span class="hljs-keyword">catch</span>(e) {
-      <span class="hljs-keyword">this</span>.app.errorHandler.handleI18nError(e);
+      <span class="hljs-keyword">this</span>.app.errorHandler.handleI18nError(e, {
+        handledBy: <span class="hljs-string">"pie.i18n#_expand"</span>,
+        expandString: t,
+        regex: regex
+      });
       <span class="hljs-keyword">return</span> <span class="hljs-string">""</span>;
     }
   },
@@ -9152,7 +9169,10 @@ i18n.t(<span class="hljs-string">'foo.path'</span>, {name: <span class="hljs-str
       <span class="hljs-keyword">if</span>(data &amp;&amp; data.hasOwnProperty(<span class="hljs-string">'default'</span>)) {
         translation = pie.fn.valueFrom(data.default);
       } <span class="hljs-keyword">else</span> {
-        <span class="hljs-keyword">this</span>.app.errorHandler.handleI18nError(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Translation not found: "</span> + path));
+        <span class="hljs-keyword">this</span>.app.errorHandler.handleI18nError(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Translation not found: "</span> + path), {
+          handledBy: <span class="hljs-string">"pie.i18n#translate"</span>,
+          translationPath: path
+        });
         <span class="hljs-keyword">return</span> <span class="hljs-string">""</span>;
       }
     }

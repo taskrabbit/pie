@@ -109,7 +109,11 @@ pie.i18n = pie.model.extend('i18n', {
         return val;
       });
     } catch(e) {
-      this.app.errorHandler.handleI18nError(e);
+      this.app.errorHandler.handleI18nError(e, {
+        handledBy: "pie.i18n#_expand",
+        expandString: t,
+        regex: regex
+      });
       return "";
     }
   },
@@ -237,7 +241,10 @@ pie.i18n = pie.model.extend('i18n', {
       if(data && data.hasOwnProperty('default')) {
         translation = pie.fn.valueFrom(data.default);
       } else {
-        this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path));
+        this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path), {
+          handledBy: "pie.i18n#translate",
+          translationPath: path
+        });
         return "";
       }
     }
