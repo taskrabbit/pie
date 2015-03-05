@@ -10728,7 +10728,7 @@ app.router.changedUrl({page: <span class="hljs-number">3</span>, q: <span class=
             
             <div class="content"><div class='highlight'><pre>  changedUrl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span> </span>{
     <span class="hljs-keyword">var</span> current = <span class="hljs-keyword">this</span>.app.parsedUrl;
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.path(current.route &amp;&amp; current.route.name || current.path, pie.object.merge({}, current.data, changes));
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.path(current.get(<span class="hljs-string">'route.name'</span>) || current.get(<span class="hljs-string">'path'</span>), pie.object.merge({}, current.get(<span class="hljs-string">'data'</span>), changes));
   },</pre></div></div>
             
         </li>

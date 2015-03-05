@@ -38,7 +38,7 @@ pie.router = pie.model.extend('router', {
   // ```
   changedUrl: function(changes) {
     var current = this.app.parsedUrl;
-    return this.path(current.route && current.route.name || current.path, pie.object.merge({}, current.data, changes));
+    return this.path(current.get('route.name') || current.get('path'), pie.object.merge({}, current.get('data'), changes));
   },
 
   // **pie.router.findRoute**
