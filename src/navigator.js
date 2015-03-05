@@ -19,15 +19,19 @@ pie.navigator = pie.model.extend('navigator', {
   // //=> pushState: '/foo/bar?page=2'
   // ```
   go: function(path, params, replace) {
-    var url = path, state;
+    var split = path.split('?'), query, url, state;
+    path = split[0];
+    query = split[1];
 
-    params = params || {};
+    params = pie.object.deepMerge(query ? pie.string.deserialize(query) : {}, params);
 
     if(this.get('path') === path && this.get('query') === params) {
       return this;
     }
 
-    if(Object.keys(params).length) {
+    url = path;
+
+    if(pie.object.hasAny(params)) {
       url = pie.string.urlConcat(url, pie.object.serialize(params));
     }
 

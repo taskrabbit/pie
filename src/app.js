@@ -1,22 +1,23 @@
 // # Pie App
-// The app class is the entry point of your application. It acts as container in charge of managing the page's context.
+//
+// The app class is the entry point of your application. It acts as the container in charge of managing the page's context.
 // It provides access to application utilities, routing, templates, i18n, etc.
-// It observes navigation and changes the page's context automatically.
+// It observes browser and link navigation and changes the page's context automatically.
 pie.app = pie.base.extend('app', {
   init: function(options) {
 
 
-    // `pie.base.prototype.constructor` handles the setting of an app,
-    // but we don't want a reference to another app within this app.
+    /* `pie.base.prototype.constructor` handles the setting of an app, */
+    /* but we don't want a reference to another app within this app. */
     delete this.app;
 
-    // Set a global instance which can be used as a backup within the pie library.
+    /* Set a global instance which can be used as a backup within the pie library. */
     pie.appInstance = pie.appInstance || this;
 
-    // Register with pie to allow for nifty global lookups.
+    /* Register with pie to allow for nifty global lookups. */
     pie.apps[this.pieId] = this;
 
-    // Default application options.
+    /* Default application options. */
     this.options = pie.object.deepMerge({
       uiTarget: 'body',
       viewNamespace: 'lib.views',
@@ -30,22 +31,23 @@ pie.app = pie.base.extend('app', {
       return;
     }
 
-    // `classOption` Allows class configurations to be provided in the following formats:
+    // `classOption` allows class configurations to be provided in the following formats:
     // ```
     // new pie.app({
     //   i18n: myCustomI18nClass,
     //   i18nOptions: {foo: 'bar'}
     // });
-    // // which will result in `this.i18n = new myCustomI18nClass(this, {foo: 'bar'});`
     // ```
+    // which will result in `this.i18n = new myCustomI18nClass(this, {foo: 'bar'});`
     //
+    // Alternatively you can provide instances as the option.
     // ```
     // var instance = new myCustomI18nClass();
     // new pie.app({
     //   i18n: instance,
     // });
-    // // which will result in `this.i18n = instance; this.i18n.app = this;`
     // ```
+    // which will result in `this.i18n = instance; this.i18n.app = this;`
     var classOption = function(key, _default){
       var k = this.options[key] || _default,
       opt = this.options[key + 'Options'] || {};
@@ -88,10 +90,12 @@ pie.app = pie.base.extend('app', {
     // rendered by this app's `templates` object.
     this.helpers = classOption('helpers', pie.helpers);
 
-    // `app.templates` is used to manage application templates.
+    // `app.templates` is used to manage and render application templates.
     this.templates = classOption('templates', pie.templates);
 
     // `app.navigator` is the only navigator which should exist and be used within this app.
+    // Multiple apps and navigators can exist but one must take the lead for actually changing
+    // browser state. See more in the pie.navigator class.
     this.navigator = classOption('navigator', pie.navigator);
 
     // `app.validator` a validator intance to be used in conjunction with this app's model activity.
@@ -99,11 +103,13 @@ pie.app = pie.base.extend('app', {
 
     // The view transition class to be used when transitioning between pages.
     // Since a new instance of this is needed on every page change, just provide the class.
-    // You can also provide viewTransitionOptions which will be merged into the constructor of this class.
     this.viewTransitionClass = this.options.viewTransitionClass || pie.simpleViewTransition;
 
+    // You can also provide `viewTransitionOptions` which will be merged into the constructor of this class.
+    this.viewTransitionOptions = this.options.viewTransitionOptions || {};
+
     // After a navigation change, app.parsedUrl is the new parsed route
-    this.parsedUrl = {};
+    this.parsedUrl = new pie.model({});
 
     // We observe the navigator and handle changing the context of the page.
     this.navigator.observe(this.navigationChanged.bind(this), 'url');
@@ -146,47 +152,57 @@ pie.app = pie.base.extend('app', {
   go: function(){
     var args = pie.array.from(arguments), path, notificationArgs, replaceState;
 
+    /* Path is always first. */
     path = args.shift();
 
 
-    // ```
-    // arguments => '/test-url', {query: 'object'}
-    // ```
-    if(typeof args[0] === 'object') {
+    /* Next we check for a query object */
+    if(pie.object.isPlainObject(args[0])) {
       path = this.router.path(path, args.shift());
 
-    // ```
-    // arguments => '/test-url
-    // arguments => ['/test-url', {query: 'object'}]
-    // ```
+    /* If there is no query object we treat the first arg as an array and apply to router.path */
+    /* This enables the user to pass anything to the router.path function by providing an array as the first arg */
     } else {
       path = this.router.path.apply(this.router, pie.array.from(path));
     }
 
-    // If the next argument is a boolean, we care about replaceState
+    /* If the next argument is a boolean, we care about replaceState */
     if(pie.object.isBoolean(args[0])) {
       replaceState = args.shift();
+    } else {
+      replaceState = false;
     }
 
-    // Anything left is considered arguments for the notifier.
+    /* Anything left is considered arguments for the notifier. */
     notificationArgs = args;
 
+    if(notificationArgs.length) {
+      /* The first argument is the message content, we make sure it's evaluated in our current context */
+      /* since we could lose the translation when we move. */
+      notificationArgs[0] = this.i18n.attempt(notificationArgs[0]);
+    }
+
     if(pie.object.has(this.router.parseUrl(path), 'view')) {
+
       this.navigator.go(path, {}, replaceState);
-      if(notificationArgs && notificationArgs.length) {
+
+      if(notificationArgs.length) {
         this.notifier.notify.apply(this.notifier, notificationArgs);
       }
+
     } else {
 
-      if(notificationArgs && notificationArgs.length) {
-        // the first argument is the message content, we make sure it's evaluated in our current context
-        // since we could lose the translation when we move.
-        notificationArgs[0] = this.i18n.attempt(notificationArgs[0]);
+      if(notificationArgs.length) {
         this.store(this.options.notificationStorageKey, notificationArgs);
       }
 
-      window.location.href = path;
+      this.hardGo(path);
     }
+  },
+
+  // Extracted so we can effectively test the logic within `go()` without redirection.
+  hardGo: function(path) {
+    window.location.href = path;
   },
 
   // Go back one page.
@@ -217,6 +233,13 @@ pie.app = pie.base.extend('app', {
     this.go(href);
   },
 
+  parseUrl: function() {
+    var fromRouter = this.router.parseUrl(this.navigator.get('fullPath'));
+
+    this.parsedUrl.reset({skipObservers: true});
+    this.parsedUrl.sets(fromRouter);
+  },
+
   // When we change urls
   // We always remove the current before instantiating the next. this ensures are views can prepare
   // Context's in removedFromParent before the constructor of the next view is invoked.
@@ -224,28 +247,28 @@ pie.app = pie.base.extend('app', {
     var current  = this.getChild('currentView');
 
     // Let the router determine our new url
-    this.previousUrl = this.parsedUrl;
-    this.parsedUrl = this.router.parseUrl(this.navigator.get('fullPath'));
+    this.previousUrl = this.parsedUrl.get('fullPath');
+    this.parseUrl();
 
-    if(this.previousUrl !== this.parsedUrl) {
+    if(this.previousUrl !== this.parsedUrl.get('fullPath')) {
       this.emitter.fire('urlChanged');
     }
 
     // Not necessary for a view to exist on each page.
     // Maybe the entry point is server generated.
-    if(!this.parsedUrl.view) {
+    if(!this.parsedUrl.get('view')) {
 
-      if(!this.parsedUrl.redirect) return;
+      var redirectTo = this.parsedUrl.get('redirect');
+      if(!redirectTo) return;
 
-      var redirectTo = this.parsedUrl.redirect;
-      redirectTo = app.router.path(redirectTo, this.parsedUrl.data);
+      redirectTo = app.router.path(redirectTo, this.parsedUrl.get('data'));
 
       this.go(redirectTo);
       return;
     }
 
     // if the view that's in there is already loaded, don't remove / add again.
-    if(current && current._pieName === this.parsedUrl.view) {
+    if(current && current._pieName === this.parsedUrl.get('view')) {
       if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
       return;
     }
@@ -269,13 +292,13 @@ pie.app = pie.base.extend('app', {
 
       // Use the view key of the parsedUrl to find the viewClass.
       // At this point we've already verified the view option exists, so we don't have to check it.
-      viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.view);
+      viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.get('view'));
       // The instance to be added. If the class is not defined, this could and should blow up.
       child = new viewClass({ app: this });
 
       // Cache an identifier on the view so we can invoke navigationUpdated instead of reloading
       // if the url changes but the view does not
-      child._pieName = this.parsedUrl.view;
+      child._pieName = this.parsedUrl.get('view');
 
       // Instantiate a transition object based on the app configuration.
       transition = new this.viewTransitionClass(this, pie.object.merge({
@@ -283,7 +306,7 @@ pie.app = pie.base.extend('app', {
         newChild: child,
         childName: 'currentView',
         targetEl: target
-      }, this.options.viewTransitionOptions));
+      }, this.viewTransitionOptions));
 
       // Provide a couple common events out of the app.
       transition.emitter.on('afterRemoveOldChild', function() {

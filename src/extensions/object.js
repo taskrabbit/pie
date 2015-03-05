@@ -90,6 +90,10 @@ pie.object.flatten = function(a, object, prefix) {
   return b;
 };
 
+pie.object.hasAny = function(obj) {
+  return obj && !!Object.keys(obj).length;
+};
+
 pie.object.isWindow = function(obj) {
   return obj && typeof obj === "object" && "setInterval" in obj;
 };

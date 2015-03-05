@@ -41,6 +41,19 @@ pie.array.areAny = function(a, f) {
   return false;
 };
 
+// ** pie.array.avg **
+//
+// Find the average of a series of numbers.
+// ```
+// pie.array.avg([1,2,3,4,5,8])
+// //=> 3.8333
+// ```
+pie.array.avg = function(a) {
+  a = pie.array.from(a);
+  var s = pie.array.sum(a), l = a.length;
+  return l ? (s / l) : 0;
+};
+
 // ** pie.array.change **
 //
 // Change an array by many `pie.array` utilities.
@@ -60,19 +73,6 @@ pie.array.change = function() {
   });
 
   return arr;
-};
-
-// ** pie.array.avg **
-//
-// Find the average of a series of numbers.
-// ```
-// pie.array.avg([1,2,3,4,5,8])
-// //=> 3.8333
-// ```
-pie.array.avg = function(a) {
-  a = pie.array.from(a);
-  var s = pie.array.sum(a), l = a.length;
-  return l ? (s / l) : 0;
 };
 
 // ** pie.array.compact **
