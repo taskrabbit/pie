@@ -429,4 +429,31 @@ describe("pie.model", function() {
 
   });
 
+  describe('#test', function() {
+
+    it("should return true if the value is equivalent", function() {
+      this.model.set('foo', '4');
+      expect(this.model.test('foo', '4')).toEqual(true);
+      expect(this.model.test('foo', 4)).toEqual(false);
+
+      this.model.set('bar', undefined);
+      expect(this.model.test('bar', undefined)).toEqual(true);
+      expect(this.model.test('bar', null)).toEqual(false);
+      expect(this.model.test('bar', false)).toEqual(false);
+    });
+
+    it("should return true if a regex is provided and the value is not nully and matches the regex", function() {
+      this.model.set('foo', 'bar');
+
+      expect(this.model.test('foo', /ba/)).toEqual(true);
+      expect(this.model.test('foo', /BA/i)).toEqual(true);
+      expect(this.model.test('foo', /bad/)).toEqual(false);
+      expect(this.model.test('foo', /BA/)).toEqual(false);
+
+      this.model.set('bar', undefined);
+      expect(this.model.test('bar', /undef/)).toEqual(false);
+    });
+
+  });
+
 });

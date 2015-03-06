@@ -28,7 +28,7 @@ lib.views.nav = pie.view.extend('nav', {
   },
 
   navigationChanged: function() {
-    var path = app.parsedUrl.pathWithRoot,
+    var path = app.parsedUrl.get('pathWithRoot'),
     target = this.qs('.page-nav ul li a[href="' + path + '"]');
 
     pie.dom.all(this.qsa('.page-nav li.is-active'), 'classList.remove', 'is-active');
@@ -62,7 +62,7 @@ lib.views.page = pie.activeView.extend('page', {
   },
 
   templateName: function() {
-    return app.parsedUrl.data.page || 'getting-started';
+    return app.parsedUrl.get('data.page') || 'getting-started';
   }
 
 });

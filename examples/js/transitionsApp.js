@@ -9,7 +9,7 @@ pie.ns('lib.mixins').toggler = {
   },
 
   toggleView: function() {
-    var target = this.app.parsedUrl.path.match(/\/a\.html/) ? 'b' : 'a';
+    var target = this.app.parsedUrl.get('path').match(/\/a\.html/) ? 'b' : 'a';
     this.app.go(target);
   }
 };

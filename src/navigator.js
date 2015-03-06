@@ -25,7 +25,7 @@ pie.navigator = pie.model.extend('navigator', {
 
     params = pie.object.deepMerge(query ? pie.string.deserialize(query) : {}, params);
 
-    if(this.get('path') === path && this.get('query') === params) {
+    if(this.test('path', path) && this.test('query', params)) {
       return this;
     }
 

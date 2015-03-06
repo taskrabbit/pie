@@ -118,12 +118,12 @@ pie.model = pie.base.extend('model', {
   // ** pie.model.compute **
   //
   // After updates have been made we deliver our change records to our observers
-  deliverChangeRecords: function() {
+  deliverChangeRecords: function(options) {
     if(!this.changeRecords.length) return this;
     if(this.deliveringRecords) return this;
 
     /* This is where the version tracking is incremented. */
-    this.trackVersion();
+    if(!options || !options.skipVersionTracking) this.trackVersion();
 
 
     var changeSet = this.changeRecords,
@@ -159,7 +159,7 @@ pie.model = pie.base.extend('model', {
 
     /* Now we can decrement our deliveringRecords flag and attempt to deliver any leftover records */
     this.deliveringRecords--;
-    this.deliverChangeRecords();
+    this.deliverChangeRecords(options);
 
     return this;
 
@@ -373,7 +373,7 @@ pie.model = pie.base.extend('model', {
     }
 
     if(options && options.skipObservers) return this;
-    return this.deliverChangeRecords();
+    return this.deliverChangeRecords(options);
   },
 
   // ** pie.model.sets **
@@ -389,7 +389,35 @@ pie.model = pie.base.extend('model', {
     }.bind(this));
 
     if(options && options.skipObservers) return this;
-    return this.deliverChangeRecords();
+    return this.deliverChangeRecords(options);
+  },
+
+  // ** pie.model.test **
+  //
+  // Test a `value` against the value at `path`.
+  // If `value` is a regular expression it will stringify the path's value and test against the regex.
+  // ```
+  // model.test('foo', 'bar');
+  // model.test('firstName', 'Douglas');
+  // model.test('firstName', /doug/i);
+  // ```
+  test: function(path, value) {
+    var owned = this.get(path);
+    if(owned === value) return true;
+    else if(owned == null) return false;
+    else if (pie.object.isRegExp(value)) return value.test(String(owned));
+    else return false;
+  },
+
+  // ** pie.model.touch **
+  //
+  // Bumps the _version by 1 and delivers change records to observers of _version
+  // ```
+  // model.touch();
+  // ```
+  touch: function() {
+    this.trackVersion();
+    this.deliverChangeRecords({skipVersionTracking: true});
   },
 
   // ** pie.model.trackVersion **
