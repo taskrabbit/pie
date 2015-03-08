@@ -41,6 +41,7 @@ pie.resources = pie.model.extend('resources', {
   _inferredResourceType: function(src) {
     if((/(\.|\/)js(\?|$)/).test(src)) return 'script';
     if((/(\.|\/)css(\?|$)/).test(src)) return 'link';
+    if((/\.(png|jpeg|jpg|gif|svg|tiff|tif)(\?|$)/).test(src)) return 'image';
     return 'ajax';
   },
 
@@ -66,29 +67,19 @@ pie.resources = pie.model.extend('resources', {
     request.success(resourceOnload);
   },
 
-  // **pie.resources.\_loadscript**
+  // **pie.resources.\_loadimage**
   //
-  // Adds a `<script>` tag to the dom if the "type" is "script"
-  //
+  // Load an image and invoke `resourceOnload` when complete.
   // Options:
-  // * **src** - the url of the script.
-  // * **callbackName** - _(optional)_ the global callback name the loading library will invoke
-  // * **noAsync** - _(optional)_ if true, the script will be loaded synchronously.
-  _loadscript: function(options, resourceOnload) {
-
-    var script = document.createElement('script');
-
-    if(options.noAsync) script.async = false;
-
-    /* If options.callbackName is present, the invoking method self-references itself so it can clean itself up. */
-    /* Because of this, we don't need to invoke the onload */
-    if(!options.callbackName) {
-      script.onload = resourceOnload;
-    }
-
-    this._appendNode(script);
-    script.src = options.src;
-
+  // * **src** - the url of the image.
+  _loadimage: function(options, resourceOnload) {
+    var img = new Image();
+    img.onload = function(){
+      resourceOnload(pie.object.merge({
+        img: img
+      }, options));
+    };
+    img.src = options.src;
   },
 
   // **pie.resources.\_loadlink**
@@ -115,6 +106,30 @@ pie.resources = pie.model.extend('resources', {
     /* Need to record that we added this thing. */
     /* The resource may not actually be present yet. */
     resourceOnload();
+  },
+
+  // **pie.resources.\_loadscript**
+  //
+  // Adds a `<script>` tag to the dom if the "type" is "script"
+  //
+  // Options:
+  // * **src** - the url of the script.
+  // * **callbackName** - _(optional)_ the global callback name the loading library will invoke
+  // * **noAsync** - _(optional)_ if true, the script will be loaded synchronously.
+  _loadscript: function(options, resourceOnload) {
+
+    var script = document.createElement('script');
+
+    if(options.noAsync) script.async = false;
+
+    /* If options.callbackName is present, the invoking method self-references itself so it can clean itself up. */
+    /* Because of this, we don't need to invoke the onload */
+    if(!options.callbackName) {
+      script.onload = resourceOnload;
+    }
+
+    this._appendNode(script);
+    script.src = options.src;
   },
 
   // ** pie.resources.define **
