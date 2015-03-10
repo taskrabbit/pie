@@ -9159,8 +9159,13 @@ i18n.t(<span class="hljs-string">'foo.path'</span>, {name: <span class="hljs-str
 
     <span class="hljs-keyword">if</span>(!translation) {
 
-      <span class="hljs-keyword">if</span>(data &amp;&amp; data.hasOwnProperty(<span class="hljs-string">'default'</span>)) {
-        translation = pie.fn.valueFrom(data.default);
+      <span class="hljs-keyword">if</span>(pie.object.has(data, <span class="hljs-string">'default'</span>)) {
+        <span class="hljs-keyword">var</span> def = pie.fn.valueFrom(data.default);
+        <span class="hljs-keyword">if</span>(pie.object.isString(def)) {
+          translation = <span class="hljs-keyword">this</span>.attempt(def);
+        } <span class="hljs-keyword">else</span> {
+          translation = def;
+        }
       } <span class="hljs-keyword">else</span> {
         <span class="hljs-keyword">this</span>.app.errorHandler.handleI18nError(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Translation not found: "</span> + path), {
           handledBy: <span class="hljs-string">"pie.i18n#translate"</span>,
@@ -9234,16 +9239,16 @@ i18n.timeago(d, d2)
     } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86400</span> * <span class="hljs-number">7</span>) { <span class="hljs-comment">// less than a week (</span>
       c = <span class="hljs-built_in">Math</span>.floor(diff / <span class="hljs-number">86400</span>);
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(scope + <span class="hljs-string">'.timeago.days'</span>, {count: c});
-    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86400</span> * <span class="hljs-number">30.4368</span>) { <span class="hljs-comment">// less than a month</span>
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86400</span> * <span class="hljs-number">30</span>) { <span class="hljs-comment">// less than 30 days</span>
       c = <span class="hljs-built_in">Math</span>.floor(diff / (<span class="hljs-number">86400</span> * <span class="hljs-number">7</span>));
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(scope + <span class="hljs-string">'.timeago.weeks'</span>, {count: c});
-    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86500</span> * <span class="hljs-number">365.25</span>) { <span class="hljs-comment">// less than a year</span>
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86500</span> * <span class="hljs-number">365</span>) { <span class="hljs-comment">// less than 365 days</span>
       c = (nowD.getFullYear() - tD.getFullYear()) * <span class="hljs-number">12</span>;
       c -= tD.getMonth();
       c += nowD.getMonth();
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(scope + <span class="hljs-string">'.timeago.months'</span>, {count: c});
     } <span class="hljs-keyword">else</span> {
-      c = <span class="hljs-built_in">Math</span>.floor(diff / (<span class="hljs-number">86400</span> * <span class="hljs-number">365.25</span>));
+      c = <span class="hljs-built_in">Math</span>.floor(diff / (<span class="hljs-number">86400</span> * <span class="hljs-number">365</span>));
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(scope + <span class="hljs-string">'.timeago.years'</span>, {count: c});
     }
   },</pre></div></div>
@@ -12347,7 +12352,7 @@ when the transition is complete, invoke the callback.</p>
   }
 
 });
-  pie.VERSION = <span class="hljs-string">"0.0.20150306.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150310.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

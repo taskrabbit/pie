@@ -5489,8 +5489,13 @@ pie.i18n = pie.model.extend('i18n', {
 
     if(!translation) {
 
-      if(data && data.hasOwnProperty('default')) {
-        translation = pie.fn.valueFrom(data.default);
+      if(pie.object.has(data, 'default')) {
+        var def = pie.fn.valueFrom(data.default);
+        if(pie.object.isString(def)) {
+          translation = this.attempt(def);
+        } else {
+          translation = def;
+        }
       } else {
         this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path), {
           handledBy: "pie.i18n#translate",
@@ -5555,16 +5560,16 @@ pie.i18n = pie.model.extend('i18n', {
     } else if (diff < 86400 * 7) { // less than a week (
       c = Math.floor(diff / 86400);
       return this.t(scope + '.timeago.days', {count: c});
-    } else if (diff < 86400 * 30.4368) { // less than a month
+    } else if (diff < 86400 * 30) { // less than 30 days
       c = Math.floor(diff / (86400 * 7));
       return this.t(scope + '.timeago.weeks', {count: c});
-    } else if (diff < 86500 * 365.25) { // less than a year
+    } else if (diff < 86500 * 365) { // less than 365 days
       c = (nowD.getFullYear() - tD.getFullYear()) * 12;
       c -= tD.getMonth();
       c += nowD.getMonth();
       return this.t(scope + '.timeago.months', {count: c});
     } else {
-      c = Math.floor(diff / (86400 * 365.25));
+      c = Math.floor(diff / (86400 * 365));
       return this.t(scope + '.timeago.years', {count: c});
     }
   },
@@ -7700,7 +7705,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150306.1";
+  pie.VERSION = "0.0.20150310.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {
