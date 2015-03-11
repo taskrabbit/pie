@@ -306,7 +306,7 @@ pie.i18n = pie.model.extend('i18n', {
     } else if (diff < 86400) { // less than a day
       c = Math.floor(diff / 3600);
       return this.t(scope + '.timeago.hours', {count: c});
-    } else if (diff < 86400 * 7) { // less than a week (
+    } else if (diff < 86400 * 7) { // less than a week
       c = Math.floor(diff / 86400);
       return this.t(scope + '.timeago.days', {count: c});
     } else if (diff < 86400 * 30) { // less than 30 days

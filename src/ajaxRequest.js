@@ -231,16 +231,12 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     if(this.get('verb') !== this.VERBS.get) {
 
-      if(data) {
-        if(pie.object.isString(data)) {
-          d = data;
-        } else if(window.FormData && data instanceof window.FormData) {
-          d = data;
-        } else {
-          d = JSON.stringify(pie.object.compact(data));
-        }
+      if(pie.object.isString(data)) {
+        d = data;
+      } else if(window.FormData && data instanceof window.FormData) {
+        d = data;
       } else {
-        d = undefined;
+        d = JSON.stringify(pie.object.compact(data));
       }
     }
 

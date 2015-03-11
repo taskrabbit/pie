@@ -338,6 +338,8 @@ pie.app = pie.base.extend('app', {
   retrieve: function(key, clear) {
     var encoded, decoded;
 
+    if(!window.localStorage) return undefined;
+
     try {
       encoded = window.localStorage.getItem(key);
       decoded = encoded ? JSON.parse(encoded) : undefined;
@@ -350,7 +352,7 @@ pie.app = pie.base.extend('app', {
 
     try {
       if(clear || clear === undefined){
-        window.localStorage.removeItem(key);
+        window.localStorage && window.localStorage.removeItem(key);
       }
     } catch(err) {
       this.errorHandler.reportError(err, {
@@ -385,10 +387,13 @@ pie.app = pie.base.extend('app', {
 
   // Safely access localStorage, passing along any errors for reporting.
   store: function(key, data) {
+    if(!window.localStorage) return false;
+
     var str;
     try {
       str = JSON.stringify(data);
       window.localStorage.setItem(key, str);
+      return true;
     } catch(err) {
       this.errorHandler.reportError(err, {
         handledBy: "pie.app#store",

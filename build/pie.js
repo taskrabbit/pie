@@ -3302,6 +3302,8 @@ pie.app = pie.base.extend('app', {
   retrieve: function(key, clear) {
     var encoded, decoded;
 
+    if(!window.localStorage) return undefined;
+
     try {
       encoded = window.localStorage.getItem(key);
       decoded = encoded ? JSON.parse(encoded) : undefined;
@@ -3314,7 +3316,7 @@ pie.app = pie.base.extend('app', {
 
     try {
       if(clear || clear === undefined){
-        window.localStorage.removeItem(key);
+        window.localStorage && window.localStorage.removeItem(key);
       }
     } catch(err) {
       this.errorHandler.reportError(err, {
@@ -3349,10 +3351,13 @@ pie.app = pie.base.extend('app', {
 
   // Safely access localStorage, passing along any errors for reporting.
   store: function(key, data) {
+    if(!window.localStorage) return false;
+
     var str;
     try {
       str = JSON.stringify(data);
       window.localStorage.setItem(key, str);
+      return true;
     } catch(err) {
       this.errorHandler.reportError(err, {
         handledBy: "pie.app#store",
@@ -4323,16 +4328,12 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     if(this.get('verb') !== this.VERBS.get) {
 
-      if(data) {
-        if(pie.object.isString(data)) {
-          d = data;
-        } else if(window.FormData && data instanceof window.FormData) {
-          d = data;
-        } else {
-          d = JSON.stringify(pie.object.compact(data));
-        }
+      if(pie.object.isString(data)) {
+        d = data;
+      } else if(window.FormData && data instanceof window.FormData) {
+        d = data;
       } else {
-        d = undefined;
+        d = JSON.stringify(pie.object.compact(data));
       }
     }
 
@@ -5557,7 +5558,7 @@ pie.i18n = pie.model.extend('i18n', {
     } else if (diff < 86400) { // less than a day
       c = Math.floor(diff / 3600);
       return this.t(scope + '.timeago.hours', {count: c});
-    } else if (diff < 86400 * 7) { // less than a week (
+    } else if (diff < 86400 * 7) { // less than a week
       c = Math.floor(diff / 86400);
       return this.t(scope + '.timeago.days', {count: c});
     } else if (diff < 86400 * 30) { // less than 30 days
@@ -7705,7 +7706,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150310.1";
+  pie.VERSION = "0.0.20150311.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

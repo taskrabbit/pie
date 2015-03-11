@@ -2953,25 +2953,46 @@ describe("pie.i18n", function() {
         expect(response).toEqual('3 weeks ago');
       });
 
-      [2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach(function(i){
-        it("should return month results", function() {
-          this.then.setMonth(this.then.getMonth() - i);
-          var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
-          expect(response).toEqual(i + ' months ago');
+      // offset, diff, end of month diff
+      [
+        [2, 2, 2],
+        [3, 3, 3],
+        [4, 4, 3],
+        [5, 5, 5],
+        [6, 6, 5],
+        [7, 7, 7],
+        [8, 8, 8],
+        [9, 9, 8],
+        [10, 10, 10],
+        [11, 11, 10]
+      ].forEach(function(arr){
+        var i = arr[0],
+        diff = arr[1],
+        endDiff = arr[2];
 
-          this.now.setDate(this.now.getDate() + 20);
-          this.then.setDate(this.then.getDate() + 20);
+        it("should return month results for " + i + " months back", function() {
+          var now = new Date(2015, 2, 11); // 2015-03-11
+          var then = new Date(now.getTime());
+          then.setMonth(then.getMonth() - i);
 
-          response = this.i18n.timeago(this.then, this.now, 'timeagotest');
-          expect(response).toEqual(i + ' months ago');
+          var response = this.i18n.timeago(then, now, 'timeagotest');
+          expect(response).toEqual(diff + ' months ago');
+
+          now.setDate(now.getDate() + 20);
+
+          then = new Date(now.getTime());
+          then.setMonth(then.getMonth() - i);
+
+          response = this.i18n.timeago(then, now, 'timeagotest');
+          expect(response).toEqual(endDiff + ' months ago');
         });
       });
 
       it("should return year results", function() {
-        this.then.setFullYear(this.then.getFullYear() - 4);
+        this.then.setFullYear(this.then.getFullYear() - 3);
 
         var response = this.i18n.timeago(this.then, this.now, 'timeagotest');
-        expect(response).toEqual('4 years ago');
+        expect(response).toEqual('3 years ago');
       });
 
     });

@@ -5990,6 +5990,8 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
             <div class="content"><div class='highlight'><pre>  retrieve: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, clear)</span> </span>{
     <span class="hljs-keyword">var</span> encoded, decoded;
 
+    <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">window</span>.localStorage) <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>;
+
     <span class="hljs-keyword">try</span> {
       encoded = <span class="hljs-built_in">window</span>.localStorage.getItem(key);
       decoded = encoded ? <span class="hljs-built_in">JSON</span>.parse(encoded) : <span class="hljs-literal">undefined</span>;
@@ -6002,7 +6004,7 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
 
     <span class="hljs-keyword">try</span> {
       <span class="hljs-keyword">if</span>(clear || clear === <span class="hljs-literal">undefined</span>){
-        <span class="hljs-built_in">window</span>.localStorage.removeItem(key);
+        <span class="hljs-built_in">window</span>.localStorage &amp;&amp; <span class="hljs-built_in">window</span>.localStorage.removeItem(key);
       }
     } <span class="hljs-keyword">catch</span>(err) {
       <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {
@@ -6085,10 +6087,13 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  store: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, data)</span> </span>{
+    <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">window</span>.localStorage) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+
     <span class="hljs-keyword">var</span> str;
     <span class="hljs-keyword">try</span> {
       str = <span class="hljs-built_in">JSON</span>.stringify(data);
       <span class="hljs-built_in">window</span>.localStorage.setItem(key, str);
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
     } <span class="hljs-keyword">catch</span>(err) {
       <span class="hljs-keyword">this</span>.errorHandler.reportError(err, {
         handledBy: <span class="hljs-string">"pie.app#store"</span>,
@@ -7387,16 +7392,12 @@ By passing <code>skipSend = false</code> you can manage the <code>send()</code> 
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'verb'</span>) !== <span class="hljs-keyword">this</span>.VERBS.get) {
 
-      <span class="hljs-keyword">if</span>(data) {
-        <span class="hljs-keyword">if</span>(pie.object.isString(data)) {
-          d = data;
-        } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-built_in">window</span>.FormData &amp;&amp; data <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.FormData) {
-          d = data;
-        } <span class="hljs-keyword">else</span> {
-          d = <span class="hljs-built_in">JSON</span>.stringify(pie.object.compact(data));
-        }
+      <span class="hljs-keyword">if</span>(pie.object.isString(data)) {
+        d = data;
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-built_in">window</span>.FormData &amp;&amp; data <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.FormData) {
+        d = data;
       } <span class="hljs-keyword">else</span> {
-        d = <span class="hljs-literal">undefined</span>;
+        d = <span class="hljs-built_in">JSON</span>.stringify(pie.object.compact(data));
       }
     }
 
@@ -9236,7 +9237,7 @@ i18n.timeago(d, d2)
     } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86400</span>) { <span class="hljs-comment">// less than a day</span>
       c = <span class="hljs-built_in">Math</span>.floor(diff / <span class="hljs-number">3600</span>);
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(scope + <span class="hljs-string">'.timeago.hours'</span>, {count: c});
-    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86400</span> * <span class="hljs-number">7</span>) { <span class="hljs-comment">// less than a week (</span>
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86400</span> * <span class="hljs-number">7</span>) { <span class="hljs-comment">// less than a week</span>
       c = <span class="hljs-built_in">Math</span>.floor(diff / <span class="hljs-number">86400</span>);
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(scope + <span class="hljs-string">'.timeago.days'</span>, {count: c});
     } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (diff &lt; <span class="hljs-number">86400</span> * <span class="hljs-number">30</span>) { <span class="hljs-comment">// less than 30 days</span>
@@ -12352,7 +12353,7 @@ when the transition is complete, invoke the callback.</p>
   }
 
 });
-  pie.VERSION = <span class="hljs-string">"0.0.20150310.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150311.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
