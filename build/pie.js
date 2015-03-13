@@ -3612,6 +3612,17 @@ pie.model = pie.base.extend('model', {
     return !!pie.object.hasPath(this.data, path);
   },
 
+  // ** pie.model.is **
+  //
+  // Boolean check the value at `path`.
+  // ```
+  // model.is('foo.bar')
+  // //=> true | false
+  // ```
+  is: function(path) {
+    return !!this.get(path);
+  },
+
   // ** pie.model.observe **
   //
   // Register an observer and optionally filter by key.
