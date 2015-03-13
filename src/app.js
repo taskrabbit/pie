@@ -136,10 +136,10 @@ pie.app = pie.base.extend('app', {
     }
   },
 
-  // Print stuff if we're not in prod.
-  debug: function(msg) {
-    if(this.env === 'production') return;
-    if(console && console.log) console.log('[PIE] ' + msg);
+  debug: function() {
+    if(window.console && window.console.log) {
+      window.console.log.apply(window.console, arguments);
+    }
   },
   // Use this to navigate. This allows us to apply app-specific navigation logic
   // without altering the underling navigator.
@@ -352,7 +352,7 @@ pie.app = pie.base.extend('app', {
 
     try {
       if(clear || clear === undefined){
-        window.localStorage && window.localStorage.removeItem(key);
+        window.localStorage.removeItem(key);
       }
     } catch(err) {
       this.errorHandler.reportError(err, {

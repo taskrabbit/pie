@@ -143,9 +143,10 @@ pie.fn.once = function(f) {
   result;
 
   return function() {
+
     if(!called) {
       called = true;
-      result = f();
+      result = f.apply(null, arguments);
     }
 
     return result;

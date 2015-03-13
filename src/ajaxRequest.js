@@ -107,7 +107,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       }
 
       if(!headers['Content-Type']) {
-        if(pie.object.isString(data) || window.formData && data instanceof window.FormData) {
+        if(pie.object.isString(data) || window.FormData && data instanceof window.FormData) {
           headers['Content-Type'] = 'application/x-www-form-urlencoded';
         // if we aren't already sending a string, we will encode to json.
         } else {
@@ -125,15 +125,12 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
   _applyCsrfToken: function(xhr) {
 
-    var cache = this.app.cache,
-    token = pie.fn.valueFrom(this.get('csrfToken'));
+    var token = pie.fn.valueFrom(this.get('csrfToken'));
 
-    if(!token) {
-      token = cache.getOrSet('csrfToken', function() {
-        var el = pie.qs('meta[name="csrf-token"]');
-        return el ? el.getAttribute('content') : null;
-      });
-    }
+    token = token || this.app.cache.getOrSet('csrfToken', function() {
+      var el = pie.qs('meta[name="csrf-token"]');
+      return el ? el.getAttribute('content') : null;
+    });
 
     if(token) {
       xhr.setRequestHeader('X-CSRF-Token', token);
@@ -231,9 +228,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     if(this.get('verb') !== this.VERBS.get) {
 
-      if(pie.object.isString(data)) {
-        d = data;
-      } else if(window.FormData && data instanceof window.FormData) {
+      if(pie.object.isString(data) || window.FormData && data instanceof window.FormData) {
         d = data;
       } else {
         d = JSON.stringify(pie.object.compact(data));
