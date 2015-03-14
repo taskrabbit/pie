@@ -26,16 +26,18 @@ pie.route = pie.model.extend('route', {
 
     this.name = this.options.name || ("route-" + this.pieId);
 
-    this.compute('splitPathTemplate', 'pathTemplate');
-    this.compute('interpolationsCount', 'pathTemplate');
-    this.compute('pathRegex', 'pathTemplate');
+    this.compute('segments',            'pathTemplate');
+    this.compute('pathRegex',           'pathTemplate');
+    this.compute('interpolationsCount', 'segments');
+    this.compute('globsCount',          'segments');
+    this.compute('weight',              'segments');
   },
 
-  // **pie.route.splitPathTemplate**
+  // **pie.route.segments**
   //
   // The pathTemplate split into segments.
   // Since this is a computed property, we only ever have to do this once.
-  splitPathTemplate: function() {
+  segments: function() {
     return this.get('pathTemplate').split('/');
   },
 
@@ -44,16 +46,54 @@ pie.route = pie.model.extend('route', {
   // The number of interpolations this route has.
   // Since this is a computed property, we only ever have to do this once.
   interpolationsCount: function() {
-    var m = this.get('pathTemplate').match(/:/g);
+    var m = pie.array.count(this.get('segments'), function(s){ return s.charAt(0) === ':'; });
     return m && m.length || 0;
   },
+
+  // **pie.route.globsCount**
+  //
+  // The number of globs this route has.
+  // Since this is a computed property, we only ever have to do this once.
+  globsCount: function() {
+    var m = pie.array.count(this.get('segments'), function(s){ return s.charAt(0) === '*'; });
+    return m && m.length || 0;
+  },
+
 
   // **pie.route.pathRegex**
   //
   // A RegExp representing the path.
   // Since this is a computed property, we only ever have to do this once.
   pathRegex: function() {
-    return new RegExp('^' + this.get('pathTemplate').replace(/(:[^\/]+)/g,'([^\\/]+)') + '$');
+    var t = this.get('pathTemplate');
+    t = t.replace(/(:[^\/]+)/g,'([^\\/]+)');
+    t = t.replace(/(\*[^\/]+)/g, '(.+)');
+    return new RegExp('^' + t + '$');
+  },
+
+  // **pie.route.weight**
+  //
+  // A weight representing the specificity of the route. It compiles a number as a string
+  // based on the type of segment then casts the number as an integer as part of the return statement.
+  // Specificity is determined by:
+  //   -
+  // Since this is a computed property, we only ever have to do this once.
+  weight: function() {
+    var tmpls = this.get('segments'),
+    w = '';
+
+    tmpls.forEach(function(segment){
+      if(segment.match(/^:([^\/]+)$/))
+        w += '3';
+      else if(segment.match(/^\*([^\/]+)$/))
+        w += '2';
+      else if(segment === '')
+        w += '1';
+      else
+        w += '4';
+    });
+
+    return +w;
   },
 
   // **pie.route.interpolations**
@@ -68,7 +108,7 @@ pie.route = pie.model.extend('route', {
   // ```
   interpolations: function(path, parseValues) {
     var splitPaths = path.split('/'),
-    tmpls = this.get('splitPathTemplate'),
+    tmpls = this.get('segments'),
     interpolations = {},
     splitPath, tmpl;
 
@@ -76,8 +116,11 @@ pie.route = pie.model.extend('route', {
       tmpl = tmpls[i];
       splitPath = splitPaths[i];
       if(splitPath !== tmpl) {
-        if(/^:/.test(tmpl)) {
-          interpolations[tmpl.replace(/^:/, '')] = splitPath;
+        if(tmpl.charAt(0) === ':') {
+          interpolations[tmpl.substr(1)] = splitPath;
+        } else if(tmpl.charAt(0) === '*') {
+          interpolations[tmpl.substr(1)] = pie.array.get(splitPaths, i, -1).join('/');
+          break;
         }
       }
     }
@@ -122,7 +165,7 @@ pie.route = pie.model.extend('route', {
 
     data = data || {};
 
-    s = s.replace(/\:([a-zA-Z0-9_]+)/g, function(match, key){
+    s = s.replace(/[:\*]([a-zA-Z0-9_]+)/g, function(match, key){
       usedKeys.push(key);
       if(data[key] === undefined || data[key] === null || data[key].toString().length === 0) {
         throw new Error("[PIE] missing route interpolation: " + match);

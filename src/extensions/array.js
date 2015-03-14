@@ -94,6 +94,23 @@ pie.array.compact = function(a, removeAllFalsy){
   });
 };
 
+// ** pie.array.count **
+//
+// Count the number of items that match a given criteria defined by `f`.
+// ```
+// pie.array.count([0, 1, 2, 3], function(i){ return i % 2 === 0; });
+// //=> 2
+//
+// pie.array.count(['foo', 'bar', 'q', 'ux'], function(i){ return i.length === 3; })
+// //=> 2
+// ```
+pie.array.count = function(a, f) {
+  var cnt = 0;
+  pie.array.from(a).forEach(function(i){
+    if(pie.object.getValue(i, f)) cnt++;
+  });
+  return cnt;
+};
 
 // ** pie.array.detect **
 //

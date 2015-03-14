@@ -139,14 +139,12 @@ pie.router = pie.model.extend('router', {
   // * prefers more segments to less
   // * prefers more characters to less
   sortRoutes: function() {
-    var ac, bc, c;
+    var c;
 
     this.sortChildren(function(a,b) {
-      ac = a.get('interpolationsCount');
-      bc = b.get('interpolationsCount');
-      c = ac - bc;
-      c = c || (b.get('splitPathTemplate').length - a.get('splitPathTemplate').length);
-      c = c || (b.get('pathTemplate').length - a.get('pathTemplate').length);
+      c = b.get('weight') - a.get('weight');
+      c = c || b.get('pathTemplate').length - a.get('pathTemplate').length;
+      c = c || a.get('pathTemplate').localeCompare(b.get('pathTemplate'));
       return c;
     });
   },

@@ -10,6 +10,7 @@ describe("pie.router", function(){
       '/t/:id/b'            : {view: 'b', name: 'bSpecificRoute'},
       '/t/unique/b'         : {view: 'b', name: 'bUniqueRoute'},
       '/t/:parent_id/b/:id' : {view: 'b', name: 'bParentRoute'},
+      '/m/*path'            : {view: 'm', name: 'mRoute'},
 
       'api.route'          : '/api/a.json',
       'api.specificRoute'  : '/api/:id/a.json'
@@ -28,8 +29,9 @@ describe("pie.router", function(){
     expect(r.getChild('aRoute').get('pathTemplate')).toEqual('/t/a');
     expect(r.getChild('api.specificRoute').get('pathTemplate')).toEqual('/api/:id/a.json');
     expect(r.getChild('aSpecificRoute').get('pathTemplate')).toEqual('/t/:id/a');
+    expect(r.getChild('mRoute').get('pathTemplate')).toEqual('/m/*path');
 
-    expect(r.children.length).toEqual(7);
+    expect(r.children.length).toEqual(8);
   });
 
   it('should correctly build paths', function() {
@@ -91,6 +93,15 @@ describe("pie.router", function(){
     expect(o.data.q).toEqual(1);
     expect(o.data.foo).toEqual(true);
 
+    o = r.parseUrl('/m/thing');
+    expect(o.view).toEqual('m');
+    expect(o.data.path).toEqual('thing');
+
+    o = r.parseUrl('/m/thing/foo?bar=true', true);
+    expect(o.view).toEqual('m');
+    expect(o.data.path).toEqual('thing/foo');
+    expect(o.data.bar).toEqual(true);
+
     o = r.parseUrl('/unrecognized/path');
     expect(o.view).toEqual(undefined);
     expect(o.path).toEqual('/unrecognized/path');
@@ -100,13 +111,14 @@ describe("pie.router", function(){
   it("should correctly sort the routes", function() {
     var routes = this.router.children.map(function(r){ return r.get('pathTemplate'); });
     expect(routes).toEqual([
+      '/t/:parent_id/b/:id',
       '/t/unique/b',
-      '/api/a.json',
-      '/t/a',
       '/api/:id/a.json',
       '/t/:id/a',
       '/t/:id/b',
-      '/t/:parent_id/b/:id'
+      '/api/a.json',
+      '/t/a',
+      '/m/*path'
     ]);
   });
 });
