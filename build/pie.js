@@ -3043,8 +3043,11 @@ pie.app = pie.base.extend('app', {
     }.bind(this);
 
 
+    // `app.config` is a model used to manage configuration objects.
+    this.config = classOption('config', pie.config);
+
     // `app.cache` is a centralized cache store to be used by anyone.
-    this.cache = new pie.cache();
+    this.cache = classOption('cache', pie.cache);
 
     // `app.emitter` is an interface for subscribing and observing app events
     this.emitter = classOption('emitter', pie.emitter);
@@ -3871,6 +3874,63 @@ pie.model = pie.base.extend('model', {
 
     return this;
   }
+});
+// # Pie Config
+// A place to store app configuration information.
+// It allows for dynamic subconfigs to be defined as well.
+//
+// ```
+// app.config.set('googleMapsKey', 'xyz');
+// app.config.dynamic('env', {
+//   "defaults" : {
+//     analyticsEnabled: false
+//   },
+//   "production" : {
+//     analyticsEnabled: true
+//   }
+// });
+//
+// app.config.get('googleMapsKey')
+// //=> 'xyz'
+//
+// app.config.get('analyticsEnabled');
+// //=> false
+//
+// app.config.set('env', 'production');
+// app.config.get('analyticsEnabled');
+// //=> true
+// ```
+pie.config = pie.model.extend('config', {
+
+  init: function() {
+    this._super.apply(this, arguments);
+    this.dynamicKeys = {};
+  },
+
+  _onDynamicChange: function(dynamic) {
+    var val = this.get(dynamic),
+    defaults, conf;
+
+    defaults = this.get(dynamic + 'Config.defaults');
+    conf = val && this.get(dynamic + 'Config.' + val);
+
+    this.sets(pie.object.deepMerge({}, defaults, conf));
+  },
+
+  dynamic: function(dynamic, obj) {
+    var current = this.get(dynamic + 'Config') || {};
+    this.set(dynamic + 'Config', pie.object.deepMerge(current, obj));
+
+    if(!this.dynamicKeys[dynamic]) {
+      this.dynamicKeys[dynamic] = true;
+      this.observe(function(){
+        this._onDynamicChange(dynamic);
+      }.bind(this), dynamic);
+    }
+
+    this._onDynamicChange(dynamic);
+  }
+
 });
 // pie.view manages events delegation, provides some convenience methods, and some <form> standards.
 pie.view = pie.base.extend('view');
@@ -7771,7 +7831,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150313.1";
+  pie.VERSION = "0.0.20150314.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

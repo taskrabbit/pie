@@ -61,8 +61,11 @@ pie.app = pie.base.extend('app', {
     }.bind(this);
 
 
+    // `app.config` is a model used to manage configuration objects.
+    this.config = classOption('config', pie.config);
+
     // `app.cache` is a centralized cache store to be used by anyone.
-    this.cache = new pie.cache();
+    this.cache = classOption('cache', pie.cache);
 
     // `app.emitter` is an interface for subscribing and observing app events
     this.emitter = classOption('emitter', pie.emitter);
