@@ -185,7 +185,7 @@ pie.app = pie.base.extend('app', {
       notificationArgs[0] = this.i18n.attempt(notificationArgs[0]);
     }
 
-    if(pie.object.has(this.router.parseUrl(path), 'view')) {
+    if(this.router.parseUrl(path).route) {
 
       this.navigator.go(path, {}, replaceState);
 
@@ -257,18 +257,13 @@ pie.app = pie.base.extend('app', {
       this.emitter.fire('urlChanged');
     }
 
-    // Not necessary for a view to exist on each page.
-    // Maybe the entry point is server generated.
-    if(!this.parsedUrl.get('view')) {
-
-      var redirectTo = this.parsedUrl.get('redirect');
-      if(!redirectTo) return;
-
-      redirectTo = app.router.path(redirectTo, this.parsedUrl.get('data'));
-
+    var redirectTo = this.parsedUrl.get('redirect');
+    if(redirectTo) {
       this.go(redirectTo);
       return;
     }
+
+    if(!this.parsedUrl.get('view')) return;
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.parsedUrl.get('view')) {

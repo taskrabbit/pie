@@ -28,8 +28,6 @@ pie.route = pie.model.extend('route', {
 
     this.compute('segments',            'pathTemplate');
     this.compute('pathRegex',           'pathTemplate');
-    this.compute('interpolationsCount', 'segments');
-    this.compute('globsCount',          'segments');
     this.compute('weight',              'segments');
   },
 
@@ -40,25 +38,6 @@ pie.route = pie.model.extend('route', {
   segments: function() {
     return this.get('pathTemplate').split('/');
   },
-
-  // **pie.route.interpolationsCount**
-  //
-  // The number of interpolations this route has.
-  // Since this is a computed property, we only ever have to do this once.
-  interpolationsCount: function() {
-    var m = pie.array.count(this.get('segments'), function(s){ return s.charAt(0) === ':'; });
-    return m && m.length || 0;
-  },
-
-  // **pie.route.globsCount**
-  //
-  // The number of globs this route has.
-  // Since this is a computed property, we only ever have to do this once.
-  globsCount: function() {
-    var m = pie.array.count(this.get('segments'), function(s){ return s.charAt(0) === '*'; });
-    return m && m.length || 0;
-  },
-
 
   // **pie.route.pathRegex**
   //

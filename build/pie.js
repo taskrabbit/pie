@@ -3167,7 +3167,7 @@ pie.app = pie.base.extend('app', {
       notificationArgs[0] = this.i18n.attempt(notificationArgs[0]);
     }
 
-    if(pie.object.has(this.router.parseUrl(path), 'view')) {
+    if(this.router.parseUrl(path).route) {
 
       this.navigator.go(path, {}, replaceState);
 
@@ -3239,18 +3239,13 @@ pie.app = pie.base.extend('app', {
       this.emitter.fire('urlChanged');
     }
 
-    // Not necessary for a view to exist on each page.
-    // Maybe the entry point is server generated.
-    if(!this.parsedUrl.get('view')) {
-
-      var redirectTo = this.parsedUrl.get('redirect');
-      if(!redirectTo) return;
-
-      redirectTo = app.router.path(redirectTo, this.parsedUrl.get('data'));
-
+    var redirectTo = this.parsedUrl.get('redirect');
+    if(redirectTo) {
       this.go(redirectTo);
       return;
     }
+
+    if(!this.parsedUrl.get('view')) return;
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.parsedUrl.get('view')) {
@@ -6590,8 +6585,6 @@ pie.route = pie.model.extend('route', {
 
     this.compute('segments',            'pathTemplate');
     this.compute('pathRegex',           'pathTemplate');
-    this.compute('interpolationsCount', 'segments');
-    this.compute('globsCount',          'segments');
     this.compute('weight',              'segments');
   },
 
@@ -6602,25 +6595,6 @@ pie.route = pie.model.extend('route', {
   segments: function() {
     return this.get('pathTemplate').split('/');
   },
-
-  // **pie.route.interpolationsCount**
-  //
-  // The number of interpolations this route has.
-  // Since this is a computed property, we only ever have to do this once.
-  interpolationsCount: function() {
-    var m = pie.array.count(this.get('segments'), function(s){ return s.charAt(0) === ':'; });
-    return m && m.length || 0;
-  },
-
-  // **pie.route.globsCount**
-  //
-  // The number of globs this route has.
-  // Since this is a computed property, we only ever have to do this once.
-  globsCount: function() {
-    var m = pie.array.count(this.get('segments'), function(s){ return s.charAt(0) === '*'; });
-    return m && m.length || 0;
-  },
-
 
   // **pie.route.pathRegex**
   //
@@ -6857,6 +6831,13 @@ pie.router = pie.model.extend('router', {
     this.cache.clear();
   },
 
+  // **pie.router.onMiss**
+  //
+  // The config to return when a route is parsed but not recognized.
+  onMiss: function(config) {
+    this.missedConfig = config;
+  },
+
   // **pie.router.path**
   //
   // Will return the named path. If there is no path with that name it will return itself.
@@ -6938,7 +6919,7 @@ pie.router = pie.model.extend('router', {
         query: query,
         data: pie.object.merge({}, interpolations, query),
         route: match
-      }, match && match.options);
+      }, match && match.options || this.missedConfig);
 
       return result;
     }.bind(this));

@@ -107,6 +107,13 @@ pie.router = pie.model.extend('router', {
     this.cache.clear();
   },
 
+  // **pie.router.onMiss**
+  //
+  // The config to return when a route is parsed but not recognized.
+  onMiss: function(config) {
+    this.missedConfig = config;
+  },
+
   // **pie.router.path**
   //
   // Will return the named path. If there is no path with that name it will return itself.
@@ -188,7 +195,7 @@ pie.router = pie.model.extend('router', {
         query: query,
         data: pie.object.merge({}, interpolations, query),
         route: match
-      }, match && match.options);
+      }, match && match.options || this.missedConfig);
 
       return result;
     }.bind(this));
