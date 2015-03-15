@@ -5588,7 +5588,8 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
       notificationArgs[<span class="hljs-number">0</span>] = <span class="hljs-keyword">this</span>.i18n.attempt(notificationArgs[<span class="hljs-number">0</span>]);
     }
 
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.router.parseUrl(path).route) {
+    <span class="hljs-keyword">var</span> parsed = <span class="hljs-keyword">this</span>.router.parseUrl(path);
+    <span class="hljs-keyword">if</span>(parsed.route &amp;&amp; (parsed.view || parsed.redirect)) {
 
       <span class="hljs-keyword">this</span>.navigator.go(path, {}, replaceState);
 

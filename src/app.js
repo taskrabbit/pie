@@ -185,7 +185,8 @@ pie.app = pie.base.extend('app', {
       notificationArgs[0] = this.i18n.attempt(notificationArgs[0]);
     }
 
-    if(this.router.parseUrl(path).route) {
+    var parsed = this.router.parseUrl(path);
+    if(parsed.route && (parsed.view || parsed.redirect)) {
 
       this.navigator.go(path, {}, replaceState);
 
