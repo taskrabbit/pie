@@ -3151,6 +3151,8 @@ pie.app = pie.base.extend('app', {
       path = this.router.path.apply(this.router, pie.array.from(path));
     }
 
+    if(path === this.parsedUrl.get('fullPath')) return;
+
     /* If the next argument is a boolean, we care about replaceState */
     if(pie.object.isBoolean(args[0])) {
       replaceState = args.shift();
@@ -3898,8 +3900,11 @@ pie.model = pie.base.extend('model', {
 // ```
 pie.config = pie.model.extend('config', {
 
-  init: function() {
-    this._super.apply(this, arguments);
+  init: function(app, options) {
+    options = options || {};
+    options.app = app;
+
+    this._super({}, options);
     this.dynamicKeys = {};
   },
 

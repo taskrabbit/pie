@@ -25,8 +25,11 @@
 // ```
 pie.config = pie.model.extend('config', {
 
-  init: function() {
-    this._super.apply(this, arguments);
+  init: function(app, options) {
+    options = options || {};
+    options.app = app;
+
+    this._super({}, options);
     this.dynamicKeys = {};
   },
 

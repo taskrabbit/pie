@@ -5572,6 +5572,8 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
       path = <span class="hljs-keyword">this</span>.router.path.apply(<span class="hljs-keyword">this</span>.router, pie.array.from(path));
     }
 
+    <span class="hljs-keyword">if</span>(path === <span class="hljs-keyword">this</span>.parsedUrl.get(<span class="hljs-string">'fullPath'</span>)) <span class="hljs-keyword">return</span>;
+
     <span class="hljs-comment">/* If the next argument is a boolean, we care about replaceState */</span>
     <span class="hljs-keyword">if</span>(pie.object.isBoolean(args[<span class="hljs-number">0</span>])) {
       replaceState = args.shift();
@@ -6789,8 +6791,11 @@ app.config.get(<span class="hljs-string">'analyticsEnabled'</span>);
             
             <div class="content"><div class='highlight'><pre>pie.config = pie.model.extend(<span class="hljs-string">'config'</span>, {
 
-  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, options)</span> </span>{
+    options = options || {};
+    options.app = app;
+
+    <span class="hljs-keyword">this</span>._super({}, options);
     <span class="hljs-keyword">this</span>.dynamicKeys = {};
   },
 
