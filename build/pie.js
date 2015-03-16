@@ -3097,7 +3097,7 @@ pie.app = pie.base.extend('app', {
     this.parsedUrl = new pie.model({});
 
     // We observe the navigator and handle changing the context of the page.
-    this.navigator.observe(this.navigationChanged.bind(this), 'url');
+    this.navigator.observe(this.navigationChanged.bind(this));
 
     // Before we get going, observe link navigation & show any notifications stored
     // in localStorage.
@@ -6223,6 +6223,7 @@ pie.navigator = pie.model.extend('navigator', {
     this.sets({
       url: window.location.href,
       path: window.location.pathname,
+      anchor: window.location.hash.slice(1),
       fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
       query: query
     });

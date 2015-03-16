@@ -5468,7 +5468,7 @@ Since a new instance of this is needed on every page change, just provide the cl
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.navigator.observe(<span class="hljs-keyword">this</span>.navigationChanged.bind(<span class="hljs-keyword">this</span>), <span class="hljs-string">'url'</span>);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.navigator.observe(<span class="hljs-keyword">this</span>.navigationChanged.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
             
         </li>
         
@@ -10127,6 +10127,7 @@ Set the data on this navigator object.</p>
     <span class="hljs-keyword">this</span>.sets({
       url: <span class="hljs-built_in">window</span>.location.href,
       path: <span class="hljs-built_in">window</span>.location.pathname,
+      anchor: <span class="hljs-built_in">window</span>.location.hash.slice(<span class="hljs-number">1</span>),
       fullPath: pie.array.compact([<span class="hljs-built_in">window</span>.location.pathname, stringQuery], <span class="hljs-literal">true</span>).join(<span class="hljs-string">'?'</span>),
       query: query
     });

@@ -51,6 +51,7 @@ pie.navigator = pie.model.extend('navigator', {
     this.sets({
       url: window.location.href,
       path: window.location.pathname,
+      anchor: window.location.hash.slice(1),
       fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
       query: query
     });
