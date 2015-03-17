@@ -1241,7 +1241,7 @@ pie.fn.debounce = function(func, wait, immediate) {
 //   window.scrollTo(0, y);
 // }, { from: 0, to: 300, name: 'easeOutCubic' });
 // ```
-pie.fn.ease = function(cb, o) {
+pie.fn.ease = function(each, o, complete) {
   o = pie.object.merge({
     name: 'linear',
     duration: 250,
@@ -1250,7 +1250,7 @@ pie.fn.ease = function(cb, o) {
   }, o);
 
   if(o.name === 'none') {
-    cb(o.to, 1);
+    each(o.to, 1);
     return;
   }
 
@@ -1268,10 +1268,12 @@ pie.fn.ease = function(cb, o) {
   runner = function(){
     dy = fn(t);
     y = o.from + (dy * delta);
-    cb(y, t);
-    if(t >= 1) clearInterval(pid);
-    else t += dt;
-    if(t > 1) t = 1;
+    each(y, t);
+    if(t >= 1) {
+      t = 1;
+      clearInterval(pid);
+      if(complete) complete();
+    } else t += dt;
     // return ourself so we can invoke as part of setInterval
     return runner;
   };
@@ -7819,7 +7821,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150314.1";
+  pie.VERSION = "0.0.20150317.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

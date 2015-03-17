@@ -1866,7 +1866,7 @@ a name option which coincides with the easing functions defined in <code>pie.mat
 </code></pre>
             </div>
             
-            <div class="content"><div class='highlight'><pre>pie.fn.ease = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb, o)</span> </span>{
+            <div class="content"><div class='highlight'><pre>pie.fn.ease = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(each, o, complete)</span> </span>{
   o = pie.object.merge({
     name: <span class="hljs-string">'linear'</span>,
     duration: <span class="hljs-number">250</span>,
@@ -1875,7 +1875,7 @@ a name option which coincides with the easing functions defined in <code>pie.mat
   }, o);
 
   <span class="hljs-keyword">if</span>(o.name === <span class="hljs-string">'none'</span>) {
-    cb(o.to, <span class="hljs-number">1</span>);
+    each(o.to, <span class="hljs-number">1</span>);
     <span class="hljs-keyword">return</span>;
   }
 
@@ -1906,10 +1906,12 @@ a name option which coincides with the easing functions defined in <code>pie.mat
   runner = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
     dy = fn(t);
     y = o.from + (dy * delta);
-    cb(y, t);
-    <span class="hljs-keyword">if</span>(t &gt;= <span class="hljs-number">1</span>) clearInterval(pid);
-    <span class="hljs-keyword">else</span> t += dt;
-    <span class="hljs-keyword">if</span>(t &gt; <span class="hljs-number">1</span>) t = <span class="hljs-number">1</span>;</pre></div></div>
+    each(y, t);
+    <span class="hljs-keyword">if</span>(t &gt;= <span class="hljs-number">1</span>) {
+      t = <span class="hljs-number">1</span>;
+      clearInterval(pid);
+      <span class="hljs-keyword">if</span>(complete) complete();
+    } <span class="hljs-keyword">else</span> t += dt;</pre></div></div>
             
         </li>
         
@@ -12494,7 +12496,7 @@ when the transition is complete, invoke the callback.</p>
   }
 
 });
-  pie.VERSION = <span class="hljs-string">"0.0.20150314.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150317.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
