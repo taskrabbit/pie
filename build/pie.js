@@ -1313,6 +1313,40 @@ pie.fn.once = function(f) {
   };
 };
 
+// **pie.fn.throttle**
+//
+// Trigger an event no more than the specified rate.
+// Note that the functions do not pile up and continue executing,
+// they only execute at the rate specified while still being invoked.
+//
+// ```
+// fn = pie.fn.throttle(fn, 250);
+// fn(); fn();
+// //=> fires once
+// ```
+pie.fn.throttle = function(fn, threshold, scope) {
+  threshold = threshold || 250;
+  var last, deferTimer;
+
+  return function () {
+    var context = scope || this;
+
+    var now = pie.date.now(),
+        args = arguments;
+
+    if (last && now < last + threshold) {
+      clearTimeout(deferTimer);
+      deferTimer = setTimeout(function () {
+        last = now;
+        fn.apply(context, args);
+      }, threshold);
+    } else {
+      last = now;
+      fn.apply(context, args);
+    }
+  };
+};
+
 
 // **pie.fn.valueFrom**
 //
@@ -7821,7 +7855,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150317.1";
+  pie.VERSION = "0.0.20150319.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {
