@@ -106,6 +106,10 @@ var pie = window.pie = {
     o.unique  = pie.unique;
 
     return o;
+  },
+
+  _debugArgs: function(msg) {
+    return ["%c[pie] %c" + msg, "color: orange; font-weight: bold;", "color: inherit; font-weight: inherit;"];
   }
 
 };
@@ -3288,6 +3292,7 @@ pie.app = pie.base.extend('app', {
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.parsedUrl.get('view')) {
+      this.emitter.fire('navigationUpdated');
       if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
       return;
     }
@@ -4372,7 +4377,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       try{
         return xhr.responseText.trim().length ? JSON.parse(xhr.responseText) : {};
       } catch(err) {
-        this.app.debug("could not parse JSON response: " + err);
+        this.app.debug.apply(this.app, pie._debugArgs("could not parse JSON response: " + err));
         return {};
       }
     },
@@ -4707,13 +4712,6 @@ pie.emitter = pie.model.extend('emitter', {
     this.set('eventCallbacks.' + eventName, undefined);
   },
 
-  // ** pie.emitter.debug **
-  //
-  // Begin logging events which are triggered by this emitter.
-  debug: function(bool) {
-    this.isDebugging = bool || bool === undefined;
-  },
-
   // ** pie.emitter.hasEvent **
   //
   // Has the event `eventName` been triggered by this emitter yet?
@@ -4864,9 +4862,6 @@ pie.emitter = pie.model.extend('emitter', {
     callbacks = this.get('eventCallbacks.' + event),
     compactNeeded = false;
 
-    /* show that this event was triggered if we're debugging */
-    if(this.isDebugging) this.app.debug(event);
-
     /* increment our trigger counters */
     this._reportTrigger(event, args);
 
@@ -4991,7 +4986,7 @@ pie.errorHandler = pie.model.extend('errorHandler', {
     errors = pie.array.compact(errors, true);
     clean   = this.app.i18n.t('app.errors.' + xhr.status, {default: errors});
 
-    this.app.debug(errors);
+    this.app.debug.apply(this.app, pie._debugArgs(errors));
 
     return pie.array.from(clean);
   },
@@ -5061,7 +5056,7 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   //
   // Hook in your own error reporting service. bugsnag, airbrake, etc.
   _reportError: function(err, options) {
-    this.app.debug(String(err) + " | " + JSON.stringify(options));
+    this.app.debug.apply(this.app, pie._debugArgs(String(err) + " | " + JSON.stringify(options)));
   }
 });
 // # Pie FormView
@@ -7005,7 +7000,10 @@ pie.templates = pie.model.extend('templates', {
   // <h1>[%= h.t("account.hello") %], [%= h.get(data, "firstName") %]</h1>
   // ```
   registerTemplate: function(name, content) {
-    this.app.debug('Compiling and storing template: ' + name);
+    var args = pie._debugArgs('Compiling template: %c' + name);
+    args.push("color: #aaa;");
+
+    this.app.debug.apply(this.app, args);
 
     this.set(name, pie.string.template(content, this.app.helpers.provideVariables()));
   },
@@ -7855,7 +7853,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150319.1";
+  pie.VERSION = "0.0.20150323.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

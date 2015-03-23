@@ -32,13 +32,6 @@ pie.emitter = pie.model.extend('emitter', {
     this.set('eventCallbacks.' + eventName, undefined);
   },
 
-  // ** pie.emitter.debug **
-  //
-  // Begin logging events which are triggered by this emitter.
-  debug: function(bool) {
-    this.isDebugging = bool || bool === undefined;
-  },
-
   // ** pie.emitter.hasEvent **
   //
   // Has the event `eventName` been triggered by this emitter yet?
@@ -188,9 +181,6 @@ pie.emitter = pie.model.extend('emitter', {
     event = args.shift(),
     callbacks = this.get('eventCallbacks.' + event),
     compactNeeded = false;
-
-    /* show that this event was triggered if we're debugging */
-    if(this.isDebugging) this.app.debug(event);
 
     /* increment our trigger counters */
     this._reportTrigger(event, args);

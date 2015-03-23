@@ -35,7 +35,10 @@ pie.templates = pie.model.extend('templates', {
   // <h1>[%= h.t("account.hello") %], [%= h.get(data, "firstName") %]</h1>
   // ```
   registerTemplate: function(name, content) {
-    this.app.debug('Compiling and storing template: ' + name);
+    var args = pie._debugArgs('Compiling template: %c' + name);
+    args.push("color: #aaa;");
+
+    this.app.debug.apply(this.app, args);
 
     this.set(name, pie.string.template(content, this.app.helpers.provideVariables()));
   },

@@ -270,6 +270,7 @@ pie.app = pie.base.extend('app', {
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.parsedUrl.get('view')) {
+      this.emitter.fire('navigationUpdated');
       if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
       return;
     }

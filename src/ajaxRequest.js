@@ -149,7 +149,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       try{
         return xhr.responseText.trim().length ? JSON.parse(xhr.responseText) : {};
       } catch(err) {
-        this.app.debug("could not parse JSON response: " + err);
+        this.app.debug.apply(this.app, pie._debugArgs("could not parse JSON response: " + err));
         return {};
       }
     },

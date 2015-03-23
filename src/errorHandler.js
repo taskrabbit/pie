@@ -43,7 +43,7 @@ pie.errorHandler = pie.model.extend('errorHandler', {
     errors = pie.array.compact(errors, true);
     clean   = this.app.i18n.t('app.errors.' + xhr.status, {default: errors});
 
-    this.app.debug(errors);
+    this.app.debug.apply(this.app, pie._debugArgs(errors));
 
     return pie.array.from(clean);
   },
@@ -113,6 +113,6 @@ pie.errorHandler = pie.model.extend('errorHandler', {
   //
   // Hook in your own error reporting service. bugsnag, airbrake, etc.
   _reportError: function(err, options) {
-    this.app.debug(String(err) + " | " + JSON.stringify(options));
+    this.app.debug.apply(this.app, pie._debugArgs(String(err) + " | " + JSON.stringify(options)));
   }
 });

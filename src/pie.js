@@ -105,6 +105,10 @@ var pie = window.pie = {
     o.unique  = pie.unique;
 
     return o;
+  },
+
+  _debugArgs: function(msg) {
+    return ["%c[pie] %c" + msg, "color: orange; font-weight: bold;", "color: inherit; font-weight: inherit;"];
   }
 
 };
