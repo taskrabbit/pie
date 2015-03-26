@@ -247,7 +247,27 @@ pie.dom.on = function(el, event, fn, selector, capture) {
   return cb;
 };
 
-pie.dom.parseForm = function() {
+// **pie.dom.parseForm**
+//
+// Given a form element `el` parse the names & values from it.
+// Optionally, the fields to parse can be filtered by providing a list of names.
+//
+// Given the markup:
+// ```
+// <form>
+//   <input name="fullName" />
+//   <input name="email" />
+//   <select name="interest">...</select>
+// </form>
+// ```
+// We can retrieve the fields using `parseForm`.
+// ```
+// pie.dom.parseForm(form)
+// //=> {fullName: 'foo', email: 'foo@bar.com', interest: 'user'}
+// pie.dom.parseForm(form, 'fullName')
+// //=> {fullName: 'foo'}
+// ```
+pie.dom.parseForm = function(/* el, *fields */) {
   var args = pie.array.from(arguments),
   form = args.shift(),
   names = pie.array.flatten(args),
@@ -277,16 +297,149 @@ pie.dom.parseForm = function() {
   return o;
 };
 
+// **pie.dom.prependChild**
+//
+// Insert a child at the top of the parent.
+// ```
+// // el = <div><p>Things</p></div>
+// // child = <h3>Title</h3>
+// pie.dom.prependChild(el, child)
+// // el = <div><h3>Title</h3><p>Things</p></div>
+// ```
 pie.dom.prependChild = function(el, child) {
   el.insertBefore(child, el.firstChild);
 };
 
+// **pie.dom.remove**
+//
+// Remove `el` from the dom, clearing any cache we've constructed.
+// If you intend on adding the element back into the dom you should
+// remove `el` manually, not via `pie.dom.remove`.
+//
+// ```
+// pie.dom.remove(el)
+// // => el.parentNode == null;
+// ```
 pie.dom.remove = function(el) {
   pie.setUid(el);
   pie.dom.cache().del('element-' + el.pieId);
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 
+// **pie.dom.scrollParents**
+//
+// Find all the parent elements of `el` that have a scroll property.
+// Useful for spying on scroll and determing element position.
+// Optionally, you can provide the following options:
+//  * direction = 'x' or 'y', defaults to null (both)
+//  * includeSelf - if `true` it will evaluate `el`'s scroll property and include it in the parent list.
+//  * closest - if `true` it will return the first scroll parent instead of all of them.
+//
+// ```
+// pie.dom.scrollParents(el)
+// //=> document.body
+// ```
+// **Note** window will not be included in the response.
+pie.dom.scrollParents = (function(){
+  var regex = /scroll|auto/,
+  prop = function(el, dir) {
+    var style = getComputedStyle(el),
+    flow = style.getPropertyValue('overflow');
+    if(!dir || dir === 'x') flow += style.getPropertyValue('overflow-x');
+    if(!dir || dir === 'y') flow += style.getPropertyValue('overflow-y');
+    return flow;
+  };
+
+  return function(el, options) {
+    var parents = options && options.closest ? undefined : [],
+    style;
+
+    if(!options || !options.includeSelf) el = el.parentNode;
+
+    while(el) {
+      style = prop(el, options && options.direction);
+
+      if(regex.test(style)) {
+        if(options && options.closest) return el;
+        parents.unshift(el);
+      }
+
+      el = el.parentNode;
+    }
+
+    return parents;
+  };
+})();
+
+// **pie.dom.scrollTo**
+//
+// Scroll the page to `sel`.
+// If `sel` is a string it will find the first occurrence via a querySelector.
+// Available options:
+//  * container - the container to scroll, defaults to document.body
+//  * cb - the callback to invoke when scrolling is finished.
+//  * onlyUp - only scrolls if the element is above the current position.
+//  * onlyDown - only scrolls if the element is below the current position.
+//  * * - any option available in pie.fn.ease
+//
+// ```
+// pie.dom.scrollTo('header', {onlyUp: true, cb: fn, name: 'easeInQuart'});
+pie.dom.scrollTo = function(sel, options) {
+  var position = 0,
+  container = options && options.container || document.body,
+  cb = options && options.cb,
+  quit = false;
+
+  if(sel) {
+    var target = pie.object.isString(sel) ? container.querySelector(sel) : sel;
+    while(target && target !== container) {
+      position += (target.offsetTop - target.scrollTop);
+      target = target.offsetParent;
+    }
+  }
+
+  if(options) {
+    if(options.onlyUp && container.scrollTop <= position) quit = true;
+    if(options.onlyDown && container.scrollTop >= position) quit = true;
+  }
+
+  if(position === container.scrollTop) quit = true;
+
+  if(quit) {
+    if(cb) cb();
+    return;
+  }
+
+  options = pie.object.merge({
+    from: container.scrollTop,
+    to: position,
+    name: 'easeInOutCubic',
+    duration: 250
+  }, options);
+
+  delete options.cb;
+  delete options.container;
+  delete options.onlyUp;
+  delete options.onlyDown;
+
+  pie.fn.ease(function(p){
+    container.scrollTop = p;
+  }, options, cb);
+
+};
+
+// **pie.dom.trigger**
+//
+// Trigger an event `e` on `el`.
+// If the event is a click, it will invoke the click() handler instead of creating
+// a dom event. This is for browser compatability reasons (certain versions of FF).
+// If you want to force an event, pass true as the third argument.
+//
+// ```
+// pie.dom.trigger(el, 'click');
+// pie.dom.trigger(el, 'foo.bar');
+// ```
+//
 pie.dom.trigger = function(el, e, forceEvent) {
 
   if(!forceEvent && e === 'click') return el.click();
@@ -296,8 +449,19 @@ pie.dom.trigger = function(el, e, forceEvent) {
   return el.dispatchEvent(event);
 };
 
+// **pie.dom.prefixed**
+//
+// Find the first available version of the desired function, including browser specific implementations.
+// ```
+// pie.dom.prefixed(el, 'matches');
+// pie.dom.prefixed(el, 'matchesSelector');
+// pie.dom.prefixed(getComputedStyle(document.body), 'animation-delay')
+// ```
 pie.dom.prefixed = (function(){
-  var prefixes = ['', 'webkit', 'moz', 'ms', 'o'];
+  var prefixes = ['', 'webkit', 'moz', 'ms', 'o'],
+  returnVal = function(val, el){
+    return pie.object.isFunction(val) ? val.bind(el) : val;
+  };
 
   return function(el, standardName) {
     var prefix, i = 0,
@@ -306,8 +470,9 @@ pie.dom.prefixed = (function(){
     for(; i < prefixes.length; i++) {
       prefix = prefixes[i];
 
-      if(el[prefix + standardName]) return el[prefix + standardName].bind(el);
-      if(el[prefix + capd]) return el[prefix + capd].bind(el);
+      if(el[prefix + standardName]) return returnVal(el[prefix + standardName], el);
+      if(el['-' + prefix + '-' + standardName]) return returnVal(el['-' + prefix + '-' + standardName], el);
+      if(el[prefix + capd]) return returnVal(el[prefix + capd], el);
     }
   };
 })();

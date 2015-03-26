@@ -7,6 +7,7 @@ source_files       := src/pie.js src/extensions/*.js src/mixins/*.js src/base.js
 amd_files          := src/amd/*.txt
 deploy             := build/pie.js.min
 debug              := build/pie.js
+gzip               := build/pie.js.min.gz
 
 spec_source_files  := spec/specHelper.js spec/**/*Spec.js spec/*Spec.js
 specs              := spec/compiled.js
@@ -19,6 +20,7 @@ all: clean $(debug) $(specs) $(guide) $(deploy) $(guide_debug) document
 
 $(deploy): $(debug)
 	uglifyjs -cmo $(deploy) $(debug)
+	gzip -c $(deploy) > $(gzip)
 
 $(debug): $(source_files) $(amd_files)
 	mkdir -p build
