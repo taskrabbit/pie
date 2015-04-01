@@ -4,7 +4,7 @@
 
 <div class="copy">
   <h1>The Object Model</h1>
-  <p>If you've used Ember, Base2, or Prototype, etc, [%= possess %] object model should feel familiar. It's essentially based on <a target="_blank" href="http://ejohn.org/blog/simple-javascript-inheritance/">John Resig's thoughts on simple inheritance</a>. [%= pie.string.capitalize(project) %] tries to behave in the most obvious, expected way possible (POLA). [%= project %] attempts to provide an interface which can easily be replaced with ES6's inheritance implementation once it's fully adopted.</p>
+  <p>If you've used Ember, React, Base2,2 Prototype, etc, [%= possess %] object model should feel familiar. It's essentially based on <a target="_blank" href="http://ejohn.org/blog/simple-javascript-inheritance/">John Resig's thoughts on simple inheritance</a>. [%= pie.string.capitalize(project) %] tries to behave in the most obvious, expected way possible (POLA). [%= project %] attempts to provide an interface which can easily be replaced with ES6's inheritance implementation once it's fully adopted.</p>
 
   <h3>Inheritance</h3>
 
@@ -26,7 +26,7 @@
 
   [%= h.gist('_super.js') %]
 
-  <p>Until ES6 rolls out, all <em>_super</em> implementations are a bit hacky. Here's how [%= possess %] works. When an extension is added to a prototype, each key in the extension is evaluated. For each key, [%= ns %] checks to see if there is an existing function on the prototype. If there is, a wrapper function is created around the new function which sets <em>this._super</em> to the old function. After execution of the new function, this._super is reset to it's previous value.</p>
+  <p>Until ES2015+ rolls out, all <em>_super</em> implementations are a bit hacky. Here's how [%= possess %] works. When an extension is added to a prototype, each key in the extension is evaluated. For each key, [%= ns %] checks to see if there is an existing function on the prototype. If there is, a wrapper function is created around the new function which sets <em>this._super</em> to the old function. After execution of the new function, this._super is reset to it's previous value.</p>
 
   <h3>_super Gotchas</h3>
 

@@ -50,6 +50,7 @@ lib.views.nav = pie.view.extend('nav', {
 
 
 lib.views.page = pie.activeView.extend('page', {
+
   init: function() {
     this._super({
       renderOnSetup: true
