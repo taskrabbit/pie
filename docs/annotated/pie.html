@@ -2080,20 +2080,6 @@ Lifted from underscore.js</p>
 
     <span class="hljs-keyword">return</span> result;
   };
-};
-
-pie.fn.computed = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* fn, props */</span>)</span> </span>{
-  <span class="hljs-keyword">var</span> fn = <span class="hljs-built_in">arguments</span>[<span class="hljs-number">0</span>],
-  props = pie.array.get(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>, -<span class="hljs-number">1</span>);
-  <span class="hljs-keyword">return</span> pie.fn.decorate(fn, {computedProperty: <span class="hljs-literal">true</span>, properties: props});
-};
-
-pie.fn.decorate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn, options)</span> </span>{
-  <span class="hljs-keyword">var</span> wrap = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-    <span class="hljs-keyword">return</span> fn.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
-  };
-  wrap.pieOptions = options;
-  <span class="hljs-keyword">return</span> wrap;
 };</pre></div></div>
             
         </li>

@@ -72,19 +72,6 @@ pie.fn.debounce = function(func, wait, immediate) {
   };
 };
 
-pie.fn.computed = function(/* fn, props */) {
-  var fn = arguments[0],
-  props = pie.array.get(arguments, 1, -1);
-  return pie.fn.decorate(fn, {computedProperty: true, properties: props});
-};
-
-pie.fn.decorate = function(fn, options) {
-  var wrap = function(){
-    return fn.apply(this, arguments);
-  };
-  wrap.pieOptions = options;
-  return wrap;
-};
 
 // **pie.fn.ease**
 //
