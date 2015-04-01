@@ -356,7 +356,7 @@ pie.dom.scrollParents = (function(){
 
     if(!options || !options.includeSelf) el = el.parentNode;
 
-    while(el) {
+    while(el && !pie.dom.isDocument(el)) {
       style = prop(el, options && options.direction);
 
       if(regex.test(style)) {

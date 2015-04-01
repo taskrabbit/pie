@@ -114,7 +114,7 @@ code, code * {
 .page-nav {
   width: 250px;
   position: fixed;
-  left: -100px;
+  right: -100px;
   top: 0;
   bottom: 0;
   padding: 1em 0;
@@ -129,15 +129,16 @@ code, code * {
 .page-nav li a {
   display: block;
   padding: 0.5em 1em;
-  border-left: 3px solid transparent;
+  border: 3px solid transparent;
+  border-width: 0 3px 0 0;
 }
 
 .page-nav li a:hover {
-  border-left: 3px solid #692B05;
+  border-color: #692B05;
 }
 
 .page-nav li.is-active a {
-  border-left: 3px solid #291000;
+  border-color: #291000;
 }
 
 .page-nav .home {
@@ -156,8 +157,8 @@ code, code * {
 
 .nav-toggle {
   position: absolute;
-  top: 8px;
-  left: 16px;
+  bottom: 8px;
+  right: 16px;
   width: 30px;
   height: 30px;
   z-index: 2;
@@ -171,12 +172,14 @@ code, code * {
 }
 
 .page-container {
-  position: relative;
+  position: absolute;
   left: 0;
-  width: 100%;
-  min-height: 100%;
-  z-index:1;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
   background-color: #FFFAF8;
+  overflow-y: auto;
 }
 
 .page {
@@ -246,6 +249,7 @@ code, code * {
 }
 
 @media all and (max-width: 730px) {
+
   .page-container {
     box-shadow: 0 0 3px 1px rgba(0,0,0,0.15);
   }
@@ -256,15 +260,19 @@ code, code * {
   }
 
   .nav-active .page-nav{
-    transform: translate3d(100px, 0, 0);
+    transform: translate3d(-100px, 0, 0);
   }
 
   .nav-active .page-container, .nav-active .nav-toggle{
-    transform: translate3d(250px, 0, 0);
+    transform: translate3d(-250px, 0, 0);
   }
 
   .nav-active pre {
     overflow: hidden;
+  }
+
+  .page-nav li a {
+    border-width: 0 0 0 3px;
   }
 
 }

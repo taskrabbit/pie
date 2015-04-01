@@ -57,8 +57,14 @@ lib.views.page = pie.activeView.extend('page', {
   },
 
   navigationUpdated: function() {
+    var scrollParent = pie.dom.scrollParents(this.el, {closest: true});
+    this.emitter.once('afterRender', function(){
+      pie.dom.scrollTo(null, {
+        container: scrollParent,
+        onlyUp: true
+      });
+    });
     this.render();
-    window.scrollTo(0,0);
   },
 
   templateName: function() {

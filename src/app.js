@@ -20,7 +20,8 @@ pie.app = pie.base.extend('app', {
     /* Default application options. */
     this.options = pie.object.deepMerge({
       uiTarget: 'body',
-      viewNamespace: 'lib.views',
+      handlerNamespace: 'pie.routeHandlers',
+      defaultHandler: 'view',
       unsupportedPath: '/browser/unsupported',
       notificationStorageKey: 'js-alerts',
       verifySupport: true
@@ -103,13 +104,6 @@ pie.app = pie.base.extend('app', {
 
     // `app.validator` a validator intance to be used in conjunction with this app's model activity.
     this.validator = classOption('validator', pie.validator);
-
-    // The view transition class to be used when transitioning between pages.
-    // Since a new instance of this is needed on every page change, just provide the class.
-    this.viewTransitionClass = this.options.viewTransitionClass || pie.simpleViewTransition;
-
-    // You can also provide `viewTransitionOptions` which will be merged into the constructor of this class.
-    this.viewTransitionOptions = this.options.viewTransitionOptions || {};
 
     // After a navigation change, app.parsedUrl is the new parsed route
     this.parsedUrl = new pie.model({});
@@ -250,7 +244,7 @@ pie.app = pie.base.extend('app', {
   // We always remove the current before instantiating the next. this ensures are views can prepare
   // Context's in removedFromParent before the constructor of the next view is invoked.
   navigationChanged: function() {
-    var current  = this.getChild('currentView');
+    var current  = this.getChild('currentHandler');
 
     // Let the router determine our new url
     this.previousUrl = this.parsedUrl.get('fullPath');
@@ -260,73 +254,19 @@ pie.app = pie.base.extend('app', {
       this.emitter.fire('urlChanged');
     }
 
-    var redirectTo = this.parsedUrl.get('redirect');
-    if(redirectTo) {
-      this.go(redirectTo);
-      return;
+    var handler = this.parsedUrl.get('handler');
+    handler = handler || this.options.defaultHandler;
+
+    if(pie.object.isString(handler)){
+      var handlerClass = pie.object.getPath(window, this.options.handlerNamespace + '.' + handler);
+      handler = new handlerClass(this);
+    } else if (pie.object.isFunction(handler)) {
+      handler = new handler(this, this.parsedUrl);
     }
 
-    if(!this.parsedUrl.get('view')) return;
-
-    // if the view that's in there is already loaded, don't remove / add again.
-    if(current && current._pieName === this.parsedUrl.get('view')) {
-      this.emitter.fire('navigationUpdated');
-      if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
-      return;
-    }
-
-    this.transitionToNewView();
-
+    handler.handle();
   },
 
-  // The process for transitioning to a new view.
-  // Both the current view and the next view are optional.
-  transitionToNewView: function() {
-    var target = pie.qs(this.options.uiTarget),
-        current = this.getChild('currentView'),
-        viewClass, child, transition;
-
-    // Provide some events that can be observed around the transition process.
-    this.emitter.fire('beforeViewChanged');
-    this.emitter.fireAround('aroundViewChanged', function() {
-
-      this.emitter.fire('viewChanged');
-
-      // Use the view key of the parsedUrl to find the viewClass.
-      // At this point we've already verified the view option exists, so we don't have to check it.
-      viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.parsedUrl.get('view'));
-      // The instance to be added. If the class is not defined, this could and should blow up.
-      child = new viewClass({ app: this });
-
-      // Cache an identifier on the view so we can invoke navigationUpdated instead of reloading
-      // if the url changes but the view does not
-      child._pieName = this.parsedUrl.get('view');
-
-      // Instantiate a transition object based on the app configuration.
-      transition = new this.viewTransitionClass(this, pie.object.merge({
-        oldChild: current,
-        newChild: child,
-        childName: 'currentView',
-        targetEl: target
-      }, this.viewTransitionOptions));
-
-      // Provide a couple common events out of the app.
-      transition.emitter.on('afterRemoveOldChild', function() {
-        this.emitter.fire('oldViewRemoved', current);
-      }.bind(this));
-
-      transition.emitter.on('afterTransition', function() {
-        this.emitter.fire('newViewLoaded', child);
-      }.bind(this));
-
-      transition.transition(function(){
-
-        // The instance is now our 'currentView'
-        this.emitter.fire('afterViewChanged');
-      }.bind(this));
-
-    }.bind(this));
-  },
 
   // Reload the page without reloading the browser.
   // Alters the current view's _pieName to appear as invalid for the route.
@@ -340,9 +280,9 @@ pie.app = pie.base.extend('app', {
   retrieve: function(key, clear) {
     var encoded, decoded;
 
-    if(!window.localStorage) return undefined;
-
     try {
+      if(!window.localStorage) return undefined;
+
       encoded = window.localStorage.getItem(key);
       decoded = encoded ? JSON.parse(encoded) : undefined;
     } catch(err) {
@@ -389,10 +329,11 @@ pie.app = pie.base.extend('app', {
 
   // Safely access localStorage, passing along any errors for reporting.
   store: function(key, data) {
-    if(!window.localStorage) return false;
 
     var str;
     try {
+      if(!window.localStorage) return false;
+
       str = JSON.stringify(data);
       window.localStorage.setItem(key, str);
       return true;
