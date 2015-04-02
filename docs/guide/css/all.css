@@ -227,6 +227,7 @@ code, code * {
   display: block;
   padding: 0.25em;
   background-color: white;
+  margin-top: 1em;
 }
 
 @media all and (min-width: 731px) {

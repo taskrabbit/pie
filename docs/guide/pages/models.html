@@ -40,4 +40,50 @@
   </p>
 
   [%= h.gist("modelObserver.js") %]
+
+  <h5>ChangeSets</h5>
+
+  <p>
+    When an observer is triggered it's always provided with a changeSet object. This object is an array, with some extra functionality. Here's what you can do with a changeSet.
+  </p>
+
+  <ul>
+    <li>
+      <code>*</code>
+      <span>- every Array.prototype function.</span>
+    </li>
+    <li>
+      <code>get(key)</code>
+      <span>- access the most recent change record associated with the given key.</span>
+    </li>
+    <li>
+      <code>has(key)</code>
+      <span>- does the changeSet contain a record with the given key.</span>
+    </li>
+    <li>
+      <code>hasAny(*keys)</code>
+      <span>- are there any change records that match any of the given keys?</span>
+    </li>
+    <li>
+      <code>hasAll(*keys)</code>
+      <span>- are all of the provided keys present in the given change records?</span>
+    </li>
+    <li>
+      <code>query(options)</code>
+      <span>- query for the latest change set by name and/or type.</span>
+      <br />
+      <ul>
+        <li><code>changeSet.query({name: "firstName", type: "update"})</code></li>
+      </ul>
+    </li>
+    <li>
+      <code>queryAll(options)</code>
+      <span>- query for all change records matching the name and/or type.</span>
+      <br />
+      <ul>
+        <li><code>changeSet.queryAll({type: "update"})</code></li>
+      </ul>
+    </li>
+  </ul>
+
 </div>

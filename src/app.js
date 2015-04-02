@@ -20,8 +20,6 @@ pie.app = pie.base.extend('app', {
     /* Default application options. */
     this.options = pie.object.deepMerge({
       uiTarget: 'body',
-      handlerNamespace: 'pie.routeHandlers',
-      defaultHandler: 'view',
       unsupportedPath: '/browser/unsupported',
       notificationStorageKey: 'js-alerts',
       verifySupport: true
@@ -83,8 +81,14 @@ pie.app = pie.base.extend('app', {
     // `app.errorHandler` is the object responsible for
     this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
+    // After a navigation change, app.parsedUrl is the new parsed route
+    this.parsedUrl = new pie.model({});
+
     // `app.router` is used to determine which view should be rendered based on the url
     this.router = classOption('router', pie.router);
+
+    // `app.routeHandler` extracts information from the current route and determines what to do with it.
+    this.routeHandler = classOption('routeHandler', pie.routeHandler);
 
     // `app.resources` is used for managing the loading of external resources.
     this.resources = classOption('resources', pie.resources);
@@ -104,9 +108,6 @@ pie.app = pie.base.extend('app', {
 
     // `app.validator` a validator intance to be used in conjunction with this app's model activity.
     this.validator = classOption('validator', pie.validator);
-
-    // After a navigation change, app.parsedUrl is the new parsed route
-    this.parsedUrl = new pie.model({});
 
     // We observe the navigator and handle changing the context of the page.
     this.navigator.observe(this.navigationChanged.bind(this));
@@ -244,7 +245,6 @@ pie.app = pie.base.extend('app', {
   // We always remove the current before instantiating the next. this ensures are views can prepare
   // Context's in removedFromParent before the constructor of the next view is invoked.
   navigationChanged: function() {
-    var current  = this.getChild('currentHandler');
 
     // Let the router determine our new url
     this.previousUrl = this.parsedUrl.get('fullPath');
@@ -254,17 +254,7 @@ pie.app = pie.base.extend('app', {
       this.emitter.fire('urlChanged');
     }
 
-    var handler = this.parsedUrl.get('handler');
-    handler = handler || this.options.defaultHandler;
-
-    if(pie.object.isString(handler)){
-      var handlerClass = pie.object.getPath(window, this.options.handlerNamespace + '.' + handler);
-      handler = new handlerClass(this);
-    } else if (pie.object.isFunction(handler)) {
-      handler = new handler(this, this.parsedUrl);
-    }
-
-    handler.handle();
+    this.routeHandler.handle();
   },
 
 

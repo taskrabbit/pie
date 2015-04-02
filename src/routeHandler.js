@@ -1,76 +1,51 @@
-pie.ns('pie.routeHandlers');
+pie.routeHandler = pie.base.extend('routeHandler', {
 
-
-
-pie.routeHandlers.base = pie.base.extend('routeHandler', {
   init: function(app, options) {
     this.app = app;
-    this.options = options || {};
-    this.urlModel = this.app.parsedUrl;
-    this.emitter = this.app.emitter;
+    this.options = pie.object.merge({
+      viewNamespace: 'lib.views',
+      uiTarget: 'body',
+      viewKey: 'view',
+      viewTransitionClass: pie.simpleViewTransition,
+      viewTransitionOptions: {}
+    }, options);
+
     this._super();
-  },
 
-  handle: function() {
-    // concrete classes override this.
-  }
-});
-
-
-
-// Look for a "redirect" key and tell the app to go there.
-pie.routeHandlers.redirect = pie.routeHandlers.base.extend('redirectRouteHandler', {
-  handle: function() {
-    var redirectTo = this.urlModel.get('redirect');
-    if(redirectTo) this.app.go(redirectTo);
-  }
-});
-
-
-
-
-pie.routeHandlers.view = pie.routeHandlers.base.extend('viewRouteHandler', {
-
-  init: function(app, options) {
-    this._super(app, options);
-
-    var setOpt = function(name, defalt) {
-      if(pie.object.has(this.options, name)) return;
-      if(pie.object.has(this.app.options, name)) return this.options[name] = this.app.options[name];
-      this.options[name] = defalt;
-    }.bind(this);
-
-    // the place to search for matching views.
-    setOpt('viewNamespace', 'lib.views');
-
-    // the element or selector to attach our view to
-    setOpt('uiTarget', 'body');
-
-    // the key to access in the urlModel
-    setOpt('viewKey', 'view');
-
-    // The view transition class to be used when transitioning between pages.
-    setOpt('viewTransitionClass', pie.simpleViewTransition);
-
-    // You can also provide `viewTransitionOptions` which will be merged into the constructor of this class.
-    setOpt('viewTransitionOptions', {});
+    this.urlModel = this.app.parsedUrl;
+    this.emitter  = this.app.emitter;
   },
 
   currentView: function() {
-    return app.getChild(this.options.viewKey + ".currentView");
+    return app.getChild("currentView");
   },
 
   handle: function() {
+    return this.handleRedirect() || this.handleView();
+  },
+
+  handleRedirect: function() {
+    var redirectTo = this.urlModel.get('redirect');
+    if(redirectTo) {
+      this.app.go(redirectTo);
+      return true;
+    } else {
+      return false;
+    }
+  },
+
+  handleView: function() {
     var current = this.currentView();
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.urlModel.get(this.options.viewKey)) {
       this.emitter.fire('navigationUpdated', this);
       if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
-      return;
+      return true;
     }
 
     this.transitionToNewView();
+    return true;
   },
 
   // The process for transitioning to a new view.
@@ -79,7 +54,7 @@ pie.routeHandlers.view = pie.routeHandlers.base.extend('viewRouteHandler', {
     var current = this.currentView(),
         target, viewClass, child, transition;
 
-    target = (this.options.parentView || pie).qs(this.options.uiTarget);
+    target = pie.qs(this.options.uiTarget);
 
     // Provide some events that can be observed around the transition process.
     this.emitter.fire('beforeViewChanged', this);
@@ -102,7 +77,7 @@ pie.routeHandlers.view = pie.routeHandlers.base.extend('viewRouteHandler', {
       transition = new this.options.viewTransitionClass(this.app, pie.object.merge({
         oldChild: current,
         newChild: child,
-        childName: this.options.viewKey + ".currentView",
+        childName: "currentView",
         targetEl: target
       }, this.options.viewTransitionOptions));
 
