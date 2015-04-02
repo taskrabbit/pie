@@ -1,5 +1,6 @@
 [% var project = h.t('project'); %]
 [% var ns = h.t('ns'); %]
+
 <div class="copy">
   <h1>Getting Started</h1>
   <p>
@@ -40,14 +41,12 @@
   <p>You'll notice that the interpolations, query, and path information are easily accessible. You'll also notice that a route instance is provided back to you for the sake of extensibility.</p>
 
   <h3>URL-to-View Routing Process</h3>
-  <p>As mentioned earlier, your app is observing url changes and asking the router to parse the new url. When that happens, the <em>view</em> key is used to determine which top-level view to load.</p>
-  <p>By default, the app looks for views in a <em>lib.views</em> namespace. This namespace is configurable via the app's <em>viewNamespace</em> option. So, in the case of our example, if a user navigated to <em>/basic/path</em> the app would attempt to instantiate an instance of the view class defined at <em>lib.views.sublayout</em> and that instance could then use <em>app.parsedUrl</em> to retrieve the current parsed version of the route.</p>
-  <p>If the new route maps to the same view as the previous, the app will attempt to invoke a <em>navigationUpdated</em> function on the existing view. By default [%= ns %].views will trigger a navigationUpdated event on their emitter as well as propagate the invocation down to it's children.</p>
+  <p>As mentioned earlier, your app is observing url changes and asking the router to parse the new url. When that happens, the app's <em>routeHandler</em> object is asked to handle the new route. By default, the route handler will look for a <em>view</em> key in the route that is used to determine which top-level view to load.</p>
+  <p>By default, the routeHandler looks for views in a <em>lib.views</em> namespace. This namespace is configurable via the handler's <em>viewNamespace</em> option. So, in the case of our example, if a user navigated to <em>/basic/path</em> the handler would attempt to instantiate an instance of the view class defined at <em>lib.views.sublayout</em> and that instance could then use <em>app.parsedUrl</em> to retrieve the current parsed version of the route.</p>
+  <p>If the new route maps to the same view as the previous, the handler will attempt to invoke a <em>navigationUpdated</em> function on the existing view. By default [%= ns %].views will trigger a navigationUpdated event on their emitter as well as propagate the invocation down to it's children.</p>
 
   <h3>Simple Example App</h3>
   <p>This example app shows how an app is created, two routes are mapped, and views are declared.</p>
   [%= h.gist('gettingStartedExample.html') %]
-
-  <a class="next-page" href="[%= h.path('object-model') %]">Next up: The Object Model</a>
 </div>
 

@@ -99,6 +99,8 @@ pie.model = pie.base.extend('model', {
     fn = props.shift(),
     wrap;
 
+    props = pie.array.flatten(props);
+
     if(!pie.object.isFunction(fn)) {
       props.unshift(fn);
       fn = this[name].bind(this);
@@ -239,6 +241,22 @@ pie.model = pie.base.extend('model', {
   // ```
   is: function(path) {
     return !!this.get(path);
+  },
+
+  // ** pie.model.merge **
+  //
+  // Set keys, but do so by merging with the current values
+  // ```
+  // model.set('location.city', "San Francisco")
+  // model.set('location.lat', 0);
+  // model.set('location.lng', 0);
+  // model.merge({location: {lat: 37.77, lng: -122.44}})
+  // model.get('location')
+  // //=> {city: "San Francico", lat: 37.77, lng: -122.44}
+  merge: function(/* objs */) {
+    var obj = arguments.length > 1 ? pie.object.deepMerge.apply(null, arguments) : arguments[0]
+    obj = pie.object.flatten(obj);
+    this.sets(obj);
   },
 
   // ** pie.model.observe **

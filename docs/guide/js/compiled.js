@@ -50,15 +50,38 @@ lib.views.nav = pie.view.extend('nav', {
 
 
 lib.views.page = pie.activeView.extend('page', {
+
   init: function() {
     this._super({
       renderOnSetup: true
     });
   },
 
+  setup: function() {
+    this.emitter.on('afterRender', this.scrollToTop.bind(this));
+    this.emitter.on('afterRender', this.setNext.bind(this));
+    this._super();
+  },
+
   navigationUpdated: function() {
     this.render();
-    window.scrollTo(0,0);
+  },
+
+  scrollToTop: function() {
+    var scrollParent = pie.dom.scrollParents(this.el, {closest: true});
+    pie.dom.scrollTo(null, {
+      container: scrollParent,
+      onlyUp: true
+    });
+  },
+
+  setNext: function() {
+    var a = pie.qs('.page-nav li.is-active + li a');
+
+    if(a) {
+      var next = pie.dom.createElement('<a class="next-page" href="' + a.getAttribute('href') + '">Next up: ' + a.innerHTML + '</a>');
+      this.el.appendChild(next);
+    }
   },
 
   templateName: function() {
@@ -68,10 +91,12 @@ lib.views.page = pie.activeView.extend('page', {
 });
 
 window.app = new pie.app({
-  uiTarget: '.page',
   navigationContainer: 'body',
   routerOptions: {
     root: '/docs/guide'
+  },
+  routeHandlerOptions: {
+    uiTarget: '.page'
   }
 });
 
