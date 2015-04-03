@@ -301,6 +301,27 @@ pie.array.groupBy = function(arr, groupingF) {
   return h;
 };
 
+// ** pie.array.hasAny **
+//
+// Determine if the given array `a` has any of the provided values.
+// ```
+// arr = ["foo", "bar", "baz"]
+// pie.array.hasAny(arr, "foo")
+// //=> true
+// pie.array.hasAny(arr, ["food", "bar"])
+// //=> true
+// pie.array.hasAny(arr, "qux")
+// //=> false
+pie.array.hasAny = function(/* a, *values */) {
+  var a = pie.array.from(arguments[0]),
+  values = pie.array.get(arguments, 1, -1), i;
+  values = pie.array.flatten(values);
+  for(i=0;i<values.length;i++) {
+    if(~a.indexOf(values[i])) return true;
+  }
+  return false;
+};
+
 // ** pie.array.indexOf **
 //
 // Find the first index of the item that matches `f`.

@@ -90,10 +90,6 @@ pie.object.flatten = function(a, object, prefix) {
   return b;
 };
 
-pie.object.hasAny = function(obj) {
-  return obj && !!Object.keys(obj).length;
-};
-
 pie.object.isWindow = function(obj) {
   return obj && typeof obj === "object" && "setInterval" in obj;
 };
@@ -208,6 +204,21 @@ pie.object.getValue = function(o, attribute) {
 pie.object.has = function(obj, key, includeInherited) {
   return obj && (obj.hasOwnProperty(key) || (includeInherited && (key in obj)));
 };
+
+pie.object.hasAny = function(/* obj, *keys */) {
+  var obj = arguments[0], keys, checks;
+  if(!obj) return false;
+
+  if(arguments.length === 1) return !!Object.keys(obj).length;
+
+  checks = pie.array.flatten(pie.array.get(arguments, 1, -1));
+  for(var i=0;i<checks.length;i++) {
+    if(pie.object.has(obj, checks[i])) return true;
+  }
+
+  return false;
+};
+
 
 // does the object have the described path
 pie.object.hasPath = function(obj, path) {

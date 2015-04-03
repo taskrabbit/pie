@@ -44,6 +44,8 @@ pie.routeHandler = pie.base.extend('routeHandler', {
       return true;
     }
 
+    if(!this.urlModel.get(this.options.viewKey)) return false;
+
     this.transitionToNewView();
     return true;
   },

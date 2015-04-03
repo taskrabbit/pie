@@ -89,4 +89,27 @@ describe("pie.validator", function() {
       expect(this.validator.inclusion('foo', {in: ['qux', 'baz', 'bar']})).toEqual(false);
     });
   });
+
+  describe("#date", function() {
+    it("should allow a valid iso date to pass", function() {
+      expect(this.validator.date("2015-04-01")).toEqual(true);
+      expect(this.validator.date("2015-12-31")).toEqual(true);
+      expect(this.validator.date("2015-01-01")).toEqual(true);
+    });
+
+    it("should not allow invalid dates", function() {
+      expect(this.validator.date("2015-13-01")).toEqual(false);
+      expect(this.validator.date("2015-12-00")).toEqual(false);
+      expect(this.validator.date("2015-02-29")).toEqual(false);
+    });
+
+    it("should not allow invalid formats", function() {
+      expect(this.validator.date("2015-12-1")).toEqual(false);
+      expect(this.validator.date("2015-1-01")).toEqual(false);
+      expect(this.validator.date("15-12-01")).toEqual(false);
+      expect(this.validator.date("2015-to-01")).toEqual(false);
+      expect(this.validator.date("2015-12-001")).toEqual(false);
+      expect(this.validator.date("12/24/2015")).toEqual(false);
+    });
+  });
 });
