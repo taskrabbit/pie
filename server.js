@@ -22,6 +22,10 @@ app.get(/^\/examples\/transitions\/(a|b|c|d)\.html/, function(request, response)
   response.sendFile(__dirname + '/examples/transitions.html');
 });
 
+app.get('/', function(req, res) {
+  res.redirect(301, '/docs/guide');
+});
+
 app.get('*', function(req, res) {
   res.sendFile(__dirname + req.path);
 });
