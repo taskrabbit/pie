@@ -7453,8 +7453,8 @@ Options:</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-265">&#182;</a>
               </div>
-              <p><strong>pie.view.addedToParent</strong>
-Accommodates the <code>addedToParent</code> hook event in pie.container.
+              <p><strong>pie.view.addedToParent</strong></p>
+<p>Accommodates the <code>addedToParent</code> hook event in pie.container.
 Emits the event via the emitter, meaning this can be subscribed to in the init or setup process.</p>
 
             </div>
@@ -7472,8 +7472,8 @@ Emits the event via the emitter, meaning this can be subscribed to in the init o
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-266">&#182;</a>
               </div>
-              <p><strong>pie.view.appendToDom</strong>
-A function which appends the view’s el to the DOM within target (or this.options.uiTarget).
+              <p><strong>pie.view.appendToDom</strong></p>
+<p>A function which appends the view’s el to the DOM within target (or this.options.uiTarget).
 An “attach” sequence is fired so views can control how they enter the DOM.</p>
 
             </div>
@@ -7496,8 +7496,8 @@ An “attach” sequence is fired so views can control how they enter the DOM.</
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-267">&#182;</a>
               </div>
-              <p><strong>pie.view.consumeEvent</strong>
-A utility method for consuming an event, and optionally immediately stopping propagation.</p>
+              <p><strong>pie.view.consumeEvent</strong></p>
+<p>A utility method for consuming an event, and optionally immediately stopping propagation.</p>
 <pre><code>clickCallback: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span> </span>{
   <span class="hljs-keyword">this</span>.consumeEvent(e);
   <span class="hljs-built_in">console</span>.log(e.delegateTarget.href);
@@ -7522,8 +7522,8 @@ A utility method for consuming an event, and optionally immediately stopping pro
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-268">&#182;</a>
               </div>
-              <p><strong>pie.view.eventNamespace</strong>
-The namespace used for this view’s events. All views have a separate namespace to ensure
+              <p><strong>pie.view.eventNamespace</strong></p>
+<p>The namespace used for this view’s events. All views have a separate namespace to ensure
 event triggers are propagated efficiently.</p>
 
             </div>
@@ -7541,8 +7541,8 @@ event triggers are propagated efficiently.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-269">&#182;</a>
               </div>
-              <p><strong>pie.view.navigationUpdated</strong>
-When navigation changes but this view is still deemed relevant by the routeHandler, <code>navigationUpdated</code> will be invoked.
+              <p><strong>pie.view.navigationUpdated</strong></p>
+<p>When navigation changes but this view is still deemed relevant by the routeHandler, <code>navigationUpdated</code> will be invoked.
 A <code>navigationUpdated</code> event is emmitted, then all children are checked for a navigationUpdated function which, if found, is invoked.</p>
 
             </div>
@@ -7615,8 +7615,8 @@ view.on(<span class="hljs-string">'resize'</span>, <span class="hljs-literal">nu
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-271">&#182;</a>
               </div>
-              <p><strong>pie.view.onChange</strong>
-Observe changes of an model, unobserving them when the view is removed.
+              <p><strong>pie.view.onChange</strong></p>
+<p>Observe changes of an model, unobserving them when the view is removed.
 If the object is not observable, an error will be thrown.
 The first argument must be the observable model, the remaining arguments must match
 the expected arguments of model.observe.</p>
@@ -7654,8 +7654,8 @@ view.onChange(context, <span class="hljs-keyword">this</span>.onContextChange.bi
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-272">&#182;</a>
               </div>
-              <p><strong>pie.view.qs</strong>
-Shortcut for this.el.querySelector</p>
+              <p><strong>pie.view.qs</strong></p>
+<p>Shortcut for this.el.querySelector</p>
 
             </div>
             
@@ -7672,8 +7672,8 @@ Shortcut for this.el.querySelector</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-273">&#182;</a>
               </div>
-              <p><strong>pie.view.qsa</strong>
-shortcut for this.el.querySelectorAll</p>
+              <p><strong>pie.view.qsa</strong></p>
+<p>shortcut for this.el.querySelectorAll</p>
 
             </div>
             
@@ -7690,8 +7690,8 @@ shortcut for this.el.querySelectorAll</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-274">&#182;</a>
               </div>
-              <p><strong>pie.view.removeFromDom</strong>
-Assuming the view’s el is in the DOM, a detach sequence will be invoked, resulting in the el being removed.
+              <p><strong>pie.view.removeFromDom</strong></p>
+<p>Assuming the view’s el is in the DOM, a detach sequence will be invoked, resulting in the el being removed.
 Note we don’t use pie.dom.remove since we know we’re cleaning up our events. Multiple views could be associated
 with the same el.</p>
 
@@ -7714,8 +7714,8 @@ with the same el.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-275">&#182;</a>
               </div>
-              <p><strong>pie.view.removedFromParent</strong>
-Accommodates the <code>removedFromParent</code> hook event in pie.container.
+              <p><strong>pie.view.removedFromParent</strong></p>
+<p>Accommodates the <code>removedFromParent</code> hook event in pie.container.
 It emits a <code>removedFromParent</code> event which can be observed in the setup process.</p>
 
             </div>
@@ -7733,8 +7733,8 @@ It emits a <code>removedFromParent</code> event which can be observed in the set
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-276">&#182;</a>
               </div>
-              <p><strong>pie.view.setup</strong>
-Placeholder for default functionality.
+              <p><strong>pie.view.setup</strong></p>
+<p>Placeholder for default functionality.
 By default, the setup event is triggered on the emitter.</p>
 
             </div>
@@ -7753,8 +7753,8 @@ By default, the setup event is triggered on the emitter.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-277">&#182;</a>
               </div>
-              <p><strong>pie.view.teardown</strong>
-This function should be invoked when it’s ready to dismiss the view.
+              <p><strong>pie.view.teardown</strong></p>
+<p>This function should be invoked when it’s ready to dismiss the view.
 Upon invocation, a <code>teardown</code> sequence is emitted.
 When teardown runs, the view’s <code>el</code> is removed from the dom, all observations are removed,
 and all children have teardown invoked.</p>
@@ -7788,8 +7788,8 @@ and all children have teardown invoked.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-278">&#182;</a>
               </div>
-              <p><strong>pie.view.teardownChildren</strong>
-Invokes teardown on each child that responds to it.</p>
+              <p><strong>pie.view.teardownChildren</strong></p>
+<p>Invokes teardown on each child that responds to it.</p>
 
             </div>
             

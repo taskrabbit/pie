@@ -42,6 +42,7 @@ pie.view.reopen({
   },
 
   // **pie.view.addedToParent**
+  //
   // Accommodates the `addedToParent` hook event in pie.container.
   // Emits the event via the emitter, meaning this can be subscribed to in the init or setup process.
   addedToParent: function() {
@@ -49,6 +50,7 @@ pie.view.reopen({
   },
 
   // **pie.view.appendToDom**
+  //
   // A function which appends the view's el to the DOM within target (or this.options.uiTarget).
   // An "attach" sequence is fired so views can control how they enter the DOM.
   appendToDom: function(target) {
@@ -61,6 +63,7 @@ pie.view.reopen({
   },
 
   // **pie.view.consumeEvent**
+  //
   // A utility method for consuming an event, and optionally immediately stopping propagation.
   // ```
   // clickCallback: function(e) {
@@ -77,6 +80,7 @@ pie.view.reopen({
   },
 
   // **pie.view.eventNamespace**
+  //
   // The namespace used for this view's events. All views have a separate namespace to ensure
   // event triggers are propagated efficiently.
   eventNamespace: function() {
@@ -85,6 +89,7 @@ pie.view.reopen({
 
 
   // **pie.view.navigationUpdated**
+  //
   // When navigation changes but this view is still deemed relevant by the routeHandler, `navigationUpdated` will be invoked.
   // A `navigationUpdated` event is emmitted, then all children are checked for a navigationUpdated function which, if found, is invoked.
   navigationUpdated: function() {
@@ -140,6 +145,7 @@ pie.view.reopen({
   },
 
   // **pie.view.onChange**
+  //
   // Observe changes of an model, unobserving them when the view is removed.
   // If the object is not observable, an error will be thrown.
   // The first argument must be the observable model, the remaining arguments must match
@@ -170,6 +176,7 @@ pie.view.reopen({
 
 
   // **pie.view.qs**
+  //
   // Shortcut for this.el.querySelector
   qs: function(selector) {
     return this.el.querySelector(selector);
@@ -177,12 +184,14 @@ pie.view.reopen({
 
 
   // **pie.view.qsa**
+  //
   // shortcut for this.el.querySelectorAll
   qsa: function(selector) {
     return this.el.querySelectorAll(selector);
   },
 
   // **pie.view.removeFromDom**
+  //
   // Assuming the view's el is in the DOM, a detach sequence will be invoked, resulting in the el being removed.
   // Note we don't use pie.dom.remove since we know we're cleaning up our events. Multiple views could be associated
   // with the same el.
@@ -195,6 +204,7 @@ pie.view.reopen({
   },
 
   // **pie.view.removedFromParent**
+  //
   // Accommodates the `removedFromParent` hook event in pie.container.
   // It emits a `removedFromParent` event which can be observed in the setup process.
   removedFromParent: function() {
@@ -202,6 +212,7 @@ pie.view.reopen({
   },
 
   // **pie.view.setup**
+  //
   // Placeholder for default functionality.
   // By default, the setup event is triggered on the emitter.
   setup: function(){
@@ -211,6 +222,7 @@ pie.view.reopen({
 
 
   // **pie.view.teardown**
+  //
   // This function should be invoked when it's ready to dismiss the view.
   // Upon invocation, a `teardown` sequence is emitted.
   // When teardown runs, the view's `el` is removed from the dom, all observations are removed,
@@ -234,6 +246,7 @@ pie.view.reopen({
   },
 
   // **pie.view.teardownChildren**
+  //
   // Invokes teardown on each child that responds to it.
   teardownChildren: function() {
     this.children.forEach(function(child) {
