@@ -109,8 +109,12 @@ pie.app = pie.base.extend('app', {
     // `app.validator` a validator intance to be used in conjunction with this app's model activity.
     this.validator = classOption('validator', pie.validator);
 
-    // We observe the navigator and handle changing the context of the page.
-    this.navigator.observe(this.navigationChanged.bind(this));
+    // We observe the navigator and tell the router to parse the new url
+    this.navigator.observe(this.parseUrl.bind(this));
+
+    // Watch for changes to the parsedUrl
+    this.parsedUrl.observe(this.parsedUrlChanged.bind(this));
+
 
     // Before we get going, observe link navigation & show any notifications stored
     // in localStorage.
@@ -237,24 +241,16 @@ pie.app = pie.base.extend('app', {
   parseUrl: function() {
     var fromRouter = this.router.parseUrl(this.navigator.get('fullPath'));
 
-    this.parsedUrl.reset({skipObservers: true});
-    this.parsedUrl.sets(fromRouter);
+    this.parsedUrl.setData(fromRouter);
   },
 
-  // When we change urls
-  // We always remove the current before instantiating the next. this ensures are views can prepare
-  // Context's in removedFromParent before the constructor of the next view is invoked.
-  navigationChanged: function() {
 
-    // Let the router determine our new url
-    this.previousUrl = this.parsedUrl.get('fullPath');
-    this.parseUrl();
-
-    if(this.previousUrl !== this.parsedUrl.get('fullPath')) {
+  parsedUrlChanged: function(changeSet) {
+    if(changeSet.has('fullPath')) {
       this.emitter.fire('urlChanged');
     }
 
-    this.routeHandler.handle();
+    this.routeHandler.handle(changeSet);
   },
 
 

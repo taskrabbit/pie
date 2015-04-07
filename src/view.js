@@ -92,10 +92,10 @@ pie.view.reopen({
   //
   // When navigation changes but this view is still deemed relevant by the routeHandler, `navigationUpdated` will be invoked.
   // A `navigationUpdated` event is emmitted, then all children are checked for a navigationUpdated function which, if found, is invoked.
-  navigationUpdated: function() {
-    this.emitter.fire('navigationUpdated');
+  navigationUpdated: function(changeSet) {
+    this.emitter.fire('navigationUpdated', changeSet);
     this.children.forEach(function(c){
-      if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated();
+      if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated(changeSet);
     });
   },
 

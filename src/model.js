@@ -405,6 +405,34 @@ pie.model = pie.base.extend('model', {
     return this.deliverChangeRecords(options);
   },
 
+  // ** pie.model.setData **
+  //
+  // Update data to contain only the keys defined by obj.
+  // Results in the same data value as a `reset` + `sets` BUT change records will reflect
+  // the updates, not the removal + the additions.
+  //
+  // ```
+  // model.setData({foo: 'bar', bar: 'baz'})
+  // model.setData({bar: 'foo'})
+  // //=> change records will include a deleted foo, and an updated bar.
+  // model.data
+  // //=> {_version: 3, bar: 'foo'}
+  // ```
+  setData: function(obj, options) {
+    var existing = Object.keys(pie.object.flatten(this.data)),
+    given = Object.keys(pie.object.flatten(obj)),
+    removed = pie.array.subtract(existing, given),
+    rmOptions = pie.object.merge({}, options, {skipObservers: true});
+
+    removed = pie.array.remove(removed, '_version');
+
+    removed.forEach(function(rm){
+      this.set(rm, undefined, rmOptions);
+    }.bind(this));
+
+    return this.sets(obj, options);
+  },
+
   // ** pie.model.sets **
   //
   // Set a bunch of stuff at once.
