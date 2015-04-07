@@ -3626,8 +3626,12 @@ pie.app = pie.base.extend('app', {
     // `app.validator` a validator intance to be used in conjunction with this app's model activity.
     this.validator = classOption('validator', pie.validator);
 
-    // We observe the navigator and handle changing the context of the page.
-    this.navigator.observe(this.navigationChanged.bind(this));
+    // We observe the navigator and tell the router to parse the new url
+    this.navigator.observe(this.parseUrl.bind(this));
+
+    // Watch for changes to the parsedUrl
+    this.parsedUrl.observe(this.parsedUrlChanged.bind(this));
+
 
     // Before we get going, observe link navigation & show any notifications stored
     // in localStorage.
@@ -3754,24 +3758,16 @@ pie.app = pie.base.extend('app', {
   parseUrl: function() {
     var fromRouter = this.router.parseUrl(this.navigator.get('fullPath'));
 
-    this.parsedUrl.reset({skipObservers: true});
-    this.parsedUrl.sets(fromRouter);
+    this.parsedUrl.setData(fromRouter);
   },
 
-  // When we change urls
-  // We always remove the current before instantiating the next. this ensures are views can prepare
-  // Context's in removedFromParent before the constructor of the next view is invoked.
-  navigationChanged: function() {
 
-    // Let the router determine our new url
-    this.previousUrl = this.parsedUrl.get('fullPath');
-    this.parseUrl();
-
-    if(this.previousUrl !== this.parsedUrl.get('fullPath')) {
+  parsedUrlChanged: function(changeSet) {
+    if(changeSet.has('fullPath')) {
       this.emitter.fire('urlChanged');
     }
 
-    this.routeHandler.handle();
+    this.routeHandler.handle(changeSet);
   },
 
 
@@ -4272,6 +4268,34 @@ pie.model = pie.base.extend('model', {
     return this.deliverChangeRecords(options);
   },
 
+  // ** pie.model.setData **
+  //
+  // Update data to contain only the keys defined by obj.
+  // Results in the same data value as a `reset` + `sets` BUT change records will reflect
+  // the updates, not the removal + the additions.
+  //
+  // ```
+  // model.setData({foo: 'bar', bar: 'baz'})
+  // model.setData({bar: 'foo'})
+  // //=> change records will include a deleted foo, and an updated bar.
+  // model.data
+  // //=> {_version: 3, bar: 'foo'}
+  // ```
+  setData: function(obj, options) {
+    var existing = Object.keys(pie.object.flatten(this.data)),
+    given = Object.keys(pie.object.flatten(obj)),
+    removed = pie.array.subtract(existing, given),
+    rmOptions = pie.object.merge({}, options, {skipObservers: true});
+
+    removed = pie.array.remove(removed, '_version');
+
+    removed.forEach(function(rm){
+      this.set(rm, undefined, rmOptions);
+    }.bind(this));
+
+    return this.sets(obj, options);
+  },
+
   // ** pie.model.sets **
   //
   // Set a bunch of stuff at once.
@@ -4512,10 +4536,10 @@ pie.view.reopen({
   //
   // When navigation changes but this view is still deemed relevant by the routeHandler, `navigationUpdated` will be invoked.
   // A `navigationUpdated` event is emmitted, then all children are checked for a navigationUpdated function which, if found, is invoked.
-  navigationUpdated: function() {
-    this.emitter.fire('navigationUpdated');
+  navigationUpdated: function(changeSet) {
+    this.emitter.fire('navigationUpdated', changeSet);
     this.children.forEach(function(c){
-      if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated();
+      if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated(changeSet);
     });
   },
 
@@ -7215,11 +7239,11 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     return app.getChild("currentView");
   },
 
-  handle: function() {
-    return this.handleRedirect() || this.handleView();
+  handle: function(changeSet) {
+    return this.handleRedirect(changeSet) || this.handleView(changeSet);
   },
 
-  handleRedirect: function() {
+  handleRedirect: function(/* changeSet */) {
     var redirectTo = this.urlModel.get('redirect');
     if(redirectTo) {
       this.app.go(redirectTo);
@@ -7229,35 +7253,35 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     }
   },
 
-  handleView: function() {
+  handleView: function(changeSet) {
     var current = this.currentView();
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.urlModel.get(this.options.viewKey)) {
-      this.emitter.fire('navigationUpdated', this);
-      if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
+      this.emitter.fire('navigationUpdated', changeSet);
+      if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated(changeSet);
       return true;
     }
 
     if(!this.urlModel.get(this.options.viewKey)) return false;
 
-    this.transitionToNewView();
+    this.transitionToNewView(changeSet);
     return true;
   },
 
   // The process for transitioning to a new view.
   // Both the current view and the next view are optional.
-  transitionToNewView: function() {
+  transitionToNewView: function(changeSet) {
     var current = this.currentView(),
         target, viewClass, child, transition;
 
     target = pie.qs(this.options.uiTarget);
 
     // Provide some events that can be observed around the transition process.
-    this.emitter.fire('beforeViewChanged', this);
+    this.emitter.fire('beforeViewChanged', changeSet);
     this.emitter.fireAround('aroundViewChanged', function() {
 
-      this.emitter.fire('viewChanged', this);
+      this.emitter.fire('viewChanged', changeSet);
 
       // Use the view key of the urlModel to find the viewClass.
       // At this point we've already verified the view option exists, so we don't have to check it.
@@ -7289,7 +7313,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
 
       transition.transition(function(){
         // The instance is now our 'currentView'
-        this.emitter.fire('afterViewChanged', this);
+        this.emitter.fire('afterViewChanged', changeSet);
       }.bind(this));
 
     }.bind(this));

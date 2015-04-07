@@ -6158,11 +6158,11 @@ browser state. See more in the pie.navigator class.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-222">&#182;</a>
               </div>
-              <p>We observe the navigator and handle changing the context of the page.</p>
+              <p>We observe the navigator and tell the router to parse the new url</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.navigator.observe(<span class="hljs-keyword">this</span>.navigationChanged.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.navigator.observe(<span class="hljs-keyword">this</span>.parseUrl.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
             
         </li>
         
@@ -6172,6 +6172,21 @@ browser state. See more in the pie.navigator class.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-223">&#182;</a>
+              </div>
+              <p>Watch for changes to the parsedUrl</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.parsedUrl.observe(<span class="hljs-keyword">this</span>.parsedUrlChanged.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-224">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-224">&#182;</a>
               </div>
               <p>Before we get going, observe link navigation &amp; show any notifications stored
 in localStorage.</p>
@@ -6186,11 +6201,11 @@ in localStorage.</p>
         </li>
         
         
-        <li id="section-224">
+        <li id="section-225">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-224">&#182;</a>
+                <a class="pilcrow" href="#section-225">&#182;</a>
               </div>
               <p>Once the dom is loaded, start the app.</p>
 
@@ -6203,11 +6218,11 @@ in localStorage.</p>
         </li>
         
         
-        <li id="section-225">
+        <li id="section-226">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-225">&#182;</a>
+                <a class="pilcrow" href="#section-226">&#182;</a>
               </div>
               <p>Just in case the client wants to override the standard confirmation dialog.
 Eventually this could create a confirmation view and provide options to it.
@@ -6232,11 +6247,11 @@ The view could have more options but would always end up invoking onConfirm or o
         </li>
         
         
-        <li id="section-226">
+        <li id="section-227">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-226">&#182;</a>
+                <a class="pilcrow" href="#section-227">&#182;</a>
               </div>
               <p>Use this to navigate. This allows us to apply app-specific navigation logic
 without altering the underling navigator.
@@ -6306,11 +6321,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-227">
+        <li id="section-228">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-227">&#182;</a>
+                <a class="pilcrow" href="#section-228">&#182;</a>
               </div>
               <p>Extracted so we can effectively test the logic within <code>go()</code> without redirection.</p>
 
@@ -6323,11 +6338,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-228">
+        <li id="section-229">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-228">&#182;</a>
+                <a class="pilcrow" href="#section-229">&#182;</a>
               </div>
               <p>Go back one page.</p>
 
@@ -6340,11 +6355,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-229">
+        <li id="section-230">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-229">&#182;</a>
+                <a class="pilcrow" href="#section-230">&#182;</a>
               </div>
               <p>Callback for when a link is clicked in our app</p>
 
@@ -6355,11 +6370,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-230">
+        <li id="section-231">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-230">&#182;</a>
+                <a class="pilcrow" href="#section-231">&#182;</a>
               </div>
               <p>If the link is targeting something else, let the browser take over</p>
 
@@ -6370,11 +6385,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-231">
+        <li id="section-232">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-231">&#182;</a>
+                <a class="pilcrow" href="#section-232">&#182;</a>
               </div>
               <p>If the user is trying to do something beyond simple navigation, let the browser take over</p>
 
@@ -6385,11 +6400,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-232">
+        <li id="section-233">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-232">&#182;</a>
+                <a class="pilcrow" href="#section-233">&#182;</a>
               </div>
               <p>Extract the location from the link.</p>
 
@@ -6400,11 +6415,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-233">
+        <li id="section-234">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-233">&#182;</a>
+                <a class="pilcrow" href="#section-234">&#182;</a>
               </div>
               <p>If we’re going nowhere, somewhere else, or to an anchor on the page, let the browser take over</p>
 
@@ -6415,11 +6430,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-234">
+        <li id="section-235">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-234">&#182;</a>
+                <a class="pilcrow" href="#section-235">&#182;</a>
               </div>
               <p>Ensure that relative links are evaluated as relative</p>
 
@@ -6430,11 +6445,11 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
         </li>
         
         
-        <li id="section-235">
+        <li id="section-236">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-235">&#182;</a>
+                <a class="pilcrow" href="#section-236">&#182;</a>
               </div>
               <p>Great, we can handle it. let the app decide whether to use pushstate or not</p>
 
@@ -6447,26 +6462,17 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
   parseUrl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> fromRouter = <span class="hljs-keyword">this</span>.router.parseUrl(<span class="hljs-keyword">this</span>.navigator.get(<span class="hljs-string">'fullPath'</span>));
 
-    <span class="hljs-keyword">this</span>.parsedUrl.reset({skipObservers: <span class="hljs-literal">true</span>});
-    <span class="hljs-keyword">this</span>.parsedUrl.sets(fromRouter);
-  },</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-236">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-236">&#182;</a>
-              </div>
-              <p>When we change urls
-We always remove the current before instantiating the next. this ensures are views can prepare
-Context’s in removedFromParent before the constructor of the next view is invoked.</p>
+    <span class="hljs-keyword">this</span>.parsedUrl.setData(fromRouter);
+  },
 
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  navigationChanged: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{</pre></div></div>
+
+  parsedUrlChanged: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changeSet)</span> </span>{
+    <span class="hljs-keyword">if</span>(changeSet.has(<span class="hljs-string">'fullPath'</span>)) {
+      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'urlChanged'</span>);
+    }
+
+    <span class="hljs-keyword">this</span>.routeHandler.handle(changeSet);
+  },</pre></div></div>
             
         </li>
         
@@ -6476,29 +6482,6 @@ Context’s in removedFromParent before the constructor of the next view is invo
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-237">&#182;</a>
-              </div>
-              <p>Let the router determine our new url</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.previousUrl = <span class="hljs-keyword">this</span>.parsedUrl.get(<span class="hljs-string">'fullPath'</span>);
-    <span class="hljs-keyword">this</span>.parseUrl();
-
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.previousUrl !== <span class="hljs-keyword">this</span>.parsedUrl.get(<span class="hljs-string">'fullPath'</span>)) {
-      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'urlChanged'</span>);
-    }
-
-    <span class="hljs-keyword">this</span>.routeHandler.handle();
-  },</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-238">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-238">&#182;</a>
               </div>
               <p>Reload the page without reloading the browser.
 Alters the current view’s _pieName to appear as invalid for the route.</p>
@@ -6514,11 +6497,11 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-239">
+        <li id="section-238">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-239">&#182;</a>
+                <a class="pilcrow" href="#section-238">&#182;</a>
               </div>
               <p>Safely access localStorage, passing along any errors for reporting.</p>
 
@@ -6557,11 +6540,11 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-240">
+        <li id="section-239">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-240">&#182;</a>
+                <a class="pilcrow" href="#section-239">&#182;</a>
               </div>
               <p>When a link is clicked, go there without a refresh if we recognize the route.</p>
 
@@ -6575,11 +6558,11 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-241">
+        <li id="section-240">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-241">&#182;</a>
+                <a class="pilcrow" href="#section-240">&#182;</a>
               </div>
               <p>Show any notification which have been preserved via local storage.</p>
 
@@ -6596,11 +6579,11 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-242">
+        <li id="section-241">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-242">&#182;</a>
+                <a class="pilcrow" href="#section-241">&#182;</a>
               </div>
               <p>Start the app by starting the navigator (which we have observed).</p>
 
@@ -6613,11 +6596,11 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-243">
+        <li id="section-242">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-243">&#182;</a>
+                <a class="pilcrow" href="#section-242">&#182;</a>
               </div>
               <p>Safely access localStorage, passing along any errors for reporting.</p>
 
@@ -6657,11 +6640,11 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
         </li>
         
         
-        <li id="section-244">
+        <li id="section-243">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-244">&#182;</a>
+                <a class="pilcrow" href="#section-243">&#182;</a>
               </div>
               <h1 id="pie-model">Pie Model</h1>
 <h3 id="setters-and-getters">Setters and Getters</h3>
@@ -6736,11 +6719,11 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
         </li>
         
         
-        <li id="section-245">
+        <li id="section-244">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-245">&#182;</a>
+                <a class="pilcrow" href="#section-244">&#182;</a>
               </div>
               <p><strong> pie.model.compute </strong></p>
 <p>Register a computed property which is accessible via <code>name</code> and defined by <code>fn</code>.
@@ -6779,11 +6762,11 @@ model.compute(<span class="hljs-string">'displayName'</span>, <span class="hljs-
         </li>
         
         
-        <li id="section-246">
+        <li id="section-245">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-246">&#182;</a>
+                <a class="pilcrow" href="#section-245">&#182;</a>
               </div>
               <p><strong> pie.model.compute </strong></p>
 <p>After updates have been made we deliver our change records to our observers</p>
@@ -6840,11 +6823,11 @@ model.compute(<span class="hljs-string">'displayName'</span>, <span class="hljs-
         </li>
         
         
-        <li id="section-247">
+        <li id="section-246">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-247">&#182;</a>
+                <a class="pilcrow" href="#section-246">&#182;</a>
               </div>
               <p><strong> pie.model.get </strong></p>
 <p>Access the value stored at data[key]
@@ -6863,11 +6846,11 @@ model.get(<span class="hljs-string">'bar.baz'</span>)
         </li>
         
         
-        <li id="section-248">
+        <li id="section-247">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-248">&#182;</a>
+                <a class="pilcrow" href="#section-247">&#182;</a>
               </div>
               <p><strong> pie.model.getOrSet </strong></p>
 <p>Retrieve or set a key within the model.
@@ -6890,11 +6873,11 @@ model.getOrSet(<span class="hljs-string">'foo'</span>, <span class="hljs-string"
         </li>
         
         
-        <li id="section-249">
+        <li id="section-248">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-249">&#182;</a>
+                <a class="pilcrow" href="#section-248">&#182;</a>
               </div>
               <p><strong> pie.model.gets </strong></p>
 <p>Retrieve multiple values at once.
@@ -6921,11 +6904,11 @@ Path keys will be transformed into objects.</p>
         </li>
         
         
-        <li id="section-250">
+        <li id="section-249">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-250">&#182;</a>
+                <a class="pilcrow" href="#section-249">&#182;</a>
               </div>
               <p><strong> pie.model.has </strong></p>
 <p>Determines whether a path exists in our data.</p>
@@ -6941,11 +6924,11 @@ Path keys will be transformed into objects.</p>
         </li>
         
         
-        <li id="section-251">
+        <li id="section-250">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-251">&#182;</a>
+                <a class="pilcrow" href="#section-250">&#182;</a>
               </div>
               <p><strong> pie.model.is </strong></p>
 <p>Boolean check the value at <code>path</code>.</p>
@@ -6961,11 +6944,11 @@ Path keys will be transformed into objects.</p>
         </li>
         
         
-        <li id="section-252">
+        <li id="section-251">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-252">&#182;</a>
+                <a class="pilcrow" href="#section-251">&#182;</a>
               </div>
               <p><strong> pie.model.merge </strong></p>
 <p>Set keys, but do so by merging with the current values
@@ -6988,11 +6971,11 @@ model.get(‘location’)
         </li>
         
         
-        <li id="section-253">
+        <li id="section-252">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-253">&#182;</a>
+                <a class="pilcrow" href="#section-252">&#182;</a>
               </div>
               <p><strong> pie.model.observe </strong></p>
 <p>Register an observer and optionally filter by key.
@@ -7032,11 +7015,11 @@ If no keys are provided, any change will result in the observer being triggered.
         </li>
         
         
-        <li id="section-254">
+        <li id="section-253">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-254">&#182;</a>
+                <a class="pilcrow" href="#section-253">&#182;</a>
               </div>
               <p><strong> pie.model.reset </strong></p>
 <p>Reset a model to it’s empty state, without affecting the <code>_version</code> attribute.
@@ -7059,11 +7042,11 @@ Optionally, you can pass any options which are valid to <code>sets</code>.</p>
         </li>
         
         
-        <li id="section-255">
+        <li id="section-254">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-255">&#182;</a>
+                <a class="pilcrow" href="#section-254">&#182;</a>
               </div>
               <p><strong> pie.model.set </strong></p>
 <p>Set a <code>value</code> on the model at the specified <code>key</code>.
@@ -7145,11 +7128,11 @@ model.set(<span class="hljs-string">'foo'</span>, <span class="hljs-string">'bar
         </li>
         
         
-        <li id="section-256">
+        <li id="section-255">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-256">&#182;</a>
+                <a class="pilcrow" href="#section-255">&#182;</a>
               </div>
               <p>Create the change record with the old &amp; new keys.</p>
 
@@ -7167,6 +7150,42 @@ model.set(<span class="hljs-string">'foo'</span>, <span class="hljs-string">'bar
 
     <span class="hljs-keyword">if</span>(options &amp;&amp; options.skipObservers) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.deliverChangeRecords(options);
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-256">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-256">&#182;</a>
+              </div>
+              <p><strong> pie.model.setData </strong></p>
+<p>Update data to contain only the keys defined by obj.
+Results in the same data value as a <code>reset</code> + <code>sets</code> BUT change records will reflect
+the updates, not the removal + the additions.</p>
+<pre><code>model.setData({foo: <span class="hljs-string">'bar'</span>, bar: <span class="hljs-string">'baz'</span>})
+model.setData({bar: <span class="hljs-string">'foo'</span>})
+<span class="hljs-comment">//=&gt; change records will include a deleted foo, and an updated bar.</span>
+model.data
+<span class="hljs-comment">//=&gt; {_version: 3, bar: 'foo'}</span>
+</code></pre>
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  setData: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj, options)</span> </span>{
+    <span class="hljs-keyword">var</span> existing = <span class="hljs-built_in">Object</span>.keys(pie.object.flatten(<span class="hljs-keyword">this</span>.data)),
+    given = <span class="hljs-built_in">Object</span>.keys(pie.object.flatten(obj)),
+    removed = pie.array.subtract(existing, given),
+    rmOptions = pie.object.merge({}, options, {skipObservers: <span class="hljs-literal">true</span>});
+
+    removed = pie.array.remove(removed, <span class="hljs-string">'_version'</span>);
+
+    removed.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(rm)</span></span>{
+      <span class="hljs-keyword">this</span>.set(rm, <span class="hljs-literal">undefined</span>, rmOptions);
+    }.bind(<span class="hljs-keyword">this</span>));
+
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.sets(obj, options);
   },</pre></div></div>
             
         </li>
@@ -7547,10 +7566,10 @@ A <code>navigationUpdated</code> event is emmitted, then all children are checke
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  navigationUpdated: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'navigationUpdated'</span>);
+            <div class="content"><div class='highlight'><pre>  navigationUpdated: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changeSet)</span> </span>{
+    <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'navigationUpdated'</span>, changeSet);
     <span class="hljs-keyword">this</span>.children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span></span>{
-      <span class="hljs-keyword">if</span>(pie.object.has(c, <span class="hljs-string">'navigationUpdated'</span>, <span class="hljs-literal">true</span>)) c.navigationUpdated();
+      <span class="hljs-keyword">if</span>(pie.object.has(c, <span class="hljs-string">'navigationUpdated'</span>, <span class="hljs-literal">true</span>)) c.navigationUpdated(changeSet);
     });
   },</pre></div></div>
             
@@ -11486,11 +11505,11 @@ pie.routeHandler = pie.base.extend(<span class="hljs-string">'routeHandler'</spa
     <span class="hljs-keyword">return</span> app.getChild(<span class="hljs-string">"currentView"</span>);
   },
 
-  handle: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.handleRedirect() || <span class="hljs-keyword">this</span>.handleView();
+  handle: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changeSet)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.handleRedirect(changeSet) || <span class="hljs-keyword">this</span>.handleView(changeSet);
   },
 
-  handleRedirect: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  handleRedirect: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* changeSet */</span>)</span> </span>{
     <span class="hljs-keyword">var</span> redirectTo = <span class="hljs-keyword">this</span>.urlModel.get(<span class="hljs-string">'redirect'</span>);
     <span class="hljs-keyword">if</span>(redirectTo) {
       <span class="hljs-keyword">this</span>.app.go(redirectTo);
@@ -11500,7 +11519,7 @@ pie.routeHandler = pie.base.extend(<span class="hljs-string">'routeHandler'</spa
     }
   },
 
-  handleView: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  handleView: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changeSet)</span> </span>{
     <span class="hljs-keyword">var</span> current = <span class="hljs-keyword">this</span>.currentView();</pre></div></div>
             
         </li>
@@ -11517,14 +11536,14 @@ pie.routeHandler = pie.base.extend(<span class="hljs-string">'routeHandler'</spa
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(current &amp;&amp; current._pieName === <span class="hljs-keyword">this</span>.urlModel.get(<span class="hljs-keyword">this</span>.options.viewKey)) {
-      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'navigationUpdated'</span>, <span class="hljs-keyword">this</span>);
-      <span class="hljs-keyword">if</span>(pie.object.has(current, <span class="hljs-string">'navigationUpdated'</span>, <span class="hljs-literal">true</span>)) current.navigationUpdated();
+      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'navigationUpdated'</span>, changeSet);
+      <span class="hljs-keyword">if</span>(pie.object.has(current, <span class="hljs-string">'navigationUpdated'</span>, <span class="hljs-literal">true</span>)) current.navigationUpdated(changeSet);
       <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
     }
 
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.urlModel.get(<span class="hljs-keyword">this</span>.options.viewKey)) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
 
-    <span class="hljs-keyword">this</span>.transitionToNewView();
+    <span class="hljs-keyword">this</span>.transitionToNewView(changeSet);
     <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
   },</pre></div></div>
             
@@ -11542,7 +11561,7 @@ Both the current view and the next view are optional.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  transitionToNewView: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+            <div class="content"><div class='highlight'><pre>  transitionToNewView: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changeSet)</span> </span>{
     <span class="hljs-keyword">var</span> current = <span class="hljs-keyword">this</span>.currentView(),
         target, viewClass, child, transition;
 
@@ -11561,10 +11580,10 @@ Both the current view and the next view are optional.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'beforeViewChanged'</span>, <span class="hljs-keyword">this</span>);
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'beforeViewChanged'</span>, changeSet);
     <span class="hljs-keyword">this</span>.emitter.fireAround(<span class="hljs-string">'aroundViewChanged'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
 
-      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'viewChanged'</span>, <span class="hljs-keyword">this</span>);</pre></div></div>
+      <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'viewChanged'</span>, changeSet);</pre></div></div>
             
         </li>
         
@@ -11669,7 +11688,7 @@ if the url changes but the view does not</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterViewChanged'</span>, <span class="hljs-keyword">this</span>);
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterViewChanged'</span>, changeSet);
       }.bind(<span class="hljs-keyword">this</span>));
 
     }.bind(<span class="hljs-keyword">this</span>));

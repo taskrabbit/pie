@@ -20,11 +20,11 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     return app.getChild("currentView");
   },
 
-  handle: function() {
-    return this.handleRedirect() || this.handleView();
+  handle: function(changeSet) {
+    return this.handleRedirect(changeSet) || this.handleView(changeSet);
   },
 
-  handleRedirect: function() {
+  handleRedirect: function(/* changeSet */) {
     var redirectTo = this.urlModel.get('redirect');
     if(redirectTo) {
       this.app.go(redirectTo);
@@ -34,35 +34,35 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     }
   },
 
-  handleView: function() {
+  handleView: function(changeSet) {
     var current = this.currentView();
 
     // if the view that's in there is already loaded, don't remove / add again.
     if(current && current._pieName === this.urlModel.get(this.options.viewKey)) {
-      this.emitter.fire('navigationUpdated', this);
-      if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated();
+      this.emitter.fire('navigationUpdated', changeSet);
+      if(pie.object.has(current, 'navigationUpdated', true)) current.navigationUpdated(changeSet);
       return true;
     }
 
     if(!this.urlModel.get(this.options.viewKey)) return false;
 
-    this.transitionToNewView();
+    this.transitionToNewView(changeSet);
     return true;
   },
 
   // The process for transitioning to a new view.
   // Both the current view and the next view are optional.
-  transitionToNewView: function() {
+  transitionToNewView: function(changeSet) {
     var current = this.currentView(),
         target, viewClass, child, transition;
 
     target = pie.qs(this.options.uiTarget);
 
     // Provide some events that can be observed around the transition process.
-    this.emitter.fire('beforeViewChanged', this);
+    this.emitter.fire('beforeViewChanged', changeSet);
     this.emitter.fireAround('aroundViewChanged', function() {
 
-      this.emitter.fire('viewChanged', this);
+      this.emitter.fire('viewChanged', changeSet);
 
       // Use the view key of the urlModel to find the viewClass.
       // At this point we've already verified the view option exists, so we don't have to check it.
@@ -94,7 +94,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
 
       transition.transition(function(){
         // The instance is now our 'currentView'
-        this.emitter.fire('afterViewChanged', this);
+        this.emitter.fire('afterViewChanged', changeSet);
       }.bind(this));
 
     }.bind(this));
