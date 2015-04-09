@@ -24,13 +24,13 @@ pie.mixins.listView = {
   },
 
   setup: function() {
-    this.onChange(this.list, this._renderItemsToEl.bind(this), '_version');
-    this.emitter.waitUntil('afterRender', 'afterAttach', this._renderItemsToEl.bind(this));
+    this.onChange(this.list, this.renderItems.bind(this), '_version');
+    this.emitter.waitUntil('afterRender', 'afterAttach', this.renderItems.bind(this));
 
     this._super.apply(this, arguments);
   },
 
-  _renderItemsToEl: function(templateName) {
+  renderItems: function(templateName) {
     var container = this.qs(this.options.item.uiTarget),
       content;
 
@@ -42,7 +42,7 @@ pie.mixins.listView = {
   },
 
   _addItems: function() {
-    var items = this.renderData(),
+    var items = this.listData(),
       klass = this.options.item.klass || this._defaultItemKlass();
 
     items.forEach(function(data, i) {
@@ -79,7 +79,7 @@ pie.mixins.listView = {
     });
   },
 
-  renderData: function() {
+  listData: function() {
     if (this.list) {
       return this.list.get('items') || [];
     }
