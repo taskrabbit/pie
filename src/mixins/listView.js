@@ -43,10 +43,11 @@ pie.mixins.listView = {
 
   _addItems: function() {
     var items = this.listData(),
-      klass = this.options.item.klass || this._defaultItemKlass();
+      klass = this.options.item.klass || this._defaultItemKlass(),
+      opts = {uiTarget: this.qs(this.options.item.uiTarget)};
 
     items.forEach(function(data, i) {
-      this.addChild('item-' + i, new klass(data));
+      this.addChild('item-' + i, new klass(opts, data));
     }.bind(this));
   },
 
@@ -64,17 +65,15 @@ pie.mixins.listView = {
   },
 
   _defaultItemKlass: function() {
-    var tmpl = this.options.item.template,
-      uiTarget = this.qs(this.options.item.uiTarget);
+    var tmpl = this.options.item.template;
 
-    return pie.activeView.extend('listItemView', function(data) {
+    return pie.activeView.extend('listItemView', function(opts, data) {
       this.model = new pie.model(data);
 
       this._super({
         renderOnSetup: true,
         setup: true,
-        template: tmpl,
-        uiTarget: uiTarget
+        template: tmpl
       });
     });
   },

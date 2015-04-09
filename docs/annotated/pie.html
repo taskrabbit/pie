@@ -5314,10 +5314,11 @@ pie.mixins.listView = {
 
   _addItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> items = <span class="hljs-keyword">this</span>.listData(),
-      klass = <span class="hljs-keyword">this</span>.options.item.klass || <span class="hljs-keyword">this</span>._defaultItemKlass();
+      klass = <span class="hljs-keyword">this</span>.options.item.klass || <span class="hljs-keyword">this</span>._defaultItemKlass(),
+      opts = {uiTarget: <span class="hljs-keyword">this</span>.qs(<span class="hljs-keyword">this</span>.options.item.uiTarget)};
 
     items.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, i)</span> </span>{
-      <span class="hljs-keyword">this</span>.addChild(<span class="hljs-string">'item-'</span> + i, <span class="hljs-keyword">new</span> klass(data));
+      <span class="hljs-keyword">this</span>.addChild(<span class="hljs-string">'item-'</span> + i, <span class="hljs-keyword">new</span> klass(opts, data));
     }.bind(<span class="hljs-keyword">this</span>));
   },
 
@@ -5335,17 +5336,15 @@ pie.mixins.listView = {
   },
 
   _defaultItemKlass: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> tmpl = <span class="hljs-keyword">this</span>.options.item.template,
-      uiTarget = <span class="hljs-keyword">this</span>.qs(<span class="hljs-keyword">this</span>.options.item.uiTarget);
+    <span class="hljs-keyword">var</span> tmpl = <span class="hljs-keyword">this</span>.options.item.template;
 
-    <span class="hljs-keyword">return</span> pie.activeView.extend(<span class="hljs-string">'listItemView'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data)</span> </span>{
+    <span class="hljs-keyword">return</span> pie.activeView.extend(<span class="hljs-string">'listItemView'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(opts, data)</span> </span>{
       <span class="hljs-keyword">this</span>.model = <span class="hljs-keyword">new</span> pie.model(data);
 
       <span class="hljs-keyword">this</span>._super({
         renderOnSetup: <span class="hljs-literal">true</span>,
         setup: <span class="hljs-literal">true</span>,
-        template: tmpl,
-        uiTarget: uiTarget
+        template: tmpl
       });
     });
   },
@@ -13505,29 +13504,6 @@ when the transition is complete, invoke the callback.</p>
         
     </ul>
   </div>
-<script type="text/javascript">
-  var titles = Array.prototype.slice.call(document.querySelectorAll('[id^="section-"] h1'), 0);
-  var html = '<li class="docco-index" id="docco-index"><div class="annotation"><ul>', a = document.createElement('a');
-  a.textContent = 'Back to top';
-  a.href = '#docco-index';
-  a.style.color = '#cccccc';
-
-  titles.forEach(function(title) {
-    html += '<li><a href="#' + title.id + '">' + title.innerHTML.replace(/pie\s/i, '') + '</a></li>';
-    title.parentNode.insertBefore(a.cloneNode(true), title);
-  });
-
-  html += "</ul></div></li>";
-
-  var newEl = document.createElement('div');
-  newEl.innerHTML = html;
-  newEl = newEl.firstElementChild;
-
-  var title = document.querySelector('#title');
-  title.parentNode.insertBefore(newEl, title.nextSibling);
-
-
-</script>
 <script type="text/javascript">
   var titles = Array.prototype.slice.call(document.querySelectorAll('[id^="section-"] h1'), 0);
   var html = '<li class="docco-index" id="docco-index"><div class="annotation"><ul>', a = document.createElement('a');
