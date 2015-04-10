@@ -5369,7 +5369,7 @@ list = <span class="hljs-keyword">new</span> UserList({
         klass = opts.viewClass || listItemClass(),
         afterRenders = [],
         whenComplete = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-          <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">true</span>);
+          <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">false</span>);
           <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterRenderItems'</span>);
         }.bind(<span class="hljs-keyword">this</span>),
         child;
@@ -5412,7 +5412,7 @@ list = <span class="hljs-keyword">new</span> UserList({
         <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">true</span>);
         <span class="hljs-keyword">this</span>.removeItems();
         <span class="hljs-keyword">this</span>.addItems();
-      });
+      }.bind(<span class="hljs-keyword">this</span>));
     },
 
     setListLoadingStyle: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(bool)</span> </span>{

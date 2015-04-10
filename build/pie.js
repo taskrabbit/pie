@@ -3306,7 +3306,7 @@ pie.mixins.listView = (function(){
         klass = opts.viewClass || listItemClass(),
         afterRenders = [],
         whenComplete = function() {
-          this.setListLoadingStyle(true);
+          this.setListLoadingStyle(false);
           this.emitter.fire('afterRenderItems');
         }.bind(this),
         child;
@@ -3349,7 +3349,7 @@ pie.mixins.listView = (function(){
         this.setListLoadingStyle(true);
         this.removeItems();
         this.addItems();
-      });
+      }.bind(this));
     },
 
     setListLoadingStyle: function(bool) {
