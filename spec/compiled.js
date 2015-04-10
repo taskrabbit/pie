@@ -3823,7 +3823,29 @@ describe("pie.model", function() {
 
   });
 
-  describe("#hasOne", function() {
+  describe("#hasAny", function() {
+    it("should determine if the model has any of the requested attributes", function() {
+      var model = new pie.model({foo: false, bar: false});
+      expect(model.hasAny('foo')).toEqual(true);
+      expect(model.hasAny('bar', 'baz')).toEqual(true);
+      expect(model.hasAny('baz', 'foo')).toEqual(true);
+      expect(model.hasAny('baz', 'qux')).toEqual(false);
+      expect(model.hasAny('foo', 'bar')).toEqual(true);
+    });
+  });
+
+  describe("#hasAll", function() {
+    it("should determine if the model has any of the requested attributes", function() {
+      var model = new pie.model({foo: false, bar: false});
+      expect(model.hasAll('foo')).toEqual(true);
+      expect(model.hasAll('bar', 'baz')).toEqual(false);
+      expect(model.hasAll('baz', 'foo')).toEqual(false);
+      expect(model.hasAll('baz', 'qux')).toEqual(false);
+      expect(model.hasAll('foo', 'bar')).toEqual(true);
+    });
+  });
+
+  describe("associations", function() {
 
     it("should allow a hasOne association to be defined", function() {
       var parent = new pie.model({});

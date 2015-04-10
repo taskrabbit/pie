@@ -416,6 +416,29 @@ pie.array.groupBy = function(arr, groupingF) {
   return h;
 };
 
+// ** pie.array.hasAll **
+//
+// Determine if the given array `a` has all of the provided values.
+// ```
+// arr = ["foo", "bar", "baz"]
+// pie.array.hasAll(arr, "foo")
+// //=> true
+// pie.array.hasAll(arr, "foo", "bar")
+// //=> true
+// pie.array.hasAll(arr, ["food", "bar"])
+// //=> false
+// pie.array.hasAll(arr, "qux")
+// //=> false
+pie.array.hasAll = function(/* a, *values */) {
+  var a = pie.array.from(arguments[0]),
+  values = pie.array.get(arguments, 1, -1), i;
+  values = pie.array.flatten(values);
+  for(i=0;i<values.length;i++) {
+    if(!~a.indexOf(values[i])) return false;
+  }
+  return true;
+};
+
 // ** pie.array.hasAny **
 //
 // Determine if the given array `a` has any of the provided values.
@@ -434,7 +457,7 @@ pie.array.hasAny = function(/* a, *values */) {
   for(i=0;i<values.length;i++) {
     if(~a.indexOf(values[i])) return true;
   }
-  return false;
+  return !values.length;
 };
 
 // ** pie.array.indexOf **
@@ -4338,6 +4361,38 @@ pie.model = pie.base.extend('model', {
   // ```
   has: function(path) {
     return !!pie.object.hasPath(this.data, path);
+  },
+
+  // ** pie.model.hasAll **
+  //
+  // Determines whether all paths exist in our data.
+  // ```
+  // model.hasAll('foo', 'bar')
+  // //=> true | false
+  // ```
+  hasAll: function() {
+    var args = pie.array.change(arguments, 'from', 'flatten'), i;
+
+    for(i = 0; i < args.length; i++) {
+      if(!this.has(args[i])) return false;
+    }
+    return true;
+  },
+
+  // ** pie.model.hasAny **
+  //
+  // Determines whether any key given exists
+  // ```
+  // model.hasAny('foo', 'bar')
+  // //=> true | false
+  // ```
+  hasAny: function() {
+    var args = pie.array.change(arguments, 'from', 'flatten'), i;
+
+    for(i = 0; i < args.length; i++) {
+      if(this.has(args[i])) return true;
+    }
+    return !args.length;
   },
 
   // ** pie.model.is **
