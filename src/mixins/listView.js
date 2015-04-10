@@ -108,7 +108,7 @@ pie.mixins.listView = (function(){
       var className = this.options.listOptions.loadingClass;
       if(!className) return;
 
-      this.listConainer().classList[bool ? 'add' : 'remove'](className);
+      this.listContainer().classList[bool ? 'add' : 'remove'](className);
     },
 
     listData: function() {
