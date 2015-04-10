@@ -4394,6 +4394,7 @@ pie.model = pie.base.extend('model', {
     }
     return !args.length;
   },
+
   // ** pie.model.is **
   //
   // Boolean check the value at `path`.
