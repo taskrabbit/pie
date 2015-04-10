@@ -456,4 +456,37 @@ describe("pie.model", function() {
 
   });
 
+  describe("#hasOne", function() {
+
+    it("should allow a hasOne association to be defined", function() {
+      var parent = new pie.model({});
+      parent.hasOne('child');
+
+      expect(parent.get('child')).toEqual(undefined);
+      parent.set('child', {foo: 'bar'});
+
+      expect(parent.get('child.foo')).toEqual('bar');
+
+      var child = parent.get('childModel');
+      expect(child).toBeTruthy();
+      expect(child.get('foo')).toEqual('bar');
+    });
+
+    it("should allow a hasMany association to be defined", function() {
+      var parent = new pie.model({});
+      parent.hasMany('children');
+
+      expect(parent.get('children')).toEqual(undefined);
+      parent.set('children', [{foo: 'bar'}, {baz: 'qux'}]);
+
+      expect(parent.get('children.0.foo')).toEqual('bar');
+
+      var child = parent.get('childrenList');
+      expect(child).toBeTruthy();
+      expect(child.get(0).foo).toEqual('bar');
+    });
+
+
+  });
+
 });

@@ -72,6 +72,39 @@ pie.fn.debounce = function(func, wait, immediate) {
   };
 };
 
+// **pie.fn.delay**
+//
+// Delay an invocation until some time has passed. Once that time has passed, any invocation will occur immediately.
+// Invocations 2-N that occur before the delay period are ignored.
+// ```
+// fn = pie.fn.delay(fn, 250)
+// fn(); // doesn't happen but is scheduled for 250ms from now.
+// // 249ms passes
+// fn(); // doesn't happen, not scheduled either.
+// // 1ms passes
+// // one invocation is triggered.
+// // N ms passes
+// fn(); // happens immediately
+// ```
+pie.fn.delay = function(fn, delay) {
+  if(!delay) return fn;
+
+  var threshold = pie.date.now() + delay;
+  var scheduled = false;
+
+  return function() {
+    var now = pie.date.now();
+    if(now < threshold) {
+      if(!scheduled) {
+        scheduled = true;
+        setTimeout(fn, threshold - now);
+      }
+    } else {
+      fn();
+    }
+  };
+};
+
 
 // **pie.fn.ease**
 //
