@@ -117,6 +117,82 @@ pie.model = pie.base.extend('model', {
     this.set(name, fn.call(this));
   },
 
+  // **pie.model.hasOne**
+  //
+  // Define an association on this model which will autoconvert objects at the given key into models.
+  // Rather than altering the original data, we place the association at `associationName`.
+  // The associationName defaults to the value of `key` + 'Model'.
+  // ```
+  // var parent = new pie.model();
+  // parent.hasOne('child');
+  // parent.get('child');
+  // //=> undefined
+  // parent.set('child.foo', 'bar');
+  // parent.get('child');
+  // //=> {foo: 'bar'}
+  // parent.get('childModel')
+  // //=> pie.model({foo: 'bar', _version: 2})
+  // parent.set('child.bar', 'baz')
+  // parent.get('childModel')
+  // //=> pie.model({foo: 'bar', bar: 'baz', _version: 3})
+  // ```
+  hasOne: function(key, associationName, modelClass) {
+    modelClass = modelClass || pie.model;
+    associationName = associationName || key + 'Model';
+
+    this.compute(associationName, function(){
+
+      var data = this.get(key);
+
+      if(data) {
+        var mod = this.get(associationName) || new modelClass();
+        mod.sets(data);
+        return mod;
+      } else {
+        return undefined;
+      }
+
+    }, key);
+  },
+
+  // **pie.model.hasMany**
+  //
+  // Define an association on this model which will autoconvert arrays at the given key into lists.
+  // Rather than altering the original data, we place the association at `associationName`.
+  // The associationName defaults to the value of `key` + 'List'.
+  // ```
+  // var parent = new pie.model();
+  // parent.hasMany('children');
+  // parent.get('children');
+  // //=> undefined
+  // parent.set('children', ['foo', 'bar']);
+  // parent.get('children');
+  // //=> ['foo', 'bar']
+  // parent.get('childrenList')
+  // //=> pie.list({items: ['foo', 'bar'], _version: 2})
+  // ```
+  hasMany: function(key, associationName, listClass) {
+    listClass = listClass || pie.list;
+    associationName = associationName || key + 'List';
+
+    this.compute(associationName, function(){
+
+      var data = this.get(key);
+
+      if(data) {
+        var mod = this.get(associationName) || new listClass();
+        if(Array.isArray(data)) {
+          data = {items: data};
+        }
+        mod.sets(data);
+        return mod;
+      } else {
+        return undefined;
+      }
+
+    }, key);
+  },
+
   // ** pie.model.compute **
   //
   // After updates have been made we deliver our change records to our observers
@@ -254,7 +330,7 @@ pie.model = pie.base.extend('model', {
   // model.get('location')
   // //=> {city: "San Francico", lat: 37.77, lng: -122.44}
   merge: function(/* objs */) {
-    var obj = arguments.length > 1 ? pie.object.deepMerge.apply(null, arguments) : arguments[0]
+    var obj = arguments.length > 1 ? pie.object.deepMerge.apply(null, arguments) : arguments[0];
     obj = pie.object.flatten(obj);
     this.sets(obj);
   },

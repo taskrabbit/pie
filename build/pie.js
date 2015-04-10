@@ -1420,6 +1420,39 @@ pie.fn.debounce = function(func, wait, immediate) {
   };
 };
 
+// **pie.fn.delay**
+//
+// Delay an invocation until some time has passed. Once that time has passed, any invocation will occur immediately.
+// Invocations 2-N that occur before the delay period are ignored.
+// ```
+// fn = pie.fn.delay(fn, 250)
+// fn(); // doesn't happen but is scheduled for 250ms from now.
+// // 249ms passes
+// fn(); // doesn't happen, not scheduled either.
+// // 1ms passes
+// // one invocation is triggered.
+// // N ms passes
+// fn(); // happens immediately
+// ```
+pie.fn.delay = function(fn, delay) {
+  if(!delay) return fn;
+
+  var threshold = pie.date.now() + delay;
+  var scheduled = false;
+
+  return function() {
+    var now = pie.date.now();
+    if(now < threshold) {
+      if(!scheduled) {
+        scheduled = true;
+        setTimeout(fn, threshold - now);
+      }
+    } else {
+      fn();
+    }
+  };
+};
+
 
 // **pie.fn.ease**
 //
@@ -3205,6 +3238,130 @@ pie.mixins.formView = {
   }
 
 };
+// # Pie ListView
+//
+// A view mixin for easily managing a series of items. It assumes the activeView mixin has already been applied to your view.
+// ```
+// UserList = pie.view.extend(pie.mixins.activeView, pie.mixins.listView);
+// list = new UserList({
+//   template: 'userList',
+//   itemOptions: {
+//     templateName: 'userItem'
+//   }
+// });
+// ```
+//
+// Available options:
+// * listOptions
+//   * **containerSel -** the selector within this view's template to append items to. Defaults to "ul, ol, .js-items-container". If no match is found the view's `el` is used.
+//   * **loadingClass -** the loading class to be added to the list container while items are being removed, setup, and added. Defaults to "is-loading".
+//   * **modelAttribute -** the attribute to extract list data from. Defaults to `items` to work with pie.list.
+//   * **minLoadingTime -** if a loading class is added, the minimum time it should be shown. Defaults to 0.
+// * itemOptions
+//   * **viewClass -** the view class which should be used to generate child views. If none is supplied, a pure activeView will be used.
+//   * **template -** assuming a viewClass is not provided, this is the template to apply to the pure activeView.
+//
+pie.mixins.listView = (function(){
+
+  var _listItemClass;
+  var listItemClass = function(){
+    return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView);
+  };
+  return {
+
+    init: function() {
+
+      this._super.apply(this, arguments);
+
+      this.options = pie.object.deepMerge({
+        listOptions: {
+          containerSel: 'ul, ol, .js-items-container',
+          loadingClass: 'is-loading',
+          modelAttribute: 'items',
+          minLoadingTime: null
+        },
+        itemOptions: {
+          viewClass: null,
+          template: null
+        }
+      }, this.options);
+
+      if(!this.options.itemOptions.viewClass && !this.options.itemOptions.template) {
+        throw new Error("No viewClass or template provided for the itemOptions");
+      }
+
+      this.list = this.list || new pie.list([]);
+    },
+
+    setup: function() {
+      this.onChange(this.list, this.renderItems.bind(this), this.options.listOptions.modelAttribute);
+      this.emitter.on('afterRender', this.renderItems.bind(this));
+
+      this._super.apply(this, arguments);
+    },
+
+    addItems: function() {
+      var container = this.listContainer(),
+        opts = pie.object.dup(this.options.itemOptions),
+        klass = opts.viewClass || listItemClass(),
+        afterRenders = [],
+        child;
+
+      delete opts.viewClass;
+
+      this.listData().forEach(function(data, i) {
+        child = new klass(opts, data);
+
+        /* we subscribe to each child's after render to understand when our "loading" style can be removed. */
+        afterRenders.push(function(cb) {
+          child.emitter.once('afterRender', cb, {immediate: true});
+        });
+
+        this.addChild('list-item-' + i, child);
+
+        /* we append to the dom before setup to preserve ordering. */
+        child.appendToDom(container);
+        child.setup();
+
+      }.bind(this));
+
+      pie.fn.async(afterRenders, pie.fn.delay(this.setListLoadingStyle.bind(this), this.options.listOptions.minLoadingTime));
+    },
+
+    removeItems: function() {
+      var regex = /^list\-item\-/, child;
+
+      pie.array.grep(Object.keys(this.childNames), regex).forEach(function(name) {
+        child = this.getChild(name);
+        this.removeChild(child);
+        child.teardown();
+      }.bind(this));
+    },
+
+    renderItems: function(templateName) {
+      this.setListLoadingStyle(true);
+      this.removeItems();
+      this.addItems();
+    },
+
+    setListLoadingStyle: function(bool) {
+      var className = this.options.listOptions.loadingClass;
+      if(!className) return;
+
+      this.listConainer().classList[bool ? 'add' : 'remove'](className);
+    },
+
+    listData: function() {
+      return this.list.get(this.options.listOptions.modelAttribute) || [];
+    },
+
+    listContainer: function() {
+      var option = this.options.listOptions.containerSel;
+      return option && this.qs(option) || this;
+    }
+
+  };
+})();
 pie.mixins.validatable = {
 
   init: function() {
@@ -3980,6 +4137,82 @@ pie.model = pie.base.extend('model', {
     this.set(name, fn.call(this));
   },
 
+  // **pie.model.hasOne**
+  //
+  // Define an association on this model which will autoconvert objects at the given key into models.
+  // Rather than altering the original data, we place the association at `associationName`.
+  // The associationName defaults to the value of `key` + 'Model'.
+  // ```
+  // var parent = new pie.model();
+  // parent.hasOne('child');
+  // parent.get('child');
+  // //=> undefined
+  // parent.set('child.foo', 'bar');
+  // parent.get('child');
+  // //=> {foo: 'bar'}
+  // parent.get('childModel')
+  // //=> pie.model({foo: 'bar', _version: 2})
+  // parent.set('child.bar', 'baz')
+  // parent.get('childModel')
+  // //=> pie.model({foo: 'bar', bar: 'baz', _version: 3})
+  // ```
+  hasOne: function(key, associationName, modelClass) {
+    modelClass = modelClass || pie.model;
+    associationName = associationName || key + 'Model';
+
+    this.compute(associationName, function(){
+
+      var data = this.get(key);
+
+      if(data) {
+        var mod = this.get(associationName) || new modelClass();
+        mod.sets(data);
+        return mod;
+      } else {
+        return undefined;
+      }
+
+    }, key);
+  },
+
+  // **pie.model.hasMany**
+  //
+  // Define an association on this model which will autoconvert arrays at the given key into lists.
+  // Rather than altering the original data, we place the association at `associationName`.
+  // The associationName defaults to the value of `key` + 'List'.
+  // ```
+  // var parent = new pie.model();
+  // parent.hasMany('children');
+  // parent.get('children');
+  // //=> undefined
+  // parent.set('children', ['foo', 'bar']);
+  // parent.get('children');
+  // //=> ['foo', 'bar']
+  // parent.get('childrenList')
+  // //=> pie.list({items: ['foo', 'bar'], _version: 2})
+  // ```
+  hasMany: function(key, associationName, listClass) {
+    listClass = listClass || pie.list;
+    associationName = associationName || key + 'List';
+
+    this.compute(associationName, function(){
+
+      var data = this.get(key);
+
+      if(data) {
+        var mod = this.get(associationName) || new listClass();
+        if(Array.isArray(data)) {
+          data = {items: data};
+        }
+        mod.sets(data);
+        return mod;
+      } else {
+        return undefined;
+      }
+
+    }, key);
+  },
+
   // ** pie.model.compute **
   //
   // After updates have been made we deliver our change records to our observers
@@ -4117,7 +4350,7 @@ pie.model = pie.base.extend('model', {
   // model.get('location')
   // //=> {city: "San Francico", lat: 37.77, lng: -122.44}
   merge: function(/* objs */) {
-    var obj = arguments.length > 1 ? pie.object.deepMerge.apply(null, arguments) : arguments[0]
+    var obj = arguments.length > 1 ? pie.object.deepMerge.apply(null, arguments) : arguments[0];
     obj = pie.object.flatten(obj);
     this.sets(obj);
   },
@@ -6455,6 +6688,9 @@ pie.list = pie.model.extend('list', {
     return this.insert(0, value, options);
   }
 });
+// listView has moved to a mixin, you should use the mixin rather than this class.
+// This class is being preserved for the sake of backwards compatability.
+pie.listView = pie.view.extend('listView', pie.mixins.activeView, pie.mixins.listView);
 // # Pie Navigator
 // The navigator is in charge of observing browser navigation and updating it's data.
 // It's also the place to conduct push/replaceState history changes.
@@ -7345,6 +7581,32 @@ pie.templates = pie.model.extend('templates', {
     return pie.qs(this.options.templateSelector + '[id="' + name + '"]');
   },
 
+  ensureTemplate: function(name, cb) {
+    var node, content, src;
+
+    if(this.get(name)) {
+      cb(name);
+      return;
+    }
+
+    node = this._node(name);
+    content = node && (node.content || node.textContent);
+    src = node && node.getAttribute('data-src');
+
+    if (content) {
+      this.registerTemplate(name, content);
+      cb(name);
+      return
+    } else if(src) {
+      this.load(name, {url: src}, function(){
+        this.ensureTemplate(name, cb);
+      }.bind(this));
+    } else {
+      throw new Error("[PIE] Template fetch error: " + name);
+    }
+
+  },
+
   // **pie.templates.registerTemplate**
   //
   // Register a template containing the `content` by the `name`.
@@ -7432,28 +7694,11 @@ pie.templates = pie.model.extend('templates', {
   // </script>
   // ```
   renderAsync: function(name, data, cb) {
-
-    var content, node, src;
-
-    if(this.get(name)) {
+    this.ensureTemplate(name, function() {
       content = this.render(name, data);
       cb(content);
-      return;
-    }
-
-    node = this._node(name);
-    src = node && node.getAttribute('data-src');
-
-    if(src) {
-      this.load(name, {url: src}, function(){
-        this.renderAsync(name, data, cb);
-      }.bind(this));
-    } else {
-      content = this.render(name, data);
-      cb(content);
-      return;
-    }
-  },
+    }.bind(this));
+  }
 });
 // # Pie Validator
 // A collection of validators commonly used in web forms.
