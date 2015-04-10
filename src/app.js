@@ -189,7 +189,7 @@ pie.app = pie.base.extend('app', {
     var parsed = this.router.parseUrl(path);
     if(parsed.route && (parsed.view || parsed.redirect)) {
 
-      this.navigator.go(path, {}, replaceState);
+      this.softGo(path, replaceState);
 
       if(notificationArgs.length) {
         this.notifier.notify.apply(this.notifier, notificationArgs);
@@ -203,6 +203,10 @@ pie.app = pie.base.extend('app', {
 
       this.hardGo(path);
     }
+  },
+
+  softGo: function(path, replaceState) {
+    this.navigator.go(path, {}, replaceState);
   },
 
   // Extracted so we can effectively test the logic within `go()` without redirection.
@@ -231,7 +235,7 @@ pie.app = pie.base.extend('app', {
     if(!href || /^(#|[a-z]+:\/\/)/.test(href)) return;
 
     // Ensure that relative links are evaluated as relative
-    if(href.charAt(0) === '?') href = window.location.pathname + href;
+    if(href.charAt(0) === '?') href = this.parsedUrl.get('fullPath') + href;
 
     // Great, we can handle it. let the app decide whether to use pushstate or not
     e.preventDefault();

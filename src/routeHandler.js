@@ -56,7 +56,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     var current = this.currentView(),
         target, viewClass, child, transition;
 
-    target = pie.qs(this.options.uiTarget);
+    target = pie.object.isString(this.options.uiTarget) ? pie.qs(this.options.uiTarget) : this.options.uiTarget;
 
     // Provide some events that can be observed around the transition process.
     this.emitter.fire('beforeViewChanged', changeSet);
