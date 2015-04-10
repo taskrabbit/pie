@@ -308,6 +308,38 @@ pie.model = pie.base.extend('model', {
     return !!pie.object.hasPath(this.data, path);
   },
 
+  // ** pie.model.hasAll **
+  //
+  // Determines whether all paths exist in our data.
+  // ```
+  // model.hasAll('foo', 'bar')
+  // //=> true | false
+  // ```
+  hasAll: function() {
+    var args = pie.array.change(arguments, 'from', 'flatten'), i;
+
+    for(i = 0; i < args.length; i++) {
+      if(!this.has(args[i])) return false;
+    }
+    return true;
+  },
+
+  // ** pie.model.hasAny **
+  //
+  // Determines whether any key given exists
+  // ```
+  // model.hasAny('foo', 'bar')
+  // //=> true | false
+  // ```
+  hasAny: function() {
+    var args = pie.array.change(arguments, 'from', 'flatten'), i;
+
+    for(i = 0; i < args.length; i++) {
+      if(this.has(args[i])) return true;
+    }
+    return !args.length;
+  },
+
   // ** pie.model.is **
   //
   // Boolean check the value at `path`.
