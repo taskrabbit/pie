@@ -65,6 +65,10 @@ pie.mixins.listView = (function(){
         opts = pie.object.dup(this.options.itemOptions),
         klass = opts.viewClass || listItemClass(),
         afterRenders = [],
+        whenComplete = function() {
+          this.setListLoadingStyle(false);
+          this.emitter.fire('afterRenderItems');
+        }.bind(this),
         child;
 
       delete opts.viewClass;
@@ -85,7 +89,7 @@ pie.mixins.listView = (function(){
 
       }.bind(this));
 
-      pie.fn.async(afterRenders, pie.fn.delay(this.setListLoadingStyle.bind(this), this.options.listOptions.minLoadingTime));
+      pie.fn.async(afterRenders, pie.fn.delay(whenComplete, this.options.listOptions.minLoadingTime));
     },
 
     removeItems: function() {
@@ -99,9 +103,13 @@ pie.mixins.listView = (function(){
     },
 
     renderItems: function(templateName) {
-      this.setListLoadingStyle(true);
-      this.removeItems();
-      this.addItems();
+      this.emitter.fire('beforeRenderItems');
+      this.emitter.fireAround('aroundRenderItems', function() {
+        this.emitter.fire('renderItems');
+        this.setListLoadingStyle(true);
+        this.removeItems();
+        this.addItems();
+      }.bind(this));
     },
 
     setListLoadingStyle: function(bool) {
