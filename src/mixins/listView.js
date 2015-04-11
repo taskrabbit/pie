@@ -6,7 +6,7 @@
 // list = new UserList({
 //   template: 'userList',
 //   itemOptions: {
-//     templateName: 'userItem'
+//     template: 'userItem'
 //   }
 // });
 // ```
@@ -18,15 +18,30 @@
 //   * **modelAttribute -** the attribute to extract list data from. Defaults to `items` to work with pie.list.
 //   * **minLoadingTime -** if a loading class is added, the minimum time it should be shown. Defaults to 0.
 // * itemOptions
-//   * **viewClass -** the view class which should be used to generate child views. If none is supplied, a pure activeView will be used.
-//   * **template -** assuming a viewClass is not provided, this is the template to apply to the pure activeView.
+//   * **viewFactory -** a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data as the render data.
+//   * **template -** assuming a substitute viewFactory is not provided, this is the template (name) to apply to the default activeView.
+//   * **any option -** any set of option you'd like to pass to your view.
 //
 pie.mixins.listView = (function(){
 
   var _listItemClass;
+  // this ensures the class isn't created unless absolutely necessary.
   var listItemClass = function(){
-    return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView);
+    return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView, {
+      init: function(options, itemData, idx) {
+        this.model = new pie.model(itemData);
+        this._super(pie.object.merge({
+          renderOnSetup: true,
+        }, options));
+      }
+    });
   };
+
+  var viewFactory = function(options, itemData){
+    var klass = listItemClass();
+    return new klass(options, itemData);
+  };
+
   return {
 
     init: function() {
@@ -41,13 +56,12 @@ pie.mixins.listView = (function(){
           minLoadingTime: null
         },
         itemOptions: {
-          viewClass: null,
-          template: null
+          viewFactory: viewFactory
         }
       }, this.options);
 
-      if(!this.options.itemOptions.viewClass && !this.options.itemOptions.template) {
-        throw new Error("No viewClass or template provided for the itemOptions");
+      if(!this.options.itemOptions.viewFactory) {
+        throw new Error("No viewFactory provided");
       }
 
       this.list = this.list || new pie.list([]);
@@ -63,7 +77,7 @@ pie.mixins.listView = (function(){
     addItems: function() {
       var container = this.listContainer(),
         opts = pie.object.dup(this.options.itemOptions),
-        klass = opts.viewClass || listItemClass(),
+        factory = this.options.itemOptions.viewFactory,
         afterRenders = [],
         whenComplete = function() {
           this.setListLoadingStyle(false);
@@ -71,10 +85,10 @@ pie.mixins.listView = (function(){
         }.bind(this),
         child;
 
-      delete opts.viewClass;
+      delete opts.viewFactory;
 
       this.listData().forEach(function(data, i) {
-        child = new klass(opts, data);
+        child = factory(opts, data, i);
 
         /* we subscribe to each child's after render to understand when our "loading" style can be removed. */
         afterRenders.push(function(cb) {
@@ -125,7 +139,7 @@ pie.mixins.listView = (function(){
 
     listContainer: function() {
       var option = this.options.listOptions.containerSel;
-      return option && this.qs(option) || this;
+      return option && this.qs(option) || this.el;
     }
 
   };

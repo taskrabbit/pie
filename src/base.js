@@ -6,6 +6,9 @@ pie.base = function() {
     else this.app = pie.appInstance;
   }
 };
+
+pie.base.prototype.pieRole = 'object';
+
 pie.base.prototype.init = function(){};
 
 pie.base.prototype.reopen = function() {

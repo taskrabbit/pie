@@ -74,8 +74,13 @@
 
 pie.model = pie.base.extend('model', {
 
+  pieRole: 'model',
+
   init: function(d, options) {
-    this.data = pie.object.merge({_version: 1}, d);
+
+    if(d && d.pieRole === 'model') d = d.data;
+
+    this.data = pie.object.deepMerge({_version: 1}, d);
     this.options = options || {};
     this.app = this.app || this.options.app || pie.appInstance;
     this.observations = {};

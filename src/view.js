@@ -21,6 +21,8 @@ pie.view.prototype.constructor = function view() {
 
 pie.view.reopen({
 
+  pieRole: 'view',
+
   // **pie.view.init
   // Options:
   //   * el - (optional) the root element of the views control. if not provided, a new <div> will be created.
