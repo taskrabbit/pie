@@ -5350,9 +5350,13 @@ list = <span class="hljs-keyword">new</span> UserList({
 </ul>
 </li>
 <li>itemOptions<ul>
-<li><strong>viewFactory -</strong> a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data as the render data.</li>
+<li><strong>viewFactory -</strong> a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data &amp; the parent’s renderData as the renderData.</li>
 <li><strong>template -</strong> assuming a substitute viewFactory is not provided, this is the template (name) to apply to the default activeView.</li>
 <li><strong>any option -</strong> any set of option you’d like to pass to your view.</li>
+</ul>
+</li>
+<li>emptyOptions<ul>
+<li><strong>any option -</strong> these options are identical to the itemOptions.</li>
 </ul>
 </li>
 </ul>
@@ -5378,12 +5382,18 @@ list = <span class="hljs-keyword">new</span> UserList({
             
             <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> listItemClass = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
     <span class="hljs-keyword">return</span> _listItemClass = _listItemClass || pie.view.extend(<span class="hljs-string">'defaultListItemView'</span>, pie.mixins.activeView, {
+
       init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, itemData, idx)</span> </span>{
         <span class="hljs-keyword">this</span>.model = <span class="hljs-keyword">new</span> pie.model(itemData);
         <span class="hljs-keyword">this</span>._super(pie.object.merge({
           renderOnSetup: <span class="hljs-literal">true</span>,
         }, options));
+      },
+
+      renderData: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">return</span> pie.object.deepMerge({}, <span class="hljs-keyword">this</span>._super(), <span class="hljs-keyword">this</span>.bubble(<span class="hljs-string">'renderData'</span>));
       }
+
     });
   };
 
@@ -5407,6 +5417,9 @@ list = <span class="hljs-keyword">new</span> UserList({
         },
         itemOptions: {
           viewFactory: viewFactory
+        },
+        emptyOptions: {
+          viewFactory: viewFactory
         }
       }, <span class="hljs-keyword">this</span>.options);
 
@@ -5425,9 +5438,18 @@ list = <span class="hljs-keyword">new</span> UserList({
     },
 
     addItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.listData().length) {
+        <span class="hljs-keyword">this</span>._addListItems();
+      } <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">this</span>._addEmptyItem();
+      }
+    },
+
+    _addListItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+
       <span class="hljs-keyword">var</span> container = <span class="hljs-keyword">this</span>.listContainer(),
         opts = pie.object.dup(<span class="hljs-keyword">this</span>.options.itemOptions),
-        factory = <span class="hljs-keyword">this</span>.options.itemOptions.viewFactory,
+        factory = opts.viewFactory,
         afterRenders = [],
         whenComplete = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
           <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">false</span>);
@@ -5454,6 +5476,31 @@ list = <span class="hljs-keyword">new</span> UserList({
       }.bind(<span class="hljs-keyword">this</span>));
 
       pie.fn.async(afterRenders, pie.fn.delay(whenComplete, <span class="hljs-keyword">this</span>.options.listOptions.minLoadingTime));
+    },
+
+    _addEmptyItem: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">var</span> opts = pie.object.dup(<span class="hljs-keyword">this</span>.options.emptyOptions),
+      factory = opts.viewFactory,
+      whenComplete = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">false</span>);
+        <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterRenderItems'</span>);
+      }.bind(<span class="hljs-keyword">this</span>);
+
+      <span class="hljs-keyword">delete</span> opts.viewFactory;
+
+      <span class="hljs-keyword">if</span>(!factory) {
+        <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterRenderItems'</span>);
+        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">var</span> child = factory(opts, {});
+
+      <span class="hljs-keyword">this</span>.addChild(<span class="hljs-string">'list-item-empty'</span>, child);
+
+      child.emitter.once(<span class="hljs-string">'afterRender'</span>, whenComplete, {immediate: <span class="hljs-literal">true</span>});
+
+      child.appendToDom(<span class="hljs-keyword">this</span>.listContainer());
+      child.setup();
     },
 
     removeItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -13787,7 +13834,7 @@ when the transition is complete, invoke the callback.</p>
   }
 
 });
-  pie.VERSION = <span class="hljs-string">"0.0.20150410.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150413.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

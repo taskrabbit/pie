@@ -18,22 +18,31 @@
 //   * **modelAttribute -** the attribute to extract list data from. Defaults to `items` to work with pie.list.
 //   * **minLoadingTime -** if a loading class is added, the minimum time it should be shown. Defaults to 0.
 // * itemOptions
-//   * **viewFactory -** a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data as the render data.
+//   * **viewFactory -** a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data & the parent's renderData as the renderData.
 //   * **template -** assuming a substitute viewFactory is not provided, this is the template (name) to apply to the default activeView.
 //   * **any option -** any set of option you'd like to pass to your view.
+// * emptyOptions
+//   * **any option -** these options are identical to the itemOptions.
 //
 pie.mixins.listView = (function(){
 
   var _listItemClass;
+
   // this ensures the class isn't created unless absolutely necessary.
   var listItemClass = function(){
     return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView, {
+
       init: function(options, itemData, idx) {
         this.model = new pie.model(itemData);
         this._super(pie.object.merge({
           renderOnSetup: true,
         }, options));
+      },
+
+      renderData: function() {
+        return pie.object.deepMerge({}, this._super(), this.bubble('renderData'));
       }
+
     });
   };
 
@@ -57,6 +66,9 @@ pie.mixins.listView = (function(){
         },
         itemOptions: {
           viewFactory: viewFactory
+        },
+        emptyOptions: {
+          viewFactory: viewFactory
         }
       }, this.options);
 
@@ -75,9 +87,18 @@ pie.mixins.listView = (function(){
     },
 
     addItems: function() {
+      if(this.listData().length) {
+        this._addListItems();
+      } else {
+        this._addEmptyItem();
+      }
+    },
+
+    _addListItems: function() {
+
       var container = this.listContainer(),
         opts = pie.object.dup(this.options.itemOptions),
-        factory = this.options.itemOptions.viewFactory,
+        factory = opts.viewFactory,
         afterRenders = [],
         whenComplete = function() {
           this.setListLoadingStyle(false);
@@ -104,6 +125,31 @@ pie.mixins.listView = (function(){
       }.bind(this));
 
       pie.fn.async(afterRenders, pie.fn.delay(whenComplete, this.options.listOptions.minLoadingTime));
+    },
+
+    _addEmptyItem: function() {
+      var opts = pie.object.dup(this.options.emptyOptions),
+      factory = opts.viewFactory,
+      whenComplete = function(){
+        this.setListLoadingStyle(false);
+        this.emitter.fire('afterRenderItems');
+      }.bind(this);
+
+      delete opts.viewFactory;
+
+      if(!factory) {
+        this.emitter.fire('afterRenderItems');
+        return;
+      }
+
+      var child = factory(opts, {});
+
+      this.addChild('list-item-empty', child);
+
+      child.emitter.once('afterRender', whenComplete, {immediate: true});
+
+      child.appendToDom(this.listContainer());
+      child.setup();
     },
 
     removeItems: function() {
