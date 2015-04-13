@@ -6216,7 +6216,7 @@ pie.i18n = pie.model.extend('i18n', {
   // //=> "THIS IS BAR'S"
   // ```
   translate: function(/* path, data, stringChange1, stringChange2 */) {
-    var changes = pie.array.from(arguments),
+    var changes = pie.array.change(arguments, 'from', 'compact'),
     path = changes.shift(),
     data = pie.object.isObject(changes[0]) ? changes.shift() : undefined,
     translation = this.get(path),

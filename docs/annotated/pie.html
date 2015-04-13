@@ -10012,7 +10012,7 @@ i18n.t(<span class="hljs-string">'foo.path'</span>, {name: <span class="hljs-str
             </div>
             
             <div class="content"><div class='highlight'><pre>  translate: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* path, data, stringChange1, stringChange2 */</span>)</span> </span>{
-    <span class="hljs-keyword">var</span> changes = pie.array.from(<span class="hljs-built_in">arguments</span>),
+    <span class="hljs-keyword">var</span> changes = pie.array.change(<span class="hljs-built_in">arguments</span>, <span class="hljs-string">'from'</span>, <span class="hljs-string">'compact'</span>),
     path = changes.shift(),
     data = pie.object.isObject(changes[<span class="hljs-number">0</span>]) ? changes.shift() : <span class="hljs-literal">undefined</span>,
     translation = <span class="hljs-keyword">this</span>.get(path),
