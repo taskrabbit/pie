@@ -519,6 +519,8 @@ pie.validator.rangeOptions = pie.base.extend('rangeOptions', {
     this.rangedata = hash || {};
     /* for double casting situations */
     if(pie.object.has(this.rangedata, 'rangedata')) this.rangedata = this.rangedata.rangedata;
+
+    this._super();
   },
 
   get: function(key) {

@@ -86,6 +86,8 @@ pie.model = pie.base.extend('model', {
     this.observations = {};
     this.changeRecords = [];
     this.deliveringRecords = 0;
+
+    this._super();
   },
 
   // ** pie.model.compute **

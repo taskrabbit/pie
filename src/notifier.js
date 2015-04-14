@@ -8,6 +8,8 @@ pie.notifier = pie.base.extend('notifier', {
     this.options = options || {};
     this.app = app || this.options.app || pie.appInstance;
     this.notifications = new pie.list([]);
+
+    this._super();
   },
 
   // remove all alerts, potentially filtering by the type of alert.

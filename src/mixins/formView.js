@@ -7,7 +7,7 @@
 //   fields: [
 //     {
 //       name: 'full_name'
-//       validates: {
+//       validation: {
 //         presence: true
 //       }
 //     },
@@ -18,7 +18,7 @@
 //         type: 'check',
 //         dataType: 'boolean'
 //       },
-//       validates: {
+//       validation: {
 //         chosen: true
 //       }
 //     }

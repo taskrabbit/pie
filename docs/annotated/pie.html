@@ -5016,7 +5016,7 @@ FormViews expect the activeView and bindings mixins to be included.</p>
   fields: [
     {
       name: <span class="hljs-string">'full_name'</span>
-      validates: {
+      validation: {
         presence: <span class="hljs-literal">true</span>
       }
     },
@@ -5027,7 +5027,7 @@ FormViews expect the activeView and bindings mixins to be included.</p>
         type: <span class="hljs-string">'check'</span>,
         dataType: <span class="hljs-string">'boolean'</span>
       },
-      validates: {
+      validation: {
         chosen: <span class="hljs-literal">true</span>
       }
     }
@@ -6512,6 +6512,8 @@ in localStorage.</p>
             
             <div class="content"><div class='highlight'><pre>      <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.start.bind(<span class="hljs-keyword">this</span>));
     }
+
+    <span class="hljs-keyword">this</span>._super();
   },</pre></div></div>
             
         </li>
@@ -6823,6 +6825,8 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
         handledBy: <span class="hljs-string">"pie.app#retrieve/getItem"</span>,
         key: key
       });
+
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>;
     }
 
     <span class="hljs-keyword">try</span> {
@@ -6924,6 +6928,7 @@ Alters the current view’s _pieName to appear as invalid for the route.</p>
         key: key,
         data: str
       });
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
     }
   },
 
@@ -7022,6 +7027,8 @@ pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
     <span class="hljs-keyword">this</span>.observations = {};
     <span class="hljs-keyword">this</span>.changeRecords = [];
     <span class="hljs-keyword">this</span>.deliveringRecords = <span class="hljs-number">0</span>;
+
+    <span class="hljs-keyword">this</span>._super();
   },</pre></div></div>
             
         </li>
@@ -7915,6 +7922,8 @@ Options:</p>
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.uiTarget) {
       <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'afterSetup'</span>, <span class="hljs-keyword">this</span>.appendToDom.bind(<span class="hljs-keyword">this</span>));
     }
+
+    <span class="hljs-keyword">this</span>._super();
   },</pre></div></div>
             
         </li>
@@ -8792,6 +8801,7 @@ pie.ajax = pie.base.extend(<span class="hljs-string">'ajax'</span>, {
 
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app)</span></span>{
     <span class="hljs-keyword">this</span>.app = app;
+    <span class="hljs-keyword">this</span>._super();
   },
 
   defaultAjaxOptions: {
@@ -10986,6 +10996,8 @@ UI notifications.</p>
     <span class="hljs-keyword">this</span>.options = options || {};
     <span class="hljs-keyword">this</span>.app = app || <span class="hljs-keyword">this</span>.options.app || pie.appInstance;
     <span class="hljs-keyword">this</span>.notifications = <span class="hljs-keyword">new</span> pie.list([]);
+
+    <span class="hljs-keyword">this</span>._super();
   },</pre></div></div>
             
         </li>
@@ -11965,10 +11977,10 @@ pie.routeHandler = pie.base.extend(<span class="hljs-string">'routeHandler'</spa
       viewTransitionOptions: {}
     }, options);
 
-    <span class="hljs-keyword">this</span>._super();
-
     <span class="hljs-keyword">this</span>.urlModel = <span class="hljs-keyword">this</span>.app.parsedUrl;
     <span class="hljs-keyword">this</span>.emitter  = <span class="hljs-keyword">this</span>.app.emitter;
+
+    <span class="hljs-keyword">this</span>._super();
   },
 
   currentView: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -13072,6 +13084,8 @@ range.matches(<span class="hljs-number">10</span>)
     <span class="hljs-keyword">this</span>.rangedata = hash || {};
     <span class="hljs-comment">/* for double casting situations */</span>
     <span class="hljs-keyword">if</span>(pie.object.has(<span class="hljs-keyword">this</span>.rangedata, <span class="hljs-string">'rangedata'</span>)) <span class="hljs-keyword">this</span>.rangedata = <span class="hljs-keyword">this</span>.rangedata.rangedata;
+
+    <span class="hljs-keyword">this</span>._super();
   },
 
   get: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key)</span> </span>{
@@ -13144,6 +13158,8 @@ range.matches(<span class="hljs-number">10</span>)
     <span class="hljs-keyword">this</span>.options = options;
 
     <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'beforeTransition'</span>, <span class="hljs-keyword">this</span>.manageChildren.bind(<span class="hljs-keyword">this</span>));
+
+    <span class="hljs-keyword">this</span>._super();
   },</pre></div></div>
             
         </li>

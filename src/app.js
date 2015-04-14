@@ -125,6 +125,8 @@ pie.app = pie.base.extend('app', {
       // Once the dom is loaded, start the app.
       document.addEventListener('DOMContentLoaded', this.start.bind(this));
     }
+
+    this._super();
   },
 
   // Just in case the client wants to override the standard confirmation dialog.
@@ -280,6 +282,8 @@ pie.app = pie.base.extend('app', {
         handledBy: "pie.app#retrieve/getItem",
         key: key
       });
+
+      return undefined;
     }
 
     try {
@@ -333,6 +337,7 @@ pie.app = pie.base.extend('app', {
         key: key,
         data: str
       });
+      return false;
     }
   },
 

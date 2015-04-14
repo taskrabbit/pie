@@ -41,6 +41,8 @@ pie.view.reopen({
     if(this.options.uiTarget) {
       this.emitter.once('afterSetup', this.appendToDom.bind(this));
     }
+
+    this._super();
   },
 
   // **pie.view.addedToParent**

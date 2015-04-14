@@ -2,6 +2,7 @@ pie.ajax = pie.base.extend('ajax', {
 
   init: function(app){
     this.app = app;
+    this._super();
   },
 
   defaultAjaxOptions: {

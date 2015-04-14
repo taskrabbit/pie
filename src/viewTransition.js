@@ -17,6 +17,8 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     this.options = options;
 
     this.emitter.on('beforeTransition', this.manageChildren.bind(this));
+
+    this._super();
   },
 
   // fire a sequence which looks like

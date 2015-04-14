@@ -3026,7 +3026,7 @@ pie.mixins.container = {
 //   fields: [
 //     {
 //       name: 'full_name'
-//       validates: {
+//       validation: {
 //         presence: true
 //       }
 //     },
@@ -3037,7 +3037,7 @@ pie.mixins.container = {
 //         type: 'check',
 //         dataType: 'boolean'
 //       },
-//       validates: {
+//       validation: {
 //         chosen: true
 //       }
 //     }
@@ -3893,6 +3893,8 @@ pie.app = pie.base.extend('app', {
       // Once the dom is loaded, start the app.
       document.addEventListener('DOMContentLoaded', this.start.bind(this));
     }
+
+    this._super();
   },
 
   // Just in case the client wants to override the standard confirmation dialog.
@@ -4048,6 +4050,8 @@ pie.app = pie.base.extend('app', {
         handledBy: "pie.app#retrieve/getItem",
         key: key
       });
+
+      return undefined;
     }
 
     try {
@@ -4101,6 +4105,7 @@ pie.app = pie.base.extend('app', {
         key: key,
         data: str
       });
+      return false;
     }
   },
 
@@ -4204,6 +4209,8 @@ pie.model = pie.base.extend('model', {
     this.observations = {};
     this.changeRecords = [];
     this.deliveringRecords = 0;
+
+    this._super();
   },
 
   // ** pie.model.compute **
@@ -4853,6 +4860,8 @@ pie.view.reopen({
     if(this.options.uiTarget) {
       this.emitter.once('afterSetup', this.appendToDom.bind(this));
     }
+
+    this._super();
   },
 
   // **pie.view.addedToParent**
@@ -5405,6 +5414,7 @@ pie.ajax = pie.base.extend('ajax', {
 
   init: function(app){
     this.app = app;
+    this._super();
   },
 
   defaultAjaxOptions: {
@@ -6936,6 +6946,8 @@ pie.notifier = pie.base.extend('notifier', {
     this.options = options || {};
     this.app = app || this.options.app || pie.appInstance;
     this.notifications = new pie.list([]);
+
+    this._super();
   },
 
   // remove all alerts, potentially filtering by the type of alert.
@@ -7602,10 +7614,10 @@ pie.routeHandler = pie.base.extend('routeHandler', {
       viewTransitionOptions: {}
     }, options);
 
-    this._super();
-
     this.urlModel = this.app.parsedUrl;
     this.emitter  = this.app.emitter;
+
+    this._super();
   },
 
   currentView: function() {
@@ -8358,6 +8370,8 @@ pie.validator.rangeOptions = pie.base.extend('rangeOptions', {
     this.rangedata = hash || {};
     /* for double casting situations */
     if(pie.object.has(this.rangedata, 'rangedata')) this.rangedata = this.rangedata.rangedata;
+
+    this._super();
   },
 
   get: function(key) {
@@ -8417,6 +8431,8 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     this.options = options;
 
     this.emitter.on('beforeTransition', this.manageChildren.bind(this));
+
+    this._super();
   },
 
   // fire a sequence which looks like
