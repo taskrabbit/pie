@@ -430,6 +430,7 @@ pie.i18n.defaultTranslations = {
       }
     },
     time: {
+      today: "Today",
       formats: {
         isoDate:    '%Y-%m-%d',
         isoTime:    '%Y-%m-%dT%H:%M:%S.%L%:z',

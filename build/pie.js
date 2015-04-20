@@ -277,6 +277,37 @@ pie.array.dup = function(a) {
   return pie.array.from(a).slice(0);
 };
 
+// ** pie.array.each **
+//
+// Invoke `f` on each item of a.
+// `f` can be a function or the name of a function to invoke.
+// ```
+// pie.array.each(arr, 'send');
+// ```
+pie.array.each = function(a, f) {
+  return pie.array._each(a, f, true, 'forEach');
+};
+
+pie.array._each = function(a, f, callInternalFunction, via) {
+  var callingF;
+
+  if(!pie.object.isFunction(f)) {
+    callingF = function(e){
+      var ef = e[f];
+
+      if(callInternalFunction && pie.object.isFunction(ef))
+        return ef.apply(e);
+      else
+        return ef;
+    };
+  } else {
+    callingF = f;
+  }
+
+  return pie.array.from(a)[via](function(e){ return callingF(e); });
+};
+
+
 // ** pie.array.filter **
 //
 // Return the elements of the array that match `fn`.
@@ -522,22 +553,7 @@ pie.array.last = function(arr) {
 // //=> ["0", "1", "2"]
 // ```
 pie.array.map = function(a, f, callInternalFunction){
-  var callingF;
-
-  if(!pie.object.isFunction(f)) {
-    callingF = function(e){
-      var ef = e[f];
-
-      if(callInternalFunction && pie.object.isFunction(ef))
-        return ef.apply(e);
-      else
-        return ef;
-    };
-  } else {
-    callingF = f;
-  }
-
-  return pie.array.from(a).map(function(e){ return callingF(e); });
+  return pie.array._each(a, f, callInternalFunction, 'map');
 };
 
 // **pie.array.partition**
@@ -3694,6 +3710,14 @@ pie.base = function() {
     if(this.options && this.options.app) this.app = this.options.app;
     else this.app = pie.appInstance;
   }
+
+  // This enables objects to be assigned to a global variable to assist with debugging
+  // Any pie object can define a debugName attribute or function and the value will be the name of the global
+  // variable to which this object is assigned.
+  if(this.debugName) {
+    window.pieDebug = window.pieDebug || {};
+    window.pieDebug[pie.fn.valueFrom(this.debugName)] = this;
+  }
 };
 
 pie.base.prototype.pieRole = 'object';
@@ -3886,6 +3910,9 @@ pie.app = pie.base.extend('app', {
     // `app.cache` is a centralized cache store to be used by anyone.
     this.cache = classOption('cache', pie.cache);
 
+    // `app.dataStore` is used for storage access
+    this.dataStore = classOption('dataStore', pie.dataStore);
+
     // `app.emitter` is an interface for subscribing and observing app events
     this.emitter = classOption('emitter', pie.emitter);
 
@@ -3948,6 +3975,19 @@ pie.app = pie.base.extend('app', {
 
     this._super();
   },
+
+  // DEPRECATED
+  // Safely access localStorage, passing along any errors for reporting.
+  retrieve: function(key, clear) {
+    return this.dataStore.get(key, {clear: clear === undefined || clear});
+  },
+
+  // Safely access localStorage, passing along any errors for reporting.
+  store: function(key, data) {
+    return this.dataStore.set(key, data);
+  },
+
+  // END DEPRECATED
 
   // Just in case the client wants to override the standard confirmation dialog.
   // Eventually this could create a confirmation view and provide options to it.
@@ -4020,7 +4060,7 @@ pie.app = pie.base.extend('app', {
     } else {
 
       if(notificationArgs.length) {
-        this.store(this.options.notificationStorageKey, notificationArgs);
+        this.dataStore.set(this.options.notificationStorageKey, notificationArgs);
       }
 
       this.hardGo(path);
@@ -4079,48 +4119,6 @@ pie.app = pie.base.extend('app', {
     this.routeHandler.handle(changeSet);
   },
 
-
-  // Reload the page without reloading the browser.
-  // Alters the current view's _pieName to appear as invalid for the route.
-  refresh: function() {
-    var current = this.getChild('currentView');
-    current._pieName = '__remove__';
-    this.navigationChanged();
-  },
-
-  // Safely access localStorage, passing along any errors for reporting.
-  retrieve: function(key, clear) {
-    var encoded, decoded;
-
-    try {
-      if(!window.localStorage) return undefined;
-
-      encoded = window.localStorage.getItem(key);
-      decoded = encoded ? JSON.parse(encoded) : undefined;
-    } catch(err) {
-      this.errorHandler.reportError(err, {
-        handledBy: "pie.app#retrieve/getItem",
-        key: key
-      });
-
-      return undefined;
-    }
-
-    try {
-      if(clear || clear === undefined){
-        window.localStorage.removeItem(key);
-      }
-    } catch(err) {
-      this.errorHandler.reportError(err, {
-        handledBy: "pie.app#retrieve/removeItem",
-        key: key,
-        clear: clear
-      });
-    }
-
-    return decoded;
-  },
-
   // When a link is clicked, go there without a refresh if we recognize the route.
   setupSinglePageLinks: function() {
     var target = pie.qs(this.options.navigationContainer || this.options.uiTarget);
@@ -4129,7 +4127,7 @@ pie.app = pie.base.extend('app', {
 
   // Show any notification which have been preserved via local storage.
   showStoredNotifications: function() {
-    var messages = this.retrieve(this.options.notificationStorageKey);
+    var messages = this.dataStore.get(this.options.notificationStorageKey);
 
     if(messages && messages.length) {
       this.notifier.notify.apply(this.notifier, messages);
@@ -4139,26 +4137,6 @@ pie.app = pie.base.extend('app', {
   // Start the app by starting the navigator (which we have observed).
   start: function() {
     this.emitter.fireSequence('start', this.navigator.start.bind(this.navigator));
-  },
-
-  // Safely access localStorage, passing along any errors for reporting.
-  store: function(key, data) {
-
-    var str;
-    try {
-      if(!window.localStorage) return false;
-
-      str = JSON.stringify(data);
-      window.localStorage.setItem(key, str);
-      return true;
-    } catch(err) {
-      this.errorHandler.reportError(err, {
-        handledBy: "pie.app#store",
-        key: key,
-        data: str
-      });
-      return false;
-    }
   },
 
   verifySupport: function() {
@@ -4869,6 +4847,195 @@ pie.config = pie.model.extend('config', {
   }
 
 });
+pie.dataStore = pie.base.extend('dataStore', {
+
+  init: function(app, options) {
+    this.app = app;
+    this.options = pie.object.merge({
+      stores: ['sessionStorage', 'localStorage', 'cookie', 'backup']
+    }, options);
+    this._super();
+
+    this.backup = new pie.model({});
+  },
+
+  stores: function(options) {
+    var arr;
+
+    if(options && options.store) arr = pie.array.from(options.store);
+    if(options && options.stores) arr = pie.array.from(options.stores);
+
+    var all = pie.array.from(this.options.store || this.options.stores);
+    if(options && options.except) arr = pie.array.sutract(all, options.except);
+    if(options && options.only) arr = pie.array.union(all, options.only);
+
+    arr = arr || all;
+
+    return arr.map(function(s){
+      if(pie.object.isString(s)) return pie.dataStore.adapters[s];
+      else return s;
+    });
+  },
+
+
+  clear: function(key, options) {
+    var stores = this.stores(options);
+    for(var i = 0; i < stores.length; i++) {
+      stores[i].clear(key, this);
+    }
+  },
+
+
+  get: function(key, options) {
+    var stores = this.stores(options), val;
+
+    for(var i = 0; i < stores.length; i++) {
+      val = stores[i].get(key, this);
+      if(val !== pie.dataStore.ACCESS_ERROR) break;
+      else val = undefined;
+    }
+
+    if(!options || (options.clear === undefined || options.clear)) {
+      this.clear(key, options);
+    }
+
+    return val;
+  },
+
+  set: function(key, value, options) {
+    var stores = this.stores(options), val;
+
+    for(var i = 0; i < stores.length; i++) {
+      val = stores[i].set(key, value, this);
+      if(val !== pie.dataStore.ACCESS_ERROR) break;
+      else val = undefined;
+    }
+
+    return val;
+  }
+
+});
+
+pie.dataStore.ACCESS_ERROR = new Error("~~PIE_ACCESS_ERROR~~");
+pie.dataStore.adapters = (function(){
+
+  var storageGet = function(storeName, key) {
+
+    try {
+      if(!window[storeName]) return pie.dataStore.ACCESS_ERROR;
+
+      var encoded = window[storeName].getItem(key);
+      return encoded != null ? JSON.parse(encoded) : encoded;
+    } catch(err) {
+      this.app.errorHandler.reportError(err, {
+        handledBy: "pie.dataStore." + storeName + "#get",
+        key: key
+      });
+
+      return pie.dataStore.ACCESS_ERROR;
+    }
+  };
+
+  var storageSet = function(storeName, key, value) {
+
+    var str;
+
+    try {
+      if(!window[storeName]) return pie.dataStore.ACCESS_ERROR;
+
+      str = JSON.stringify(value);
+      window[storeName].setItem(key, str);
+
+      return true;
+    } catch(err) {
+      this.app.errorHandler.reportError(err, {
+        handledBy: "pie.dataStore." + storeName + "#get",
+        key: key,
+        data: str
+      });
+
+      return pie.dataStore.ACCESS_ERROR;
+    }
+  };
+
+  var storageClear = function(storeName, key) {
+    try {
+      if(!window[storeName]) return pie.dataStore.ACCESS_ERROR;
+      window[storeName].removeItem(key);
+    } catch(err) {
+      this.app.errorHandler.reportError(err, {
+        handledBy: "pie.dataStore." + storeName + "#clear",
+        key: key
+      });
+    }
+  };
+
+  return {
+
+    sessionStorage: {
+
+      clear: function(key, parentStore) {
+        return storageClear.call(parentStore, 'sessionStorage', key);
+      },
+
+      get: function(key, parentStore) {
+        return storageGet.call(parentStore, 'sessionStorage', key);
+      },
+      set: function(key, value, parentStore) {
+        return storageSet.call(parentStore, 'sessionStorage', key, value);
+      }
+    },
+
+    localStorage: {
+
+      clear: function(key, parentStore) {
+        return storageClear.call(parentStore, 'localStorage', key);
+      },
+
+      get: function(key, parentStore) {
+        return storageGet.call(parentStore, 'localStorage', key);
+      },
+      set: function(key, value, parentStore) {
+        return storageSet.call(parentStore, 'localStorage', key, value);
+      }
+
+    },
+
+    cookie: {
+
+      clear: function(key, parentStore) {
+        return pie.browser.setCookie(key, null);
+      },
+
+      get: function(key, parentStore) {
+        var encoded = pie.browser.getCookie(key);
+        return encoded != null ? JSON.parse(encoded) : encoded;
+      },
+
+      set: function(key, value, parentStore) {
+        var encoded = JSON.stringify(value);
+        pie.browser.setCookie(key, value);
+      }
+
+    },
+
+    backup: {
+
+      clear: function(key, parentStore) {
+        parentStore.backup.set(key, undefined);
+      },
+
+      get: function(key, parentStore) {
+        parentStore.backup.get(key);
+      },
+
+      set: function(key, value, parentStore) {
+        parentStore.backup.set(key, value);
+      }
+
+    }
+  };
+})();
 // # Pie View
 //
 // Views are objects which wrap and interact with DOM. They hold reference to a single element via `this.el`. All
@@ -6021,6 +6188,7 @@ pie.helpers = pie.model.extend('helpers', {
     this.register('timeago', i18n.timeago.bind(i18n));
     this.register('path', this.app.router.path.bind(this.app.router));
     this.register('get', pie.object.getPath);
+    this.register('render', this.renderPartials.bind(this));
   },
 
   /* Register a function to be available in templates. */
@@ -6039,6 +6207,13 @@ pie.helpers = pie.model.extend('helpers', {
     name = args.shift();
 
     return this.fetch(name).apply(null, args);
+  },
+
+  /* enables render to be called from templates. data can be an object or an array */
+  renderPartials: function(templateName, data) {
+    return pie.array.map(data, function(d){
+      return this.app.templates.render(templateName, d);
+    }.bind(this)).join("\n");
   },
 
   /* Provide the functions which should be available in templates. */
@@ -6484,6 +6659,7 @@ pie.i18n.defaultTranslations = {
       }
     },
     time: {
+      today: "Today",
       formats: {
         isoDate:    '%Y-%m-%d',
         isoTime:    '%Y-%m-%dT%H:%M:%S.%L%:z',
@@ -7676,8 +7852,17 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     this._super();
   },
 
+  // Reload the page without reloading the browser.
+  // Alters the current view's _pieName to appear as invalid for the route.
+  refresh: function() {
+    var current = this.app.getChild('currentView');
+    current._pieName = '__remove__';
+    this.urlModel.touch();
+  },
+
+
   currentView: function() {
-    return app.getChild("currentView");
+    return this.app.getChild("currentView");
   },
 
   handle: function(changeSet) {

@@ -162,6 +162,37 @@ pie.array.dup = function(a) {
   return pie.array.from(a).slice(0);
 };
 
+// ** pie.array.each **
+//
+// Invoke `f` on each item of a.
+// `f` can be a function or the name of a function to invoke.
+// ```
+// pie.array.each(arr, 'send');
+// ```
+pie.array.each = function(a, f) {
+  return pie.array._each(a, f, true, 'forEach');
+};
+
+pie.array._each = function(a, f, callInternalFunction, via) {
+  var callingF;
+
+  if(!pie.object.isFunction(f)) {
+    callingF = function(e){
+      var ef = e[f];
+
+      if(callInternalFunction && pie.object.isFunction(ef))
+        return ef.apply(e);
+      else
+        return ef;
+    };
+  } else {
+    callingF = f;
+  }
+
+  return pie.array.from(a)[via](function(e){ return callingF(e); });
+};
+
+
 // ** pie.array.filter **
 //
 // Return the elements of the array that match `fn`.
@@ -407,22 +438,7 @@ pie.array.last = function(arr) {
 // //=> ["0", "1", "2"]
 // ```
 pie.array.map = function(a, f, callInternalFunction){
-  var callingF;
-
-  if(!pie.object.isFunction(f)) {
-    callingF = function(e){
-      var ef = e[f];
-
-      if(callInternalFunction && pie.object.isFunction(ef))
-        return ef.apply(e);
-      else
-        return ef;
-    };
-  } else {
-    callingF = f;
-  }
-
-  return pie.array.from(a).map(function(e){ return callingF(e); });
+  return pie.array._each(a, f, callInternalFunction, 'map');
 };
 
 // **pie.array.partition**

@@ -66,6 +66,9 @@ pie.app = pie.base.extend('app', {
     // `app.cache` is a centralized cache store to be used by anyone.
     this.cache = classOption('cache', pie.cache);
 
+    // `app.dataStore` is used for storage access
+    this.dataStore = classOption('dataStore', pie.dataStore);
+
     // `app.emitter` is an interface for subscribing and observing app events
     this.emitter = classOption('emitter', pie.emitter);
 
@@ -128,6 +131,19 @@ pie.app = pie.base.extend('app', {
 
     this._super();
   },
+
+  // DEPRECATED
+  // Safely access localStorage, passing along any errors for reporting.
+  retrieve: function(key, clear) {
+    return this.dataStore.get(key, {clear: clear === undefined || clear});
+  },
+
+  // Safely access localStorage, passing along any errors for reporting.
+  store: function(key, data) {
+    return this.dataStore.set(key, data);
+  },
+
+  // END DEPRECATED
 
   // Just in case the client wants to override the standard confirmation dialog.
   // Eventually this could create a confirmation view and provide options to it.
@@ -200,7 +216,7 @@ pie.app = pie.base.extend('app', {
     } else {
 
       if(notificationArgs.length) {
-        this.store(this.options.notificationStorageKey, notificationArgs);
+        this.dataStore.set(this.options.notificationStorageKey, notificationArgs);
       }
 
       this.hardGo(path);
@@ -259,48 +275,6 @@ pie.app = pie.base.extend('app', {
     this.routeHandler.handle(changeSet);
   },
 
-
-  // Reload the page without reloading the browser.
-  // Alters the current view's _pieName to appear as invalid for the route.
-  refresh: function() {
-    var current = this.getChild('currentView');
-    current._pieName = '__remove__';
-    this.navigationChanged();
-  },
-
-  // Safely access localStorage, passing along any errors for reporting.
-  retrieve: function(key, clear) {
-    var encoded, decoded;
-
-    try {
-      if(!window.localStorage) return undefined;
-
-      encoded = window.localStorage.getItem(key);
-      decoded = encoded ? JSON.parse(encoded) : undefined;
-    } catch(err) {
-      this.errorHandler.reportError(err, {
-        handledBy: "pie.app#retrieve/getItem",
-        key: key
-      });
-
-      return undefined;
-    }
-
-    try {
-      if(clear || clear === undefined){
-        window.localStorage.removeItem(key);
-      }
-    } catch(err) {
-      this.errorHandler.reportError(err, {
-        handledBy: "pie.app#retrieve/removeItem",
-        key: key,
-        clear: clear
-      });
-    }
-
-    return decoded;
-  },
-
   // When a link is clicked, go there without a refresh if we recognize the route.
   setupSinglePageLinks: function() {
     var target = pie.qs(this.options.navigationContainer || this.options.uiTarget);
@@ -309,7 +283,7 @@ pie.app = pie.base.extend('app', {
 
   // Show any notification which have been preserved via local storage.
   showStoredNotifications: function() {
-    var messages = this.retrieve(this.options.notificationStorageKey);
+    var messages = this.dataStore.get(this.options.notificationStorageKey);
 
     if(messages && messages.length) {
       this.notifier.notify.apply(this.notifier, messages);
@@ -319,26 +293,6 @@ pie.app = pie.base.extend('app', {
   // Start the app by starting the navigator (which we have observed).
   start: function() {
     this.emitter.fireSequence('start', this.navigator.start.bind(this.navigator));
-  },
-
-  // Safely access localStorage, passing along any errors for reporting.
-  store: function(key, data) {
-
-    var str;
-    try {
-      if(!window.localStorage) return false;
-
-      str = JSON.stringify(data);
-      window.localStorage.setItem(key, str);
-      return true;
-    } catch(err) {
-      this.errorHandler.reportError(err, {
-        handledBy: "pie.app#store",
-        key: key,
-        data: str
-      });
-      return false;
-    }
   },
 
   verifySupport: function() {

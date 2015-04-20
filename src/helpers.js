@@ -31,6 +31,7 @@ pie.helpers = pie.model.extend('helpers', {
     this.register('timeago', i18n.timeago.bind(i18n));
     this.register('path', this.app.router.path.bind(this.app.router));
     this.register('get', pie.object.getPath);
+    this.register('render', this.renderPartials.bind(this));
   },
 
   /* Register a function to be available in templates. */
@@ -49,6 +50,13 @@ pie.helpers = pie.model.extend('helpers', {
     name = args.shift();
 
     return this.fetch(name).apply(null, args);
+  },
+
+  /* enables render to be called from templates. data can be an object or an array */
+  renderPartials: function(templateName, data) {
+    return pie.array.map(data, function(d){
+      return this.app.templates.render(templateName, d);
+    }.bind(this)).join("\n");
   },
 
   /* Provide the functions which should be available in templates. */

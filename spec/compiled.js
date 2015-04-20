@@ -1920,7 +1920,7 @@ describe("pie.app", function() {
       this.goSpy = spyOn(app.navigator, 'go');
       this.hardGoSpy = spyOn(app, 'hardGo');
       this.notifierSpy = spyOn(app.notifier, 'notify');
-      this.storeSpy = spyOn(app, 'store');
+      this.storeSpy = spyOn(app.dataStore, 'set');
     });
 
     it("should construct a path based on the first argument", function() {
@@ -1995,7 +1995,7 @@ describe("pie.app", function() {
       expect(theCall.length).toEqual(3);
     });
 
-    it("if the route is not recognized it should store the notification args in localstorage for the next request", function() {
+    it("if the route is not recognized it should store the notification args in storage for the next request", function() {
       var theCall;
 
       app.go('/missing-thing', 'foo');
