@@ -6247,7 +6247,7 @@ pie.i18n = pie.model.extend('i18n', {
         } else {
           translation = def;
         }
-      } else {
+      } else if(translation == null) {
         this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path), {
           handledBy: "pie.i18n#translate",
           translationPath: path
@@ -8874,7 +8874,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150414.1";
+  pie.VERSION = "0.0.20150421.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

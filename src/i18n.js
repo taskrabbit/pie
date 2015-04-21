@@ -245,7 +245,7 @@ pie.i18n = pie.model.extend('i18n', {
         } else {
           translation = def;
         }
-      } else {
+      } else if(translation == null) {
         this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path), {
           handledBy: "pie.i18n#translate",
           translationPath: path
