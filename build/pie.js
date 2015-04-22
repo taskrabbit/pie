@@ -521,6 +521,7 @@ pie.array.indexOf = function(a, f) {
 // //=> [0, 2, 4]
 // ```
 pie.array.intersect = function(a, b) {
+  b = pie.array.from(b);
   return pie.array.from(a).filter(function(i) { return ~b.indexOf(i); });
 };
 
@@ -4866,8 +4867,8 @@ pie.dataStore = pie.base.extend('dataStore', {
     if(options && options.stores) arr = pie.array.from(options.stores);
 
     var all = pie.array.from(this.options.store || this.options.stores);
-    if(options && options.except) arr = pie.array.sutract(all, options.except);
-    if(options && options.only) arr = pie.array.union(all, options.only);
+    if(options && options.except) arr = pie.array.subtract(all, options.except);
+    if(options && options.only) arr = pie.array.intersect(all, options.only);
 
     arr = arr || all;
 

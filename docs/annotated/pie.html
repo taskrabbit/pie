@@ -833,6 +833,7 @@ pie.array.intersect(a, b)
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.array.intersect = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, b)</span> </span>{
+  b = pie.array.from(b);
   <span class="hljs-keyword">return</span> pie.array.from(a).filter(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(i)</span> </span>{ <span class="hljs-keyword">return</span> ~b.indexOf(i); });
 };</pre></div></div>
             
@@ -7957,8 +7958,8 @@ pie.dataStore = pie.base.extend(<span class="hljs-string">'dataStore'</span>, {
     <span class="hljs-keyword">if</span>(options &amp;&amp; options.stores) arr = pie.array.from(options.stores);
 
     <span class="hljs-keyword">var</span> all = pie.array.from(<span class="hljs-keyword">this</span>.options.store || <span class="hljs-keyword">this</span>.options.stores);
-    <span class="hljs-keyword">if</span>(options &amp;&amp; options.except) arr = pie.array.sutract(all, options.except);
-    <span class="hljs-keyword">if</span>(options &amp;&amp; options.only) arr = pie.array.union(all, options.only);
+    <span class="hljs-keyword">if</span>(options &amp;&amp; options.except) arr = pie.array.subtract(all, options.except);
+    <span class="hljs-keyword">if</span>(options &amp;&amp; options.only) arr = pie.array.intersect(all, options.only);
 
     arr = arr || all;
 

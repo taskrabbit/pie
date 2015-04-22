@@ -406,6 +406,7 @@ pie.array.indexOf = function(a, f) {
 // //=> [0, 2, 4]
 // ```
 pie.array.intersect = function(a, b) {
+  b = pie.array.from(b);
   return pie.array.from(a).filter(function(i) { return ~b.indexOf(i); });
 };
 
