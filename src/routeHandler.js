@@ -16,8 +16,17 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     this._super();
   },
 
+  // Reload the page without reloading the browser.
+  // Alters the current view's _pieName to appear as invalid for the route.
+  refresh: function() {
+    var current = this.app.getChild('currentView');
+    current._pieName = '__remove__';
+    this.urlModel.touch();
+  },
+
+
   currentView: function() {
-    return app.getChild("currentView");
+    return this.app.getChild("currentView");
   },
 
   handle: function(changeSet) {

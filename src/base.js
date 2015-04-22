@@ -5,6 +5,14 @@ pie.base = function() {
     if(this.options && this.options.app) this.app = this.options.app;
     else this.app = pie.appInstance;
   }
+
+  // This enables objects to be assigned to a global variable to assist with debugging
+  // Any pie object can define a debugName attribute or function and the value will be the name of the global
+  // variable to which this object is assigned.
+  if(this.debugName) {
+    window.pieDebug = window.pieDebug || {};
+    window.pieDebug[pie.fn.valueFrom(this.debugName)] = this;
+  }
 };
 
 pie.base.prototype.pieRole = 'object';
