@@ -414,7 +414,8 @@ pie.dom.scrollTo = function(sel, options) {
     from: container.scrollTop,
     to: position,
     name: 'easeInOutCubic',
-    duration: 250
+    duration: 250,
+    animation: true
   }, options);
 
   delete options.cb;
