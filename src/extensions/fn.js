@@ -122,7 +122,8 @@ pie.fn.ease = function(each, o, complete) {
     name: 'linear',
     duration: 250,
     from: 0,
-    to: 1
+    to: 1,
+    animation: false
   }, o);
 
   if(o.name === 'none') {
@@ -130,11 +131,17 @@ pie.fn.ease = function(each, o, complete) {
     return;
   }
 
+  if(o.animation) return pie.fn._easeAnimation(each, o, complete);
+  else return pie.fn._easeInterval(each, o, complete);
+};
+
+/* ease using an interval (non-ui stuff) */
+pie.fn._easeInterval = function(each, o, complete) {
   o.steps = o.steps || Math.max(o.duration / 16, 12);
 
   /* the easing function */
   var fn = pie.math.easing[o.name],
-  // the current "time" 0 to 1.
+  /* the current "time" 0 to 1. */
   t = 0,
   delta = (o.to - o.from),
   dt = (1 / o.steps),
@@ -156,6 +163,45 @@ pie.fn.ease = function(each, o, complete) {
 
   pid = setInterval(runner(), o.duration / o.steps);
   return pid;
+};
+
+/* ease using the animation frame (ui stuff) */
+pie.fn._easeAnimation = function(each, o, complete) {
+
+  var animate = pie.dom.prefixed(window, 'requestAnimationFrame');
+
+  // just in case the browser doesn't support the animation frame.
+  if(!animate) return pie.fn._easeInterval(each, o, complete);
+
+  /* the easing function */
+  var fn = pie.math.easing[o.name],
+  // the current "time" 0 to 1.
+  x = 0,
+  startT,
+  endT,
+  delta = (o.to - o.from),
+  dy,
+  y,
+  runner = function(bigT){
+
+    if(!startT) {
+      startT = bigT;
+      endT = startT + o.duration;
+    }
+
+    x = (bigT - startT) / (endT - startT);
+    dy = fn(x);
+    y = o.from + (dy * delta);
+    each(y, x);
+
+    if(bigT >= endT) {
+      if(complete) complete();
+    } else {
+      animate(runner);
+    }
+  };
+
+  animate(runner);
 };
 
 // **pie.fn.once**
