@@ -8001,7 +8001,7 @@ pie.dataStore = pie.base.extend(<span class="hljs-string">'dataStore'</span>, {
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.clear(key);
 
     <span class="hljs-keyword">var</span> result = <span class="hljs-keyword">this</span>.primary().set(key, value, <span class="hljs-keyword">this</span>);
-    <span class="hljs-keyword">if</span>(result === pie.dataStore.ACCESS_ERROR) result = <span class="hljs-keyword">this</span>.backup().set(key, <span class="hljs-keyword">this</span>);
+    <span class="hljs-keyword">if</span>(result === pie.dataStore.ACCESS_ERROR) result = <span class="hljs-keyword">this</span>.backup().set(key, value, <span class="hljs-keyword">this</span>);
 
     <span class="hljs-keyword">return</span> result;
   }

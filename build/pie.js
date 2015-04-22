@@ -4897,7 +4897,7 @@ pie.dataStore = pie.base.extend('dataStore', {
     this.clear(key);
 
     var result = this.primary().set(key, value, this);
-    if(result === pie.dataStore.ACCESS_ERROR) result = this.backup().set(key, this);
+    if(result === pie.dataStore.ACCESS_ERROR) result = this.backup().set(key, value, this);
 
     return result;
   }
