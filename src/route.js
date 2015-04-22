@@ -45,8 +45,9 @@ pie.route = pie.model.extend('route', {
   // Since this is a computed property, we only ever have to do this once.
   pathRegex: function() {
     var t = this.get('pathTemplate');
-    t = t.replace(/(:[^\/]+)/g,'([^\\/]+)');
-    t = t.replace(/(\*[^\/]+)/g, '(.+)');
+    t = pie.string.escapeRegex(t);
+    t = t.replace(/(:[^\/\?]+)/g,'([^\\/\\?]+)');
+    t = t.replace(/(\\\*[^\/]+)/g, '(.+)');
     return new RegExp('^' + t + '$');
   },
 
