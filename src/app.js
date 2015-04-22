@@ -66,8 +66,8 @@ pie.app = pie.base.extend('app', {
     // `app.cache` is a centralized cache store to be used by anyone.
     this.cache = classOption('cache', pie.cache);
 
-    // `app.dataStore` is used for storage access
-    this.dataStore = classOption('dataStore', pie.dataStore);
+    // `app.storage` is used for local, session, cache, etc storage
+    this.storage = classOption('storage', pie.dataStore);
 
     // `app.emitter` is an interface for subscribing and observing app events
     this.emitter = classOption('emitter', pie.emitter);
@@ -135,12 +135,12 @@ pie.app = pie.base.extend('app', {
   // DEPRECATED
   // Safely access localStorage, passing along any errors for reporting.
   retrieve: function(key, clear) {
-    return this.dataStore.get(key, {clear: clear === undefined || clear});
+    return this.storage.get(key, {clear: clear === undefined || clear});
   },
 
   // Safely access localStorage, passing along any errors for reporting.
   store: function(key, data) {
-    return this.dataStore.set(key, data);
+    return this.storage.set(key, data);
   },
 
   // END DEPRECATED
@@ -216,7 +216,7 @@ pie.app = pie.base.extend('app', {
     } else {
 
       if(notificationArgs.length) {
-        this.dataStore.set(this.options.notificationStorageKey, notificationArgs);
+        this.storage.set(this.options.notificationStorageKey, notificationArgs);
       }
 
       this.hardGo(path);
@@ -283,7 +283,7 @@ pie.app = pie.base.extend('app', {
 
   // Show any notification which have been preserved via local storage.
   showStoredNotifications: function() {
-    var messages = this.dataStore.get(this.options.notificationStorageKey);
+    var messages = this.storage.get(this.options.notificationStorageKey);
 
     if(messages && messages.length) {
       this.notifier.notify.apply(this.notifier, messages);

@@ -3,66 +3,53 @@ pie.dataStore = pie.base.extend('dataStore', {
   init: function(app, options) {
     this.app = app;
     this.options = pie.object.merge({
-      stores: ['sessionStorage', 'localStorage', 'cookie', 'backup']
+      primary: 'sessionStorage',
+      backup: 'backup'
     }, options);
+
     this._super();
 
-    this.backup = new pie.model({});
+    this.backupModel = new pie.model({});
   },
 
-  stores: function(options) {
-    var arr;
+  primary: function() {
+    return this._store(this.options.primary);
+  },
 
-    if(options && options.store) arr = pie.array.from(options.store);
-    if(options && options.stores) arr = pie.array.from(options.stores);
+  backup: function() {
+    return this._store(this.options.backup);
+  },
 
-    var all = pie.array.from(this.options.store || this.options.stores);
-    if(options && options.except) arr = pie.array.subtract(all, options.except);
-    if(options && options.only) arr = pie.array.intersect(all, options.only);
-
-    arr = arr || all;
-
-    return arr.map(function(s){
-      if(pie.object.isString(s)) return pie.dataStore.adapters[s];
-      else return s;
-    });
+  _store: function(name) {
+    if(pie.object.isString(name)) return pie.dataStore.adapters[name];
+    else return name;
   },
 
 
-  clear: function(key, options) {
-    var stores = this.stores(options);
-    for(var i = 0; i < stores.length; i++) {
-      stores[i].clear(key, this);
-    }
+  clear: function(key) {
+    this.primary().clear(key, this);
+    this.primary().clear(key, this);
   },
-
 
   get: function(key, options) {
-    var stores = this.stores(options), val;
-
-    for(var i = 0; i < stores.length; i++) {
-      val = stores[i].get(key, this);
-      if(val !== pie.dataStore.ACCESS_ERROR) break;
-      else val = undefined;
-    }
+    var result = this.primary().get(key, this);
+    if(result === pie.dataStore.ACCESS_ERROR) result = this.backup().get(key, this);
 
     if(!options || (options.clear === undefined || options.clear)) {
-      this.clear(key, options);
+      this.clear(key);
     }
 
-    return val;
+    return result;
   },
 
   set: function(key, value, options) {
-    var stores = this.stores(options), val;
+    // clear from all stores so we don't get out of sync.
+    this.clear(key);
 
-    for(var i = 0; i < stores.length; i++) {
-      val = stores[i].set(key, value, this);
-      if(val !== pie.dataStore.ACCESS_ERROR) break;
-      else val = undefined;
-    }
+    var result = this.primary().set(key, value, this);
+    if(result === pie.dataStore.ACCESS_ERROR) result = this.backup().set(key, this);
 
-    return val;
+    return result;
   }
 
 });
@@ -118,6 +105,8 @@ pie.dataStore.adapters = (function(){
         handledBy: "pie.dataStore." + storeName + "#clear",
         key: key
       });
+
+      return pie.dataStore.ACCESS_ERROR;
     }
   };
 
@@ -155,17 +144,29 @@ pie.dataStore.adapters = (function(){
     cookie: {
 
       clear: function(key, parentStore) {
-        return pie.browser.setCookie(key, null);
+        try {
+          return pie.browser.setCookie(key, null);
+        } catch(e) {
+          return pie.dataStore.ACCESS_ERROR;
+        }
       },
 
       get: function(key, parentStore) {
-        var encoded = pie.browser.getCookie(key);
-        return encoded != null ? JSON.parse(encoded) : encoded;
+        try {
+          var encoded = pie.browser.getCookie(key);
+          return encoded != null ? JSON.parse(encoded) : encoded;
+        } catch(e) {
+          return pie.dataStore.ACCESS_ERROR;
+        }
       },
 
       set: function(key, value, parentStore) {
-        var encoded = JSON.stringify(value);
-        pie.browser.setCookie(key, value);
+        try{
+          var encoded = JSON.stringify(value);
+          pie.browser.setCookie(key, value);
+        } catch(e) {
+          return pie.dataStore.ACCESS_ERROR;
+        }
       }
 
     },
@@ -173,15 +174,15 @@ pie.dataStore.adapters = (function(){
     backup: {
 
       clear: function(key, parentStore) {
-        parentStore.backup.set(key, undefined);
+        parentStore.backupModel.set(key, undefined);
       },
 
       get: function(key, parentStore) {
-        parentStore.backup.get(key);
+        parentStore.backupModel.get(key);
       },
 
       set: function(key, value, parentStore) {
-        parentStore.backup.set(key, value);
+        parentStore.backupModel.set(key, value);
       }
 
     }
