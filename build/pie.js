@@ -2137,6 +2137,11 @@ pie.string.normalizeUrl =  function(path) {
     path = path.substr(0, path.length - 1);
   }
 
+  // remove trailing question marks
+  if(path.charAt(path.length - 1) === '?') {
+    path = path.substr(0, path.length - 1);
+  }
+
   // remove trailing slashes
   if(path.length > 1 && path.charAt(path.length - 1) === '/') {
     path = path.substr(0, path.length - 1);
@@ -7279,8 +7284,9 @@ pie.route = pie.model.extend('route', {
   // Since this is a computed property, we only ever have to do this once.
   pathRegex: function() {
     var t = this.get('pathTemplate');
-    t = t.replace(/(:[^\/]+)/g,'([^\\/]+)');
-    t = t.replace(/(\*[^\/]+)/g, '(.+)');
+    t = pie.string.escapeRegex(t);
+    t = t.replace(/(:[^\/\?]+)/g,'([^\\/\\?]+)');
+    t = t.replace(/(\\\*[^\/]+)/g, '(.+)');
     return new RegExp('^' + t + '$');
   },
 
@@ -7525,11 +7531,14 @@ pie.router = pie.model.extend('router', {
   // //=> "/foo/bar/44?q=search"
   // ```
   path: function(nameOrPath, data, interpolateOnly) {
-    var r = this.findRoute(nameOrPath) || new pie.route(nameOrPath),
-    path;
+    var r = this.findRoute(nameOrPath) || new pie.route(nameOrPath.split('?')[0]),
+    path, params;
 
-    data = pie.object.merge(r.interpolations(nameOrPath), data);
-    path = r.path(data, interpolateOnly);
+    if(~nameOrPath.indexOf('?')) params = pie.string.deserialize(nameOrPath.split('?')[1]);
+    else params = {};
+
+    params = pie.object.merge(params, r.interpolations(nameOrPath), data);
+    path = r.path(params, interpolateOnly);
 
     // apply the root.
     if(!pie.string.PROTOCOL_TEST.test(path) && !this.get('rootRegex').test(path)) {

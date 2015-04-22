@@ -171,6 +171,11 @@ pie.string.normalizeUrl =  function(path) {
     path = path.substr(0, path.length - 1);
   }
 
+  // remove trailing question marks
+  if(path.charAt(path.length - 1) === '?') {
+    path = path.substr(0, path.length - 1);
+  }
+
   // remove trailing slashes
   if(path.length > 1 && path.charAt(path.length - 1) === '/') {
     path = path.substr(0, path.length - 1);
