@@ -477,3 +477,39 @@ pie.dom.prefixed = (function(){
     }
   };
 })();
+
+pie.dom.viewportLocation = function() {
+  var windowW = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
+  windowH = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+  return {
+    top: window.scrollY,
+    bottom: window.scrollY + windowH,
+    left: window.scrollX,
+    right: window.scrollX + windowW
+  };
+};
+
+pie.dom.inViewport = function(el, threshold, vLoc) {
+  var viewportLoc = vLoc || pie.dom.viewportLocation(),
+  t = threshold || 0,
+  target = el,
+  top = 0,
+  left = 0,
+  w = el.offsetWidth,
+  h = el.offsetHeight,
+  bottom, right;
+
+  while(target && target !== document.body) {
+    top += (target.offsetTop - target.scrollTop);
+    left += (target.offsetLeft - target.scrollLeft);
+    target = target.offsetParent;
+  }
+
+  bottom = top + h;
+  right = left + w;
+
+  return  bottom >= viewportLoc.top - t &&
+          top <= viewportLoc.bottom + t &&
+          right >= viewportLoc.left - t &&
+          left <= viewportLoc.right + t;
+};

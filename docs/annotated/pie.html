@@ -2080,7 +2080,43 @@ pie.dom.prefixed(getComputedStyle(<span class="hljs-built_in">document</span>.bo
       <span class="hljs-keyword">if</span>(el[prefix + capd]) <span class="hljs-keyword">return</span> returnVal(el[prefix + capd], el);
     }
   };
-})();</pre></div></div>
+})();
+
+pie.dom.viewportLocation = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">var</span> windowW = <span class="hljs-built_in">Math</span>.max(<span class="hljs-built_in">document</span>.documentElement.clientWidth, <span class="hljs-built_in">window</span>.innerWidth || <span class="hljs-number">0</span>),
+  windowH = <span class="hljs-built_in">Math</span>.max(<span class="hljs-built_in">document</span>.documentElement.clientHeight, <span class="hljs-built_in">window</span>.innerHeight || <span class="hljs-number">0</span>);
+  <span class="hljs-keyword">return</span> {
+    top: <span class="hljs-built_in">window</span>.scrollY,
+    bottom: <span class="hljs-built_in">window</span>.scrollY + windowH,
+    left: <span class="hljs-built_in">window</span>.scrollX,
+    right: <span class="hljs-built_in">window</span>.scrollX + windowW
+  };
+};
+
+pie.dom.inViewport = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, threshold, vLoc)</span> </span>{
+  <span class="hljs-keyword">var</span> viewportLoc = vLoc || pie.dom.viewportLocation(),
+  t = threshold || <span class="hljs-number">0</span>,
+  target = el,
+  top = <span class="hljs-number">0</span>,
+  left = <span class="hljs-number">0</span>,
+  w = el.offsetWidth,
+  h = el.offsetHeight,
+  bottom, right;
+
+  <span class="hljs-keyword">while</span>(target &amp;&amp; target !== <span class="hljs-built_in">document</span>.body) {
+    top += (target.offsetTop - target.scrollTop);
+    left += (target.offsetLeft - target.scrollLeft);
+    target = target.offsetParent;
+  }
+
+  bottom = top + h;
+  right = left + w;
+
+  <span class="hljs-keyword">return</span>  bottom &gt;= viewportLoc.top - t &amp;&amp;
+          top &lt;= viewportLoc.bottom + t &amp;&amp;
+          right &gt;= viewportLoc.left - t &amp;&amp;
+          left &lt;= viewportLoc.right + t;
+};</pre></div></div>
             
         </li>
         
@@ -14174,7 +14210,7 @@ when the transition is complete, invoke the callback.</p>
   }
 
 });
-  pie.VERSION = <span class="hljs-string">"0.0.20150422.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150426.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
