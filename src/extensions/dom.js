@@ -374,7 +374,9 @@ pie.dom.scrollParents = (function(){
 // **pie.dom.scrollTo**
 //
 // Scroll the page to `sel`.
-// If `sel` is a string it will find the first occurrence via a querySelector.
+// If `sel` is a string it will find the first occurrence via a querySelector within the provided container.
+// If `sel` is a dom node, the nodes position will be used.
+// If `sel` is a number, it will scroll to that position.
 // Available options:
 //  * container - the container to scroll, defaults to document.body
 //  * cb - the callback to invoke when scrolling is finished.
@@ -390,12 +392,12 @@ pie.dom.scrollTo = function(sel, options) {
   cb = options && options.cb,
   quit = false;
 
-  if(sel) {
-    var target = pie.object.isString(sel) ? container.querySelector(sel) : sel;
-    while(target && target !== container) {
-      position += (target.offsetTop - target.scrollTop);
-      target = target.offsetParent;
-    }
+  if(pie.object.isString(sel)) {
+    position = pie.dom.position(container.querySelector(sel), container).top;
+  } else if(pie.object.isNumber(sel)) {
+    position = sel;
+  } else if(sel) {
+    position = pie.dom.position(sel, container).top;
   }
 
   if(options) {
@@ -489,13 +491,15 @@ pie.dom.viewportPosition = function() {
   };
 };
 
-pie.dom.position = function(el) {
+pie.dom.position = function(el, container) {
   var   top = 0,
   left = 0,
   w = el.offsetWidth,
   h = el.offsetHeight;
 
-  while(el && el !== document.body) {
+  container = container || document.body;
+
+  while(el && el !== container) {
     top += (el.offsetTop - el.scrollTop);
     left += (el.offsetLeft - el.scrollLeft);
     el = el.offsetParent;

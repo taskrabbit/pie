@@ -1952,7 +1952,9 @@ Optionally, you can provide the following options:</p>
               </div>
               <p><strong>pie.dom.scrollTo</strong></p>
 <p>Scroll the page to <code>sel</code>.
-If <code>sel</code> is a string it will find the first occurrence via a querySelector.
+If <code>sel</code> is a string it will find the first occurrence via a querySelector within the provided container.
+If <code>sel</code> is a dom node, the nodes position will be used.
+If <code>sel</code> is a number, it will scroll to that position.
 Available options:</p>
 <ul>
 <li>container - the container to scroll, defaults to document.body</li>
@@ -1978,12 +1980,12 @@ pie.dom.scrollTo(‘header’, {onlyUp: true, cb: fn, name: ‘easeInQuart’});
   cb = options &amp;&amp; options.cb,
   quit = <span class="hljs-literal">false</span>;
 
-  <span class="hljs-keyword">if</span>(sel) {
-    <span class="hljs-keyword">var</span> target = pie.object.isString(sel) ? container.querySelector(sel) : sel;
-    <span class="hljs-keyword">while</span>(target &amp;&amp; target !== container) {
-      position += (target.offsetTop - target.scrollTop);
-      target = target.offsetParent;
-    }
+  <span class="hljs-keyword">if</span>(pie.object.isString(sel)) {
+    position = pie.dom.position(container.querySelector(sel), container).top;
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isNumber(sel)) {
+    position = sel;
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(sel) {
+    position = pie.dom.position(sel, container).top;
   }
 
   <span class="hljs-keyword">if</span>(options) {
@@ -2093,13 +2095,15 @@ pie.dom.viewportPosition = <span class="hljs-function"><span class="hljs-keyword
   };
 };
 
-pie.dom.position = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
+pie.dom.position = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, container)</span> </span>{
   <span class="hljs-keyword">var</span>   top = <span class="hljs-number">0</span>,
   left = <span class="hljs-number">0</span>,
   w = el.offsetWidth,
   h = el.offsetHeight;
 
-  <span class="hljs-keyword">while</span>(el &amp;&amp; el !== <span class="hljs-built_in">document</span>.body) {
+  container = container || <span class="hljs-built_in">document</span>.body;
+
+  <span class="hljs-keyword">while</span>(el &amp;&amp; el !== container) {
     top += (el.offsetTop - el.scrollTop);
     left += (el.offsetLeft - el.scrollLeft);
     el = el.offsetParent;
