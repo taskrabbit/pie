@@ -119,7 +119,7 @@ pie.mixins.listView = (function(){
         this.addChild('list-item-' + i, child);
 
         /* we append to the dom before setup to preserve ordering. */
-        child.appendToDom(container);
+        child.addToDom(container);
         child.setup();
 
       }.bind(this));
@@ -148,7 +148,7 @@ pie.mixins.listView = (function(){
 
       child.emitter.once('afterRender', whenComplete, {immediate: true});
 
-      child.appendToDom(this.listContainer());
+      child.addToDom(this.listContainer());
       child.setup();
     },
 

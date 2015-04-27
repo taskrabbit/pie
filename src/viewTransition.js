@@ -17,6 +17,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     this.options = options;
 
     this.emitter.on('beforeTransition', this.manageChildren.bind(this));
+    this.propagateTransitionEvents();
 
     this._super();
   },
@@ -72,6 +73,32 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     }
   },
 
+  propagateTransitionEvents: function() {
+    var em = this.emitter,
+    oldEm = this.oldChild && this.oldChild.emitter,
+    newEm = this.newChild && this.newChild.emitter;
+
+    if(oldEm) {
+      em.on('beforeRemoveOldChild', function() {
+        oldEm.fire('beforeTransitionOut');
+      });
+
+      em.on('afterRemoveOldChild', function() {
+        oldEm.fire('afterTransitionOut');
+      });
+    }
+
+    if(newEm) {
+      em.on('beforeAddNewChild', function() {
+        newEm.fire('beforeTransitionIn');
+      });
+
+      em.on('afterTransition', function() {
+        newEm.fire('afterTransitionIn');
+      });
+    }
+  }
+
 });
 
 
@@ -89,7 +116,7 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
   addNewChild: function() {
     if(this.newChild) {
       this.newChild.emitter.once('afterSetup', function(){
-        this.newChild.appendToDom(this.targetEl);
+        this.newChild.addToDom(this.targetEl);
         this.emitter.fire('afterAddNewChild');
       }.bind(this), {immediate: true});
     } else {
@@ -143,7 +170,7 @@ pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransiti
       if(!this.options.minDelay || now >= (this.begin + this.options.minDelay)) {
         if(!this.newChild.emitter.hasEvent('removedFromParent')) {
           this.setLoading(false);
-          this.newChild.appendToDom(this.targetEl);
+          this.newChild.addToDom(this.targetEl);
           this.emitter.fire('afterAddNewChild');
         }
       }
@@ -314,7 +341,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
 
       if(this.newChild) {
         this.applyClass(this.newChild.el, true);
-        this.newChild.appendToDom(this.targetEl);
+        this.newChild.addToDom(this.targetEl);
       }
 
       // then we let everyone else know.
@@ -332,7 +359,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   // give the new child the "out" classes, then add it to the dom.
   addNewChild: function() {
     // this.applyClass(this.newChild.el, false);
-    this.newChild.appendToDom(this.targetEl);
+    this.newChild.addToDom(this.targetEl);
   },
 
   ensureNewChildPrepared: function(cb) {

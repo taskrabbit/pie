@@ -39,7 +39,7 @@ pie.view.reopen({
     this.emitter = new pie.emitter();
 
     if(this.options.uiTarget) {
-      this.emitter.once('afterSetup', this.appendToDom.bind(this));
+      this.emitter.once('afterSetup', this.addToDom.bind(this));
     }
 
     this._super();
@@ -55,13 +55,27 @@ pie.view.reopen({
 
   // **pie.view.appendToDom**
   //
+  // **deprecated**
+  //
   // A function which appends the view's el to the DOM within target (or this.options.uiTarget).
   // An "attach" sequence is fired so views can control how they enter the DOM.
   appendToDom: function(target) {
+    this.addToDom(target, 'appendChild');
+  },
+
+
+  // **pie.view.addToDom**
+  //
+  // A function which adds the view's el to the DOM within target (or this.options.uiTarget).
+  // An "attach" sequence is fired so views can control how they enter the DOM.
+  // By default the element will be appended, if `prependInstead` is true the element will be
+  // prepended.
+  addToDom: function(target, prependInstead) {
     target = target || this.options.uiTarget;
     if(target !== this.el.parentNode) {
       this.emitter.fireSequence('attach', function(){
-        target.appendChild(this.el);
+        if(prependInstead) target.insertBefore(this.el, target.firstChild);
+        else target.appendChild(this.el);
       }.bind(this));
     }
   },

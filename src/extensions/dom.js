@@ -478,7 +478,7 @@ pie.dom.prefixed = (function(){
   };
 })();
 
-pie.dom.viewportLocation = function() {
+pie.dom.viewportPosition = function() {
   var windowW = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
   windowH = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
   return {
@@ -489,27 +489,35 @@ pie.dom.viewportLocation = function() {
   };
 };
 
-pie.dom.inViewport = function(el, threshold, vLoc) {
-  var viewportLoc = vLoc || pie.dom.viewportLocation(),
-  t = threshold || 0,
-  target = el,
-  top = 0,
+pie.dom.position = function(el) {
+  var   top = 0,
   left = 0,
   w = el.offsetWidth,
-  h = el.offsetHeight,
-  bottom, right;
+  h = el.offsetHeight;
 
-  while(target && target !== document.body) {
-    top += (target.offsetTop - target.scrollTop);
-    left += (target.offsetLeft - target.scrollLeft);
-    target = target.offsetParent;
+  while(el && el !== document.body) {
+    top += (el.offsetTop - el.scrollTop);
+    left += (el.offsetLeft - el.scrollLeft);
+    el = el.offsetParent;
   }
 
-  bottom = top + h;
-  right = left + w;
+  return {
+    width: w,
+    height: h,
+    top: top,
+    left: left,
+    right: left + w,
+    bottom: top + h
+  };
+};
 
-  return  bottom >= viewportLoc.top - t &&
-          top <= viewportLoc.bottom + t &&
-          right >= viewportLoc.left - t &&
-          left <= viewportLoc.right + t;
+pie.dom.inViewport = function(el, threshold, vLoc) {
+  var viewportLoc = vLoc || pie.dom.viewportPosition(),
+  t = threshold || 0,
+  elLoc = pie.dom.position(el);
+
+  return  elLoc.bottom >= viewportLoc.top - t &&
+          elLoc.top <= viewportLoc.bottom + t &&
+          elLoc.right >= viewportLoc.left - t &&
+          elLoc.left <= viewportLoc.right + t;
 };

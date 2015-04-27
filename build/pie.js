@@ -1388,7 +1388,7 @@ pie.dom.prefixed = (function(){
   };
 })();
 
-pie.dom.viewportLocation = function() {
+pie.dom.viewportPosition = function() {
   var windowW = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
   windowH = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
   return {
@@ -1399,29 +1399,37 @@ pie.dom.viewportLocation = function() {
   };
 };
 
-pie.dom.inViewport = function(el, threshold, vLoc) {
-  var viewportLoc = vLoc || pie.dom.viewportLocation(),
-  t = threshold || 0,
-  target = el,
-  top = 0,
+pie.dom.position = function(el) {
+  var   top = 0,
   left = 0,
   w = el.offsetWidth,
-  h = el.offsetHeight,
-  bottom, right;
+  h = el.offsetHeight;
 
-  while(target && target !== document.body) {
-    top += (target.offsetTop - target.scrollTop);
-    left += (target.offsetLeft - target.scrollLeft);
-    target = target.offsetParent;
+  while(el && el !== document.body) {
+    top += (el.offsetTop - el.scrollTop);
+    left += (el.offsetLeft - el.scrollLeft);
+    el = el.offsetParent;
   }
 
-  bottom = top + h;
-  right = left + w;
+  return {
+    width: w,
+    height: h,
+    top: top,
+    left: left,
+    right: left + w,
+    bottom: top + h
+  };
+};
 
-  return  bottom >= viewportLoc.top - t &&
-          top <= viewportLoc.bottom + t &&
-          right >= viewportLoc.left - t &&
-          left <= viewportLoc.right + t;
+pie.dom.inViewport = function(el, threshold, vLoc) {
+  var viewportLoc = vLoc || pie.dom.viewportPosition(),
+  t = threshold || 0,
+  elLoc = pie.dom.position(el);
+
+  return  elLoc.bottom >= viewportLoc.top - t &&
+          elLoc.top <= viewportLoc.bottom + t &&
+          elLoc.right >= viewportLoc.left - t &&
+          elLoc.left <= viewportLoc.right + t;
 };
 // **pie.fn.async**
 //
@@ -3487,7 +3495,7 @@ pie.mixins.listView = (function(){
         this.addChild('list-item-' + i, child);
 
         /* we append to the dom before setup to preserve ordering. */
-        child.appendToDom(container);
+        child.addToDom(container);
         child.setup();
 
       }.bind(this));
@@ -3516,7 +3524,7 @@ pie.mixins.listView = (function(){
 
       child.emitter.once('afterRender', whenComplete, {immediate: true});
 
-      child.appendToDom(this.listContainer());
+      child.addToDom(this.listContainer());
       child.setup();
     },
 
@@ -5115,7 +5123,7 @@ pie.view.reopen({
     this.emitter = new pie.emitter();
 
     if(this.options.uiTarget) {
-      this.emitter.once('afterSetup', this.appendToDom.bind(this));
+      this.emitter.once('afterSetup', this.addToDom.bind(this));
     }
 
     this._super();
@@ -5131,13 +5139,27 @@ pie.view.reopen({
 
   // **pie.view.appendToDom**
   //
+  // **deprecated**
+  //
   // A function which appends the view's el to the DOM within target (or this.options.uiTarget).
   // An "attach" sequence is fired so views can control how they enter the DOM.
   appendToDom: function(target) {
+    this.addToDom(target, 'appendChild');
+  },
+
+
+  // **pie.view.addToDom**
+  //
+  // A function which adds the view's el to the DOM within target (or this.options.uiTarget).
+  // An "attach" sequence is fired so views can control how they enter the DOM.
+  // By default the element will be appended, if `prependInstead` is true the element will be
+  // prepended.
+  addToDom: function(target, prependInstead) {
     target = target || this.options.uiTarget;
     if(target !== this.el.parentNode) {
       this.emitter.fireSequence('attach', function(){
-        target.appendChild(this.el);
+        if(prependInstead) target.insertBefore(this.el, target.firstChild);
+        else target.appendChild(this.el);
       }.bind(this));
     }
   },
@@ -8710,6 +8732,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     this.options = options;
 
     this.emitter.on('beforeTransition', this.manageChildren.bind(this));
+    this.propagateTransitionEvents();
 
     this._super();
   },
@@ -8765,6 +8788,32 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     }
   },
 
+  propagateTransitionEvents: function() {
+    var em = this.emitter,
+    oldEm = this.oldChild && this.oldChild.emitter,
+    newEm = this.newChild && this.newChild.emitter;
+
+    if(oldEm) {
+      em.on('beforeRemoveOldChild', function() {
+        oldEm.fire('beforeTransitionOut');
+      });
+
+      em.on('afterRemoveOldChild', function() {
+        oldEm.fire('afterTransitionOut');
+      });
+    }
+
+    if(newEm) {
+      em.on('beforeAddNewChild', function() {
+        newEm.fire('beforeTransitionIn');
+      });
+
+      em.on('afterTransition', function() {
+        newEm.fire('afterTransitionIn');
+      });
+    }
+  }
+
 });
 
 
@@ -8782,7 +8831,7 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
   addNewChild: function() {
     if(this.newChild) {
       this.newChild.emitter.once('afterSetup', function(){
-        this.newChild.appendToDom(this.targetEl);
+        this.newChild.addToDom(this.targetEl);
         this.emitter.fire('afterAddNewChild');
       }.bind(this), {immediate: true});
     } else {
@@ -8836,7 +8885,7 @@ pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransiti
       if(!this.options.minDelay || now >= (this.begin + this.options.minDelay)) {
         if(!this.newChild.emitter.hasEvent('removedFromParent')) {
           this.setLoading(false);
-          this.newChild.appendToDom(this.targetEl);
+          this.newChild.addToDom(this.targetEl);
           this.emitter.fire('afterAddNewChild');
         }
       }
@@ -9007,7 +9056,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
 
       if(this.newChild) {
         this.applyClass(this.newChild.el, true);
-        this.newChild.appendToDom(this.targetEl);
+        this.newChild.addToDom(this.targetEl);
       }
 
       // then we let everyone else know.
@@ -9025,7 +9074,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   // give the new child the "out" classes, then add it to the dom.
   addNewChild: function() {
     // this.applyClass(this.newChild.el, false);
-    this.newChild.appendToDom(this.targetEl);
+    this.newChild.addToDom(this.targetEl);
   },
 
   ensureNewChildPrepared: function(cb) {
@@ -9153,7 +9202,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150426.1";
+  pie.VERSION = "0.0.20150427.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {
