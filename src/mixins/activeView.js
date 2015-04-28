@@ -21,7 +21,12 @@ pie.mixins.activeView = {
       this._renderChild(options, cb);
     }.bind(this);
 
-    this.emitter.on('afterRender', f);
+    var events = options.events;
+    if(events === undefined) events = ['afterRender'];
+
+    pie.array.from(events).forEach(function(e){
+      this.emitter.on(e, f);
+    }.bind(this));
     return f;
   },
 
