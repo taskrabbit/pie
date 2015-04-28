@@ -113,35 +113,8 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
     this.emitter.on('addNewChild',    this.addNewChild.bind(this));
   },
 
-  addNewChild: function() {
-    if(this.newChild) {
-      this.newChild.emitter.once('afterSetup', function(){
-        this.newChild.addToDom(this.targetEl);
-        this.emitter.fire('afterAddNewChild');
-      }.bind(this), {immediate: true});
-    } else {
-      this.emitter.fire('afterAddNewChild');
-    }
-  },
-
-  removeOldChild: function() {
-    if(this.oldChild) {
-      this.oldChild.teardown();
-    }
-    this.emitter.fire('afterRemoveOldChild');
-  }
-
-});
-
-pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransition', {
-
-  init: function() {
-    this._super.apply(this, arguments);
-
-    this.options.loadingClass = this.options.loadingClass || 'is-loading';
-  },
-
   setLoading: function(bool) {
+    if(!this.options.loadingClass) return
     this.targetEl.classList[bool ? 'add' : 'remove'](this.options.loadingClass);
   },
 
@@ -159,22 +132,37 @@ pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransiti
       setTimeout(this.attemptToAddChild.bind(this), this.options.minDelay);
     }
 
-    this.newChild.emitter.once('afterSetup', function() {
-      this.attemptToAddChild(true);
-    }.bind(this), {immediate: true});
+    this.newChild.emitter.once('afterSetup', this.attemptToAddChild.bind(this), {immediate: true});
   },
 
-  attemptToAddChild: function(partOfAfterSetup) {
+  attemptToAddChild: function() {
     var now = pie.date.now();
-    if(partOfAfterSetup || this.newChild.emitter.hasEvent('afterSetup')) {
-      if(!this.options.minDelay || now >= (this.begin + this.options.minDelay)) {
-        if(!this.newChild.emitter.hasEvent('removedFromParent')) {
-          this.setLoading(false);
-          this.newChild.addToDom(this.targetEl);
-          this.emitter.fire('afterAddNewChild');
-        }
-      }
-    }
+
+    /* ensure our child has been setup */
+    if(!this.newChild.emitter.hasEvent('afterSetup')) return;
+
+    /* ensure the minimum delay has been reached */
+    if(this.options.minDelay && now < (this.begin + this.options.minDelay)) return;
+
+    /* ensure our view was not removed from our parent */
+    if(this.newChild.parent !== this.parent) return;
+
+    this.setLoading(false);
+    this.newChild.addToDom(this.targetEl);
+    this.emitter.fire('afterAddNewChild');
+  },
+
+  removeOldChild: function() {
+    if(this.oldChild) this.oldChild.teardown();
+    this.emitter.fire('afterRemoveOldChild');
+  }
+
+});
+
+pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransition', {
+  init: function() {
+    this._super.apply(this, arguments);
+    this.options.loadingClass = this.options.loadingClass || 'is-loading';
   }
 });
 
@@ -356,9 +344,8 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     }
   },
 
-  // give the new child the "out" classes, then add it to the dom.
+  // Add the new child to the dom.
   addNewChild: function() {
-    // this.applyClass(this.newChild.el, false);
     this.newChild.addToDom(this.targetEl);
   },
 

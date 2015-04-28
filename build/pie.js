@@ -1916,7 +1916,7 @@ pie.object.isNotUndefined = function(obj) {
 // shallow merge
 pie.object.merge = function() {
   var args = pie.array.from(arguments),
-      targ = args.shift(),
+      targ = args.shift() || {},
       obj;
 
   function fn(k) {
@@ -2456,14 +2456,10 @@ pie.mixins.activeView = {
     filter = pie.object.isString(options.filter) ? this[options.filter].bind(this) : options.filter,
     trans;
 
-    if(filter && filter() === false) return;
-
-    if(current && !options.force) return;
-
     if(pie.object.isString(target)) target = this.qs(target);
 
-    // if we have no place to put our view, or if there is no view to place
-    if(!target || !(instance = factory())) {
+    // if we have no place to put our view or we've been filtered, remove the current child
+    if(!target || (filter && filter() === false)) {
 
       // if there is a current view, make sure we tear this dude down.
       if(current) {
@@ -2474,13 +2470,18 @@ pie.mixins.activeView = {
       return;
     }
 
-    // there's a new child and a target.
-    trans = new transitionClass(this, {
+    instance = factory();
+
+    // if we are dealing with the same instance, make sure we don't remove it, only add it.
+    if(current === instance) current = null;
+
+    // there's a child and a target.
+    trans = new transitionClass(this, pie.object.merge(options.transitionOptions, {
       targetEl: target,
       childName: childName,
       oldChild: current,
       newChild: instance
-    });
+    }));
 
     trans.transition();
 
@@ -8897,35 +8898,8 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
     this.emitter.on('addNewChild',    this.addNewChild.bind(this));
   },
 
-  addNewChild: function() {
-    if(this.newChild) {
-      this.newChild.emitter.once('afterSetup', function(){
-        this.newChild.addToDom(this.targetEl);
-        this.emitter.fire('afterAddNewChild');
-      }.bind(this), {immediate: true});
-    } else {
-      this.emitter.fire('afterAddNewChild');
-    }
-  },
-
-  removeOldChild: function() {
-    if(this.oldChild) {
-      this.oldChild.teardown();
-    }
-    this.emitter.fire('afterRemoveOldChild');
-  }
-
-});
-
-pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransition', {
-
-  init: function() {
-    this._super.apply(this, arguments);
-
-    this.options.loadingClass = this.options.loadingClass || 'is-loading';
-  },
-
   setLoading: function(bool) {
+    if(!this.options.loadingClass) return
     this.targetEl.classList[bool ? 'add' : 'remove'](this.options.loadingClass);
   },
 
@@ -8943,22 +8917,37 @@ pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransiti
       setTimeout(this.attemptToAddChild.bind(this), this.options.minDelay);
     }
 
-    this.newChild.emitter.once('afterSetup', function() {
-      this.attemptToAddChild(true);
-    }.bind(this), {immediate: true});
+    this.newChild.emitter.once('afterSetup', this.attemptToAddChild.bind(this), {immediate: true});
   },
 
-  attemptToAddChild: function(partOfAfterSetup) {
+  attemptToAddChild: function() {
     var now = pie.date.now();
-    if(partOfAfterSetup || this.newChild.emitter.hasEvent('afterSetup')) {
-      if(!this.options.minDelay || now >= (this.begin + this.options.minDelay)) {
-        if(!this.newChild.emitter.hasEvent('removedFromParent')) {
-          this.setLoading(false);
-          this.newChild.addToDom(this.targetEl);
-          this.emitter.fire('afterAddNewChild');
-        }
-      }
-    }
+
+    /* ensure our child has been setup */
+    if(!this.newChild.emitter.hasEvent('afterSetup')) return;
+
+    /* ensure the minimum delay has been reached */
+    if(this.options.minDelay && now < (this.begin + this.options.minDelay)) return;
+
+    /* ensure our view was not removed from our parent */
+    if(this.newChild.parent !== this.parent) return;
+
+    this.setLoading(false);
+    this.newChild.addToDom(this.targetEl);
+    this.emitter.fire('afterAddNewChild');
+  },
+
+  removeOldChild: function() {
+    if(this.oldChild) this.oldChild.teardown();
+    this.emitter.fire('afterRemoveOldChild');
+  }
+
+});
+
+pie.loadingViewTransition = pie.simpleViewTransition.extend('loadingViewTransition', {
+  init: function() {
+    this._super.apply(this, arguments);
+    this.options.loadingClass = this.options.loadingClass || 'is-loading';
   }
 });
 
@@ -9140,9 +9129,8 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     }
   },
 
-  // give the new child the "out" classes, then add it to the dom.
+  // Add the new child to the dom.
   addNewChild: function() {
-    // this.applyClass(this.newChild.el, false);
     this.newChild.addToDom(this.targetEl);
   },
 

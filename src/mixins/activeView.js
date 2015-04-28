@@ -40,14 +40,10 @@ pie.mixins.activeView = {
     filter = pie.object.isString(options.filter) ? this[options.filter].bind(this) : options.filter,
     trans;
 
-    if(filter && filter() === false) return;
-
-    if(current && !options.force) return;
-
     if(pie.object.isString(target)) target = this.qs(target);
 
-    // if we have no place to put our view, or if there is no view to place
-    if(!target || !(instance = factory())) {
+    // if we have no place to put our view or we've been filtered, remove the current child
+    if(!target || (filter && filter() === false)) {
 
       // if there is a current view, make sure we tear this dude down.
       if(current) {
@@ -58,13 +54,18 @@ pie.mixins.activeView = {
       return;
     }
 
-    // there's a new child and a target.
-    trans = new transitionClass(this, {
+    instance = factory();
+
+    // if we are dealing with the same instance, make sure we don't remove it, only add it.
+    if(current === instance) current = null;
+
+    // there's a child and a target.
+    trans = new transitionClass(this, pie.object.merge(options.transitionOptions, {
       targetEl: target,
       childName: childName,
       oldChild: current,
       newChild: instance
-    });
+    }));
 
     trans.transition();
 

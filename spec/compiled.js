@@ -906,13 +906,12 @@ describe("Object extension", function() {
       expect(a.biz).toEqual('baz');
     });
 
-    it('should blow up if the first value is falsy', function() {
-      var a = null, b = {'biz' : 'baz'};
-
-      expect(function(){
-        pie.object.merge(a, b);
-      }).toThrowError();
-
+    it('should not blow up if the first value is falsy', function() {
+      var a = null, b = {'biz' : 'baz'}, out;
+      out = pie.object.merge(a, b);
+      expect(out).toEqual({'biz' : 'baz'});
+      b.foo = 'bar';
+      expect(out.foo).toEqual(undefined);
     });
 
   });

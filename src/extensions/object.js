@@ -156,7 +156,7 @@ pie.object.isNotUndefined = function(obj) {
 // shallow merge
 pie.object.merge = function() {
   var args = pie.array.from(arguments),
-      targ = args.shift(),
+      targ = args.shift() || {},
       obj;
 
   function fn(k) {
