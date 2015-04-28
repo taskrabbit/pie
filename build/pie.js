@@ -2476,7 +2476,7 @@ pie.mixins.activeView = {
     if(current === instance) current = null;
 
     // there's a child and a target.
-    trans = new transitionClass(this, pie.object.merge(options.transitionOptions, {
+    trans = new transitionClass(this, pie.object.merge(options.viewTransitionOptions, {
       targetEl: target,
       childName: childName,
       oldChild: current,
