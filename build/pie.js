@@ -1302,9 +1302,9 @@ pie.dom.scrollTo = function(sel, options) {
   cb = options && options.cb,
   quit = false;
 
-  if(pie.object.isString(sel)) {
-    position = pie.dom.position(container.querySelector(sel), container).top;
-  } else if(pie.object.isNumber(sel)) {
+  if(pie.object.isString(sel)) sel = container.querySelector(sel);
+
+  if(pie.object.isNumber(sel)) {
     position = sel;
   } else if(sel) {
     position = pie.dom.position(sel, container).top;

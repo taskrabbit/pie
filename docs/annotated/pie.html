@@ -1980,9 +1980,9 @@ pie.dom.scrollTo(‘header’, {onlyUp: true, cb: fn, name: ‘easeInQuart’});
   cb = options &amp;&amp; options.cb,
   quit = <span class="hljs-literal">false</span>;
 
-  <span class="hljs-keyword">if</span>(pie.object.isString(sel)) {
-    position = pie.dom.position(container.querySelector(sel), container).top;
-  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pie.object.isNumber(sel)) {
+  <span class="hljs-keyword">if</span>(pie.object.isString(sel)) sel = container.querySelector(sel);
+
+  <span class="hljs-keyword">if</span>(pie.object.isNumber(sel)) {
     position = sel;
   } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(sel) {
     position = pie.dom.position(sel, container).top;
