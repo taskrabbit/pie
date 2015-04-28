@@ -2332,7 +2332,7 @@ pie.string.template = function(str, varString) {
   strFunc += "__p += '";
 
   /**** preserve format by allowing multiline strings. ****/
-  strFunc += str.replace(/\n/g, "\\\n")
+  strFunc += str.replace(/\n/g, "\\n\\\n")
   /**** EX: "... __p += '[% data.foo = 1 %]text's content[%- data.foo %]more text[%= data['foo'] + 1 %]" ****/
 
   /**** replace all interpolation single quotes with a unique identifier. ****/
@@ -2448,7 +2448,10 @@ pie.mixins.activeView = {
     current = this.getChild(childName),
     instance = current,
     target = options.target || options.targetEl,
+    filter = pie.object.isString(options.filter) ? this[options.filter].bind(this) : options.filter,
     trans;
+
+    if(filter && filter() === false) return;
 
     if(current && !options.force) return;
 

@@ -3635,7 +3635,7 @@ template({first_name: <span class="hljs-string">'John'</span>, count: <span clas
   strFunc += <span class="hljs-string">"__p += '"</span>;
 
   <span class="hljs-comment">/**** preserve format by allowing multiline strings. ****/</span>
-  strFunc += str.replace(<span class="hljs-regexp">/\n/g</span>, <span class="hljs-string">"\\\n"</span>)
+  strFunc += str.replace(<span class="hljs-regexp">/\n/g</span>, <span class="hljs-string">"\\n\\\n"</span>)
   <span class="hljs-comment">/**** EX: "... __p += '[% data.foo = 1 %]text's content[%- data.foo %]more text[%= data['foo'] + 1 %]" ****/</span>
 
   <span class="hljs-comment">/**** replace all interpolation single quotes with a unique identifier. ****/</span>
@@ -3775,7 +3775,10 @@ pie.mixins.activeView = {
     current = <span class="hljs-keyword">this</span>.getChild(childName),
     instance = current,
     target = options.target || options.targetEl,
+    filter = pie.object.isString(options.filter) ? <span class="hljs-keyword">this</span>[options.filter].bind(<span class="hljs-keyword">this</span>) : options.filter,
     trans;
+
+    <span class="hljs-keyword">if</span>(filter &amp;&amp; filter() === <span class="hljs-literal">false</span>) <span class="hljs-keyword">return</span>;
 
     <span class="hljs-keyword">if</span>(current &amp;&amp; !options.force) <span class="hljs-keyword">return</span>;
 

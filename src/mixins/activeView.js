@@ -32,7 +32,10 @@ pie.mixins.activeView = {
     current = this.getChild(childName),
     instance = current,
     target = options.target || options.targetEl,
+    filter = pie.object.isString(options.filter) ? this[options.filter].bind(this) : options.filter,
     trans;
+
+    if(filter && filter() === false) return;
 
     if(current && !options.force) return;
 
