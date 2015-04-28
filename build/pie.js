@@ -1835,6 +1835,14 @@ pie.object.dup = function(obj, deep) {
   return pie.object[deep ? 'deepMerge' : 'merge']({}, obj);
 };
 
+pie.object.expand = function(o) {
+  var out = {};
+  pie.object.forEach(o, function(k, v){
+    pie.object.setPath(out, k, v);
+  });
+  return out;
+};
+
 pie.object.flatten = function(a, object, prefix) {
   var b = object || {};
   prefix = prefix || '';
@@ -2422,6 +2430,53 @@ pie.mixins.activeView = {
     this.emitter.on('render', this._renderTemplateToEl.bind(this));
 
     this._super();
+  },
+
+  setupChild: function(options, cb) {
+    var f = function(){
+      this._renderChild(options, cb);
+    }.bind(this);
+
+    this.emitter.on('afterRender', f);
+    return f;
+  },
+
+  _renderChild: function(options, cb) {
+    var factory = options.factory,
+    transitionClass = options.viewTransitionClass || pie.simpleViewTransition,
+    childName = options.childName,
+    current = this.getChild(childName),
+    instance = current,
+    target = options.target || options.targetEl,
+    trans;
+
+    if(current && !options.force) return;
+
+    if(pie.object.isString(target)) target = this.qs(target);
+
+    // if we have no place to put our view, or if there is no view to place
+    if(!target || !(instance = factory())) {
+
+      // if there is a current view, make sure we tear this dude down.
+      if(current) {
+        this.removeChild(current);
+        current.teardown();
+      }
+
+      return;
+    }
+
+    // there's a new child and a target.
+    trans = new transitionClass(this, {
+      targetEl: target,
+      childName: childName,
+      oldChild: current,
+      newChild: instance
+    });
+
+    trans.transition();
+
+    if(cb) cb(trans);
   },
 
   _renderTemplateToEl: function() {
@@ -7865,7 +7920,7 @@ pie.router = pie.model.extend('router', {
   // * **route** - the matching route object.
   // * ** * ** - all the information passed into the router for the matching route.
   parseUrl: function(path, parseQuery) {
-    return this.cache.getOrSet(path, function(){
+    var obj = this.cache.getOrSet(path, function(){
 
       var result, pieces, query, match, fullPath, pathWithRoot, interpolations;
 
@@ -7896,6 +7951,8 @@ pie.router = pie.model.extend('router', {
 
       return result;
     }.bind(this));
+
+    return pie.object.deepMerge({}, obj);
   }
 }, pie.mixins.container);
 pie.routeHandler = pie.base.extend('routeHandler', {
@@ -9206,7 +9263,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150427.1";
+  pie.VERSION = "0.0.20150428.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

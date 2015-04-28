@@ -1920,7 +1920,7 @@ describe("pie.app", function() {
       this.goSpy = spyOn(app.navigator, 'go');
       this.hardGoSpy = spyOn(app, 'hardGo');
       this.notifierSpy = spyOn(app.notifier, 'notify');
-      this.storeSpy = spyOn(app.dataStore, 'set');
+      this.storeSpy = spyOn(app.storage, 'set');
     });
 
     it("should construct a path based on the first argument", function() {

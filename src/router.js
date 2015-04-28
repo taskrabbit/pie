@@ -171,7 +171,7 @@ pie.router = pie.model.extend('router', {
   // * **route** - the matching route object.
   // * ** * ** - all the information passed into the router for the matching route.
   parseUrl: function(path, parseQuery) {
-    return this.cache.getOrSet(path, function(){
+    var obj = this.cache.getOrSet(path, function(){
 
       var result, pieces, query, match, fullPath, pathWithRoot, interpolations;
 
@@ -202,5 +202,7 @@ pie.router = pie.model.extend('router', {
 
       return result;
     }.bind(this));
+
+    return pie.object.deepMerge({}, obj);
   }
 }, pie.mixins.container);

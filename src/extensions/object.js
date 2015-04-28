@@ -75,6 +75,14 @@ pie.object.dup = function(obj, deep) {
   return pie.object[deep ? 'deepMerge' : 'merge']({}, obj);
 };
 
+pie.object.expand = function(o) {
+  var out = {};
+  pie.object.forEach(o, function(k, v){
+    pie.object.setPath(out, k, v);
+  });
+  return out;
+};
+
 pie.object.flatten = function(a, object, prefix) {
   var b = object || {};
   prefix = prefix || '';
