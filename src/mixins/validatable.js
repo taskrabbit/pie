@@ -6,24 +6,18 @@ pie.mixins.validatable = {
 
     if(this._super) this._super.apply(this, arguments);
 
-    if(!this.data.validationErrors) this.data.validationErrors = {};
-
     this.compute('isValid', 'validationErrors');
   },
 
   isValid: function() {
-    return Object.keys(this.get('validationErrors')).length === 0;
+    return !this.data.validationErrors || Object.keys(this.data.validationErrors).length === 0;
   },
 
   // default to a model implementation
-  reportValidationError: (function(){
-    var opts = {noDeleteRecursive: true};
-
-    return function(key, errors) {
-      errors = errors && errors.length ? errors : undefined;
-      this.set('validationErrors.' + key, errors, opts);
-    };
-  })(),
+  reportValidationError: function(key, errors) {
+    errors = errors && errors.length ? errors : undefined;
+    this.set('validationErrors.' + key, errors);
+  },
 
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
@@ -121,7 +115,7 @@ pie.mixins.validatable = {
       this.validate(change.name);
     } else if(this.validationStrategy === 'dirty') {
       // for speed.
-      if(this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
+      if(this.data.validationErrors && this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
         this.reportValidationError(change.name, undefined);
       }
     }

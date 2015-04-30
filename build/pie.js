@@ -1292,6 +1292,7 @@ pie.dom.scrollParents = (function(){
 //  * cb - the callback to invoke when scrolling is finished.
 //  * onlyUp - only scrolls if the element is above the current position.
 //  * onlyDown - only scrolls if the element is below the current position.
+//  * gravity - where the element should appear in the viewport,
 //  * * - any option available in pie.fn.ease
 //
 // ```
@@ -1300,14 +1301,28 @@ pie.dom.scrollTo = function(sel, options) {
   var position = 0,
   container = options && options.container || document.body,
   cb = options && options.cb,
+  gravity = options && options.gravity || 'top',
   quit = false;
-
-  if(pie.object.isString(sel)) sel = container.querySelector(sel);
 
   if(pie.object.isNumber(sel)) {
     position = sel;
-  } else if(sel) {
-    position = pie.dom.position(sel, container).top;
+  } else if(pie.object.isString(sel)) {
+    sel = container.querySelector(sel);
+  }
+
+  if(sel) {
+    // ep is the elements position on the page.
+    var ep = pie.dom.position(sel, container),
+    // cp is the containers position on the page.
+    cp = pie.dom.position(container);
+
+    if(gravity === 'center') {
+      position = (ep.top + (ep.height / 2)) - (cp.height / 2);
+    } else if(gravity === 'bottom') {
+      position = (ep.bottom - cp.height);
+    } else { // top
+      position = ep.top;
+    }
   }
 
   if(options) {
@@ -1334,6 +1349,7 @@ pie.dom.scrollTo = function(sel, options) {
   delete options.container;
   delete options.onlyUp;
   delete options.onlyDown;
+  delete options.gravity;
 
   pie.fn.ease(function(p){
     container.scrollTop = p;
@@ -1396,12 +1412,17 @@ pie.dom.viewportPosition = function() {
   return {
     top: window.scrollY,
     bottom: window.scrollY + windowH,
+    height: windowH,
     left: window.scrollX,
-    right: window.scrollX + windowW
+    right: window.scrollX + windowW,
+    width: windowW
   };
 };
 
 pie.dom.position = function(el, container) {
+
+  if(pie.dom.isWindow(el)) return pie.dom.viewportPosition(el);
+
   var   top = 0,
   left = 0,
   w = el.offsetWidth,
@@ -1560,6 +1581,7 @@ pie.fn.ease = function(each, o, complete) {
     duration: 250,
     from: 0,
     to: 1,
+    delay: 0,
     animation: false
   }, o);
 
@@ -1568,8 +1590,12 @@ pie.fn.ease = function(each, o, complete) {
     return;
   }
 
-  if(o.animation) return pie.fn._easeAnimation(each, o, complete);
-  else return pie.fn._easeInterval(each, o, complete);
+  var via = o.animation ? pie.fn._easeAnimation : pie.fn._easeInterval,
+  start = function(){ via(each, o, complete); };
+
+  if(o.delay) start = pie.fn.delay(start, o.delay);
+
+  start();
 };
 
 /* ease using an interval (non-ui stuff) */
@@ -3642,24 +3668,18 @@ pie.mixins.validatable = {
 
     if(this._super) this._super.apply(this, arguments);
 
-    if(!this.data.validationErrors) this.data.validationErrors = {};
-
     this.compute('isValid', 'validationErrors');
   },
 
   isValid: function() {
-    return Object.keys(this.get('validationErrors')).length === 0;
+    return !this.data.validationErrors || Object.keys(this.data.validationErrors).length === 0;
   },
 
   // default to a model implementation
-  reportValidationError: (function(){
-    var opts = {noDeleteRecursive: true};
-
-    return function(key, errors) {
-      errors = errors && errors.length ? errors : undefined;
-      this.set('validationErrors.' + key, errors, opts);
-    };
-  })(),
+  reportValidationError: function(key, errors) {
+    errors = errors && errors.length ? errors : undefined;
+    this.set('validationErrors.' + key, errors);
+  },
 
   // validates({name: 'presence'});
   // validates({name: {presence: true}});
@@ -3757,7 +3777,7 @@ pie.mixins.validatable = {
       this.validate(change.name);
     } else if(this.validationStrategy === 'dirty') {
       // for speed.
-      if(this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
+      if(this.data.validationErrors && this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
         this.reportValidationError(change.name, undefined);
       }
     }
@@ -9259,7 +9279,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150428.1";
+  pie.VERSION = "0.0.20150430.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

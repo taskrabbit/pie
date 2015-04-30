@@ -382,6 +382,7 @@ pie.dom.scrollParents = (function(){
 //  * cb - the callback to invoke when scrolling is finished.
 //  * onlyUp - only scrolls if the element is above the current position.
 //  * onlyDown - only scrolls if the element is below the current position.
+//  * gravity - where the element should appear in the viewport,
 //  * * - any option available in pie.fn.ease
 //
 // ```
@@ -390,14 +391,28 @@ pie.dom.scrollTo = function(sel, options) {
   var position = 0,
   container = options && options.container || document.body,
   cb = options && options.cb,
+  gravity = options && options.gravity || 'top',
   quit = false;
-
-  if(pie.object.isString(sel)) sel = container.querySelector(sel);
 
   if(pie.object.isNumber(sel)) {
     position = sel;
-  } else if(sel) {
-    position = pie.dom.position(sel, container).top;
+  } else if(pie.object.isString(sel)) {
+    sel = container.querySelector(sel);
+  }
+
+  if(sel) {
+    // ep is the elements position on the page.
+    var ep = pie.dom.position(sel, container),
+    // cp is the containers position on the page.
+    cp = pie.dom.position(container);
+
+    if(gravity === 'center') {
+      position = (ep.top + (ep.height / 2)) - (cp.height / 2);
+    } else if(gravity === 'bottom') {
+      position = (ep.bottom - cp.height);
+    } else { // top
+      position = ep.top;
+    }
   }
 
   if(options) {
@@ -424,6 +439,7 @@ pie.dom.scrollTo = function(sel, options) {
   delete options.container;
   delete options.onlyUp;
   delete options.onlyDown;
+  delete options.gravity;
 
   pie.fn.ease(function(p){
     container.scrollTop = p;
@@ -486,12 +502,17 @@ pie.dom.viewportPosition = function() {
   return {
     top: window.scrollY,
     bottom: window.scrollY + windowH,
+    height: windowH,
     left: window.scrollX,
-    right: window.scrollX + windowW
+    right: window.scrollX + windowW,
+    width: windowW
   };
 };
 
 pie.dom.position = function(el, container) {
+
+  if(pie.dom.isWindow(el)) return pie.dom.viewportPosition(el);
+
   var   top = 0,
   left = 0,
   w = el.offsetWidth,

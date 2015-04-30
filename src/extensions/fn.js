@@ -123,6 +123,7 @@ pie.fn.ease = function(each, o, complete) {
     duration: 250,
     from: 0,
     to: 1,
+    delay: 0,
     animation: false
   }, o);
 
@@ -131,8 +132,12 @@ pie.fn.ease = function(each, o, complete) {
     return;
   }
 
-  if(o.animation) return pie.fn._easeAnimation(each, o, complete);
-  else return pie.fn._easeInterval(each, o, complete);
+  var via = o.animation ? pie.fn._easeAnimation : pie.fn._easeInterval,
+  start = function(){ via(each, o, complete); };
+
+  if(o.delay) start = pie.fn.delay(start, o.delay);
+
+  start();
 };
 
 /* ease using an interval (non-ui stuff) */
