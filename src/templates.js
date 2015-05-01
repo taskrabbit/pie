@@ -39,7 +39,7 @@ pie.templates = pie.model.extend('templates', {
     if (content) {
       this.registerTemplate(name, content);
       cb(name);
-      return
+      return;
     } else if(src) {
       this.load(name, {url: src}, function(){
         this.ensureTemplate(name, cb);
@@ -138,7 +138,7 @@ pie.templates = pie.model.extend('templates', {
   // ```
   renderAsync: function(name, data, cb) {
     this.ensureTemplate(name, function() {
-      content = this.render(name, data);
+      var content = this.render(name, data);
       cb(content);
     }.bind(this));
   }

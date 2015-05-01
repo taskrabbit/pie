@@ -104,7 +104,9 @@ pie.object.isWindow = function(obj) {
 
 pie.object.isEmpty = function(obj) {
   if(!obj) return true;
-  for(var k in obj) { return false; }
+  var k;
+  /* jshint forin:false */
+  for(k in obj) { return false; }
   return true;
 };
 

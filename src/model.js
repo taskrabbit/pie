@@ -383,29 +383,6 @@ pie.model = pie.base.extend('model', {
     return !!this.get(path);
   },
 
-  // ** pie.model.keys **
-  //
-  // Retrieve the keys which start with the given path.
-  //
-  // ```
-  // model.set('foo.bar.baz', 1);
-  // model.set('foo.bar.spaz', 2);
-  // model.set('foo.car.laz', 3);
-  //
-  // model.keys('foo')
-  // //=> ['foo.bar.baz', 'foo.bar.spaz', 'foo.car.laz']
-  // model.keys('foo.car.');
-  // //=> ['foo.car.laz'];
-  // ```
-  keys: function(path) {
-    if(!path) return Object.keys(this.data);
-    var pathCheck = path.lastIndexOf('.') === path.length-1,
-    d = pie.object.flatten(this.data);
-    return Object.keys(d).filter(function(k) {
-      return pathCheck ? k.indexOf(path) === 0 : (k === path || k.indexOf(path + '.') === 0);
-    });
-  },
-
   // ** pie.model.merge **
   //
   // Set keys, but do so by merging with the current values
@@ -512,9 +489,14 @@ pie.model = pie.base.extend('model', {
 
 
     var parentKeys = (!options || !options.skipParents) && ~key.indexOf('.') ? pie.string.pathSteps(key).slice(1) : null,
-    childKeys = !options || !options.skipChildren ? this.keys(key + '.') : null,
-    nestedOpts = childKeys || parentKeys ? pie.object.merge({}, options, {skipChildren: true, skipParents: true}) : null,
-    i;
+    childKeys, nestedOpts, i;
+
+
+    if((!options || !options.skipChildren) && pie.object.isPlainObject(changeOldValue)) {
+      childKeys = Object.keys(pie.object.flatten(changeOldValue, key + '.'));
+    }
+
+    nestedOpts = childKeys || parentKeys ? pie.object.merge({}, options, {skipChildren: true, skipParents: true}) : null;
 
     if(childKeys && childKeys.length) {
       // add change records for the deleted children.

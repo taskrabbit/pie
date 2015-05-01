@@ -97,7 +97,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this._applyCsrfToken(xhr);
 
     if(accept) {
-      headers['Accept'] = accept;
+      headers.Accept = accept;
     }
 
     if(contentType !== false) {

@@ -1,3 +1,4 @@
+/* jshint indent:false */
 (function(window) {
 // # Pie
 // The top level namespace of the framework.
@@ -374,7 +375,7 @@ pie.array.flatten = function(a, depth, into) {
 // ```
 pie.array.from = function(value) {
   if(Array.isArray(value)) return value;
-  if(pie.object.isArguments(value) || value instanceof NodeList || value instanceof HTMLCollection) return Array.prototype.slice.call(value, 0);
+  if(pie.object.isArguments(value) || value instanceof window.NodeList || value instanceof window.HTMLCollection) return Array.prototype.slice.call(value, 0);
   return pie.array.compact([value], false);
 };
 
@@ -1764,25 +1765,25 @@ pie.math.easing = {
   // decelerating to zero velocity
   easeOutQuad: function (t) { return t*(2-t); },
   // acceleration until halfway, then deceleration
-  easeInOutQuad: function (t) { return t<.5 ? 2*t*t : -1+(4-2*t)*t; },
+  easeInOutQuad: function (t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; },
   // accelerating from zero velocity
   easeInCubic: function (t) { return t*t*t; },
   // decelerating to zero velocity
   easeOutCubic: function (t) { return (--t)*t*t+1; },
   // acceleration until halfway, then deceleration
-  easeInOutCubic: function (t) { return t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1; },
+  easeInOutCubic: function (t) { return t<0.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1; },
   // accelerating from zero velocity
   easeInQuart: function (t) { return t*t*t*t; },
   // decelerating to zero velocity
   easeOutQuart: function (t) { return 1-(--t)*t*t*t; },
   // acceleration until halfway, then deceleration
-  easeInOutQuart: function (t) { return t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t; },
+  easeInOutQuart: function (t) { return t<0.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t; },
   // accelerating from zero velocity
   easeInQuint: function (t) { return t*t*t*t*t; },
   // decelerating to zero velocity
   easeOutQuint: function (t) { return 1+(--t)*t*t*t*t; },
   // acceleration until halfway, then deceleration
-  easeInOutQuint: function (t) { return t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t; }
+  easeInOutQuint: function (t) { return t<0.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t; }
 };
 // deletes all undefined and null values.
 // returns a new object less any empty key/values.
@@ -1890,7 +1891,9 @@ pie.object.isWindow = function(obj) {
 
 pie.object.isEmpty = function(obj) {
   if(!obj) return true;
-  for(var k in obj) { return false; }
+  var k;
+  /* jshint forin:false */
+  for(k in obj) { return false; }
   return true;
 };
 
@@ -3783,7 +3786,7 @@ pie.mixins.validatable = {
       this.validate(change.name);
     } else if(this.validationStrategy === 'dirty') {
       // for speed.
-      if(this.data.validationErrors && this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
+      if(this.get('validationErrors.' + change.name + '.length')) {
         this.reportValidationError(change.name, undefined);
       }
     }
@@ -4675,29 +4678,6 @@ pie.model = pie.base.extend('model', {
     return !!this.get(path);
   },
 
-  // ** pie.model.keys **
-  //
-  // Retrieve the keys which start with the given path.
-  //
-  // ```
-  // model.set('foo.bar.baz', 1);
-  // model.set('foo.bar.spaz', 2);
-  // model.set('foo.car.laz', 3);
-  //
-  // model.keys('foo')
-  // //=> ['foo.bar.baz', 'foo.bar.spaz', 'foo.car.laz']
-  // model.keys('foo.car.');
-  // //=> ['foo.car.laz'];
-  // ```
-  keys: function(path) {
-    if(!path) return Object.keys(this.data);
-    var pathCheck = path.lastIndexOf('.') === path.length-1,
-    d = pie.object.flatten(this.data);
-    return Object.keys(d).filter(function(k) {
-      return pathCheck ? k.indexOf(path) === 0 : (k === path || k.indexOf(path + '.') === 0);
-    });
-  },
-
   // ** pie.model.merge **
   //
   // Set keys, but do so by merging with the current values
@@ -4804,9 +4784,14 @@ pie.model = pie.base.extend('model', {
 
 
     var parentKeys = (!options || !options.skipParents) && ~key.indexOf('.') ? pie.string.pathSteps(key).slice(1) : null,
-    childKeys = !options || !options.skipChildren ? this.keys(key + '.') : null,
-    nestedOpts = childKeys || parentKeys ? pie.object.merge({}, options, {skipChildren: true, skipParents: true}) : null,
-    i;
+    childKeys, nestedOpts, i;
+
+
+    if((!options || !options.skipChildren) && pie.object.isPlainObject(changeOldValue)) {
+      childKeys = Object.keys(pie.object.flatten(changeOldValue, key + '.'));
+    }
+
+    nestedOpts = childKeys || parentKeys ? pie.object.merge({}, options, {skipChildren: true, skipParents: true}) : null;
 
     if(childKeys && childKeys.length) {
       // add change records for the deleted children.
@@ -5239,7 +5224,8 @@ pie.view.reopen({
 
   pieRole: 'view',
 
-  // **pie.view.init
+  // **pie.view.init**
+  //
   // Options:
   //   * el - (optional) the root element of the views control. if not provided, a new <div> will be created.
   //   * app - (optional) the app this view is associated with.
@@ -5248,7 +5234,7 @@ pie.view.reopen({
   init: function(options) {
     this.options = options || {},
     this.app = this.options.app || pie.appInstance;
-    this.el = this.options.el || pie.dom.createElement('<div></div>');
+    this.el = this.options.el || document.createElement('div');
     this.eventedEls = [];
     this.changeCallbacks = [];
 
@@ -5609,7 +5595,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this._applyCsrfToken(xhr);
 
     if(accept) {
-      headers['Accept'] = accept;
+      headers.Accept = accept;
     }
 
     if(contentType !== false) {
@@ -8173,7 +8159,7 @@ pie.templates = pie.model.extend('templates', {
     if (content) {
       this.registerTemplate(name, content);
       cb(name);
-      return
+      return;
     } else if(src) {
       this.load(name, {url: src}, function(){
         this.ensureTemplate(name, cb);
@@ -8272,7 +8258,7 @@ pie.templates = pie.model.extend('templates', {
   // ```
   renderAsync: function(name, data, cb) {
     this.ensureTemplate(name, function() {
-      content = this.render(name, data);
+      var content = this.render(name, data);
       cb(content);
     }.bind(this));
   }
@@ -8956,7 +8942,7 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
   },
 
   setLoading: function(bool) {
-    if(!this.options.loadingClass) return
+    if(!this.options.loadingClass) return;
     this.targetEl.classList[bool ? 'add' : 'remove'](this.options.loadingClass);
   },
 

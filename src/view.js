@@ -23,7 +23,8 @@ pie.view.reopen({
 
   pieRole: 'view',
 
-  // **pie.view.init
+  // **pie.view.init**
+  //
   // Options:
   //   * el - (optional) the root element of the views control. if not provided, a new <div> will be created.
   //   * app - (optional) the app this view is associated with.
@@ -32,7 +33,7 @@ pie.view.reopen({
   init: function(options) {
     this.options = options || {},
     this.app = this.options.app || pie.appInstance;
-    this.el = this.options.el || pie.dom.createElement('<div></div>');
+    this.el = this.options.el || document.createElement('div');
     this.eventedEls = [];
     this.changeCallbacks = [];
 

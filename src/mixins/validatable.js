@@ -115,7 +115,7 @@ pie.mixins.validatable = {
       this.validate(change.name);
     } else if(this.validationStrategy === 'dirty') {
       // for speed.
-      if(this.data.validationErrors && this.data.validationErrors[change.name] && this.data.validationErrors[change.name].length) {
+      if(this.get('validationErrors.' + change.name + '.length')) {
         this.reportValidationError(change.name, undefined);
       }
     }

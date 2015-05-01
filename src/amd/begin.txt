@@ -1,1 +1,2 @@
+/* jshint indent:false */
 (function(window) {

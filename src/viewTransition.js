@@ -114,7 +114,7 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
   },
 
   setLoading: function(bool) {
-    if(!this.options.loadingClass) return
+    if(!this.options.loadingClass) return;
     this.targetEl.classList[bool ? 'add' : 'remove'](this.options.loadingClass);
   },
 
