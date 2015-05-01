@@ -66,7 +66,7 @@ pie.object.deletePath = function(obj, path, propagate) {
     subObj = pie.object.getPath(obj, steps[0]);
     if(!subObj) return;
     delete subObj[attr];
-    if(!propagate || Object.keys(subObj).length) return;
+    if(!propagate || !pie.object.isEmpty(subObj)) return;
   }
 
 };
@@ -88,7 +88,7 @@ pie.object.flatten = function(a, prefix, object) {
   prefix = prefix || '';
 
   pie.object.forEach(a, function(k,v) {
-    if(pie.object.isPlainObject(v) && Object.keys(v).length) {
+    if(pie.object.isPlainObject(v) && !pie.object.isEmpty(v)) {
       pie.object.flatten(v, prefix + k + '.', b);
     } else {
       b[prefix + k] = v;
@@ -100,6 +100,12 @@ pie.object.flatten = function(a, prefix, object) {
 
 pie.object.isWindow = function(obj) {
   return obj && typeof obj === "object" && "setInterval" in obj;
+};
+
+pie.object.isEmpty = function(obj) {
+  if(!obj) return true;
+  for(var k in obj) { return false; }
+  return true;
 };
 
 
@@ -217,7 +223,7 @@ pie.object.hasAny = function(/* obj, *keys */) {
   var obj = arguments[0], keys, checks;
   if(!obj) return false;
 
-  if(arguments.length === 1) return !!Object.keys(obj).length;
+  if(arguments.length === 1) return !pie.object.isEmpty(obj);
 
   checks = pie.array.flatten(pie.array.get(arguments, 1, -1));
   for(var i=0;i<checks.length;i++) {

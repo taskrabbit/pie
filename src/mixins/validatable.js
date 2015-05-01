@@ -10,7 +10,7 @@ pie.mixins.validatable = {
   },
 
   isValid: function() {
-    return !this.data.validationErrors || Object.keys(this.data.validationErrors).length === 0;
+    return pie.object.isEmpty(this.data.validationErrors);
   },
 
   // default to a model implementation

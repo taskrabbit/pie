@@ -1852,7 +1852,7 @@ pie.object.deletePath = function(obj, path, propagate) {
     subObj = pie.object.getPath(obj, steps[0]);
     if(!subObj) return;
     delete subObj[attr];
-    if(!propagate || Object.keys(subObj).length) return;
+    if(!propagate || !pie.object.isEmpty(subObj)) return;
   }
 
 };
@@ -1874,7 +1874,7 @@ pie.object.flatten = function(a, prefix, object) {
   prefix = prefix || '';
 
   pie.object.forEach(a, function(k,v) {
-    if(pie.object.isPlainObject(v) && Object.keys(v).length) {
+    if(pie.object.isPlainObject(v) && !pie.object.isEmpty(v)) {
       pie.object.flatten(v, prefix + k + '.', b);
     } else {
       b[prefix + k] = v;
@@ -1886,6 +1886,12 @@ pie.object.flatten = function(a, prefix, object) {
 
 pie.object.isWindow = function(obj) {
   return obj && typeof obj === "object" && "setInterval" in obj;
+};
+
+pie.object.isEmpty = function(obj) {
+  if(!obj) return true;
+  for(var k in obj) { return false; }
+  return true;
 };
 
 
@@ -2003,7 +2009,7 @@ pie.object.hasAny = function(/* obj, *keys */) {
   var obj = arguments[0], keys, checks;
   if(!obj) return false;
 
-  if(arguments.length === 1) return !!Object.keys(obj).length;
+  if(arguments.length === 1) return !pie.object.isEmpty(obj);
 
   checks = pie.array.flatten(pie.array.get(arguments, 1, -1));
   for(var i=0;i<checks.length;i++) {
@@ -3672,7 +3678,7 @@ pie.mixins.validatable = {
   },
 
   isValid: function() {
-    return !this.data.validationErrors || Object.keys(this.data.validationErrors).length === 0;
+    return pie.object.isEmpty(this.data.validationErrors);
   },
 
   // default to a model implementation
@@ -4486,6 +4492,10 @@ pie.model = pie.base.extend('model', {
     }, key);
   },
 
+  // **pie.model.addChangeRecord**
+  //
+  // Add a change record to this model. If a change record of the same name already exists,
+  // update the existing value.
   addChangeRecord: function(name, type, oldValue, value) {
     var existing = pie.array.detect(this.changeRecords, function(r){ return r.name === name; });
 
@@ -4764,8 +4774,8 @@ pie.model = pie.base.extend('model', {
   // Set a `value` on the model at the specified `key`.
   // Valid options are:
   // * skipObservers - when true, observers will not be triggered.
-  // * noRecursive   - when true, subpath change records will not be sent.
-  // * noDeleteRecursive - when true, a subpath will not be deleted if the new value is `undefined`.
+  // * skipParents   - when true, parent change records will not be sent.
+  // * skipChildren  - when true, child change records will not be sent.
   //
   // *Note: skipping observation does not stop `changeRecords` from accruing.*
   // ```
@@ -4775,7 +4785,7 @@ pie.model = pie.base.extend('model', {
   // ```
   set: function(key, value, options) {
 
-    if(pie.object.isPlainObject(value) && Object.keys(value).length) {
+    if(pie.object.isPlainObject(value) && !pie.object.isEmpty(value)) {
       value = pie.object.flatten(value, key + '.');
       this.sets(value, options);
       return;
@@ -9306,7 +9316,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150430.1";
+  pie.VERSION = "0.0.20150531.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

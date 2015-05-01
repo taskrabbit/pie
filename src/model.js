@@ -200,6 +200,10 @@ pie.model = pie.base.extend('model', {
     }, key);
   },
 
+  // **pie.model.addChangeRecord**
+  //
+  // Add a change record to this model. If a change record of the same name already exists,
+  // update the existing value.
   addChangeRecord: function(name, type, oldValue, value) {
     var existing = pie.array.detect(this.changeRecords, function(r){ return r.name === name; });
 
@@ -478,8 +482,8 @@ pie.model = pie.base.extend('model', {
   // Set a `value` on the model at the specified `key`.
   // Valid options are:
   // * skipObservers - when true, observers will not be triggered.
-  // * noRecursive   - when true, subpath change records will not be sent.
-  // * noDeleteRecursive - when true, a subpath will not be deleted if the new value is `undefined`.
+  // * skipParents   - when true, parent change records will not be sent.
+  // * skipChildren  - when true, child change records will not be sent.
   //
   // *Note: skipping observation does not stop `changeRecords` from accruing.*
   // ```
@@ -489,7 +493,7 @@ pie.model = pie.base.extend('model', {
   // ```
   set: function(key, value, options) {
 
-    if(pie.object.isPlainObject(value) && Object.keys(value).length) {
+    if(pie.object.isPlainObject(value) && !pie.object.isEmpty(value)) {
       value = pie.object.flatten(value, key + '.');
       this.sets(value, options);
       return;
