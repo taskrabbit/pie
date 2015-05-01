@@ -22,30 +22,22 @@ pie.cache = pie.model.extend('cache', {
   },
 
   get: function(path) {
-    var wrap = pie.model.prototype.get.call(this, path);
-    if(!wrap) return undefined;
-    if(wrap.expiresAt && wrap.expiresAt <= this.currentTime()) {
+    var wrap = this._super(path);
+    if(!wrap || !wrap.__data) return wrap;
+    if(wrap.__expiresAt && wrap.__expiresAt <= this.currentTime()) {
       this.set(path, undefined);
       return undefined;
     }
 
-    return wrap.data;
-  },
-
-  getOrSet: function(path, value, options) {
-    var result = this.get(path);
-    if(result !== undefined) return result;
-    value = pie.fn.valueFrom(value);
-    this.set(path, value, options);
-    return value;
+    return wrap.__data;
   },
 
   set: function(path, value, options) {
-    if(value === undefined) {
-      pie.model.prototype.set.call(this, path, undefined, options);
+    if(value == null || path === '_version' || (options && options.noWrap)) {
+      this._super(path, value, options);
     } else {
       var wrap = this.wrap(value, options);
-      pie.model.prototype.set.call(this, path, wrap, options);
+      this._super(path, wrap, pie.object.merge({noWrap: true}, options));
     }
   },
 
@@ -70,8 +62,9 @@ pie.cache = pie.model.extend('cache', {
     }
 
     return {
-      data: obj,
-      expiresAt: expiresAt
+      __data: obj,
+      __expiresAt: expiresAt,
+      __notPlain: true
     };
   },
 
