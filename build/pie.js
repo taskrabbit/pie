@@ -9316,7 +9316,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   }
 
 });
-  pie.VERSION = "0.0.20150531.1";
+  pie.VERSION = "0.0.20150501.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {
