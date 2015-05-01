@@ -83,13 +83,13 @@ pie.object.expand = function(o) {
   return out;
 };
 
-pie.object.flatten = function(a, object, prefix) {
+pie.object.flatten = function(a, prefix, object) {
   var b = object || {};
   prefix = prefix || '';
 
   pie.object.forEach(a, function(k,v) {
-    if(pie.object.isPlainObject(v)) {
-      pie.object.flatten(v, b, k + '.');
+    if(pie.object.isPlainObject(v) && Object.keys(v).length) {
+      pie.object.flatten(v, prefix + k + '.', b);
     } else {
       b[prefix + k] = v;
     }
@@ -106,7 +106,7 @@ pie.object.isWindow = function(obj) {
 /* From jQuery */
 pie.object.isPlainObject = function(obj) {
 
-  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) ) {
+  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain ) {
     return false;
   }
 

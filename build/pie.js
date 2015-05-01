@@ -1869,13 +1869,13 @@ pie.object.expand = function(o) {
   return out;
 };
 
-pie.object.flatten = function(a, object, prefix) {
+pie.object.flatten = function(a, prefix, object) {
   var b = object || {};
   prefix = prefix || '';
 
   pie.object.forEach(a, function(k,v) {
-    if(pie.object.isPlainObject(v)) {
-      pie.object.flatten(v, b, k + '.');
+    if(pie.object.isPlainObject(v) && Object.keys(v).length) {
+      pie.object.flatten(v, prefix + k + '.', b);
     } else {
       b[prefix + k] = v;
     }
@@ -1892,7 +1892,7 @@ pie.object.isWindow = function(obj) {
 /* From jQuery */
 pie.object.isPlainObject = function(obj) {
 
-  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) ) {
+  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain ) {
     return false;
   }
 
@@ -4486,7 +4486,27 @@ pie.model = pie.base.extend('model', {
     }, key);
   },
 
-  // ** pie.model.compute **
+  addChangeRecord: function(name, type, oldValue, value) {
+    var existing = pie.array.detect(this.changeRecords, function(r){ return r.name === name; });
+
+    if(existing) {
+      existing.value = value;
+      if(type === 'delete') existing.type = type;
+      return;
+    }
+
+    var change = {
+      name: name,
+      type: type,
+      value: value
+    };
+
+    if(oldValue != null) change.oldValue = oldValue;
+
+    this.changeRecords.push(change);
+  },
+
+  // ** pie.model.deliverChangeRecords **
   //
   // After updates have been made we deliver our change records to our observers
   deliverChangeRecords: function(options) {
@@ -4564,6 +4584,7 @@ pie.model = pie.base.extend('model', {
     var val = this.get(key);
     if(val != null) return val;
 
+    defaultValue = pie.fn.valueFrom(defaultValue);
     this.set(key, defaultValue);
     return this.get(key);
   },
@@ -4642,6 +4663,29 @@ pie.model = pie.base.extend('model', {
   // ```
   is: function(path) {
     return !!this.get(path);
+  },
+
+  // ** pie.model.keys **
+  //
+  // Retrieve the keys which start with the given path.
+  //
+  // ```
+  // model.set('foo.bar.baz', 1);
+  // model.set('foo.bar.spaz', 2);
+  // model.set('foo.car.laz', 3);
+  //
+  // model.keys('foo')
+  // //=> ['foo.bar.baz', 'foo.bar.spaz', 'foo.car.laz']
+  // model.keys('foo.car.');
+  // //=> ['foo.car.laz'];
+  // ```
+  keys: function(path) {
+    if(!path) return Object.keys(this.data);
+    var pathCheck = path.lastIndexOf('.') === path.length-1,
+    d = pie.object.flatten(this.data);
+    return Object.keys(d).filter(function(k) {
+      return pathCheck ? k.indexOf(path) === 0 : (k === path || k.indexOf(path + '.') === 0);
+    });
   },
 
   // ** pie.model.merge **
@@ -4730,77 +4774,66 @@ pie.model = pie.base.extend('model', {
   // model.set('foo', 'bar', {skipObservers: true});
   // ```
   set: function(key, value, options) {
-    var recursive = (!options || !options.noRecursive),
-    deleteRecursive = (!options || !options.noDeleteRecursive),
-    steps = ~key.indexOf('.') && recursive ? pie.string.pathSteps(key) : null,
-    o, oldKeys, type, change;
 
-    change = { name: key, object: this.data };
+    if(pie.object.isPlainObject(value) && Object.keys(value).length) {
+      value = pie.object.flatten(value, key + '.');
+      this.sets(value, options);
+      return;
+    }
+
+    var changeName = key,
+    changeType, changeOldValue, changeValue;
 
     if(this.has(key)) {
-      change.type = 'update';
-      change.oldValue = pie.object.getPath(this.data, key);
+      changeType = 'update';
+      changeOldValue = pie.object.getPath(this.data, key);
 
       /* If we haven't actually changed, don't bother doing anything. */
-      if((!options || !options.force) && value === change.oldValue) return this;
+      if((!options || !options.force) && value === changeOldValue) return this;
     }
 
-    if(steps) {
-      steps.shift();
-      steps = steps.map(function(step) {
-        o = this.get(step);
-        return [step, o && Object.keys(o)];
-      }.bind(this));
+
+    var parentKeys = (!options || !options.skipParents) && ~key.indexOf('.') ? pie.string.pathSteps(key).slice(1) : null,
+    childKeys = !options || !options.skipChildren ? this.keys(key + '.') : null,
+    nestedOpts = childKeys || parentKeys ? pie.object.merge({}, options, {skipChildren: true, skipParents: true}) : null,
+    i;
+
+    if(childKeys && childKeys.length) {
+      // add change records for the deleted children.
+      for(i = 0; i < childKeys.length; i++) {
+        this.set(childKeys[i], undefined, nestedOpts);
+      }
     }
 
-    change.value = value;
+    if(parentKeys && parentKeys.length) {
+      var parentVal;
+
+      for(i = 0; i < parentKeys.length; i++) {
+        parentVal = this.get(parentKeys[i]);
+        if(value == null && pie.object.isObject(parentVal) && Object.keys(parentVal).length <= 1) {
+          this.set(parentKeys[i], undefined, nestedOpts);
+        } else {
+          this.addChangeRecord(parentKeys[i], 'pathUpdate', undefined, undefined);
+        }
+      }
+    }
+
+    changeValue = value;
 
     /* If we are "unsetting" the value, delete the path from `this.data`. */
-    if(value === undefined) {
-      pie.object.deletePath(this.data, key, deleteRecursive);
-      change.type = 'delete';
+    if(value == null) {
+      changeType = 'delete';
+      pie.object.deletePath(this.data, key);
 
     /* Otherwise, we set the value within `this.data`. */
     } else {
       pie.object.setPath(this.data, key, value);
-      change.type = change.type || 'add';
+      changeType = changeType || 'add';
     }
 
     /* Add the change to the `changeRecords`. */
-    this.changeRecords.push(change);
+    this.addChangeRecord(changeName, changeType, changeOldValue, changeValue);
 
-    /* Compile subpath change records. */
-    /* Subpath change records have the same structure but for performance reasons the */
-    /* oldValue & value are the sets of the keys rather than the object itself. */
-    if(steps) {
-      steps.forEach(function(step) {
-        oldKeys = step[1];
-        step = step[0];
-
-        o = this.get(step);
-
-        /* If we deleted the end of the branch, */
-        /* we may have deleted the object itself. */
-        if(change.type === 'delete') {
-          type = o ? 'update' : 'delete';
-        /* If there are no old keys, we are new. */
-        } else if(!oldKeys) {
-          type = 'add';
-        /* Otherwise, we just updated. */
-        } else {
-          type = 'update';
-        }
-
-        // Create the change record with the old & new keys.
-        this.changeRecords.push({
-          type: type,
-          oldValue: oldKeys,
-          value: o ? Object.keys(o) : undefined,
-          name: step,
-          object: this.data
-        });
-      }.bind(this));
-    }
 
     if(options && options.skipObservers) return this;
     return this.deliverChangeRecords(options);
@@ -4842,8 +4875,9 @@ pie.model = pie.base.extend('model', {
   // model.sets({foo: 'bar', baz: 'qux'}, {skipObservers: treu});
   // ```
   sets: function(obj, options) {
+    var innerOpts = pie.object.merge({}, options, {skipObservers: true});
     pie.object.forEach(obj, function(k,v) {
-      this.set(k, v, {skipObservers: true});
+      this.set(k, v, innerOpts);
     }.bind(this));
 
     if(options && options.skipObservers) return this;
@@ -5862,30 +5896,22 @@ pie.cache = pie.model.extend('cache', {
   },
 
   get: function(path) {
-    var wrap = pie.model.prototype.get.call(this, path);
-    if(!wrap) return undefined;
-    if(wrap.expiresAt && wrap.expiresAt <= this.currentTime()) {
+    var wrap = this._super(path);
+    if(!wrap || !wrap.__data) return wrap;
+    if(wrap.__expiresAt && wrap.__expiresAt <= this.currentTime()) {
       this.set(path, undefined);
       return undefined;
     }
 
-    return wrap.data;
-  },
-
-  getOrSet: function(path, value, options) {
-    var result = this.get(path);
-    if(result !== undefined) return result;
-    value = pie.fn.valueFrom(value);
-    this.set(path, value, options);
-    return value;
+    return wrap.__data;
   },
 
   set: function(path, value, options) {
-    if(value === undefined) {
-      pie.model.prototype.set.call(this, path, undefined, options);
+    if(value == null || path === '_version' || (options && options.noWrap)) {
+      this._super(path, value, options);
     } else {
       var wrap = this.wrap(value, options);
-      pie.model.prototype.set.call(this, path, wrap, options);
+      this._super(path, wrap, pie.object.merge({noWrap: true}, options));
     }
   },
 
@@ -5910,8 +5936,9 @@ pie.cache = pie.model.extend('cache', {
     }
 
     return {
-      data: obj,
-      expiresAt: expiresAt
+      __data: obj,
+      __expiresAt: expiresAt,
+      __notPlain: true
     };
   },
 

@@ -18,15 +18,15 @@ describe("pie.cache", function() {
     it("should allow an expiration to be set for a key", function() {
       this.cache.set('foo', 'bar', {ttl: 1000});
       var wrap = this.cache.data.foo;
-      expect(wrap.data).toEqual('bar');
-      expect(wrap.expiresAt).toEqual(this.now + 1000);
+      expect(wrap.__data).toEqual('bar');
+      expect(wrap.__expiresAt).toEqual(this.now + 1000);
     });
 
     it("should allow a timestamp to be used as the expiration", function() {
       var nowPlus = this.now + 5000, wrap;
       this.cache.set('foo', 'bar', {expiresAt: nowPlus});
       wrap = this.cache.data.foo;
-      expect(wrap.expiresAt).toEqual(nowPlus);
+      expect(wrap.__expiresAt).toEqual(nowPlus);
     });
 
     it("should allow an iso timestamp as the expiration", function() {
@@ -36,14 +36,14 @@ describe("pie.cache", function() {
 
       this.cache.set('foo', 'bar', {expiresAt: iso});
       wrap = this.cache.data.foo;
-      expect(wrap.expiresAt).toEqual(timestamp);
+      expect(wrap.__expiresAt).toEqual(timestamp);
     });
 
     it("should allow a numeric string as a timestamp", function() {
       var nowPlus = String(this.now + 5000), wrap;
       this.cache.set('foo', 'bar', {expiresAt: nowPlus});
       wrap = this.cache.data.foo;
-      expect(wrap.expiresAt).toEqual(parseInt(nowPlus, 10));
+      expect(wrap.__expiresAt).toEqual(parseInt(nowPlus, 10));
     });
 
   });

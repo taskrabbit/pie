@@ -2187,15 +2187,15 @@ describe("pie.cache", function() {
     it("should allow an expiration to be set for a key", function() {
       this.cache.set('foo', 'bar', {ttl: 1000});
       var wrap = this.cache.data.foo;
-      expect(wrap.data).toEqual('bar');
-      expect(wrap.expiresAt).toEqual(this.now + 1000);
+      expect(wrap.__data).toEqual('bar');
+      expect(wrap.__expiresAt).toEqual(this.now + 1000);
     });
 
     it("should allow a timestamp to be used as the expiration", function() {
       var nowPlus = this.now + 5000, wrap;
       this.cache.set('foo', 'bar', {expiresAt: nowPlus});
       wrap = this.cache.data.foo;
-      expect(wrap.expiresAt).toEqual(nowPlus);
+      expect(wrap.__expiresAt).toEqual(nowPlus);
     });
 
     it("should allow an iso timestamp as the expiration", function() {
@@ -2205,14 +2205,14 @@ describe("pie.cache", function() {
 
       this.cache.set('foo', 'bar', {expiresAt: iso});
       wrap = this.cache.data.foo;
-      expect(wrap.expiresAt).toEqual(timestamp);
+      expect(wrap.__expiresAt).toEqual(timestamp);
     });
 
     it("should allow a numeric string as a timestamp", function() {
       var nowPlus = String(this.now + 5000), wrap;
       this.cache.set('foo', 'bar', {expiresAt: nowPlus});
       wrap = this.cache.data.foo;
-      expect(wrap.expiresAt).toEqual(parseInt(nowPlus, 10));
+      expect(wrap.__expiresAt).toEqual(parseInt(nowPlus, 10));
     });
 
   });
@@ -3457,7 +3457,6 @@ describe("pie.model", function() {
         expect(changes.get('foo')).toEqual({
           'type' : 'add',
           'name' : 'foo',
-          'object' : this.model.data,
           'value' : 'bar'
         });
 
@@ -3490,7 +3489,6 @@ describe("pie.model", function() {
         expect(changes.get('foo')).toEqual({
           'type' : 'update',
           'name' : 'foo',
-          'object' : this.model.data,
           'oldValue' : 'bar',
           'value' : 'bar'
         });
@@ -3534,12 +3532,13 @@ describe("pie.model", function() {
       observer.and.callFake(function(changes){
         var change = changes.get('foo');
 
+        expect(changes.length).toEqual(2);
+        expect(changes.get('_version')).toBeTruthy();
+
         expect(change).toEqual({
-          type: 'update',
+          type: 'add',
           name: 'foo',
-          oldValue: 'bar',
-          value: 'baz',
-          object: this.model.data
+          value: 'baz'
         });
 
         expect(observer.calls.count()).toEqual(1);
@@ -3602,10 +3601,10 @@ describe("pie.model", function() {
 
       var observer2 = function(changes){
         var change = changes.get('foo');
-        expect(change.type).toEqual('add');
+        expect(change.type).toEqual('pathUpdate');
         expect(change.name).toEqual('foo');
         expect(change.oldValue).toEqual(undefined);
-        expect(change.value).toEqual(['bar']);
+        expect(change.value).toEqual(undefined);
         done();
       };
 
@@ -3614,6 +3613,22 @@ describe("pie.model", function() {
       this.model.observe(observer2, 'foo');
 
       this.model.set('foo.bar', 1);
+    });
+
+    it('should send change records to child paths when a parent changes', function(done) {
+
+      var observer = function(changes) {
+        var change = changes.get('foo.bar');
+        expect(change.type).toEqual('delete');
+        expect(change.name).toEqual('foo.bar');
+        expect(change.oldValue).toEqual(true);
+        expect(change.value).toEqual(undefined);
+        done();
+      };
+
+      this.model.set('foo.bar', true);
+      this.model.observe(observer, 'foo.bar');
+      this.model.set('foo', false);
     });
 
     it("should include changes to the computed properties for observers registered before the properties", function(done) {
@@ -3720,15 +3735,13 @@ describe("pie.model", function() {
             type: 'update',
             name: 'full_name',
             oldValue: '',
-            value: 'Doug Wilson',
-            object: this.foo.data
+            value: 'Doug Wilson'
           });
 
           expect(first).toEqual({
             type: 'add',
             name: 'first_name',
-            value: 'Doug',
-            object: this.foo.data
+            value: 'Doug'
           });
 
         } else if(portion === 2) {
@@ -3736,16 +3749,14 @@ describe("pie.model", function() {
             type: 'update',
             name: 'full_name',
             oldValue: 'Doug Wilson',
-            value: 'William Wilson',
-            object: this.foo.data
+            value: 'William Wilson'
           });
         } else {
           expect(full).toEqual({
             type: 'update',
             name: 'full_name',
             oldValue: 'William Wilson',
-            value: 'William Tell',
-            object: this.foo.data
+            value: 'William Tell'
           });
 
           done();
