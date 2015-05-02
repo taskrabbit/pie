@@ -254,6 +254,11 @@ pie.object.hasPath = function(obj, path) {
   return true;
 };
 
+pie.object.instanceOf = function(instance, nameOfClass) {
+  var klass = pie.object.getPath(window, nameOfClass);
+  return klass && instance instanceof klass;
+};
+
 pie.object.reverseMerge = function(/* args */) {
   var args = pie.array.from(arguments);
   args.reverse();

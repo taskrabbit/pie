@@ -53,7 +53,7 @@ pie.browser.isRetina = function() {
 
 pie.browser.isTouchDevice = function() {
   return pie.object.has(window, 'ontouchstart') ||
-    (window.DocumentTouch && document instanceof window.DocumentTouch) ||
+    pie.object.instanceOf(document, 'DocumentTouch') ||
     navigator.MaxTouchPoints > 0 ||
     navigator.msMaxTouchPoints > 0;
 };

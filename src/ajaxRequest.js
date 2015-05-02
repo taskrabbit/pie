@@ -97,7 +97,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this._applyCsrfToken(xhr);
 
     if(accept) {
-      headers.Accept = accept;
+      headers['Accept'] = accept;
     }
 
     if(contentType !== false) {
@@ -107,7 +107,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       }
 
       if(!headers['Content-Type']) {
-        if(pie.object.isString(data) || window.FormData && data instanceof window.FormData) {
+        if(pie.object.isString(data) || pie.object.instanceOf(data, 'FormData')) {
           headers['Content-Type'] = 'application/x-www-form-urlencoded';
         // if we aren't already sending a string, we will encode to json.
         } else {
@@ -228,7 +228,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     if(this.get('verb') !== this.VERBS.get) {
 
-      if(pie.object.isString(data) || window.FormData && data instanceof window.FormData) {
+      if(pie.object.isString(data) || pie.object.instanceOf(data, 'FormData')) {
         d = data;
       } else {
         d = JSON.stringify(pie.object.compact(data));

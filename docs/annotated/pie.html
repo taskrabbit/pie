@@ -619,7 +619,7 @@ pie.array.from(<span class="hljs-built_in">document</span>.querySelectorAll(<spa
             
             <div class="content"><div class='highlight'><pre>pie.array.from = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value)</span> </span>{
   <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(value)) <span class="hljs-keyword">return</span> value;
-  <span class="hljs-keyword">if</span>(pie.object.isArguments(value) || value <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.NodeList || value <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.HTMLCollection) <span class="hljs-keyword">return</span> <span class="hljs-built_in">Array</span>.prototype.slice.call(value, <span class="hljs-number">0</span>);
+  <span class="hljs-keyword">if</span>(pie.object.isArguments(value) || pie.object.instanceOf(value, <span class="hljs-string">'NodeList'</span>) || pie.object.instanceOf(value, <span class="hljs-string">'HTMLCollection'</span>)) <span class="hljs-keyword">return</span> <span class="hljs-built_in">Array</span>.prototype.slice.call(value, <span class="hljs-number">0</span>);
   <span class="hljs-keyword">return</span> pie.array.compact([value], <span class="hljs-literal">false</span>);
 };</pre></div></div>
             
@@ -1222,7 +1222,7 @@ pie.browser.isRetina = <span class="hljs-function"><span class="hljs-keyword">fu
 
 pie.browser.isTouchDevice = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
   <span class="hljs-keyword">return</span> pie.object.has(<span class="hljs-built_in">window</span>, <span class="hljs-string">'ontouchstart'</span>) ||
-    (<span class="hljs-built_in">window</span>.DocumentTouch &amp;&amp; <span class="hljs-built_in">document</span> <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.DocumentTouch) ||
+    pie.object.instanceOf(<span class="hljs-built_in">document</span>, <span class="hljs-string">'DocumentTouch'</span>) ||
     navigator.MaxTouchPoints &gt; <span class="hljs-number">0</span> ||
     navigator.msMaxTouchPoints &gt; <span class="hljs-number">0</span>;
 };
@@ -3168,6 +3168,11 @@ pie.object.hasAny = <span class="hljs-function"><span class="hljs-keyword">funct
   }
 
   <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+};
+
+pie.object.instanceOf = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(instance, nameOfClass)</span> </span>{
+  <span class="hljs-keyword">var</span> klass = pie.object.getPath(<span class="hljs-built_in">window</span>, nameOfClass);
+  <span class="hljs-keyword">return</span> klass &amp;&amp; instance <span class="hljs-keyword">instanceof</span> klass;
 };
 
 pie.object.reverseMerge = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* args */</span>)</span> </span>{
@@ -7612,7 +7617,6 @@ model.getOrSet(<span class="hljs-string">'foo'</span>, <span class="hljs-string"
     <span class="hljs-keyword">var</span> val = <span class="hljs-keyword">this</span>.get(key);
     <span class="hljs-keyword">if</span>(val != <span class="hljs-literal">null</span>) <span class="hljs-keyword">return</span> val;
 
-    defaultValue = pie.fn.valueFrom(defaultValue);
     <span class="hljs-keyword">this</span>.set(key, defaultValue);
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.get(key);
   },</pre></div></div>
@@ -8988,7 +8992,7 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
     <span class="hljs-keyword">this</span>._applyCsrfToken(xhr);
 
     <span class="hljs-keyword">if</span>(accept) {
-      headers.Accept = accept;
+      headers[<span class="hljs-string">'Accept'</span>] = accept;
     }
 
     <span class="hljs-keyword">if</span>(contentType !== <span class="hljs-literal">false</span>) {
@@ -8998,7 +9002,7 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
       }
 
       <span class="hljs-keyword">if</span>(!headers[<span class="hljs-string">'Content-Type'</span>]) {
-        <span class="hljs-keyword">if</span>(pie.object.isString(data) || <span class="hljs-built_in">window</span>.FormData &amp;&amp; data <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.FormData) {
+        <span class="hljs-keyword">if</span>(pie.object.isString(data) || pie.object.instanceOf(data, <span class="hljs-string">'FormData'</span>)) {
           headers[<span class="hljs-string">'Content-Type'</span>] = <span class="hljs-string">'application/x-www-form-urlencoded'</span>;</pre></div></div>
             
         </li>
@@ -9156,7 +9160,7 @@ By passing <code>skipSend = false</code> you can manage the <code>send()</code> 
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'verb'</span>) !== <span class="hljs-keyword">this</span>.VERBS.get) {
 
-      <span class="hljs-keyword">if</span>(pie.object.isString(data) || <span class="hljs-built_in">window</span>.FormData &amp;&amp; data <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">window</span>.FormData) {
+      <span class="hljs-keyword">if</span>(pie.object.isString(data) || pie.object.instanceOf(data, <span class="hljs-string">'FormData'</span>)) {
         d = data;
       } <span class="hljs-keyword">else</span> {
         d = <span class="hljs-built_in">JSON</span>.stringify(pie.object.compact(data));
@@ -9506,7 +9510,7 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(expiresAt <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">Date</span>) expiresAt = expiresAt.getTime();</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(pie.object.instanceOf(expiresAt, <span class="hljs-string">'Date'</span>)) expiresAt = expiresAt.getTime();</pre></div></div>
             
         </li>
         
@@ -9571,7 +9575,7 @@ pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
     }
 
     <span class="hljs-keyword">return</span> {
-      __data: obj,
+      __data: pie.fn.valueFrom(obj),
       __expiresAt: expiresAt,
       __notPlain: <span class="hljs-literal">true</span>
     };

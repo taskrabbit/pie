@@ -2235,6 +2235,28 @@ describe("pie.cache", function() {
 
   });
 
+  describe("getOrSet", function() {
+
+    it("should allow a path to be getOrSet", function() {
+      var r = this.cache.getOrSet('foo', 'bar');
+      expect(r).toEqual('bar');
+
+      r = this.cache.getOrSet('foo', 'baz');
+      expect(r).toEqual('bar');
+
+      r = this.cache.getOrSet('bar', function(){
+        return 'baz';
+      });
+      expect(r).toEqual('baz');
+
+      r = this.cache.getOrSet('bar', function() {
+        return 'biz';
+      });
+      expect(r).toEqual('baz');
+    });
+
+  });
+
 });
 describe("pie.emitter", function() {
 

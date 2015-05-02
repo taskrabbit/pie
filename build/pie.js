@@ -375,7 +375,7 @@ pie.array.flatten = function(a, depth, into) {
 // ```
 pie.array.from = function(value) {
   if(Array.isArray(value)) return value;
-  if(pie.object.isArguments(value) || value instanceof window.NodeList || value instanceof window.HTMLCollection) return Array.prototype.slice.call(value, 0);
+  if(pie.object.isArguments(value) || pie.object.instanceOf(value, 'NodeList') || pie.object.instanceOf(value, 'HTMLCollection')) return Array.prototype.slice.call(value, 0);
   return pie.array.compact([value], false);
 };
 
@@ -799,7 +799,7 @@ pie.browser.isRetina = function() {
 
 pie.browser.isTouchDevice = function() {
   return pie.object.has(window, 'ontouchstart') ||
-    (window.DocumentTouch && document instanceof window.DocumentTouch) ||
+    pie.object.instanceOf(document, 'DocumentTouch') ||
     navigator.MaxTouchPoints > 0 ||
     navigator.msMaxTouchPoints > 0;
 };
@@ -2039,6 +2039,11 @@ pie.object.hasPath = function(obj, path) {
   }
 
   return true;
+};
+
+pie.object.instanceOf = function(instance, nameOfClass) {
+  var klass = pie.object.getPath(window, nameOfClass);
+  return klass && instance instanceof klass;
 };
 
 pie.object.reverseMerge = function(/* args */) {
@@ -4597,7 +4602,6 @@ pie.model = pie.base.extend('model', {
     var val = this.get(key);
     if(val != null) return val;
 
-    defaultValue = pie.fn.valueFrom(defaultValue);
     this.set(key, defaultValue);
     return this.get(key);
   },
@@ -5595,7 +5599,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this._applyCsrfToken(xhr);
 
     if(accept) {
-      headers.Accept = accept;
+      headers['Accept'] = accept;
     }
 
     if(contentType !== false) {
@@ -5605,7 +5609,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       }
 
       if(!headers['Content-Type']) {
-        if(pie.object.isString(data) || window.FormData && data instanceof window.FormData) {
+        if(pie.object.isString(data) || pie.object.instanceOf(data, 'FormData')) {
           headers['Content-Type'] = 'application/x-www-form-urlencoded';
         // if we aren't already sending a string, we will encode to json.
         } else {
@@ -5726,7 +5730,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     if(this.get('verb') !== this.VERBS.get) {
 
-      if(pie.object.isString(data) || window.FormData && data instanceof window.FormData) {
+      if(pie.object.isString(data) || pie.object.instanceOf(data, 'FormData')) {
         d = data;
       } else {
         d = JSON.stringify(pie.object.compact(data));
@@ -5918,7 +5922,7 @@ pie.cache = pie.model.extend('cache', {
 
     if(expiresAt) {
       // make sure we don't have a date.
-      if(expiresAt instanceof Date) expiresAt = expiresAt.getTime();
+      if(pie.object.instanceOf(expiresAt, 'Date')) expiresAt = expiresAt.getTime();
       // or a string
       if(pie.object.isString(expiresAt)) {
         // check for a numeric
@@ -5932,7 +5936,7 @@ pie.cache = pie.model.extend('cache', {
     }
 
     return {
-      __data: obj,
+      __data: pie.fn.valueFrom(obj),
       __expiresAt: expiresAt,
       __notPlain: true
     };

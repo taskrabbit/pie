@@ -302,7 +302,6 @@ pie.model = pie.base.extend('model', {
     var val = this.get(key);
     if(val != null) return val;
 
-    defaultValue = pie.fn.valueFrom(defaultValue);
     this.set(key, defaultValue);
     return this.get(key);
   },

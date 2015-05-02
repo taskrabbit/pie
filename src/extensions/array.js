@@ -259,7 +259,7 @@ pie.array.flatten = function(a, depth, into) {
 // ```
 pie.array.from = function(value) {
   if(Array.isArray(value)) return value;
-  if(pie.object.isArguments(value) || value instanceof window.NodeList || value instanceof window.HTMLCollection) return Array.prototype.slice.call(value, 0);
+  if(pie.object.isArguments(value) || pie.object.instanceOf(value, 'NodeList') || pie.object.instanceOf(value, 'HTMLCollection')) return Array.prototype.slice.call(value, 0);
   return pie.array.compact([value], false);
 };
 

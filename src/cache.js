@@ -48,7 +48,7 @@ pie.cache = pie.model.extend('cache', {
 
     if(expiresAt) {
       // make sure we don't have a date.
-      if(expiresAt instanceof Date) expiresAt = expiresAt.getTime();
+      if(pie.object.instanceOf(expiresAt, 'Date')) expiresAt = expiresAt.getTime();
       // or a string
       if(pie.object.isString(expiresAt)) {
         // check for a numeric
@@ -62,7 +62,7 @@ pie.cache = pie.model.extend('cache', {
     }
 
     return {
-      __data: obj,
+      __data: pie.fn.valueFrom(obj),
       __expiresAt: expiresAt,
       __notPlain: true
     };
