@@ -4804,19 +4804,6 @@ pie.model = pie.base.extend('model', {
       }
     }
 
-    if(parentKeys && parentKeys.length) {
-      var parentVal;
-
-      for(i = 0; i < parentKeys.length; i++) {
-        parentVal = this.get(parentKeys[i]);
-        if(value == null && pie.object.isObject(parentVal) && Object.keys(parentVal).length <= 1) {
-          this.set(parentKeys[i], undefined, nestedOpts);
-        } else {
-          this.addChangeRecord(parentKeys[i], 'pathUpdate', undefined, undefined);
-        }
-      }
-    }
-
     changeValue = value;
 
     /* If we are "unsetting" the value, delete the path from `this.data`. */
@@ -4828,6 +4815,21 @@ pie.model = pie.base.extend('model', {
     } else {
       pie.object.setPath(this.data, key, value);
       changeType = changeType || 'add';
+    }
+
+    if(parentKeys && parentKeys.length) {
+      var parentVal;
+
+      for(i = 0; i < parentKeys.length; i++) {
+
+        parentVal = this.get(parentKeys[i]);
+
+        if(changeType === 'delete' && pie.object.isObject(parentVal) && pie.object.isEmpty(parentVal)) {
+          this.set(parentKeys[i], undefined, nestedOpts);
+        } else {
+          this.addChangeRecord(parentKeys[i], 'pathUpdate', undefined, undefined);
+        }
+      }
     }
 
     /* Add the change to the `changeRecords`. */
