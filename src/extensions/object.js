@@ -158,7 +158,7 @@ pie.object.isUndefined = function(obj) {
   return obj === void 0;
 };
 pie.object.isNotUndefined = function(obj) {
-  return !pie.object.isUndefined();
+  return !pie.object.isUndefined(obj);
 };
 
 // shallow merge
@@ -222,7 +222,7 @@ pie.object.has = function(obj, key, includeInherited) {
 };
 
 pie.object.hasAny = function(/* obj, *keys */) {
-  var obj = arguments[0], keys, checks;
+  var obj = arguments[0], checks;
   if(!obj) return false;
 
   if(arguments.length === 1) return !pie.object.isEmpty(obj);

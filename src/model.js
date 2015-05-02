@@ -507,7 +507,7 @@ pie.model = pie.base.extend('model', {
     changeValue = value;
 
     /* If we are "unsetting" the value, delete the path from `this.data`. */
-    if(value == null) {
+    if(value === undefined) {
       changeType = 'delete';
       pie.object.deletePath(this.data, key);
 

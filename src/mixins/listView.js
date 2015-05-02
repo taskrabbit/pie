@@ -32,7 +32,7 @@ pie.mixins.listView = (function(){
   var listItemClass = function(){
     return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView, {
 
-      init: function(options, itemData, idx) {
+      init: function(options, itemData) {
         this.model = new pie.model(itemData);
         this._super(pie.object.merge({
           renderOnSetup: true,
@@ -162,7 +162,7 @@ pie.mixins.listView = (function(){
       }.bind(this));
     },
 
-    renderItems: function(templateName) {
+    renderItems: function() {
       this.emitter.fire('beforeRenderItems');
       this.emitter.fireAround('aroundRenderItems', function() {
         this.emitter.fire('renderItems');

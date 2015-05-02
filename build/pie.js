@@ -1121,7 +1121,7 @@ pie.dom.on = function(el, event, fn, selector, capture) {
   events[event] = events[event] || [];
 
   cb = function(e) {
-    var targ, els, qel;
+    var targ, qel;
 
     if(namespace) {
       e.namespace = namespace;
@@ -1945,7 +1945,7 @@ pie.object.isUndefined = function(obj) {
   return obj === void 0;
 };
 pie.object.isNotUndefined = function(obj) {
-  return !pie.object.isUndefined();
+  return !pie.object.isUndefined(obj);
 };
 
 // shallow merge
@@ -2009,7 +2009,7 @@ pie.object.has = function(obj, key, includeInherited) {
 };
 
 pie.object.hasAny = function(/* obj, *keys */) {
-  var obj = arguments[0], keys, checks;
+  var obj = arguments[0], checks;
   if(!obj) return false;
 
   if(arguments.length === 1) return !pie.object.isEmpty(obj);
@@ -3516,7 +3516,7 @@ pie.mixins.listView = (function(){
   var listItemClass = function(){
     return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView, {
 
-      init: function(options, itemData, idx) {
+      init: function(options, itemData) {
         this.model = new pie.model(itemData);
         this._super(pie.object.merge({
           renderOnSetup: true,
@@ -3646,7 +3646,7 @@ pie.mixins.listView = (function(){
       }.bind(this));
     },
 
-    renderItems: function(templateName) {
+    renderItems: function() {
       this.emitter.fire('beforeRenderItems');
       this.emitter.fireAround('aroundRenderItems', function() {
         this.emitter.fire('renderItems');
@@ -4807,7 +4807,7 @@ pie.model = pie.base.extend('model', {
     changeValue = value;
 
     /* If we are "unsetting" the value, delete the path from `this.data`. */
-    if(value == null) {
+    if(value === undefined) {
       changeType = 'delete';
       pie.object.deletePath(this.data, key);
 
@@ -5059,7 +5059,7 @@ pie.dataStore = pie.base.extend('dataStore', {
     return result;
   },
 
-  set: function(key, value, options) {
+  set: function(key, value) {
     // clear from all stores so we don't get out of sync.
     this.clear(key);
 
@@ -5160,7 +5160,7 @@ pie.dataStore.adapters = (function(){
 
     cookie: {
 
-      clear: function(key, parentStore) {
+      clear: function(key) {
         try {
           return pie.browser.setCookie(key, null);
         } catch(e) {
@@ -5168,19 +5168,19 @@ pie.dataStore.adapters = (function(){
         }
       },
 
-      get: function(key, parentStore) {
+      get: function(key) {
         try {
-          var encoded = pie.browser.getCookie(key);
-          return encoded != null ? JSON.parse(encoded) : encoded;
+          var json = pie.browser.getCookie(key);
+          return json != null ? JSON.parse(json) : json;
         } catch(e) {
           return pie.dataStore.ACCESS_ERROR;
         }
       },
 
-      set: function(key, value, parentStore) {
+      set: function(key, value) {
         try{
-          var encoded = JSON.stringify(value);
-          pie.browser.setCookie(key, value);
+          var json = JSON.stringify(value);
+          pie.browser.setCookie(key, json);
         } catch(e) {
           return pie.dataStore.ACCESS_ERROR;
         }
@@ -6353,10 +6353,10 @@ pie.helpers = pie.model.extend('helpers', {
   init: function(app, options) {
     this._super({
       fns: {}
-    }, {
+    }, pie.object.merge({
       app: app,
       variableName: 'h'
-    });
+    }, options));
 
     var i18n = this.app.i18n;
 

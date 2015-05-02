@@ -210,7 +210,7 @@ pie.dom.on = function(el, event, fn, selector, capture) {
   events[event] = events[event] || [];
 
   cb = function(e) {
-    var targ, els, qel;
+    var targ, qel;
 
     if(namespace) {
       e.namespace = namespace;

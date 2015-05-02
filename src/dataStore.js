@@ -42,7 +42,7 @@ pie.dataStore = pie.base.extend('dataStore', {
     return result;
   },
 
-  set: function(key, value, options) {
+  set: function(key, value) {
     // clear from all stores so we don't get out of sync.
     this.clear(key);
 
@@ -143,7 +143,7 @@ pie.dataStore.adapters = (function(){
 
     cookie: {
 
-      clear: function(key, parentStore) {
+      clear: function(key) {
         try {
           return pie.browser.setCookie(key, null);
         } catch(e) {
@@ -151,19 +151,19 @@ pie.dataStore.adapters = (function(){
         }
       },
 
-      get: function(key, parentStore) {
+      get: function(key) {
         try {
-          var encoded = pie.browser.getCookie(key);
-          return encoded != null ? JSON.parse(encoded) : encoded;
+          var json = pie.browser.getCookie(key);
+          return json != null ? JSON.parse(json) : json;
         } catch(e) {
           return pie.dataStore.ACCESS_ERROR;
         }
       },
 
-      set: function(key, value, parentStore) {
+      set: function(key, value) {
         try{
-          var encoded = JSON.stringify(value);
-          pie.browser.setCookie(key, value);
+          var json = JSON.stringify(value);
+          pie.browser.setCookie(key, json);
         } catch(e) {
           return pie.dataStore.ACCESS_ERROR;
         }

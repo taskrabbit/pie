@@ -1723,7 +1723,7 @@ on the event. The event is then provided to <code>fn</code>.</p>
   events[event] = events[event] || [];
 
   cb = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span> </span>{
-    <span class="hljs-keyword">var</span> targ, els, qel;
+    <span class="hljs-keyword">var</span> targ, qel;
 
     <span class="hljs-keyword">if</span>(namespace) {
       e.namespace = namespace;
@@ -3029,7 +3029,7 @@ pie.object.isUndefined = <span class="hljs-function"><span class="hljs-keyword">
   <span class="hljs-keyword">return</span> obj === <span class="hljs-keyword">void</span> <span class="hljs-number">0</span>;
 };
 pie.object.isNotUndefined = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
-  <span class="hljs-keyword">return</span> !pie.object.isUndefined();
+  <span class="hljs-keyword">return</span> !pie.object.isUndefined(obj);
 };</pre></div></div>
             
         </li>
@@ -3127,7 +3127,7 @@ pie.object.has = <span class="hljs-function"><span class="hljs-keyword">function
 };
 
 pie.object.hasAny = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* obj, *keys */</span>)</span> </span>{
-  <span class="hljs-keyword">var</span> obj = <span class="hljs-built_in">arguments</span>[<span class="hljs-number">0</span>], keys, checks;
+  <span class="hljs-keyword">var</span> obj = <span class="hljs-built_in">arguments</span>[<span class="hljs-number">0</span>], checks;
   <span class="hljs-keyword">if</span>(!obj) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
 
   <span class="hljs-keyword">if</span>(<span class="hljs-built_in">arguments</span>.length === <span class="hljs-number">1</span>) <span class="hljs-keyword">return</span> !pie.object.isEmpty(obj);
@@ -5710,7 +5710,7 @@ list = <span class="hljs-keyword">new</span> UserList({
             <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> listItemClass = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
     <span class="hljs-keyword">return</span> _listItemClass = _listItemClass || pie.view.extend(<span class="hljs-string">'defaultListItemView'</span>, pie.mixins.activeView, {
 
-      init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, itemData, idx)</span> </span>{
+      init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, itemData)</span> </span>{
         <span class="hljs-keyword">this</span>.model = <span class="hljs-keyword">new</span> pie.model(itemData);
         <span class="hljs-keyword">this</span>._super(pie.object.merge({
           renderOnSetup: <span class="hljs-literal">true</span>,
@@ -5840,7 +5840,7 @@ list = <span class="hljs-keyword">new</span> UserList({
       }.bind(<span class="hljs-keyword">this</span>));
     },
 
-    renderItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(templateName)</span> </span>{
+    renderItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
       <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'beforeRenderItems'</span>);
       <span class="hljs-keyword">this</span>.emitter.fireAround(<span class="hljs-string">'aroundRenderItems'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
         <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'renderItems'</span>);
@@ -7917,7 +7917,7 @@ model.set(<span class="hljs-string">'foo'</span>, <span class="hljs-string">'bar
     changeValue = value;
 
     <span class="hljs-comment">/* If we are "unsetting" the value, delete the path from `this.data`. */</span>
-    <span class="hljs-keyword">if</span>(value == <span class="hljs-literal">null</span>) {
+    <span class="hljs-keyword">if</span>(value === <span class="hljs-literal">undefined</span>) {
       changeType = <span class="hljs-string">'delete'</span>;
       pie.object.deletePath(<span class="hljs-keyword">this</span>.data, key);
 
@@ -8236,7 +8236,7 @@ pie.dataStore = pie.base.extend(<span class="hljs-string">'dataStore'</span>, {
     <span class="hljs-keyword">return</span> result;
   },
 
-  set: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value, options)</span> </span>{</pre></div></div>
+  set: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value)</span> </span>{</pre></div></div>
             
         </li>
         
@@ -8350,7 +8350,7 @@ pie.dataStore.adapters = (<span class="hljs-function"><span class="hljs-keyword"
 
     cookie: {
 
-      clear: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, parentStore)</span> </span>{
+      clear: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key)</span> </span>{
         <span class="hljs-keyword">try</span> {
           <span class="hljs-keyword">return</span> pie.browser.setCookie(key, <span class="hljs-literal">null</span>);
         } <span class="hljs-keyword">catch</span>(e) {
@@ -8358,19 +8358,19 @@ pie.dataStore.adapters = (<span class="hljs-function"><span class="hljs-keyword"
         }
       },
 
-      get: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, parentStore)</span> </span>{
+      get: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key)</span> </span>{
         <span class="hljs-keyword">try</span> {
-          <span class="hljs-keyword">var</span> encoded = pie.browser.getCookie(key);
-          <span class="hljs-keyword">return</span> encoded != <span class="hljs-literal">null</span> ? <span class="hljs-built_in">JSON</span>.parse(encoded) : encoded;
+          <span class="hljs-keyword">var</span> json = pie.browser.getCookie(key);
+          <span class="hljs-keyword">return</span> json != <span class="hljs-literal">null</span> ? <span class="hljs-built_in">JSON</span>.parse(json) : json;
         } <span class="hljs-keyword">catch</span>(e) {
           <span class="hljs-keyword">return</span> pie.dataStore.ACCESS_ERROR;
         }
       },
 
-      set: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value, parentStore)</span> </span>{
+      set: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key, value)</span> </span>{
         <span class="hljs-keyword">try</span>{
-          <span class="hljs-keyword">var</span> encoded = <span class="hljs-built_in">JSON</span>.stringify(value);
-          pie.browser.setCookie(key, value);
+          <span class="hljs-keyword">var</span> json = <span class="hljs-built_in">JSON</span>.stringify(value);
+          pie.browser.setCookie(key, json);
         } <span class="hljs-keyword">catch</span>(e) {
           <span class="hljs-keyword">return</span> pie.dataStore.ACCESS_ERROR;
         }
@@ -10268,10 +10268,10 @@ helpers.register(<span class="hljs-string">'reverse'</span>, <span class="hljs-f
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, options)</span> </span>{
     <span class="hljs-keyword">this</span>._super({
       fns: {}
-    }, {
+    }, pie.object.merge({
       app: app,
       variableName: <span class="hljs-string">'h'</span>
-    });
+    }, options));
 
     <span class="hljs-keyword">var</span> i18n = <span class="hljs-keyword">this</span>.app.i18n;
 

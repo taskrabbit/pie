@@ -19,10 +19,10 @@ pie.helpers = pie.model.extend('helpers', {
   init: function(app, options) {
     this._super({
       fns: {}
-    }, {
+    }, pie.object.merge({
       app: app,
       variableName: 'h'
-    });
+    }, options));
 
     var i18n = this.app.i18n;
 
