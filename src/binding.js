@@ -194,6 +194,7 @@ pie.binding.typeCasters = {
     var reg = /^(1|true|yes|ok|on)$/;
 
     return function(raw) {
+      if(raw == null) return raw;
       return !!(raw && reg.test(String(raw)));
     };
 
