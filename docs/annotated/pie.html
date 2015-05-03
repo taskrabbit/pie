@@ -13789,7 +13789,7 @@ use it to typecast each value.</p>
     <span class="hljs-keyword">var</span> els = <span class="hljs-keyword">this</span>.view.qsa(<span class="hljs-keyword">this</span>.options.sel);
 
     <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; els.length; i++) {
-      <span class="hljs-keyword">this</span>.toModel(<span class="hljs-keyword">this</span>.getValueFromElement(els[i]), opts);
+      <span class="hljs-keyword">this</span>.toModel(els[i], opts);
     }
   }
 

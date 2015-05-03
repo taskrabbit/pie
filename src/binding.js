@@ -175,7 +175,7 @@ pie.binding = pie.base.extend('binding', {
     var els = this.view.qsa(this.options.sel);
 
     for(var i = 0; i < els.length; i++) {
-      this.toModel(this.getValueFromElement(els[i]), opts);
+      this.toModel(els[i], opts);
     }
   }
 
