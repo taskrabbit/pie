@@ -9229,11 +9229,11 @@ pie.binding.integrations.check = (function(){
       elValue = el.value;
 
       // In the case of an array, we check for inclusion.
-      if(binding.dataType === 'array') {
+      if(binding.options.dataType === 'array') {
         var i = index(value, elValue);
         return el.checked = !!~i;
       } else {
-        var caster = binding.getTypeCaster(binding.dataType);
+        var caster = binding.getTypeCaster(binding.options.dataType);
 
         // Otherwise we check for equality
         return el.checked = caster(elValue) === caster(value);

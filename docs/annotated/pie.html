@@ -14163,11 +14163,11 @@ pie.binding.integrations.check = (<span class="hljs-function"><span class="hljs-
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(binding.dataType === <span class="hljs-string">'array'</span>) {
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span>(binding.options.dataType === <span class="hljs-string">'array'</span>) {
         <span class="hljs-keyword">var</span> i = index(value, elValue);
         <span class="hljs-keyword">return</span> el.checked = !!~i;
       } <span class="hljs-keyword">else</span> {
-        <span class="hljs-keyword">var</span> caster = binding.getTypeCaster(binding.dataType);</pre></div></div>
+        <span class="hljs-keyword">var</span> caster = binding.getTypeCaster(binding.options.dataType);</pre></div></div>
             
         </li>
         
