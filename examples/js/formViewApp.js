@@ -1,6 +1,8 @@
 /* global bindings */
 window.app = new pie.app({
-  viewNamespace: 'forms'
+  routeHandlerOptions: {
+    viewNamespace: 'forms'
+  }
 });
 
 
@@ -11,6 +13,9 @@ app.router.map({
 
 
 pie.ns('forms').layout = pie.formView.extend('layout', {
+
+  debugName: 'view',
+
   init: function() {
 
     this._super({

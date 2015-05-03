@@ -26,13 +26,13 @@ describe("View Binding Integration", function() {
     expect(this.model.get('foo')).toEqual('barstool');
   });
 
-  it("should be able to initialize form fields by invoking initBoundFields()", function() {
+  it("should be able to initialize form fields by invoking initBindings()", function() {
     var el = this.view.qs('input[name="foo"]');
 
     this.model.data.foo = 'wingdings';
     expect(el.value).toEqual('');
 
-    this.view.initBoundFields();
+    this.view.initBindings();
 
     expect(el.value).toEqual('wingdings');
   });

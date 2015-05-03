@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "express": "^4.10.6",
-    "uglify-js": "^2.4.15"
+    "uglify-js": "^2.4.15",
+    "glob": "^5.0.5"
   },
   "repository": {
     "type": "git",

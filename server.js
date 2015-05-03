@@ -1,9 +1,10 @@
 /* global __dirname, process */
 
 var fs = require("fs");
-var port = process.env.PORT || 5000;
+var glob = require('glob');
 var express = require("express");
 
+var port = process.env.PORT || 5000;
 var app = express();
 
 app.get(/^\/docs\/guide\/(css|js|pages|images)\//, function(request, response) {
@@ -20,6 +21,33 @@ app.get("/examples/transitions.html", function(request, response) {
 
 app.get(/^\/examples\/transitions\/(a|b|c|d)\.html/, function(request, response) {
   response.sendFile(__dirname + '/examples/transitions.html');
+});
+
+app.get(/\/specRunner(\.html)?/, function(request, response) {
+  var content = fs.readFileSync(__dirname + '/specRunner.html', {encoding: 'utf8'});
+
+  var sources = fs.readFileSync(__dirname + '/sources.txt', {encoding: 'utf8'}).split("\n")[0].split(" ");
+  sources = sources.map(function(src){ return __dirname + '/' + src; });
+  var srcs = [];
+
+  sources.forEach(function(source){
+    srcs = srcs.concat(glob.sync(source));
+  });
+
+  srcs = srcs.map(function(src){
+    return '<script src="/src/' + src.split('/src/')[1] + '"></script>';
+  }).join("\n");
+
+  content = content.replace('<!-- include source files here... -->', srcs);
+
+  var specs = glob.sync(__dirname + '/spec/**/*Spec.js');
+  specs = "<script src=\"/spec/specHelper.js\"></script>\n" + specs.map(function(spec){
+    return '<script src="/spec/' + spec.split('/spec/')[1] + '"></script>';
+  }).join("\n");
+
+  content = content.replace('<!-- include spec files here... -->', specs);
+
+  response.send(content);
 });
 
 app.get('/', function(req, res) {
