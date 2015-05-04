@@ -507,6 +507,7 @@ pie.i18n.defaultTranslations = {
       ccSecurity:         "is not a valid security code",
       ccExpirationMonth:  "is not a valid expiration month",
       ccExpirationYear:   "is not a valid expiration year",
+      ccExpirationDate:   "is not a valid expiration date",
       chosen:             "must be chosen",
       date:               "is not a valid date",
       email:              "must be a valid email",
