@@ -4072,7 +4072,9 @@ pie.model = pie.base.extend('model', {
 
     if(existing) {
       existing.value = value;
-      if(type === 'delete') existing.type = type;
+      if(existing.type === 'delete' && type === 'add') existing.type = 'update';
+      else if(existing.type === 'delete' && type === 'pathUpdate') existing.type = 'pathUpdate';
+      else if(type === 'delete') existing.type = type;
       return;
     }
 
@@ -4333,6 +4335,14 @@ pie.model = pie.base.extend('model', {
   set: function(key, value, options) {
 
     if(pie.object.isPlainObject(value) && !pie.object.isEmpty(value)) {
+      // since we're overriding an object we need to unset it.
+      // we add change records for the children, but don't worry about the parents
+      // since the sets() will take care of that.
+      this.set(key, undefined, pie.object.merge({}, options, {
+        skipObservers: true,
+        skipParents: true
+      }));
+
       value = pie.object.flatten(value, key + '.');
       this.sets(value, options);
       return;
@@ -7877,9 +7887,17 @@ pie.validator = pie.base.extend('validator', {
   // validator.errorMessage("length", {gte: 4})
   // //=> "must be greater than or equal to 4"
   // ```
+  // If validationOptions contains a `message` key, that will be used to produce the message.
+  // The `message` key can be a string, i18n attempt path, or a function.
+  // If the validationOPtions contains a `messageKey` key, that will be used as an i18n lookup
+  // at `app.validations.${messageKey}`.
   errorMessage: function(validationType, validationOptions) {
 
-    if(validationOptions.message) return this.app.i18n.attempt(validationOptions.message);
+    if(validationOptions.message) {
+      var msg = validationOptions.message;
+      if(pie.object.isFunction(msg)) msg = msg(validationType, validationOptions);
+      return this.app.i18n.attempt(msg);
+    }
 
     var key = validationOptions.messageKey || validationType,
         base = this.i18n.t('app.validations.' + key),
@@ -9301,7 +9319,7 @@ pie.binding.integrations.html = {
 };
 
 
-  pie.VERSION = "0.0.20150502.1";
+  pie.VERSION = "0.0.20150505.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

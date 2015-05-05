@@ -42,9 +42,17 @@ pie.validator = pie.base.extend('validator', {
   // validator.errorMessage("length", {gte: 4})
   // //=> "must be greater than or equal to 4"
   // ```
+  // If validationOptions contains a `message` key, that will be used to produce the message.
+  // The `message` key can be a string, i18n attempt path, or a function.
+  // If the validationOPtions contains a `messageKey` key, that will be used as an i18n lookup
+  // at `app.validations.${messageKey}`.
   errorMessage: function(validationType, validationOptions) {
 
-    if(validationOptions.message) return this.app.i18n.attempt(validationOptions.message);
+    if(validationOptions.message) {
+      var msg = validationOptions.message;
+      if(pie.object.isFunction(msg)) msg = msg(validationType, validationOptions);
+      return this.app.i18n.attempt(msg);
+    }
 
     var key = validationOptions.messageKey || validationType,
         base = this.i18n.t('app.validations.' + key),

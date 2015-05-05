@@ -209,7 +209,9 @@ pie.model = pie.base.extend('model', {
 
     if(existing) {
       existing.value = value;
-      if(type === 'delete') existing.type = type;
+      if(existing.type === 'delete' && type === 'add') existing.type = 'update';
+      else if(existing.type === 'delete' && type === 'pathUpdate') existing.type = 'pathUpdate';
+      else if(type === 'delete') existing.type = type;
       return;
     }
 
@@ -470,6 +472,14 @@ pie.model = pie.base.extend('model', {
   set: function(key, value, options) {
 
     if(pie.object.isPlainObject(value) && !pie.object.isEmpty(value)) {
+      // since we're overriding an object we need to unset it.
+      // we add change records for the children, but don't worry about the parents
+      // since the sets() will take care of that.
+      this.set(key, undefined, pie.object.merge({}, options, {
+        skipObservers: true,
+        skipParents: true
+      }));
+
       value = pie.object.flatten(value, key + '.');
       this.sets(value, options);
       return;

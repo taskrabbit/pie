@@ -30,6 +30,13 @@ describe("pie.model", function() {
 
     });
 
+    it("should allow setting of an object", function() {
+      this.model.data.foo = {bar: 'baz'};
+      this.model.set('foo', {too: 'far'});
+
+      expect(this.model.get('foo')).toEqual({too: 'far'});
+    });
+
   });
 
   describe("getting", function() {
@@ -263,6 +270,26 @@ describe("pie.model", function() {
       this.model.set('foo.bar', true);
       this.model.observe(observer, 'foo.bar');
       this.model.set('foo', false);
+    });
+
+    it('should send change records to removed paths when a parent path is set to a new object', function(done) {
+      var observe = function(changes) {
+        var barChange = changes.get('foo.bar');
+        expect(barChange.type).toEqual('delete');
+        expect(barChange.name).toEqual('foo.bar');
+        expect(barChange.oldValue).toEqual('baz');
+        expect(barChange.value).toEqual(undefined);
+
+        var fooChange = changes.get('foo');
+        expect(fooChange.type).toEqual('pathUpdate');
+        expect(fooChange.name).toEqual('foo');
+
+        done();
+      };
+
+      this.model.set('foo', {bar: 'baz'});
+      this.model.observe(observe);
+      this.model.set('foo', {too: 'far'});
     });
 
     it("should include changes to the computed properties for observers registered before the properties", function(done) {
