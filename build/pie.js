@@ -1300,7 +1300,7 @@ pie.dom.scrollParents = (function(){
 // pie.dom.scrollTo('header', {onlyUp: true, cb: fn, name: 'easeInQuart'});
 pie.dom.scrollTo = function(sel, options) {
   var position = 0,
-  container = options && options.container || document.body,
+  container = options && options.container || pie.dom.rootScrollElement(),
   cb = options && options.cb,
   gravity = options && options.gravity || 'top',
   quit = false;
@@ -1357,6 +1357,32 @@ pie.dom.scrollTo = function(sel, options) {
   }, options, cb);
 
 };
+
+// **pie.dom.rootScrollElement**
+//
+// Returns either the html or body element depending on which one
+// is in charge of scrolling the page. If no determination can be
+// made the html element is returned since that's what the spec
+// states is correct.
+//
+// This is why you'll often see $('body, html').animate() in jquery apps.
+pie.dom.rootScrollElement = function() {
+  var body = document.body,
+  html = document.documentElement;
+
+  if(body.scrollTop) return body;
+  if(html.scrollTop) return html;
+
+  var correct;
+  // both are zero, so try to change it by 1
+  body.scrollTop = html.scrollTop = 1;
+  if(body.scrollTop) correct = body;
+  else correct = html;
+
+  body.scrollTop = html.scrollTop = 1;
+  return correct;
+};
+
 
 // **pie.dom.trigger**
 //
