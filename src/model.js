@@ -488,14 +488,14 @@ pie.model = pie.base.extend('model', {
     var changeName = key,
     changeType, changeOldValue, changeValue;
 
-    if(this.has(key)) {
+    changeOldValue = pie.object.getPath(this.data, key);
+
+    /* If we haven't actually changed, don't bother doing anything. */
+    if((!options || !options.force) && value === changeOldValue) return this;
+
+    if(changeOldValue !== undefined) {
       changeType = 'update';
-      changeOldValue = pie.object.getPath(this.data, key);
-
-      /* If we haven't actually changed, don't bother doing anything. */
-      if((!options || !options.force) && value === changeOldValue) return this;
     }
-
 
     var parentKeys = (!options || !options.skipParents) && ~key.indexOf('.') ? pie.string.pathSteps(key).slice(1) : null,
     childKeys, nestedOpts, i;

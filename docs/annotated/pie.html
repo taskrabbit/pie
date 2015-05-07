@@ -6870,14 +6870,14 @@ since the sets() will take care of that.</p>
     <span class="hljs-keyword">var</span> changeName = key,
     changeType, changeOldValue, changeValue;
 
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.has(key)) {
+    changeOldValue = pie.object.getPath(<span class="hljs-keyword">this</span>.data, key);
+
+    <span class="hljs-comment">/* If we haven't actually changed, don't bother doing anything. */</span>
+    <span class="hljs-keyword">if</span>((!options || !options.force) &amp;&amp; value === changeOldValue) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+
+    <span class="hljs-keyword">if</span>(changeOldValue !== <span class="hljs-literal">undefined</span>) {
       changeType = <span class="hljs-string">'update'</span>;
-      changeOldValue = pie.object.getPath(<span class="hljs-keyword">this</span>.data, key);
-
-      <span class="hljs-comment">/* If we haven't actually changed, don't bother doing anything. */</span>
-      <span class="hljs-keyword">if</span>((!options || !options.force) &amp;&amp; value === changeOldValue) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
     }
-
 
     <span class="hljs-keyword">var</span> parentKeys = (!options || !options.skipParents) &amp;&amp; ~key.indexOf(<span class="hljs-string">'.'</span>) ? pie.string.pathSteps(key).slice(<span class="hljs-number">1</span>) : <span class="hljs-literal">null</span>,
     childKeys, nestedOpts, i;
@@ -14326,7 +14326,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150505.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150507.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

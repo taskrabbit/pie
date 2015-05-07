@@ -120,6 +120,9 @@ describe("pie.model", function() {
       this.model.data.foo = 'bar';
       this.model.set('foo', 'bar');
 
+      delete this.model.data.foo;
+      this.model.set('foo', undefined);
+
       expect(observer).not.toHaveBeenCalled();
     });
 
