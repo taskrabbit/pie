@@ -4738,7 +4738,7 @@ list = <span class="hljs-keyword">new</span> UserList({
       },
 
       renderData: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-        <span class="hljs-keyword">return</span> pie.object.deepMerge({}, <span class="hljs-keyword">this</span>._super(), <span class="hljs-keyword">this</span>.bubble(<span class="hljs-string">'renderData'</span>));
+        <span class="hljs-keyword">return</span> pie.object.deepMerge({}, <span class="hljs-keyword">this</span>.bubble(<span class="hljs-string">'renderData'</span>), <span class="hljs-keyword">this</span>._super());
       }
 
     });
@@ -14374,7 +14374,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150507.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150508.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

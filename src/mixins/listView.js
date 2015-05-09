@@ -40,7 +40,7 @@ pie.mixins.listView = (function(){
       },
 
       renderData: function() {
-        return pie.object.deepMerge({}, this._super(), this.bubble('renderData'));
+        return pie.object.deepMerge({}, this.bubble('renderData'), this._super());
       }
 
     });

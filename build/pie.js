@@ -3113,7 +3113,7 @@ pie.mixins.listView = (function(){
       },
 
       renderData: function() {
-        return pie.object.deepMerge({}, this._super(), this.bubble('renderData'));
+        return pie.object.deepMerge({}, this.bubble('renderData'), this._super());
       }
 
     });
@@ -9345,7 +9345,7 @@ pie.binding.integrations.html = {
 };
 
 
-  pie.VERSION = "0.0.20150507.1";
+  pie.VERSION = "0.0.20150508.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {
