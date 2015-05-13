@@ -127,4 +127,67 @@ describe("pie.base & object inheritance", function() {
     b.bar();
   });
 
+  it("should allow an object to 'inherit' from two parents", function() {
+    var A = pie.base.extend({ a: true });
+    var B = pie.base.extend({ b: true });
+    var C = pie.base.extend(A, B, {c: true});
+
+    var a = A.create();
+    var b = B.create();
+    var c = C.create();
+
+    expect(a.a).toEqual(true);
+    expect(b.a).toEqual(undefined);
+    expect(c.a).toEqual(true);
+
+    expect(a.b).toEqual(undefined);
+    expect(b.b).toEqual(true);
+    expect(c.b).toEqual(true);
+
+    expect(a.c).toEqual(undefined);
+    expect(b.c).toEqual(undefined);
+    expect(c.c).toEqual(true);
+  });
+
+  it("should allow an object to 'inherit' from two parents, even if one of the parents is 'extended'", function() {
+    var A = pie.base.extend({ a: true });
+    var B = pie.base.extend({ b: true });
+    var C = A.extend(B, {c: true});
+
+    var a = A.create();
+    var b = B.create();
+    var c = C.create();
+
+    expect(a.a).toEqual(true);
+    expect(b.a).toEqual(undefined);
+    expect(c.a).toEqual(true);
+
+    expect(a.b).toEqual(undefined);
+    expect(b.b).toEqual(true);
+    expect(c.b).toEqual(true);
+
+    expect(a.c).toEqual(undefined);
+    expect(b.c).toEqual(undefined);
+    expect(c.c).toEqual(true);
+  });
+
+  it("child classes should reflect changes in the parent classes", function() {
+    var A = pie.base.extend({ a: true });
+    var B = A.extend({ b: true });
+
+    var olda = A.create();
+    var oldb = B.create();
+
+    A.reopen({ a: false });
+
+    var newa = A.create();
+    var newb = B.create();
+
+    expect(olda.a).toEqual(true);
+    expect(oldb.a).toEqual(true);
+
+    expect(newa.a).toEqual(false);
+    expect(newb.a).toEqual(false);
+  });
+
 });

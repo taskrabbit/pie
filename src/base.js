@@ -25,7 +25,6 @@ pie.base = {
 
   extend: function() {
     var that = this,
-    schema = pie.array.dup(this.schema),
     extensions = pie.array.change(arguments, 'from', 'flatten', 'compact'),
     name = pie.object.isString(extensions[0]) ? extensions.shift() : null;
 
@@ -34,7 +33,7 @@ pie.base = {
       return e;
     }));
 
-    schema = pie.array.unique(schema.concat(extensions));
+    var schema = [this.schema, extensions];
 
     var o = {
       __className: name
@@ -52,7 +51,9 @@ pie.base = {
 
   reopen: function() {
     var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact');
-    this.schema = pie.array.unique(this.schema.concat(extensions));
+    extensions.forEach(function(e){
+      this.schema.push(e);
+    }.bind(this));
   },
 
   _create: function(schema, args) {

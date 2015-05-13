@@ -392,7 +392,7 @@ pie.i18n = pie.model.extend('i18n', {
 });
 
 /* Aliases */
-var extension = pie.array.last(pie.i18n.schema);
+var extension = pie.array.last(pie.array.last(pie.i18n.schema));
 extension.t = extension.translate;
 extension.l = extension.strftime;
 

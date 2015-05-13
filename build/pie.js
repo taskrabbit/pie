@@ -2072,6 +2072,55 @@ pie.object.instanceOf = function(instance, nameOfClass) {
   return klass && instance instanceof klass;
 };
 
+<<<<<<< HEAD
+=======
+pie.object.reopen = (function(){
+
+  var fnTest = /xyz/.test(function(){ "xyz"; });
+  fnTest = fnTest ? /\b_super\b/ : /.*/;
+
+  var wrap = function (newF, oldF) {
+    /* jslint eqnull:true */
+
+    // if we're not defining anything new, return the old definition.
+    if(newF == null) return oldF;
+    // if there is no old definition
+    if(oldF == null) return newF;
+    // if we're not overriding with a function
+    if(!pie.object.isFunction(newF)) return newF;
+    // if we're not overriding a function
+    if(!pie.object.isFunction(oldF)) return newF;
+    // if it doesn't call _super, don't bother wrapping.
+    if(!fnTest.test(newF)) return newF;
+
+    if(oldF === newF) return newF;
+
+    return function superWrapper() {
+      var ret, sup = this._super;
+      this._super = oldF;
+      ret = newF.apply(this, arguments);
+      if(!sup) delete this._super;
+      else this._super = sup;
+      return ret;
+    };
+  };
+
+  return function(/* target, *extensions */) {
+    var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact'),
+    target = extensions.shift(),
+    extender = function(k,fn) {
+      target[k] = wrap(fn, target[k]);
+    }.bind(this);
+
+    extensions.forEach(function(e) {
+      pie.object.forEach(e, extender);
+    }.bind(this));
+
+    return target;
+  };
+})();
+
+>>>>>>> allow changes in the parent to be reflected in the child class
 pie.object.reverseMerge = function(/* args */) {
   var args = pie.array.from(arguments);
   args.reverse();
@@ -3489,7 +3538,6 @@ pie.base.reopen = function() {
 
   extend: function() {
     var that = this,
-    schema = pie.array.dup(this.schema),
     extensions = pie.array.change(arguments, 'from', 'flatten', 'compact'),
     name = pie.object.isString(extensions[0]) ? extensions.shift() : null;
 
@@ -3498,7 +3546,7 @@ pie.base.reopen = function() {
       return e;
     }));
 
-    schema = pie.array.unique(schema.concat(extensions));
+    var schema = [this.schema, extensions];
 
     var o = {
       __className: name
@@ -3516,7 +3564,9 @@ pie.base.reopen = function() {
 
   reopen: function() {
     var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact');
-    this.schema = pie.array.unique(this.schema.concat(extensions));
+    extensions.forEach(function(e){
+      this.schema.push(e);
+    }.bind(this));
   },
 
   _create: function(schema, args) {
@@ -6339,7 +6389,7 @@ pie.i18n = pie.model.extend('i18n', {
 });
 
 /* Aliases */
-var extension = pie.array.last(pie.i18n.schema);
+var extension = pie.array.last(pie.array.last(pie.i18n.schema));
 extension.t = extension.translate;
 extension.l = extension.strftime;
 
