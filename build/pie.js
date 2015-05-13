@@ -9338,7 +9338,7 @@ pie.binding.integrations.html = {
 };
 
 
-  pie.VERSION = "0.0.20150508.1";
+  pie.VERSION = "0.0.20150513.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {
