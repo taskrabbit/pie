@@ -4,7 +4,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
   init: function(parent, options) {
     options = options || {};
 
-    this.emitter    = new pie.emitter();
+    this.emitter    = pie.emitter.create();
     this.parent     = parent;
     this.oldChild   = options.oldChild;
     this.newChild   = options.newChild;

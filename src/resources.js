@@ -17,7 +17,7 @@ pie.resources = pie.model.extend('resources', {
   //
   // Provide an app and a source map (shortcut all the `resources.define()` calls).
   // ```
-  // new pie.resources(app, {googleMaps: '//maps.google.com/.../js'});
+  // pie.resources.create(app, {googleMaps: '//maps.google.com/.../js'});
   // ```
   init: function(app, srcMap) {
     this._super({

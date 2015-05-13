@@ -1,7 +1,7 @@
 describe("pie.view", function() {
 
   beforeEach(function() {
-    this.view = new pie.view();
+    this.view = pie.view.create();
   });
 
   it("should correctly build an event namespace", function() {
@@ -59,7 +59,7 @@ describe("pie.view", function() {
     });
 
     it("should remove all observers when removed from it's parent", function() {
-      var model = new pie.model(), f;
+      var model = pie.model.create(), f;
 
       this.view.onChange(model, this.view.setup.bind(this.view));
 

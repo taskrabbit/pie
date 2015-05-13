@@ -33,7 +33,7 @@ pie.mixins.listView = (function(){
     return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView, {
 
       init: function(options, itemData) {
-        this.model = new pie.model(itemData);
+        this.model = pie.model.create(itemData);
         this._super(pie.object.merge({
           renderOnSetup: true,
         }, options));
@@ -48,7 +48,7 @@ pie.mixins.listView = (function(){
 
   var viewFactory = function(options, itemData){
     var klass = listItemClass();
-    return new klass(options, itemData);
+    return klass.create(options, itemData);
   };
 
   return {
@@ -76,7 +76,7 @@ pie.mixins.listView = (function(){
         throw new Error("No viewFactory provided");
       }
 
-      this.list = this.list || new pie.list([]);
+      this.list = this.list || pie.list.create([]);
     },
 
     setup: function() {

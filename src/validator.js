@@ -1,7 +1,7 @@
 // # Pie Validator
 // A collection of validators commonly used in web forms.
 // ```
-// validator = new pie.validator();
+// validator = pie.validator.create();
 // validator.email("foo@djalfdsaf");
 // //=> false
 // validator.email("foo@bar.com");
@@ -56,11 +56,11 @@ pie.validator = pie.base.extend('validator', {
 
     var key = validationOptions.messageKey || validationType,
         base = this.i18n.t('app.validations.' + key),
-        rangeOptions = new pie.validator.rangeOptions(this.app, validationOptions),
+        rangeOptions = pie.validator.rangeOptions.create(this.app, validationOptions),
         range = rangeOptions.message();
 
     if(!range && key === 'length') {
-      rangeOptions = new pie.validator.rangeOptions(this.app, {gt: 0});
+      rangeOptions = pie.validator.rangeOptions.create(this.app, {gt: 0});
       range = rangeOptions.message();
     }
 
@@ -224,7 +224,7 @@ pie.validator = pie.base.extend('validator', {
         options.sanitized = true;
       }
 
-      var ro = new pie.validator.rangeOptions(this.app, options);
+      var ro = pie.validator.rangeOptions.create(this.app, options);
       return ro.matches(value);
 
     }.bind(this));
@@ -407,7 +407,7 @@ pie.validator = pie.base.extend('validator', {
       if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
 
       var number = parseFloat(value),
-      ro = new pie.validator.rangeOptions(this.app, options);
+      ro = pie.validator.rangeOptions.create(this.app, options);
 
       return ro.matches(number);
     });
@@ -514,7 +514,7 @@ pie.validator = pie.base.extend('validator', {
 //
 // A small utilitly class which matches range options to comparators.
 // ```
-// range = new pie.validator.rangeOptions(app, {gte: 3, lt: 8});
+// range = pie.validator.rangeOptions.create(app, {gte: 3, lt: 8});
 // range.matches(3)
 // //=> true
 // range.matches(10)

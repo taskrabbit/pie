@@ -7,7 +7,7 @@ pie.notifier = pie.base.extend('notifier', {
   init: function(app, options) {
     this.options = options || {};
     this.app = app || this.options.app || pie.appInstance;
-    this.notifications = new pie.list([]);
+    this.notifications = pie.list.create([]);
 
     this._super();
   },

@@ -4,7 +4,7 @@
 // allows for blocking of an event via `around` callbacks. It's similar to a promise implementation,
 // but doesn't worry itself with the result of the underlying functions.
 // ```
-// var emitter = new pie.emitter();
+// var emitter = pie.emitter.create();
 //
 // emitter.on('foo', function(){} );
 // emitter.prepend('foo', function(){} );

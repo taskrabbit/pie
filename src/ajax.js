@@ -21,7 +21,7 @@ pie.ajax = pie.base.extend('ajax', {
   ajax: function(options, skipSend) {
     options = pie.object.deepMerge({}, this.defaultAjaxOptions, this._normalizeOptions(options));
 
-    var request = new pie.ajaxRequest({}, { app: this.app });
+    var request = pie.ajaxRequest.create({}, { app: this.app });
     request.build(options, skipSend);
 
     /* add a default error handler if the user hasn't provided one. */

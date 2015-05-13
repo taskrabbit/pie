@@ -2,11 +2,11 @@
 describe("pie.model", function() {
 
   beforeEach(function() {
-    this.model = new pie.model();
+    this.model = pie.model.create();
   });
 
   it("should allow instantiation with an object", function() {
-    var model = new pie.model({foo: 'bar'});
+    var model = pie.model.create({foo: 'bar'});
     expect(model.data.foo).toEqual('bar');
   });
 
@@ -345,7 +345,7 @@ describe("pie.model", function() {
         }
       });
 
-      this.foo = new foo();
+      this.foo = foo.create();
     });
 
     it("should provide a _super method", function() {
@@ -358,21 +358,22 @@ describe("pie.model", function() {
   describe("computed properties", function() {
     beforeEach(function(){
 
-      var foo = pie.model.extend(function(data){
-        this._super(data);
-        this.compute('full_name', this.fullName.bind(this), 'first_name', 'last_name');
-      }, {
+      var fooClass = pie.model.extend({
+        init: function(data){
+          this._super(data);
+          this.compute('full_name', this.fullName.bind(this), 'first_name', 'last_name');
+        },
         fullName:  function() {
           return pie.array.compact([this.get('first_name'), this.get('last_name')]).join(' ');
         }
       });
 
-      this.foo = new foo();
-      this.fooClass = foo;
+      this.foo = fooClass.create();
+      this.fooClass = fooClass;
     });
 
     it("should compute initial values", function() {
-      var foo2 = new this.fooClass({first_name: 'Doug', last_name: 'Wilson'});
+      var foo2 = this.fooClass.create({first_name: 'Doug', last_name: 'Wilson'});
       expect(foo2.get('full_name')).toEqual('Doug Wilson');
     });
 
@@ -499,7 +500,7 @@ describe("pie.model", function() {
 
   describe("#hasAny", function() {
     it("should determine if the model has any of the requested attributes", function() {
-      var model = new pie.model({foo: false, bar: false});
+      var model = pie.model.create({foo: false, bar: false});
       expect(model.hasAny('foo')).toEqual(true);
       expect(model.hasAny('bar', 'baz')).toEqual(true);
       expect(model.hasAny('baz', 'foo')).toEqual(true);
@@ -510,46 +511,13 @@ describe("pie.model", function() {
 
   describe("#hasAll", function() {
     it("should determine if the model has any of the requested attributes", function() {
-      var model = new pie.model({foo: false, bar: false});
+      var model = pie.model.create({foo: false, bar: false});
       expect(model.hasAll('foo')).toEqual(true);
       expect(model.hasAll('bar', 'baz')).toEqual(false);
       expect(model.hasAll('baz', 'foo')).toEqual(false);
       expect(model.hasAll('baz', 'qux')).toEqual(false);
       expect(model.hasAll('foo', 'bar')).toEqual(true);
     });
-  });
-
-  describe("associations", function() {
-
-    it("should allow a hasOne association to be defined", function() {
-      var parent = new pie.model({});
-      parent.hasOne('child');
-
-      expect(parent.get('child')).toEqual(undefined);
-      parent.set('child', {foo: 'bar'});
-
-      expect(parent.get('child.foo')).toEqual('bar');
-
-      var child = parent.get('childModel');
-      expect(child).toBeTruthy();
-      expect(child.get('foo')).toEqual('bar');
-    });
-
-    it("should allow a hasMany association to be defined", function() {
-      var parent = new pie.model({});
-      parent.hasMany('children');
-
-      expect(parent.get('children')).toEqual(undefined);
-      parent.set('children', [{foo: 'bar'}, {baz: 'qux'}]);
-
-      expect(parent.get('children.0.foo')).toEqual('bar');
-
-      var child = parent.get('childrenList');
-      expect(child).toBeTruthy();
-      expect(child.get(0).foo).toEqual('bar');
-    });
-
-
   });
 
 });

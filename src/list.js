@@ -26,7 +26,7 @@ pie.list = pie.model.extend('list', {
     if(klass === true) klass = pie.model;
 
     if(klass && pie.object.isPlainObject(value)) {
-      value = new klass(value, this.options.castOptions);
+      value = klass.create(value, this.options.castOptions);
     }
 
     return value;
@@ -101,7 +101,7 @@ pie.list = pie.model.extend('list', {
     if(isNaN(idx)) path = key;
     else path = 'items.' + idx;
 
-    return pie.model.prototype.get.call(this, path);
+    return this._super(path);
   },
 
   // ** pie.list.indexOf **

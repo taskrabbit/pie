@@ -10,7 +10,7 @@ describe("pie.formView", function() {
     it("should work with setup true for a new model", function() {
       var example = pie.formView.extend('example', {
         init: function(data) {
-          this.model = new pie.model({});
+          this.model = pie.model.create({});
 
           this._super(pie.object.merge({
             template: 'formViewTest',
@@ -23,8 +23,8 @@ describe("pie.formView", function() {
         }
       });
 
-      this.view = new example({ setup: true });
-      expect(this.view instanceof example).toEqual(true);
+      this.view = example.create({ setup: true });
+      expect(this.view.pieRole).toEqual('view');
       expect(this.view.emitter.hasEvent('afterSetup')).toEqual(true);
     });
   });

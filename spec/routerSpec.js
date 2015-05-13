@@ -1,7 +1,7 @@
 describe("pie.router", function(){
 
   beforeEach(function(){
-    var r = new pie.router();
+    var r = pie.router.create();
     this.router = r;
 
     this.router.map({

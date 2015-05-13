@@ -29,7 +29,7 @@
     </script>
 
     <script type="text/javascript">
-      window.app = new pie.app({
+      window.app = pie.app.create({
         'uiTarget' : '#main',
         'notificationUiTarget' : '#notifications'
       });
@@ -63,7 +63,7 @@
       lib.views.listView = pie.activeView.extend('listView', {
         init: function() {
 
-          this.model = this.items = new pie.model({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
+          this.model = this.items = pie.model.create({items: [{name: 'a'}, {name: 'b'}, {name: 'c'}]});
 
           this._super({
             template: 'list',

@@ -9,7 +9,7 @@ pie.dataStore = pie.base.extend('dataStore', {
 
     this._super();
 
-    this.backupModel = new pie.model({});
+    this.backupModel = pie.model.create({});
   },
 
   primary: function() {

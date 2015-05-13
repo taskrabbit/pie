@@ -11,15 +11,7 @@
 //   * user interaction
 //   * teardown - removes any added events from the dom elements, removes any model observations, removes the el from the dom, etc.
 //   * detach - when the view's el is removed from the DOM.
-pie.view = pie.base.extend('view');
-
-/* true constructor overriden to invoke setup after init() is finished if `setup:true` was provided as an option */
-pie.view.prototype.constructor = function view() {
-  pie.base.prototype.constructor.apply(this, arguments);
-  if(this.options.setup) this.setup();
-};
-
-pie.view.reopen({
+pie.view = pie.base.extend('view', {
 
   pieRole: 'view',
 
@@ -37,7 +29,7 @@ pie.view.reopen({
     this.eventedEls = [];
     this.changeCallbacks = [];
 
-    this.emitter = new pie.emitter();
+    this.emitter = pie.emitter.create();
 
     if(this.options.uiTarget) {
       this.emitter.once('afterSetup', this.addToDom.bind(this));
@@ -292,3 +284,14 @@ pie.view.reopen({
   }
 
 }, pie.mixins.container);
+
+
+/* true create function overriden to invoke setup after init() is finished if `setup:true` was provided as an option */
+(function(){
+  var existing = pie.view.create;
+  pie.view.create = function() {
+    var instance = existing.apply(this, arguments);
+    if(instance.options.setup) instance.setup();
+    return instance;
+  };
+})();

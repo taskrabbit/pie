@@ -7,7 +7,7 @@ describe("pie.app", function() {
         isSpecial: true
       });
 
-      var app = new pie.app({
+      var app = pie.app.create({
         i18n: myi18n,
         i18nOptions: {specialOption: true},
       });
@@ -17,10 +17,10 @@ describe("pie.app", function() {
     });
 
     it("should allow subobjects to be passed as instances", function() {
-      var i = new pie.i18n();
+      var i = pie.i18n.create();
       i.superSpecial = true;
 
-      var app = new pie.app({
+      var app = pie.app.create({
         i18n: i
       });
 
@@ -34,15 +34,16 @@ describe("pie.app", function() {
   describe('#start', function() {
 
     beforeEach(function(){
-      this.app = new pie.app({noAutoStart: true});
+      this.app = pie.app.create({noAutoStart: true});
     });
 
 
     it('should set up a single observer for links before the app starts', function() {
-      spyOn(pie.app.prototype, 'setupSinglePageLinks');
 
-      this.app = new pie.app({noAutoStart: true});
+      this.app = pie.app.create({noAutoStart: true});
+      spyOn(this.app, 'setupSinglePageLinks');
 
+      expect(this.app.emitter.firedCount('beforeStart')).toEqual(0);
       this.app.emitter.fire('beforeStart');
       this.app.emitter.fire('beforeStart');
 
@@ -57,10 +58,11 @@ describe("pie.app", function() {
     });
 
     it("should show any store notifications after the app is started", function() {
-      spyOn(pie.app.prototype, 'showStoredNotifications');
 
-      this.app = new pie.app({noAutoStart: true});
+      this.app = pie.app.create({noAutoStart: true});
+      spyOn(this.app, 'showStoredNotifications');
 
+      expect(this.app.emitter.firedCount('beforeStart')).toEqual(0);
       this.app.emitter.fire('afterStart');
       this.app.emitter.fire('afterStart');
 

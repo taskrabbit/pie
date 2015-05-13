@@ -4,7 +4,7 @@
 // Routes understand if they match string paths, they know how to extract interpolations from a path,
 // and know how to generate a path given some data.
 // ```
-// r = new pie.route('/foo/:id');
+// r = pie.route.create('/foo/:id');
 //
 // r.isDirectMatch('/foo/bar')
 // //=> false
@@ -82,7 +82,7 @@ pie.route = pie.model.extend('route', {
   // extract the interpolations from `path`. If `parseValues` is true, the values will
   // be parsed based on `pie.string.deserialize`'s implementation.
   // ```
-  // r = new pie.route('/foo/:id');
+  // r = pie.route.create('/foo/:id');
   // r.interolations('/foo/bar');
   // //=> {id: 'bar'}
   // ```
@@ -129,7 +129,7 @@ pie.route = pie.model.extend('route', {
   // Generate a path based on our template & the provided `data`. If `interpolateOnly` is true,
   // a query string will not be appended, even if there are extra items provided by `data`.
   // ```
-  // r = new pie.route('/foo/:id');
+  // r = pie.route.create('/foo/:id');
   // r.path({id: 'bar'})
   // //=> '/foo/bar'
   // r.path({id: 'baz', page: 2});

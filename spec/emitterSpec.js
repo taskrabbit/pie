@@ -1,7 +1,7 @@
 describe("pie.emitter", function() {
 
   beforeEach(function() {
-    this.e = new pie.emitter();
+    this.e = pie.emitter.create();
   });
 
   it("should allow a callback of an event to be registered", function() {

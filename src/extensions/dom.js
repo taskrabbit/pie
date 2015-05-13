@@ -77,7 +77,7 @@ pie.dom.createElement = function(str) {
 // A cache created solely for caching element specific information,
 // easier for cleanup via `pie.dom.remove()`.
 pie.dom.cache = function() {
-  pie.elementCache = pie.elementCache || new pie.cache();
+  pie.elementCache = pie.elementCache || pie.cache.create();
   return pie.elementCache;
 };
 

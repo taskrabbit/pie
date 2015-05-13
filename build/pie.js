@@ -988,7 +988,7 @@ pie.dom.createElement = function(str) {
 // A cache created solely for caching element specific information,
 // easier for cleanup via `pie.dom.remove()`.
 pie.dom.cache = function() {
-  pie.elementCache = pie.elementCache || new pie.cache();
+  pie.elementCache = pie.elementCache || pie.cache.create();
   return pie.elementCache;
 };
 
@@ -1927,7 +1927,7 @@ pie.object.isEmpty = function(obj) {
 /* From jQuery */
 pie.object.isPlainObject = function(obj) {
 
-  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain ) {
+  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain || obj.pieRole ) {
     return false;
   }
 
@@ -2617,7 +2617,7 @@ pie.mixins.bindings = {
     var opts;
     for(var i = 0; i < arguments.length; i++) {
       opts = arguments[i];
-      this._bindings.push(new pie.binding(this, opts.model || this.model, opts));
+      this._bindings.push(pie.binding.create(this, opts.model || this.model, opts));
     }
   },
 
@@ -2832,7 +2832,7 @@ pie.mixins.container = {
 // FormViews make use of bindings & validations to simplify the input, validation, and submission of forms.
 // FormViews expect the activeView and bindings mixins to be included.
 // ```
-// myForm = new pie.formView({
+// myForm = pie.formView.create({
 //   fields: [
 //     {
 //       name: 'full_name'
@@ -2898,7 +2898,7 @@ pie.mixins.formView = {
   /* we build a model if one isn't present already */
   /* if the model doesn't know how to perform validations, we extend it with the functionality */
   _ensureModel: function() {
-    this.model = this.model || this.options.model || new pie.model({});
+    this.model = this.model || this.options.model || pie.model.create({});
 
     if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
   },
@@ -3106,7 +3106,7 @@ pie.mixins.listView = (function(){
     return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView, {
 
       init: function(options, itemData) {
-        this.model = new pie.model(itemData);
+        this.model = pie.model.create(itemData);
         this._super(pie.object.merge({
           renderOnSetup: true,
         }, options));
@@ -3121,7 +3121,7 @@ pie.mixins.listView = (function(){
 
   var viewFactory = function(options, itemData){
     var klass = listItemClass();
-    return new klass(options, itemData);
+    return klass.create(options, itemData);
   };
 
   return {
@@ -3149,7 +3149,7 @@ pie.mixins.listView = (function(){
         throw new Error("No viewFactory provided");
       }
 
-      this.list = this.list || new pie.list([]);
+      this.list = this.list || pie.list.create([]);
     },
 
     setup: function() {
@@ -3439,27 +3439,15 @@ pie.mixins.validatable = {
     }
   }
 };
-pie.base = function() {
-  pie.setUid(this);
-  this.init.apply(this, arguments);
-  if(!this.app) {
-    if(this.options && this.options.app) this.app = this.options.app;
-    else this.app = pie.appInstance;
-  }
+pie.base = {
 
-  // This enables objects to be assigned to a global variable to assist with debugging
-  // Any pie object can define a debugName attribute or function and the value will be the name of the global
-  // variable to which this object is assigned.
-  if(this.debugName) {
-    window.pieDebug = window.pieDebug || {};
-    window.pieDebug[pie.fn.valueFrom(this.debugName)] = this;
-  }
-};
+  schema: [{
 
-pie.base.prototype.pieRole = 'object';
+    init: function(){},
 
-pie.base.prototype.init = function(){};
+    pieRole: 'object',
 
+<<<<<<< HEAD
 pie.base.prototype.reopen = function() {
   var extensions = pie.array.change(arguments, 'from', 'flatten'),
   extender = function(k,fn) {
@@ -3473,71 +3461,93 @@ pie.base.prototype.reopen = function() {
 
   return this;
 };
+=======
+    reopen: function(){
+      var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact');
+      pie.object.reopen(this, extensions);
+      extensions.forEach(function(ext) {
+        if(ext.init) ext.init.call(this);
+      }.bind(this));
+      return this;
+    }
+>>>>>>> cocompletely avoid prototypes. just use pojos
 
-pie.base.subClasses = [];
+  }],
 
-pie.base.extend = function() {
-  return pie.base._extend(pie.base, arguments);
-};
+  pieRole: 'class',
 
+<<<<<<< HEAD
 pie.base.reopen = function() {
   return pie.base._reopen(pie.base, arguments);
 };
+=======
+>>>>>>> cocompletely avoid prototypes. just use pojos
 
-pie.base._extend = function(parentClass, extensions) {
-  extensions = pie.array.change(extensions, 'from', 'flatten');
+  create: function() {
+    return pie.base._create(this.schema, arguments);
+  },
 
-  var oldLength = extensions.length;
-  extensions = pie.array.compact(extensions);
+  extend: function() {
+    var that = this,
+    schema = pie.array.dup(this.schema),
+    extensions = pie.array.change(arguments, 'from', 'flatten', 'compact'),
+    name = pie.object.isString(extensions[0]) ? extensions.shift() : null;
 
-  if(extensions.length !== oldLength) throw new Error("Null values not allowed");
+    extensions = pie.array.flatten(extensions.map(function(e){
+      if(e.pieRole === 'class') return e.schema;
+      return e;
+    }));
 
-  var name = "", child;
+    schema = pie.array.unique(schema.concat(extensions));
 
-  if(pie.object.isString(extensions[0])) {
-    name = extensions.shift();
-  }
+    var o = {
+      __className: name
+    };
 
-  if(pie.object.isFunction(extensions[0])) {
-    extensions.unshift({init: extensions.shift()});
-  }
+    o.schema = schema;
+    o.pieRole = 'class';
 
-  if(!name) {
-    name = pie.object.getPath(extensions[0], 'init.name') || '';
-  }
+    o.extend = function(){ return that.extend.apply(this, arguments); };
+    o.create = function(){ return that.create.apply(this, arguments); };
+    o.reopen = function(){ return that.reopen.apply(this, arguments); };
 
-  child = new Function(
-    "var f = function " + name + "(){\n" +
-    "  var myProto = Object.getPrototypeOf(this);\n" +
-    "  var parentProto = Object.getPrototypeOf(myProto);\n" +
-    "  parentProto.constructor.apply(this, arguments);\n" +
-    "};\n" +
-    // ensures the function name is released. Certain browsers (take a guess)
-    // have an issue with conflicting function names.
-    (name ? "var " + name + " = null;\n" : "") +
-    "return f;"
-  )();
+    return o;
+  },
 
+  reopen: function() {
+    var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact');
+    this.schema = pie.array.unique(this.schema.concat(extensions));
+  },
 
+  _create: function(schema, args) {
+    var o = {};
+    pie.setUid(o);
 
-  child.className  = name;
+    pie.object.reopen(o, schema);
 
-  // We don't set the constructor of the prototype since it would cause
-  // an infinite loop upon instantiation of our object. (due to the constructor.apply(this) & multiple levels of inheritance.)
-  child.prototype = Object.create(parentClass.prototype);
-  child.prototype.className = name;
+    o.init.apply(o, args);
 
-  child.extend = function() {
-    return pie.base._extend(child, arguments);
-  };
-
+<<<<<<< HEAD
   child.reopen = function() {
     return pie.base._reopen(child, arguments);
   };
+=======
+    if(!o.app) {
+      if(o.options && o.options.app) o.app = o.options.app;
+      else o.app = pie.appInstance;
+    }
+>>>>>>> cocompletely avoid prototypes. just use pojos
 
-  if(extensions.length) child.reopen(extensions);
+    // This enables objects to be assigned to a global variable to assist with debugging
+    // Any pie object can define a debugName attribute or function and the value will be the name of the global
+    // variable to which this object is assigned.
+    if(o.debugName) {
+      window.pieDebug = window.pieDebug || {};
+      window.pieDebug[pie.fn.valueFrom(o.debugName)] = o;
+    }
 
-  return child;
+    return o;
+  }
 };
 
 pie.base._reopen = function(klass, extensions) {
@@ -3587,7 +3597,7 @@ pie.app = pie.base.extend('app', {
   init: function(options) {
 
 
-    /* `pie.base.prototype.constructor` handles the setting of an app, */
+    /* `pie.base.create` handles the setting of an app, */
     /* but we don't want a reference to another app within this app. */
     delete this.app;
 
@@ -3612,7 +3622,7 @@ pie.app = pie.base.extend('app', {
 
     // `classOption` allows class configurations to be provided in the following formats:
     // ```
-    // new pie.app({
+    // pie.app.create({
     //   i18n: myCustomI18nClass,
     //   i18nOptions: {foo: 'bar'}
     // });
@@ -3622,7 +3632,7 @@ pie.app = pie.base.extend('app', {
     // Alternatively you can provide instances as the option.
     // ```
     // var instance = new myCustomI18nClass();
-    // new pie.app({
+    // pie.app.create({
     //   i18n: instance,
     // });
     // ```
@@ -3631,8 +3641,10 @@ pie.app = pie.base.extend('app', {
       var k = this.options[key] || _default,
       opt = this.options[key + 'Options'] || {};
 
-      if(pie.object.isFunction(k)) {
-        return new k(this, opt);
+      if(k.pieRole === 'class') {
+        return k.create(this, opt);
+      } else if (pie.object.isFunction(k)) {
+        return k(this, opt);
       } else {
         k.app = this;
         return k;
@@ -3644,7 +3656,9 @@ pie.app = pie.base.extend('app', {
     this.config = classOption('config', pie.config);
 
     // `app.cache` is a centralized cache store to be used by anyone.
-    this.cache = classOption('cache', pie.cache);
+    this.cache = classOption('cache', function(){
+      return pie.cache.create({}, {app: this});
+    }.bind(this));
 
     // `app.storage` is used for local, session, cache, etc storage
     this.storage = classOption('storage', pie.dataStore);
@@ -3665,7 +3679,7 @@ pie.app = pie.base.extend('app', {
     this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
     // After a navigation change, app.parsedUrl is the new parsed route
-    this.parsedUrl = new pie.model({});
+    this.parsedUrl = pie.model.create({});
 
     // `app.router` is used to determine which view should be rendered based on the url
     this.router = classOption('router', pie.router);
@@ -3701,8 +3715,9 @@ pie.app = pie.base.extend('app', {
 
     // Before we get going, observe link navigation & show any notifications stored
     // in localStorage.
-    this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
-    this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
+    // Wrapped in a function for testing purposes.
+    this.emitter.once('beforeStart', function(){ this.setupSinglePageLinks(); }.bind(this));
+    this.emitter.once('afterStart', function(){ this.showStoredNotifications(); }.bind(this));
 
     if(!this.options.noAutoStart) {
       // Once the dom is loaded, start the app.
@@ -3894,7 +3909,7 @@ pie.app = pie.base.extend('app', {
 // *example:*
 //
 // ```
-// var user = new pie.model();
+// var user = pie.model.create();
 // user.set('first_name', 'Doug');
 // user.get('first_name') //=> 'Doug'
 // user.sets({
@@ -3917,7 +3932,7 @@ pie.app = pie.base.extend('app', {
 //
 // ```
 // var o = function(changes){ console.log(changes); };
-// var user = new pie.model();
+// var user = pie.model.create();
 // user.observe(o, 'first_name');
 // user.sets({first_name: 'first', last_name: 'last'});
 // // => o is called and the following is logged:
@@ -3942,7 +3957,7 @@ pie.app = pie.base.extend('app', {
 //
 // ```
 // var fullName = function(){ return this.get('first_name') + ' ' + this.get('last_name'); };
-// var user = new pie.model({first_name: 'Doug', last_name: 'Wilson'});
+// var user = pie.model.create({first_name: 'Doug', last_name: 'Wilson'});
 // user.compute('full_name', fullName, 'first_name', 'last_name');
 // user.get('full_name') //=> 'Doug Wilson'
 // user.observe(function(changes){ console.log(changes); }, 'full_name');
@@ -3985,7 +4000,7 @@ pie.model = pie.base.extend('model', {
   // Provide all properties which invalidate the definition.
   // If the definition of the property is defined by a function of the same name, the function can be ommitted.
   // ```
-  // Model.prototype.fullName = function(){ /*...*/ }
+  // Model.reopen({fullName: function(){ /*...*/ }});
   // model.compute('fullName', 'first_name', 'last_name');
   // model.compute('displayName', function(){}, 'fullName');
   // ```
@@ -4011,82 +4026,6 @@ pie.model = pie.base.extend('model', {
 
     /* Initialize the computed properties value immediately. */
     this.set(name, fn.call(this));
-  },
-
-  // **pie.model.hasOne**
-  //
-  // Define an association on this model which will autoconvert objects at the given key into models.
-  // Rather than altering the original data, we place the association at `associationName`.
-  // The associationName defaults to the value of `key` + 'Model'.
-  // ```
-  // var parent = new pie.model();
-  // parent.hasOne('child');
-  // parent.get('child');
-  // //=> undefined
-  // parent.set('child.foo', 'bar');
-  // parent.get('child');
-  // //=> {foo: 'bar'}
-  // parent.get('childModel')
-  // //=> pie.model({foo: 'bar', _version: 2})
-  // parent.set('child.bar', 'baz')
-  // parent.get('childModel')
-  // //=> pie.model({foo: 'bar', bar: 'baz', _version: 3})
-  // ```
-  hasOne: function(key, associationName, modelClass) {
-    modelClass = modelClass || pie.model;
-    associationName = associationName || key + 'Model';
-
-    this.compute(associationName, function(){
-
-      var data = this.get(key);
-
-      if(data) {
-        var mod = this.get(associationName) || new modelClass();
-        mod.sets(data);
-        return mod;
-      } else {
-        return undefined;
-      }
-
-    }, key);
-  },
-
-  // **pie.model.hasMany**
-  //
-  // Define an association on this model which will autoconvert arrays at the given key into lists.
-  // Rather than altering the original data, we place the association at `associationName`.
-  // The associationName defaults to the value of `key` + 'List'.
-  // ```
-  // var parent = new pie.model();
-  // parent.hasMany('children');
-  // parent.get('children');
-  // //=> undefined
-  // parent.set('children', ['foo', 'bar']);
-  // parent.get('children');
-  // //=> ['foo', 'bar']
-  // parent.get('childrenList')
-  // //=> pie.list({items: ['foo', 'bar'], _version: 2})
-  // ```
-  hasMany: function(key, associationName, listClass) {
-    listClass = listClass || pie.list;
-    associationName = associationName || key + 'List';
-
-    this.compute(associationName, function(){
-
-      var data = this.get(key);
-
-      if(data) {
-        var mod = this.get(associationName) || new listClass();
-        if(Array.isArray(data)) {
-          data = {items: data};
-        }
-        mod.sets(data);
-        return mod;
-      } else {
-        return undefined;
-      }
-
-    }, key);
   },
 
   // **pie.model.addChangeRecord**
@@ -4625,7 +4564,7 @@ pie.dataStore = pie.base.extend('dataStore', {
 
     this._super();
 
-    this.backupModel = new pie.model({});
+    this.backupModel = pie.model.create({});
   },
 
   primary: function() {
@@ -4817,15 +4756,7 @@ pie.dataStore.adapters = (function(){
 //   * user interaction
 //   * teardown - removes any added events from the dom elements, removes any model observations, removes the el from the dom, etc.
 //   * detach - when the view's el is removed from the DOM.
-pie.view = pie.base.extend('view');
-
-/* true constructor overriden to invoke setup after init() is finished if `setup:true` was provided as an option */
-pie.view.prototype.constructor = function view() {
-  pie.base.prototype.constructor.apply(this, arguments);
-  if(this.options.setup) this.setup();
-};
-
-pie.view.reopen({
+pie.view = pie.base.extend('view', {
 
   pieRole: 'view',
 
@@ -4843,7 +4774,7 @@ pie.view.reopen({
     this.eventedEls = [];
     this.changeCallbacks = [];
 
-    this.emitter = new pie.emitter();
+    this.emitter = pie.emitter.create();
 
     if(this.options.uiTarget) {
       this.emitter.once('afterSetup', this.addToDom.bind(this));
@@ -5098,7 +5029,18 @@ pie.view.reopen({
   }
 
 }, pie.mixins.container);
-// activeView has moved to a mixin, you should use the mixin rather than this class.
+
+
+/* true create function overriden to invoke setup after init() is finished if `setup:true` was provided as an option */
+(function(){
+  var existing = pie.view.create;
+  pie.view.create = function() {
+    var instance = existing.apply(this, arguments);
+    if(instance.options.setup) instance.setup();
+    return instance;
+  };
+})();
+// formView has moved to a mixin, you should use the mixin rather than this class.
 // This class is being preserved for the sake of backwards compatability.
 pie.activeView = pie.view.extend('activeView', pie.mixins.activeView);
 pie.ajaxRequest = pie.model.extend('ajaxRequest', {
@@ -5109,7 +5051,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this.getOrSet('headers', {});
 
     this.xhr = null;
-    this.emitter = new pie.emitter();
+    this.emitter = pie.emitter.create();
 
     this.validates({
       url: { presence: true },
@@ -5435,7 +5377,7 @@ pie.ajax = pie.base.extend('ajax', {
   ajax: function(options, skipSend) {
     options = pie.object.deepMerge({}, this.defaultAjaxOptions, this._normalizeOptions(options));
 
-    var request = new pie.ajaxRequest({}, { app: this.app });
+    var request = pie.ajaxRequest.create({}, { app: this.app });
     request.build(options, skipSend);
 
     /* add a default error handler if the user hasn't provided one. */
@@ -5553,7 +5495,7 @@ pie.cache = pie.model.extend('cache', {
 // allows for blocking of an event via `around` callbacks. It's similar to a promise implementation,
 // but doesn't worry itself with the result of the underlying functions.
 // ```
-// var emitter = new pie.emitter();
+// var emitter = pie.emitter.create();
 //
 // emitter.on('foo', function(){} );
 // emitter.prepend('foo', function(){} );
@@ -6397,8 +6339,9 @@ pie.i18n = pie.model.extend('i18n', {
 });
 
 /* Aliases */
-pie.i18n.prototype.t = pie.i18n.prototype.translate;
-pie.i18n.prototype.l = pie.i18n.prototype.strftime;
+var extension = pie.array.last(pie.i18n.schema);
+extension.t = extension.translate;
+extension.l = extension.strftime;
 
 pie.i18n.defaultTranslations = {
   app: {
@@ -6564,7 +6507,7 @@ pie.list = pie.model.extend('list', {
     if(klass === true) klass = pie.model;
 
     if(klass && pie.object.isPlainObject(value)) {
-      value = new klass(value, this.options.castOptions);
+      value = klass.create(value, this.options.castOptions);
     }
 
     return value;
@@ -6639,7 +6582,7 @@ pie.list = pie.model.extend('list', {
     if(isNaN(idx)) path = key;
     else path = 'items.' + idx;
 
-    return pie.model.prototype.get.call(this, path);
+    return this._super(path);
   },
 
   // ** pie.list.indexOf **
@@ -6950,7 +6893,7 @@ pie.notifier = pie.base.extend('notifier', {
   init: function(app, options) {
     this.options = options || {};
     this.app = app || this.options.app || pie.appInstance;
-    this.notifications = new pie.list([]);
+    this.notifications = pie.list.create([]);
 
     this._super();
   },
@@ -7032,7 +6975,7 @@ pie.resources = pie.model.extend('resources', {
   //
   // Provide an app and a source map (shortcut all the `resources.define()` calls).
   // ```
-  // new pie.resources(app, {googleMaps: '//maps.google.com/.../js'});
+  // pie.resources.create(app, {googleMaps: '//maps.google.com/.../js'});
   // ```
   init: function(app, srcMap) {
     this._super({
@@ -7243,7 +7186,7 @@ pie.resources = pie.model.extend('resources', {
 // Routes understand if they match string paths, they know how to extract interpolations from a path,
 // and know how to generate a path given some data.
 // ```
-// r = new pie.route('/foo/:id');
+// r = pie.route.create('/foo/:id');
 //
 // r.isDirectMatch('/foo/bar')
 // //=> false
@@ -7321,7 +7264,7 @@ pie.route = pie.model.extend('route', {
   // extract the interpolations from `path`. If `parseValues` is true, the values will
   // be parsed based on `pie.string.deserialize`'s implementation.
   // ```
-  // r = new pie.route('/foo/:id');
+  // r = pie.route.create('/foo/:id');
   // r.interolations('/foo/bar');
   // //=> {id: 'bar'}
   // ```
@@ -7368,7 +7311,7 @@ pie.route = pie.model.extend('route', {
   // Generate a path based on our template & the provided `data`. If `interpolateOnly` is true,
   // a query string will not be appended, even if there are extra items provided by `data`.
   // ```
-  // r = new pie.route('/foo/:id');
+  // r = pie.route.create('/foo/:id');
   // r.path({id: 'bar'})
   // //=> '/foo/bar'
   // r.path({id: 'baz', page: 2});
@@ -7422,7 +7365,7 @@ pie.router = pie.model.extend('router', {
       app: app
     }, options));
 
-    this.cache = new pie.cache();
+    this.cache = pie.cache.create();
     this.compute('rootRegex', 'root');
   },
 
@@ -7505,7 +7448,7 @@ pie.router = pie.model.extend('router', {
       existing = this.findDirectMatch(path) || (config.name || this.findRoute(config.name));
       this.removeChild(existing);
 
-      route = new pie.route(path, config);
+      route = pie.route.create(path, config);
 
       this.addChild(route.name, route);
     }.bind(this));
@@ -7531,7 +7474,7 @@ pie.router = pie.model.extend('router', {
   // //=> "/foo/bar/44?q=search"
   // ```
   path: function(nameOrPath, data, interpolateOnly) {
-    var r = this.findRoute(nameOrPath) || new pie.route(nameOrPath.split('?')[0]),
+    var r = this.findRoute(nameOrPath) || pie.route.create(nameOrPath.split('?')[0]),
     path, params;
 
     if(~nameOrPath.indexOf('?')) params = pie.string.deserialize(nameOrPath.split('?')[1]);
@@ -7872,7 +7815,7 @@ pie.templates = pie.model.extend('templates', {
 // # Pie Validator
 // A collection of validators commonly used in web forms.
 // ```
-// validator = new pie.validator();
+// validator = pie.validator.create();
 // validator.email("foo@djalfdsaf");
 // //=> false
 // validator.email("foo@bar.com");
@@ -7927,11 +7870,11 @@ pie.validator = pie.base.extend('validator', {
 
     var key = validationOptions.messageKey || validationType,
         base = this.i18n.t('app.validations.' + key),
-        rangeOptions = new pie.validator.rangeOptions(this.app, validationOptions),
+        rangeOptions = pie.validator.rangeOptions.create(this.app, validationOptions),
         range = rangeOptions.message();
 
     if(!range && key === 'length') {
-      rangeOptions = new pie.validator.rangeOptions(this.app, {gt: 0});
+      rangeOptions = pie.validator.rangeOptions.create(this.app, {gt: 0});
       range = rangeOptions.message();
     }
 
@@ -8095,7 +8038,7 @@ pie.validator = pie.base.extend('validator', {
         options.sanitized = true;
       }
 
-      var ro = new pie.validator.rangeOptions(this.app, options);
+      var ro = pie.validator.rangeOptions.create(this.app, options);
       return ro.matches(value);
 
     }.bind(this));
@@ -8278,7 +8221,7 @@ pie.validator = pie.base.extend('validator', {
       if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
 
       var number = parseFloat(value),
-      ro = new pie.validator.rangeOptions(this.app, options);
+      ro = pie.validator.rangeOptions.create(this.app, options);
 
       return ro.matches(number);
     });
@@ -8385,7 +8328,7 @@ pie.validator = pie.base.extend('validator', {
 //
 // A small utilitly class which matches range options to comparators.
 // ```
-// range = new pie.validator.rangeOptions(app, {gte: 3, lt: 8});
+// range = pie.validator.rangeOptions.create(app, {gte: 3, lt: 8});
 // range.matches(3)
 // //=> true
 // range.matches(10)
@@ -8446,7 +8389,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
   init: function(parent, options) {
     options = options || {};
 
-    this.emitter    = new pie.emitter();
+    this.emitter    = pie.emitter.create();
     this.parent     = parent;
     this.oldChild   = options.oldChild;
     this.newChild   = options.newChild;
