@@ -2591,7 +2591,7 @@ pie.mixins.activeView = {
     if(current === instance) current = null;
 
     // there's a child and a target.
-    trans = new transitionClass(this, pie.object.merge(options.viewTransitionOptions, {
+    trans = transitionClass.create(this, pie.object.merge(options.viewTransitionOptions, {
       targetEl: target,
       childName: childName,
       oldChild: current,
@@ -3677,11 +3677,11 @@ pie.app = pie.base.extend('app', {
     //   i18nOptions: {foo: 'bar'}
     // });
     // ```
-    // which will result in `this.i18n = new myCustomI18nClass(this, {foo: 'bar'});`
+    // which will result in `this.i18n = myCustomI18nClass.create(this, {foo: 'bar'});`
     //
     // Alternatively you can provide instances as the option.
     // ```
-    // var instance = new myCustomI18nClass();
+    // var instance = myCustomI18nClass.create();
     // pie.app.create({
     //   i18n: instance,
     // });
@@ -7686,14 +7686,14 @@ pie.routeHandler = pie.base.extend('routeHandler', {
       viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.urlModel.get(this.options.viewKey));
 
       // The instance to be added. If the class is not defined, this could and should blow up.
-      child = new viewClass({ app: this.app });
+      child = viewClass.create({ app: this.app });
 
       // Cache an identifier on the view so we can invoke navigationUpdated instead of reloading
       // if the url changes but the view does not
       child._pieName = this.urlModel.get(this.options.viewKey);
 
       // Instantiate a transition object based on the app configuration.
-      transition = new this.options.viewTransitionClass(this.app, pie.object.merge({
+      transition = this.options.viewTransitionClass.create(this.app, pie.object.merge({
         oldChild: current,
         newChild: child,
         childName: "currentView",

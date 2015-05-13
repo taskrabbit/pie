@@ -78,14 +78,14 @@ pie.routeHandler = pie.base.extend('routeHandler', {
       viewClass = pie.object.getPath(window, this.options.viewNamespace + '.' + this.urlModel.get(this.options.viewKey));
 
       // The instance to be added. If the class is not defined, this could and should blow up.
-      child = new viewClass({ app: this.app });
+      child = viewClass.create({ app: this.app });
 
       // Cache an identifier on the view so we can invoke navigationUpdated instead of reloading
       // if the url changes but the view does not
       child._pieName = this.urlModel.get(this.options.viewKey);
 
       // Instantiate a transition object based on the app configuration.
-      transition = new this.options.viewTransitionClass(this.app, pie.object.merge({
+      transition = this.options.viewTransitionClass.create(this.app, pie.object.merge({
         oldChild: current,
         newChild: child,
         childName: "currentView",

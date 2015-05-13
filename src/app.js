@@ -37,11 +37,11 @@ pie.app = pie.base.extend('app', {
     //   i18nOptions: {foo: 'bar'}
     // });
     // ```
-    // which will result in `this.i18n = new myCustomI18nClass(this, {foo: 'bar'});`
+    // which will result in `this.i18n = myCustomI18nClass.create(this, {foo: 'bar'});`
     //
     // Alternatively you can provide instances as the option.
     // ```
-    // var instance = new myCustomI18nClass();
+    // var instance = myCustomI18nClass.create();
     // pie.app.create({
     //   i18n: instance,
     // });
