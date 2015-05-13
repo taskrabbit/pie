@@ -2106,7 +2106,7 @@ pie.object.reopen = (function(){
   };
 
   return function(/* target, *extensions */) {
-    var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact'),
+    var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact', 'unique'),
     target = extensions.shift(),
     extender = function(k,fn) {
       target[k] = wrap(fn, target[k]);
