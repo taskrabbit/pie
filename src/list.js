@@ -246,6 +246,8 @@ pie.list = pie.model.extend('list', {
   },
 
   setItems: function(arr, options) {
+    arr = arr || [];
+
     var innerOptions = pie.object.merge({}, options, {
       skipTrackMutations: true,
       skipObservers: true

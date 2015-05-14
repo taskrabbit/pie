@@ -3155,9 +3155,12 @@ pie.mixins.listView = (function(){
     return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView, {
 
       init: function(options, itemData) {
+        options = options || {};
+
         this.model = pie.model.create(itemData);
         this._super(pie.object.merge({
           renderOnSetup: true,
+          el: document.createElement(options.tagName || 'div')
         }, options));
       },
 
@@ -3199,6 +3202,7 @@ pie.mixins.listView = (function(){
       }
 
       this.list = this.list || pie.list.create([]);
+      this.model = this.model || this.list;
     },
 
     setup: function() {
@@ -6777,6 +6781,8 @@ pie.list = pie.model.extend('list', {
   },
 
   setItems: function(arr, options) {
+    arr = arr || [];
+
     var innerOptions = pie.object.merge({}, options, {
       skipTrackMutations: true,
       skipObservers: true
