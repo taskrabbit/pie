@@ -4889,6 +4889,29 @@ pie.view = pie.base.extend('view', {
     }
   },
 
+  // **pie.view.eon**
+  //
+  // Register an event with the emitter.
+  eon: function() {
+    var args = this._normalizedEmitterArgs(arguments);
+    this.emitter.on.apply(this.emitter, args);
+  },
+
+  // **pie.view.eonce**
+  //
+  // Register an event once with the emitter.
+  eonce: function() {
+    var args = this._normalizedEmitterArgs(arguments);
+    this.emitter.once.apply(this.emitter, args);
+  },
+
+  _normalizedEmitterArgs: function(args) {
+    return pie.array.from(args).map(function(arg, i) {
+      if(pie.object.isString(arg) && i > 0) return this[arg].bind(this);
+      return arg;
+    }.bind(this));
+  },
+
   // **pie.view.eventNamespace**
   //
   // The namespace used for this view's events. All views have a separate namespace to ensure
@@ -4954,18 +4977,18 @@ pie.view = pie.base.extend('view', {
     return this;
   },
 
-  // **pie.view.onChange**
+
+  // **pie.view.observe**
   //
   // Observe changes of an model, unobserving them when the view is removed.
   // If the object is not observable, an error will be thrown.
   // The first argument must be the observable model, the remaining arguments must match
   // the expected arguments of model.observe.
   // ```
-  // view.onChange(user, this.onNameChange.bind(this), 'firstName', 'lastName');
-  // view.onChange(context, this.onContextChange.bind(this));
+  // view.observe(user, this.onNameChange.bind(this), 'firstName', 'lastName');
+  // view.observe(context, this.onContextChange.bind(this));
   // ```
-  onChange: function() {
-
+  observe: function() {
     var parts = pie.array.partitionAt(arguments, pie.object.isFunction),
     observables = parts[0],
     args = parts[1];
@@ -4980,8 +5003,11 @@ pie.view = pie.base.extend('view', {
 
       observable.observe.apply(observable, args);
     }.bind(this));
+  },
 
-
+  onChange: function() {
+    this.app.debug.apply(this.app, pie._debugArgs("view#onChange is deprected. Please use view#observe instead."));
+    this.observe.apply(this, arguments);
   },
 
 
