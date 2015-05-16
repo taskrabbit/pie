@@ -20,34 +20,34 @@
     <script type="text/pie-template" id="nav">
       <div class="page-nav-inner">
 
-        <a href="[%= app.router.path('root') %]" class="home">Pie.js</a>
+        <a href="[%= h.path('root') %]" class="home">Pie.js</a>
 
         <hr />
 
         <ul>
           <li>
-            <a href="[%= app.router.path('root') %]">Getting Started</a>
+            <a href="[%= h.path('root') %]">Getting Started</a>
           </li>
           <li>
-            <a href="[%= app.router.path('page', {page: 'object-model'}) %]">Object Model</a>
+            <a href="[%= h.path('page', {page: 'object-model'}) %]">Object Model</a>
           </li>
           <li>
-            <a href="[%= app.router.path('page', {page: 'models'}) %]">Models</a>
+            <a href="[%= h.path('page', {page: 'models'}) %]">Models</a>
           </li>
           <li>
-            <a href="[%= app.router.path('page', {page: 'views'}) %]">Views</a>
+            <a href="[%= h.path('page', {page: 'views'}) %]">Views</a>
           </li>
           <li>
-            <a href="[%= app.router.path('page', {page: 'templates'}) %]">Templates</a>
+            <a href="[%= h.path('page', {page: 'templates'}) %]">Templates</a>
           </li>
           <li>
-            <a href="[%= app.router.path('page', {page: 'routing'}) %]">Routing</a>
+            <a href="[%= h.path('page', {page: 'routing'}) %]">Routing</a>
           </li>
           <li>
-            <a href="[%= app.router.path('page', {page: 'i18n'}) %]">i18n</a>
+            <a href="[%= h.path('page', {page: 'i18n'}) %]">i18n</a>
           </li>
           <li>
-            <a href="[%= app.router.path('page', {page: 'utils'}) %]">Utils</a>
+            <a href="[%= h.path('page', {page: 'utils'}) %]">Utils</a>
           </li>
         </ul>
 

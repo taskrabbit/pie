@@ -10,7 +10,7 @@
   </p>
   [%= h.gist('appInstance.js') %]
   <p>
-    This is the focal point of your application. When the <em>DOMContentLoaded</em> event is fired, your application will begin managing it's state. Instantiation of a <em>[%= ns %].app</em> results in the instantiation of many services. If you would need to provide options to one of these services, you simply provide the services name + <em>Options</em> to the app's options. For instance, to provide options to the router, your would:
+    This is the focal point of your application. When the <em>DOMContentLoaded</em> event is fired, your application will begin managing it's state. Instantiation of a <em>[%= ns %].app</em> results in the instantiation of many services. If you need to provide options to one of these services, you simply provide the service's name + <em>Options</em> to the app's options. For instance, to provide options to the router, your would:
   </p>
   [%= h.gist('appInstanceWithRouterOptions.js') %]
   <p>If, however, you have implemented your own version of a service, you can provide the class or instance directly:</p>
@@ -29,8 +29,8 @@
   <p>So, with these changes what has happened?</p>
 
   <ul>
-    <li>All routes will now map to a "sublayout" view since the second argument to [%= ns %].router.map is simply merged into the provided route configurations.</li>
-    <li>A route by the name of "basic.foo" exists, allowing a path to be constructed via <pre>app.router.path('basic.foo')</pre></li>
+    <li>All routes will now map to a "sublayout" view since the second argument to <em>[%= ns %].router.map</em> is simply merged into the provided route configurations.</li>
+    <li>A route by the name of "basic.foo" exists, allowing a path to be constructed via <em>app.router.path('basic.foo')</em></li>
     <li>A route by the name of "api.basicPath" exists, which will not map to a view, but will be constructable via the router.</li>
   </ul>
 

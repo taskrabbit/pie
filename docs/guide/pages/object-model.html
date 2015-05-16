@@ -4,11 +4,11 @@
 
 <div class="copy">
   <h1>The Object Model</h1>
-  <p>If you've used Ember, React, Base2,2 Prototype, etc, [%= possess %] object model should feel familiar. It's essentially based on <a target="_blank" href="http://ejohn.org/blog/simple-javascript-inheritance/">John Resig's thoughts on simple inheritance</a>. [%= pie.string.capitalize(project) %] tries to behave in the most obvious, expected way possible (POLA). [%= project %] attempts to provide an interface which can easily be replaced with ES6's inheritance implementation once it's fully adopted.</p>
+  <p>If you've used Ember, React, Base2, Prototype, etc, [%= possess %] object model should feel familiar. "Classes" are simply ordered collections of mixins. There are no prototypes. You never use the <em>new</em> keyword.</p>
 
   <h3>Inheritance</h3>
 
-  <p>[%= ns %].base is the base-level class implementation used in [%= project %]. All classes inherit from [%= ns %].base, though not necessarily directly. So, how do you create a new class?</p>
+  <p>[%= ns %].base is the base-level "class" implementation used in [%= project %]. All classes "inherit" from [%= ns %].base, though not necessarily directly. So, how do you create a new class?</p>
 
   [%= h.gist('newClass.js') %]
 
@@ -18,15 +18,13 @@
 
   <p>Ignoring all the <em>[%= ns %].model</em> specifics, let's see what's happening here.</p>
 
-  <p>First, we're creating a subclass of [%= ns %].model by using <em>[%= ns %].model.extend</em>. Assuming the class is an ancestor of [%= ns %].base, you're able to subclass via the <em>extend</em> function. So, if I wanted to inherit from the User class, I would simply use <em>User.extend(...)</em>. The first argument provided to extend() is an optional string which is the name of the constructor. By providing this unique string it makes it much easier to debug in most browsers. If supplied, it will also be provided to both the class and instances of the class as the <em>className</em> attribute. The next N arguments are the extensions to the class' prototype.</p>
+  <p>First, we're creating a subclass of [%= ns %].model by using <em>[%= ns %].model.extend</em>. Assuming the class is an ancestor of [%= ns %].base, you're able to subclass via the <em>extend</em> function. So, if I wanted to inherit from the User class, I would simply use <em>User.extend(...)</em>. The first argument provided to extend() is an optional string which is the name of the constructor. By providing this unique string it makes it much easier to debug in most browsers. If supplied, it will also be provided to both the class and instances of the class as the <em>__className</em> attribute. The next N arguments are the extensions to the class' schema.</p>
 
   <h3>Extensions and _super</h3>
 
-  <p>The extensions provided to a class either via <em>extend()</em> or <em>reopen()</em> are evaluated against the existing prototype which is how all the <em>_super</em> functions are created. They are evaluated in the order in which they're provided meaning every extension can override the previous. For instance, in the example above, the <em>lib.mixins.validatable</em> mixin can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on. All that to say, a reference to an existing function is provided to the new function via <em>_super</em>.</p>
+  <p>The extensions provided to a class either via <em>extend()</em> or <em>reopen()</em> are added to the existing schema. When a new instance is instantiated, redefined functions are wrapped and provided with a <em>this._super</em> reference. <em>this._super</em> is simply a reference to the previously defined function. In the example above, the <em>lib.mixins.validatable</em> mixin can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on.</p>
 
   [%= h.gist('_super.js') %]
-
-  <p>Until ES2015+ rolls out, all <em>_super</em> implementations are a bit hacky. Here's how [%= possess %] works. When an extension is added to a prototype, each key in the extension is evaluated. For each key, [%= ns %] checks to see if there is an existing function on the prototype. If there is, a wrapper function is created around the new function which sets <em>this._super</em> to the old function. After execution of the new function, this._super is reset to it's previous value.</p>
 
   <h3>_super Gotchas</h3>
 
