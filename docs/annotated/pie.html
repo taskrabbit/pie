@@ -9453,8 +9453,7 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
 
 
   _dayName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
-    <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.date.day_names.'</span> + d, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) ||
-            <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.day_names.'</span> + d);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.day_names.'</span> + d);
   },
 
 
@@ -9466,8 +9465,7 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
 
 
   _monthName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
-    <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.date.month_names.'</span> + m, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) ||
-            <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.month_names.'</span> + m);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.month_names.'</span> + m);
   },
 
 
@@ -9519,16 +9517,12 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
 
 
   _shortDayName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
-    <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.date.short_day_names.'</span> + d, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) ||
-            <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_day_names.'</span> + d, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) ||
-            <span class="hljs-keyword">this</span>._dayName(d).slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_day_names.'</span> + d, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) || <span class="hljs-keyword">this</span>._dayName(d).slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>);
   },
 
 
   _shortMonthName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
-    <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.date.short_month_names.'</span> + m, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) ||
-            <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_month_names.'</span> + m, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) ||
-            <span class="hljs-keyword">this</span>._monthName(m).slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_month_names.'</span> + m, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) || <span class="hljs-keyword">this</span>._monthName(m).slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>);
   },
 
 
@@ -9923,10 +9917,10 @@ pie.i18n.defaultTranslations = {
         <span class="hljs-string">'Mar'</span>,
         <span class="hljs-string">'Apr'</span>,
         <span class="hljs-string">'May'</span>,
-        <span class="hljs-string">'June'</span>,
-        <span class="hljs-string">'July'</span>,
+        <span class="hljs-string">'Jun'</span>,
+        <span class="hljs-string">'Jul'</span>,
         <span class="hljs-string">'Aug'</span>,
-        <span class="hljs-string">'Sept'</span>,
+        <span class="hljs-string">'Sep'</span>,
         <span class="hljs-string">'Oct'</span>,
         <span class="hljs-string">'Nov'</span>,
         <span class="hljs-string">'Dec'</span>
