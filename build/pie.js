@@ -6077,7 +6077,8 @@ pie.i18n = pie.model.extend('i18n', {
 
 
   _dayName: function(d) {
-    return this.t('app.time.day_names.' + d);
+    return  this.t('app.date.day_names.' + d, {'default' : ''}) ||
+            this.t('app.time.day_names.' + d);
   },
 
 
@@ -6089,7 +6090,8 @@ pie.i18n = pie.model.extend('i18n', {
 
 
   _monthName: function(m) {
-    return this.t('app.time.month_names.' + m);
+    return  this.t('app.date.month_names.' + m, {'default' : ''}) ||
+            this.t('app.time.month_names.' + m);
   },
 
 
@@ -6141,12 +6143,16 @@ pie.i18n = pie.model.extend('i18n', {
 
 
   _shortDayName: function(d) {
-    return this.t('app.time.short_day_names.' + d) || this._dayName(d).slice(0, 3);
+    return  this.t('app.date.short_day_names.' + d, {'default' : ''}) ||
+            this.t('app.time.short_day_names.' + d, {'default' : ''}) ||
+            this._dayName(d).slice(0, 3);
   },
 
 
   _shortMonthName: function(m) {
-    return this.t('app.time.short_month_names.' + m) || this._monthName(m).slice(0, 3);
+    return  this.t('app.date.short_month_names.' + m) ||
+            this.t('app.time.short_month_names.' + m) ||
+            this._monthName(m).slice(0, 3);
   },
 
 

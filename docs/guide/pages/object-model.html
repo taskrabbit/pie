@@ -14,7 +14,26 @@
 
   <p>See, easy as... most libraries. Let's try something a little more interesting now:</p>
 
-  [%= h.gist('complexClass.js') %]
+  <code class="gist">
+  User = pie.model.extend('User', {
+    init: function(data, options) {
+      this._super(data, options);
+
+      this.validates({
+        'firstName' : {presence: true},
+        'lastName'  : {presence: true},
+        'email'     : {email: true}
+      });
+
+      this.compute('fullName', 'firstName', 'lastName');
+    },
+
+    fullName: function() {
+      return pie.array.compact([this.get('firstName'), this.get('lastName')], true]).join(' ');
+    }
+
+  }, pie.mixins.validatable);
+  </code>
 
   <p>Ignoring all the <em>[%= ns %].model</em> specifics, let's see what's happening here.</p>
 
@@ -24,13 +43,76 @@
 
   <p>The extensions provided to a class either via <em>extend()</em> or <em>reopen()</em> are added to the existing schema. When a new instance is instantiated, redefined functions are wrapped and provided with a <em>this._super</em> reference. <em>this._super</em> is simply a reference to the previously defined function. In the example above, the <em>lib.mixins.validatable</em> mixin can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on.</p>
 
-  [%= h.gist('_super.js') %]
+  <code class="gist">
+  var A = pie.base.extend({
+    init: function(){
+      console.log('A');
+      this._super();
+    }
+  });
+
+  var B = A.extend({
+    init: function() {
+      this._super();
+      console.log('B1');
+    }
+  }, {
+    init: function() {
+      console.log('B2');
+      this._super();
+    }
+  });
+
+  var C = B.extend({
+    init: function() {
+      console.log('C');
+      this._super();
+    }
+  });
+
+  new C();
+  //=>  "C"
+  //=>  "B2"
+  //=>  "A"
+  //=>  "B1"
+  </code>
 
   <h3>_super Gotchas</h3>
 
   <p>If you invoke another function belonging to your object which accepts a callback, you cannot assume this._super will be present within the callback. For example:</p>
 
-  [%= h.gist('_superGotcha.js') %]
+  <code class="gist">
+  // This WILL NOT work.
+  pie.activeView.extend('AjaxView', {
+
+    setup: function() {
+      this.loadModel(function() {
+        this._super();
+      }.bind(this));
+    },
+
+    loadModel: function(cb) {
+      app.ajax.get(...).success(cb);
+    },
+  });
+
+  // This WILL work
+  pie.activeView.extend('AjaxView', {
+
+    setup: function() {
+      // grab a local reference to _super.
+      var sup = this._super.bind(this);
+      this.loadModel(function() {
+        // use the local reference instead of this._super
+        sup();
+      });
+    },
+
+    loadModel: function(cb) {
+      app.ajax.get(...).success(cb);
+    },
+  });
+  </code>
 
   <h3>Reopening</h3>
 

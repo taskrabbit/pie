@@ -9,9 +9,6 @@ deploy             := build/pie.js.min
 debug              := build/pie.js
 gzip               := build/pie.js.min.gz
 
-guide_source_files := docs/guide/js/app.js docs/guide/js/gist.js docs/guide/js/highlight.js
-guide_debug        := docs/guide/js/compiled.js
-
 
 all: clean $(debug) $(guide) $(deploy) $(guide_debug) document
 
@@ -22,12 +19,6 @@ $(deploy): $(debug)
 $(debug): $(source_files) $(amd_files)
 	mkdir -p build
 	cat src/amd/begin.txt $(source_files) src/amd/version.txt src/amd/end.txt > $(debug)
-
-$(guide_pie): $(debug)
-	cp $(debug) $(guide_pie)
-
-$(guide_debug): $(guide_source_files)
-	cat $(guide_source_files) > $(guide_debug)
 
 test: $(deploy)
 	open specRunner.html
