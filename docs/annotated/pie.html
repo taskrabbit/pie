@@ -9526,8 +9526,8 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
 
 
   _shortMonthName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
-    <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.date.short_month_names.'</span> + m) ||
-            <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_month_names.'</span> + m) ||
+    <span class="hljs-keyword">return</span>  <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.date.short_month_names.'</span> + m, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) ||
+            <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_month_names.'</span> + m, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) ||
             <span class="hljs-keyword">this</span>._monthName(m).slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>);
   },
 
