@@ -1,7 +1,7 @@
-describe("pie.base & classical inheritance", function() {
+describe("pie.base & object inheritance", function() {
 
   it("should allow a generic instance to be built", function() {
-    var a = new pie.base();
+    var a = pie.base.create();
     expect(typeof a.init).toEqual('function');
     expect(typeof a.foo).toEqual('undefined');
   });
@@ -12,50 +12,47 @@ describe("pie.base & classical inheritance", function() {
       foo: 'bar'
     });
 
-    var o = new pie.base();
-    var a = new A();
-    var b = new B();
+    var o = pie.base.create();
+    var a = A.create();
+    var b = B.create();
 
     expect(o.foo).toEqual(undefined);
     expect(a.foo).toEqual(undefined);
     expect(b.foo).toEqual('bar');
   });
 
-  it("should set up the prototypal inheritance properly", function() {
-    var A = pie.base.extend();
-    var B = A.extend();
-    var C = pie.base.extend();
+  it("should set up inheritance chains properly", function() {
+    var A = pie.base.extend({a: true});
+    var B = A.extend({b: true});
+    var C = pie.base.extend({c: true});
 
-    var a = new A();
-    var b = new B();
-    var c = new C();
+    var a = A.create();
+    var b = B.create();
+    var c = C.create();
 
-    expect(a instanceof pie.base).toEqual(true);
-    expect(b instanceof pie.base).toEqual(true);
-    expect(c instanceof pie.base).toEqual(true);
+    expect(a.a).toEqual(true);
+    expect(b.a).toEqual(true);
+    expect(c.a).toEqual(undefined);
 
-    expect(a instanceof A).toEqual(true);
-    expect(b instanceof A).toEqual(true);
-    expect(c instanceof A).toEqual(false);
+    expect(a.b).toEqual(undefined);
+    expect(b.b).toEqual(true);
+    expect(c.b).toEqual(undefined);
 
-    expect(a instanceof B).toEqual(false);
-    expect(b instanceof B).toEqual(true);
-    expect(c instanceof B).toEqual(false);
-
-    expect(a instanceof C).toEqual(false);
-    expect(b instanceof C).toEqual(false);
-    expect(c instanceof C).toEqual(true);
+    expect(a.c).toEqual(undefined);
+    expect(b.c).toEqual(undefined);
+    expect(c.c).toEqual(true);
   });
 
   it("should invoke init on construction", function(done) {
     var A = pie.base.extend({
       init: function() {
-        expect(this instanceof A).toEqual(true);
+        expect(this.a).toEqual(true);
         done();
-      }
+      },
+      a: true
     });
 
-    new A();
+    A.create();
   });
 
   it("should create a _super method for functions which call it", function() {
@@ -72,8 +69,8 @@ describe("pie.base & classical inheritance", function() {
       }
     });
 
-    var a = new A();
-    var b = new B();
+    var a = A.create();
+    var b = B.create();
 
     expect(a.bInit).toEqual(undefined);
     expect(a.aInit).toEqual(true);
@@ -89,7 +86,7 @@ describe("pie.base & classical inheritance", function() {
       }
     });
 
-    var a = new A();
+    var a = A.create();
     a.foo();
   });
 
@@ -104,7 +101,7 @@ describe("pie.base & classical inheritance", function() {
       }
     });
 
-    var b = new B();
+    var b = B.create();
     b.foo();
   });
 
@@ -125,9 +122,72 @@ describe("pie.base & classical inheritance", function() {
     });
 
 
-    var b = new B();
+    var b = B.create();
     b.foo();
     b.bar();
+  });
+
+  it("should allow an object to 'inherit' from two parents", function() {
+    var A = pie.base.extend({ a: true });
+    var B = pie.base.extend({ b: true });
+    var C = pie.base.extend(A, B, {c: true});
+
+    var a = A.create();
+    var b = B.create();
+    var c = C.create();
+
+    expect(a.a).toEqual(true);
+    expect(b.a).toEqual(undefined);
+    expect(c.a).toEqual(true);
+
+    expect(a.b).toEqual(undefined);
+    expect(b.b).toEqual(true);
+    expect(c.b).toEqual(true);
+
+    expect(a.c).toEqual(undefined);
+    expect(b.c).toEqual(undefined);
+    expect(c.c).toEqual(true);
+  });
+
+  it("should allow an object to 'inherit' from two parents, even if one of the parents is 'extended'", function() {
+    var A = pie.base.extend({ a: true });
+    var B = pie.base.extend({ b: true });
+    var C = A.extend(B, {c: true});
+
+    var a = A.create();
+    var b = B.create();
+    var c = C.create();
+
+    expect(a.a).toEqual(true);
+    expect(b.a).toEqual(undefined);
+    expect(c.a).toEqual(true);
+
+    expect(a.b).toEqual(undefined);
+    expect(b.b).toEqual(true);
+    expect(c.b).toEqual(true);
+
+    expect(a.c).toEqual(undefined);
+    expect(b.c).toEqual(undefined);
+    expect(c.c).toEqual(true);
+  });
+
+  it("child classes should reflect changes in the parent classes", function() {
+    var A = pie.base.extend({ a: true });
+    var B = A.extend({ b: true });
+
+    var olda = A.create();
+    var oldb = B.create();
+
+    A.reopen({ a: false });
+
+    var newa = A.create();
+    var newb = B.create();
+
+    expect(olda.a).toEqual(true);
+    expect(oldb.a).toEqual(true);
+
+    expect(newa.a).toEqual(false);
+    expect(newb.a).toEqual(false);
   });
 
 });

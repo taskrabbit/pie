@@ -4,7 +4,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
   init: function(parent, options) {
     options = options || {};
 
-    this.emitter    = new pie.emitter();
+    this.emitter    = pie.emitter.create();
     this.parent     = parent;
     this.oldChild   = options.oldChild;
     this.newChild   = options.newChild;
@@ -144,10 +144,11 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
     /* ensure the minimum delay has been reached */
     if(this.options.minDelay && now < (this.begin + this.options.minDelay)) return;
 
+    this.setLoading(false);
+
     /* ensure our view was not removed from our parent */
     if(this.newChild.parent !== this.parent) return;
 
-    this.setLoading(false);
     this.newChild.addToDom(this.targetEl);
     this.emitter.fire('afterAddNewChild');
   },

@@ -8,7 +8,7 @@ describe("pie.activeView", function() {
 
     beforeEach(function() {
 
-      this.view = new pie.activeView({
+      this.view = pie.activeView.create({
         template: 'activeViewTest',
         autoRender: true,
         renderOnSetup: true
@@ -37,12 +37,12 @@ describe("pie.activeView", function() {
 
     it("should use this.model's data as the render data if it's present", function() {
       expect(this.view.renderData()).toEqual({});
-      var m = this.view.model = new pie.model({foo: 'bar', bar: 'baz'});
+      var m = this.view.model = pie.model.create({foo: 'bar', bar: 'baz'});
       expect(this.view.renderData()).toEqual(m.data);
     });
 
     it("should generate content and apply to this.el based on a template name defined by this.options.template", function() {
-      var m = this.view.model = new pie.model({foo: 'bar', bar: 'baz'});
+      var m = this.view.model = pie.model.create({foo: 'bar', bar: 'baz'});
       this.view.setup();
       expect(this.view.el.innerHTML).toEqual('bar - baz');
     });

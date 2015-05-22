@@ -6,7 +6,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this.getOrSet('headers', {});
 
     this.xhr = null;
-    this.emitter = new pie.emitter();
+    this.emitter = pie.emitter.create();
 
     this.validates({
       url: { presence: true },

@@ -15,7 +15,7 @@ pie.router = pie.model.extend('router', {
       app: app
     }, options));
 
-    this.cache = new pie.cache();
+    this.cache = pie.cache.create();
     this.compute('rootRegex', 'root');
   },
 
@@ -98,7 +98,7 @@ pie.router = pie.model.extend('router', {
       existing = this.findDirectMatch(path) || (config.name || this.findRoute(config.name));
       this.removeChild(existing);
 
-      route = new pie.route(path, config);
+      route = pie.route.create(path, config);
 
       this.addChild(route.name, route);
     }.bind(this));
@@ -124,7 +124,7 @@ pie.router = pie.model.extend('router', {
   // //=> "/foo/bar/44?q=search"
   // ```
   path: function(nameOrPath, data, interpolateOnly) {
-    var r = this.findRoute(nameOrPath) || new pie.route(nameOrPath.split('?')[0]),
+    var r = this.findRoute(nameOrPath) || pie.route.create(nameOrPath.split('?')[0]),
     path, params;
 
     if(~nameOrPath.indexOf('?')) params = pie.string.deserialize(nameOrPath.split('?')[1]);

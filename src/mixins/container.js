@@ -128,7 +128,7 @@ pie.mixins.container = {
       return s;
     };
     var str = "\n", nextIndent = indent + (indent ? 4 : 1);
-    str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this._indexWithinParent || this.className) + ' (' + (this.className || this.pieId) + ')', indent);
+    str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this._indexWithinParent || this.__className) + ' (' + (this.__className || pie.uid(this)) + ')', indent);
 
     this.children.forEach(function(child) {
       str += "\n" + pad('|', nextIndent);

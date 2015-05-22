@@ -17,7 +17,7 @@ var pie = window.pie = {
   /* extensions to be used within pie apps. */
   mixins: {},
 
-  pieId: 1,
+  __pieId: 1,
 
 
   // ** pie.guid **
@@ -60,11 +60,11 @@ var pie = window.pie = {
     return document.querySelectorAll.apply(document, arguments);
   },
 
-  // ** pie.setUid **
+  // ** pie.uid **
   //
-  // Set the `pieId` of `obj` if it isn't already present.
-  setUid: function(obj) {
-    return obj.pieId = obj.pieId || pie.unique();
+  // Set the `__pieId` of `obj` if it isn't already present.
+  uid: function(obj) {
+    return obj.__pieId = obj.__pieId || pie.unique();
   },
 
   // ** pie.unique **
@@ -72,7 +72,7 @@ var pie = window.pie = {
   // Provide a unique integer not yet used by pie.
   // This is good for unique local ids.
   unique: function() {
-    return String(pie.pieId++);
+    return String(this.__pieId++);
   },
 
   // ** pie.util **
@@ -101,7 +101,7 @@ var pie = window.pie = {
     o.ns      = pie.ns;
     o.qs      = pie.qs;
     o.qsa     = pie.qsa;
-    o.setUid  = pie.setUid;
+    o.setUid  = pie.uid;
     o.unique  = pie.unique;
 
     return o;

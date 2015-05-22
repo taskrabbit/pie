@@ -11,17 +11,9 @@
 //   * user interaction
 //   * teardown - removes any added events from the dom elements, removes any model observations, removes the el from the dom, etc.
 //   * detach - when the view's el is removed from the DOM.
-pie.view = pie.base.extend('view');
+pie.view = pie.base.extend('view', {
 
-/* true constructor overriden to invoke setup after init() is finished if `setup:true` was provided as an option */
-pie.view.prototype.constructor = function view() {
-  pie.base.prototype.constructor.apply(this, arguments);
-  if(this.options.setup) this.setup();
-};
-
-pie.view.reopen({
-
-  pieRole: 'view',
+  __pieRole: 'view',
 
   // **pie.view.init**
   //
@@ -37,7 +29,7 @@ pie.view.reopen({
     this.eventedEls = [];
     this.changeCallbacks = [];
 
-    this.emitter = new pie.emitter();
+    this.emitter = pie.emitter.create();
 
     if(this.options.uiTarget) {
       this.emitter.once('afterSetup', this.addToDom.bind(this));
@@ -98,12 +90,35 @@ pie.view.reopen({
     }
   },
 
+  // **pie.view.eon**
+  //
+  // Register an event with the emitter.
+  eon: function() {
+    var args = this._normalizedEmitterArgs(arguments);
+    this.emitter.on.apply(this.emitter, args);
+  },
+
+  // **pie.view.eonce**
+  //
+  // Register an event once with the emitter.
+  eonce: function() {
+    var args = this._normalizedEmitterArgs(arguments);
+    this.emitter.once.apply(this.emitter, args);
+  },
+
+  _normalizedEmitterArgs: function(args) {
+    return pie.array.from(args).map(function(arg, i) {
+      if(pie.object.isString(arg) && i > 0) return this[arg].bind(this);
+      return arg;
+    }.bind(this));
+  },
+
   // **pie.view.eventNamespace**
   //
   // The namespace used for this view's events. All views have a separate namespace to ensure
   // event triggers are propagated efficiently.
   eventNamespace: function() {
-    return 'view'+ this.pieId;
+    return 'view'+ pie.uid(this);
   },
 
 
@@ -163,34 +178,38 @@ pie.view.reopen({
     return this;
   },
 
-  // **pie.view.onChange**
+
+  // **pie.view.observe**
   //
-  // Observe changes of an model, unobserving them when the view is removed.
+  // Observe changes of a model, unobserving them when the view is removed.
   // If the object is not observable, an error will be thrown.
-  // The first argument must be the observable model, the remaining arguments must match
-  // the expected arguments of model.observe.
+  // The first argument is the observable model OR the function to be executed.
+  // If the first argument is not a model, the model will be assumed to be `this.model`.
+  // The next arguments (first or second) should be a function name or a function.
+  // The remaining arguments are optional filter keys.
   // ```
-  // view.onChange(user, this.onNameChange.bind(this), 'firstName', 'lastName');
-  // view.onChange(context, this.onContextChange.bind(this));
+  // view.observe(user, this.onNameChange.bind(this), 'firstName', 'lastName');
+  // view.observe(context, this.onContextChange.bind(this));
   // ```
+  observe: function() {
+    var args = pie.array.from(arguments),
+    observable = pie.object.isModel(args[0]) ? args.shift() : this.model;
+
+    if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
+
+    if(pie.object.isString(args[0])) args[0] = this[args[0]].bind(this);
+
+    this.changeCallbacks.push({
+      observable: observable,
+      args: args
+    });
+
+    observable.observe.apply(observable, args);
+  },
+
   onChange: function() {
-
-    var parts = pie.array.partitionAt(arguments, pie.object.isFunction),
-    observables = parts[0],
-    args = parts[1];
-
-    observables.forEach(function(observable){
-      if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
-
-      this.changeCallbacks.push({
-        observable: observable,
-        args: args
-      });
-
-      observable.observe.apply(observable, args);
-    }.bind(this));
-
-
+    this.app.debug.apply(this.app, pie._debugArgs("view#onChange is deprected. Please use view#observe instead."));
+    this.observe.apply(this, arguments);
   },
 
 
@@ -239,6 +258,15 @@ pie.view.reopen({
     return this;
   },
 
+  // **pie.view.cancelSetup**
+  //
+  // Sometimes when a view is being set up it determines that the app has to redirect and/or it's
+  // no longer relevant to the page. If you do not conduct a full setup process this function will
+  // short circuit the process.
+  cancelSetup: function() {
+    this.emitter.fire('afterSetup');
+    return this;
+  },
 
   // **pie.view.teardown**
   //
@@ -292,3 +320,14 @@ pie.view.reopen({
   }
 
 }, pie.mixins.container);
+
+
+/* true create function overriden to invoke setup after init() is finished if `setup:true` was provided as an option */
+(function(){
+  var existing = pie.view.create;
+  pie.view.create = function() {
+    var instance = existing.apply(this, arguments);
+    if(instance.options.setup) instance.setup();
+    return instance;
+  };
+})();

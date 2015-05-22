@@ -397,7 +397,7 @@ describe("pie.i18n", function() {
         '%a' : 'Mon',
         '%A' : 'Monday',
         '%B' : 'September',
-        '%b' : 'Sept',
+        '%b' : 'Sep',
         '%d' : '08',
         '%e' : ' 8',
         '%-do' : '8th',

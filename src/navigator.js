@@ -73,7 +73,7 @@ pie.navigator = pie.model.extend('navigator', {
     });
 
     /* subscribe this navigator to the global history event */
-    pie.dom.on(document.body, 'pieHistoryChange.nav-' + this.pieId, this.setDataFromLocation.bind(this));
+    pie.dom.on(document.body, 'pieHistoryChange.nav-' + pie.uid(this), this.setDataFromLocation.bind(this));
 
     return this.setDataFromLocation();
   },

@@ -7,7 +7,7 @@ pie.app = pie.base.extend('app', {
   init: function(options) {
 
 
-    /* `pie.base.prototype.constructor` handles the setting of an app, */
+    /* `pie.base.create` handles the setting of an app, */
     /* but we don't want a reference to another app within this app. */
     delete this.app;
 
@@ -15,7 +15,7 @@ pie.app = pie.base.extend('app', {
     pie.appInstance = pie.appInstance || this;
 
     /* Register with pie to allow for nifty global lookups. */
-    pie.apps[this.pieId] = this;
+    pie.apps[pie.uid(this)] = this;
 
     /* Default application options. */
     this.options = pie.object.deepMerge({
@@ -32,17 +32,17 @@ pie.app = pie.base.extend('app', {
 
     // `classOption` allows class configurations to be provided in the following formats:
     // ```
-    // new pie.app({
+    // pie.app.create({
     //   i18n: myCustomI18nClass,
     //   i18nOptions: {foo: 'bar'}
     // });
     // ```
-    // which will result in `this.i18n = new myCustomI18nClass(this, {foo: 'bar'});`
+    // which will result in `this.i18n = myCustomI18nClass.create(this, {foo: 'bar'});`
     //
     // Alternatively you can provide instances as the option.
     // ```
-    // var instance = new myCustomI18nClass();
-    // new pie.app({
+    // var instance = myCustomI18nClass.create();
+    // pie.app.create({
     //   i18n: instance,
     // });
     // ```
@@ -51,8 +51,10 @@ pie.app = pie.base.extend('app', {
       var k = this.options[key] || _default,
       opt = this.options[key + 'Options'] || {};
 
-      if(pie.object.isFunction(k)) {
-        return new k(this, opt);
+      if(k.__pieRole === 'class') {
+        return k.create(this, opt);
+      } else if (pie.object.isFunction(k)) {
+        return k(this, opt);
       } else {
         k.app = this;
         return k;
@@ -64,7 +66,9 @@ pie.app = pie.base.extend('app', {
     this.config = classOption('config', pie.config);
 
     // `app.cache` is a centralized cache store to be used by anyone.
-    this.cache = classOption('cache', pie.cache);
+    this.cache = classOption('cache', function(){
+      return pie.cache.create({}, {app: this});
+    }.bind(this));
 
     // `app.storage` is used for local, session, cache, etc storage
     this.storage = classOption('storage', pie.dataStore);
@@ -85,7 +89,7 @@ pie.app = pie.base.extend('app', {
     this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
     // After a navigation change, app.parsedUrl is the new parsed route
-    this.parsedUrl = new pie.model({});
+    this.parsedUrl = pie.model.create({});
 
     // `app.router` is used to determine which view should be rendered based on the url
     this.router = classOption('router', pie.router);
@@ -121,8 +125,9 @@ pie.app = pie.base.extend('app', {
 
     // Before we get going, observe link navigation & show any notifications stored
     // in localStorage.
-    this.emitter.once('beforeStart', this.setupSinglePageLinks.bind(this));
-    this.emitter.once('afterStart', this.showStoredNotifications.bind(this));
+    // Wrapped in a function for testing purposes.
+    this.emitter.once('beforeStart', function(){ this.setupSinglePageLinks(); }.bind(this));
+    this.emitter.once('afterStart', function(){ this.showStoredNotifications(); }.bind(this));
 
     if(!this.options.noAutoStart) {
       // Once the dom is loaded, start the app.

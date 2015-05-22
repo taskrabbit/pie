@@ -77,7 +77,7 @@ pie.dom.createElement = function(str) {
 // A cache created solely for caching element specific information,
 // easier for cleanup via `pie.dom.remove()`.
 pie.dom.cache = function() {
-  pie.elementCache = pie.elementCache || new pie.cache();
+  pie.elementCache = pie.elementCache || pie.cache.create();
   return pie.elementCache;
 };
 
@@ -125,10 +125,10 @@ pie.dom.matches = function(el, sel) {
   var parent = el.parentNode || el.document;
   if(!parent || !parent.querySelector) return false;
 
-  pie.setUid(el);
-  el.setAttribute('data-pie-id', el.pieId);
+  pie.uid(el);
+  el.setAttribute('data-pie-id', pie.uid(el));
 
-  sel += '[data-pie-id="' + el.pieId + '"]';
+  sel += '[data-pie-id="' + pie.uid(el) + '"]';
   return parent.querySelector(sel) === el;
 };
 
@@ -147,12 +147,12 @@ pie.dom.off = function(el, event, fn, selector, cap) {
   var eventSplit = event.split('.'),
     namespace, all, events, compactNeeded;
 
-  pie.setUid(el);
+  pie.uid(el);
   event = eventSplit.shift();
   namespace = eventSplit.join('.');
   all = event === '*';
 
-  events = pie.dom.cache().getOrSet('element-' + el.pieId + '.dom-events', {});
+  events = pie.dom.cache().getOrSet('element-' + pie.uid(el) + '.dom-events', {});
 
   (all ? Object.keys(events) : [event]).forEach(function(k) {
     compactNeeded = false;
@@ -201,12 +201,12 @@ pie.dom.on = function(el, event, fn, selector, capture) {
 
   event = eventSplit.shift();
   namespace = eventSplit.join('.');
-  pie.setUid(el);
+  pie.uid(el);
 
   // we force capture so that delegation works.
   if(!capture && (event === 'focus' || event === 'blur') && selector) capture = true;
 
-  events = pie.dom.cache().getOrSet('element-' + el.pieId  + '.dom-events', {});
+  events = pie.dom.cache().getOrSet('element-' + pie.uid(el)  + '.dom-events', {});
   events[event] = events[event] || [];
 
   cb = function(e) {
@@ -321,8 +321,8 @@ pie.dom.prependChild = function(el, child) {
 // // => el.parentNode == null;
 // ```
 pie.dom.remove = function(el) {
-  pie.setUid(el);
-  pie.dom.cache().del('element-' + el.pieId);
+  pie.uid(el);
+  pie.dom.cache().del('element-' + pie.uid(el));
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 

@@ -368,7 +368,7 @@ describe("Array extensions", function() {
     });
 
     it('should allow for i18n translations to be provided', function() {
-      var a = new pie.app();
+      var a = pie.app.create();
       var i18n = a.i18n;
       i18n.load({
         app: {

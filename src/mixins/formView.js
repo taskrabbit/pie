@@ -3,7 +3,7 @@
 // FormViews make use of bindings & validations to simplify the input, validation, and submission of forms.
 // FormViews expect the activeView and bindings mixins to be included.
 // ```
-// myForm = new pie.formView({
+// myForm = pie.formView.create({
 //   fields: [
 //     {
 //       name: 'full_name'
@@ -69,7 +69,7 @@ pie.mixins.formView = {
   /* we build a model if one isn't present already */
   /* if the model doesn't know how to perform validations, we extend it with the functionality */
   _ensureModel: function() {
-    this.model = this.model || this.options.model || new pie.model({});
+    this.model = this.model || this.options.model || pie.model.create({});
 
     if(!this.model.validates) this.model.reopen(pie.mixins.validatable);
   },

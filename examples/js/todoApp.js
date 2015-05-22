@@ -201,10 +201,10 @@ example.views.list = pie.activeView.extend({
   },
 
   itemAdded: function(change) {
-    var sibling = change.oldValue && this.getChild('view-' + change.oldValue.pieId),
+    var sibling = change.oldValue && this.getChild('view-' + pie.uid(change.oldValue)),
     child = new example.views.item(this.list, change.value);
 
-    this.addChild('view-' + change.value.pieId, child);
+    this.addChild('view-' + pie.uid(change.value), child);
     child.setup();
 
     if(sibling) {
@@ -219,7 +219,7 @@ example.views.list = pie.activeView.extend({
   },
 
   itemRemoved: function(change) {
-    var child = this.getChild('view-' + change.oldValue.pieId);
+    var child = this.getChild('view-' + pie.uid(change.oldValue));
     this.removeChild(child);
     child.teardown();
   },

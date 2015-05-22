@@ -26,7 +26,7 @@ pie.mixins.bindings = {
     var opts;
     for(var i = 0; i < arguments.length; i++) {
       opts = arguments[i];
-      this._bindings.push(new pie.binding(this, opts.model || this.model, opts));
+      this._bindings.push(pie.binding.create(this, opts.model || this.model, opts));
     }
   },
 

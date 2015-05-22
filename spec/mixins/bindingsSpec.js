@@ -1,7 +1,7 @@
 describe("View Binding Integration", function() {
 
   beforeEach(function() {
-    var v = new lib.views.listView();
+    var v = window.lib.views.listView.create();
     this.view = v;
     this.model = this.view.model;
   });

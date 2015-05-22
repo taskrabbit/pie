@@ -65,7 +65,7 @@ pie.helpers = pie.model.extend('helpers', {
   },
 
   provideVariables: function() {
-    return "var app = pie.apps[" + this.app.pieId + "]; var " + this.options.variableName + " = app.helpers.functions();";
+    return "var app = pie.apps[" + pie.uid(this.app) + "]; var " + this.options.variableName + " = app.helpers.functions();";
 
   }
 

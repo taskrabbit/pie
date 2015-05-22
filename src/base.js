@@ -1,139 +1,84 @@
-pie.base = function() {
-  pie.setUid(this);
-  this.init.apply(this, arguments);
-  if(!this.app) {
-    if(this.options && this.options.app) this.app = this.options.app;
-    else this.app = pie.appInstance;
-  }
+pie.base = {
 
-  // This enables objects to be assigned to a global variable to assist with debugging
-  // Any pie object can define a debugName attribute or function and the value will be the name of the global
-  // variable to which this object is assigned.
-  if(this.debugName) {
-    window.pieDebug = window.pieDebug || {};
-    window.pieDebug[pie.fn.valueFrom(this.debugName)] = this;
-  }
-};
+  schema: [{
 
-pie.base.prototype.pieRole = 'object';
+    init: function(){
+      pie.uid(this);
+    },
 
-pie.base.prototype.init = function(){};
+    __pieRole: 'object',
 
-pie.base.prototype.reopen = function() {
-  var extensions = pie.array.change(arguments, 'from', 'flatten'),
-  extender = function(k,fn) {
-    this[k] = pie.base._wrap(fn, this[k]);
-  }.bind(this);
+    reopen: function(){
+      var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact');
+      pie.object.reopen(this, extensions);
+      extensions.forEach(function(ext) {
+        if(ext.init) ext.init.call(this);
+      }.bind(this));
+      return this;
+    }
 
-  extensions.forEach(function(e) {
-    pie.object.forEach(e, extender);
-    if(e.init) e.init.call(this);
-  }.bind(this));
+  }],
 
-  return this;
-};
+  __pieRole: 'class',
 
-pie.base.subClasses = [];
+  create: function() {
+    return pie.base._create(this.schema, arguments);
+  },
 
-pie.base.extend = function() {
-  return pie.base._extend(pie.base, arguments);
-};
+  extend: function() {
+    var that = this,
+    extensions = pie.array.change(arguments, 'from', 'flatten', 'compact'),
+    name = pie.object.isString(extensions[0]) ? extensions.shift() : null;
 
-pie.base.reopen = function() {
-  return pie.base._reopen(pie.base, arguments);
-};
+    extensions = pie.array.flatten(extensions.map(function(e){
+      if(e.__pieRole === 'class') return e.schema;
+      return e;
+    }));
 
-pie.base._extend = function(parentClass, extensions) {
-  extensions = pie.array.change(extensions, 'from', 'flatten');
+    var schema = [this.schema, {__className: name}, extensions];
 
-  var oldLength = extensions.length;
-  extensions = pie.array.compact(extensions);
-
-  if(extensions.length !== oldLength) throw new Error("Null values not allowed");
-
-  var name = "", child;
-
-  if(pie.object.isString(extensions[0])) {
-    name = extensions.shift();
-  }
-
-  if(pie.object.isFunction(extensions[0])) {
-    extensions.unshift({init: extensions.shift()});
-  }
-
-  if(!name) {
-    name = pie.object.getPath(extensions[0], 'init.name') || '';
-  }
-
-  child = new Function(
-    "var f = function " + name + "(){\n" +
-    "  var myProto = Object.getPrototypeOf(this);\n" +
-    "  var parentProto = Object.getPrototypeOf(myProto);\n" +
-    "  parentProto.constructor.apply(this, arguments);\n" +
-    "};\n" +
-    // ensures the function name is released. Certain browsers (take a guess)
-    // have an issue with conflicting function names.
-    (name ? "var " + name + " = null;\n" : "") +
-    "return f;"
-  )();
-
-
-
-  child.className  = name;
-
-  // We don't set the constructor of the prototype since it would cause
-  // an infinite loop upon instantiation of our object. (due to the constructor.apply(this) & multiple levels of inheritance.)
-  child.prototype = Object.create(parentClass.prototype);
-  child.prototype.className = name;
-
-  child.extend = function() {
-    return pie.base._extend(child, arguments);
-  };
-
-  child.reopen = function() {
-    return pie.base._reopen(child, arguments);
-  };
-
-  if(extensions.length) child.reopen(extensions);
-
-  return child;
-};
-
-pie.base._reopen = function(klass, extensions) {
-  extensions = pie.array.change(extensions, 'from', 'flatten', 'compact');
-  extensions.forEach(function(ext) {
-    pie.object.forEach(ext, function(k,v) {
-      klass.prototype[k] = pie.base._wrap(v, klass.prototype[k]);
-    });
-  });
-};
-
-pie.base._wrap = (function() {
-
-  var fnTest = /xyz/.test(function(){ "xyz"; });
-  fnTest = fnTest ? /\b_super\b/ : /.*/;
-
-  return function(newF, oldF) {
-    /* jslint eqnull:true */
-
-    // if we're not defining anything new, return the old definition.
-    if(newF == null) return oldF;
-    // if there is no old definition
-    if(oldF == null) return newF;
-    // if we're not overriding with a function
-    if(!pie.object.isFunction(newF)) return newF;
-    // if we're not overriding a function
-    if(!pie.object.isFunction(oldF)) return newF;
-    // if it doesn't call _super, don't bother wrapping.
-    if(!fnTest.test(newF)) return newF;
-
-    return function superWrapper() {
-      var ret, sup = this._super;
-      this._super = oldF;
-      ret = newF.apply(this, arguments);
-      if(!sup) delete this._super;
-      else this._super = sup;
-      return ret;
+    var o = {
+      __className: name
     };
-  };
-})();
+
+    o.schema = schema;
+    o.__pieRole = 'class';
+
+    o.extend = function(){ return that.extend.apply(this, arguments); };
+    o.create = function(){ return that.create.apply(this, arguments); };
+    o.reopen = function(){ return that.reopen.apply(this, arguments); };
+
+    return o;
+  },
+
+  reopen: function() {
+    var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact');
+    extensions.forEach(function(e){
+      this.schema.push(e);
+    }.bind(this));
+  },
+
+  _create: function(schema, args) {
+    var o = {};
+    pie.uid(o);
+
+    pie.object.reopen(o, schema);
+
+    o.init.apply(o, args);
+
+    if(!o.app) {
+      if(o.options && o.options.app) o.app = o.options.app;
+      else o.app = pie.appInstance;
+    }
+
+    // This enables objects to be assigned to a global variable to assist with debugging
+    // Any pie object can define a debugName attribute or function and the value will be the name of the global
+    // variable to which this object is assigned.
+    if(o.debugName) {
+      window.pieDebug = window.pieDebug || {};
+      window.pieDebug[pie.fn.valueFrom(o.debugName)] = o;
+    }
+
+    return o;
+  }
+};

@@ -5,7 +5,7 @@
 // *example:*
 //
 // ```
-// var user = new pie.model();
+// var user = pie.model.create();
 // user.set('first_name', 'Doug');
 // user.get('first_name') //=> 'Doug'
 // user.sets({
@@ -28,7 +28,7 @@
 //
 // ```
 // var o = function(changes){ console.log(changes); };
-// var user = new pie.model();
+// var user = pie.model.create();
 // user.observe(o, 'first_name');
 // user.sets({first_name: 'first', last_name: 'last'});
 // // => o is called and the following is logged:
@@ -53,7 +53,7 @@
 //
 // ```
 // var fullName = function(){ return this.get('first_name') + ' ' + this.get('last_name'); };
-// var user = new pie.model({first_name: 'Doug', last_name: 'Wilson'});
+// var user = pie.model.create({first_name: 'Doug', last_name: 'Wilson'});
 // user.compute('full_name', fullName, 'first_name', 'last_name');
 // user.get('full_name') //=> 'Doug Wilson'
 // user.observe(function(changes){ console.log(changes); }, 'full_name');
@@ -74,11 +74,11 @@
 
 pie.model = pie.base.extend('model', {
 
-  pieRole: 'model',
+  __pieRole: 'model',
 
   init: function(d, options) {
 
-    if(d && d.pieRole === 'model') d = d.data;
+    if(d && d.__pieRole === 'model') d = d.data;
 
     this.data = pie.object.deepMerge({_version: 1}, d);
     this.options = options || {};
@@ -96,7 +96,7 @@ pie.model = pie.base.extend('model', {
   // Provide all properties which invalidate the definition.
   // If the definition of the property is defined by a function of the same name, the function can be ommitted.
   // ```
-  // Model.prototype.fullName = function(){ /*...*/ }
+  // Model.reopen({fullName: function(){ /*...*/ }});
   // model.compute('fullName', 'first_name', 'last_name');
   // model.compute('displayName', function(){}, 'fullName');
   // ```
@@ -118,86 +118,10 @@ pie.model = pie.base.extend('model', {
     }.bind(this);
 
     this.observe(wrap, props);
-    this.observations[wrap.pieId].computed = true;
+    this.observations[pie.uid(wrap)].computed = true;
 
     /* Initialize the computed properties value immediately. */
     this.set(name, fn.call(this));
-  },
-
-  // **pie.model.hasOne**
-  //
-  // Define an association on this model which will autoconvert objects at the given key into models.
-  // Rather than altering the original data, we place the association at `associationName`.
-  // The associationName defaults to the value of `key` + 'Model'.
-  // ```
-  // var parent = new pie.model();
-  // parent.hasOne('child');
-  // parent.get('child');
-  // //=> undefined
-  // parent.set('child.foo', 'bar');
-  // parent.get('child');
-  // //=> {foo: 'bar'}
-  // parent.get('childModel')
-  // //=> pie.model({foo: 'bar', _version: 2})
-  // parent.set('child.bar', 'baz')
-  // parent.get('childModel')
-  // //=> pie.model({foo: 'bar', bar: 'baz', _version: 3})
-  // ```
-  hasOne: function(key, associationName, modelClass) {
-    modelClass = modelClass || pie.model;
-    associationName = associationName || key + 'Model';
-
-    this.compute(associationName, function(){
-
-      var data = this.get(key);
-
-      if(data) {
-        var mod = this.get(associationName) || new modelClass();
-        mod.sets(data);
-        return mod;
-      } else {
-        return undefined;
-      }
-
-    }, key);
-  },
-
-  // **pie.model.hasMany**
-  //
-  // Define an association on this model which will autoconvert arrays at the given key into lists.
-  // Rather than altering the original data, we place the association at `associationName`.
-  // The associationName defaults to the value of `key` + 'List'.
-  // ```
-  // var parent = new pie.model();
-  // parent.hasMany('children');
-  // parent.get('children');
-  // //=> undefined
-  // parent.set('children', ['foo', 'bar']);
-  // parent.get('children');
-  // //=> ['foo', 'bar']
-  // parent.get('childrenList')
-  // //=> pie.list({items: ['foo', 'bar'], _version: 2})
-  // ```
-  hasMany: function(key, associationName, listClass) {
-    listClass = listClass || pie.list;
-    associationName = associationName || key + 'List';
-
-    this.compute(associationName, function(){
-
-      var data = this.get(key);
-
-      if(data) {
-        var mod = this.get(associationName) || new listClass();
-        if(Array.isArray(data)) {
-          data = {items: data};
-        }
-        mod.sets(data);
-        return mod;
-      } else {
-        return undefined;
-      }
-
-    }, key);
   },
 
   // **pie.model.addChangeRecord**
@@ -425,9 +349,9 @@ pie.model = pie.base.extend('model', {
     fns.forEach(function(fn){
 
       /* Setting the uid is needed because we'll want to manage unobservation effectively. */
-      pie.setUid(fn);
+      pie.uid(fn);
 
-      this.observations[fn.pieId] = {
+      this.observations[pie.uid(fn)] = {
         fn: fn,
         keys: keys
       };
@@ -644,20 +568,20 @@ pie.model = pie.base.extend('model', {
     observation;
 
     fns.forEach(function(fn){
-      pie.setUid(fn);
+      pie.uid(fn);
 
-      observation = this.observations[fn.pieId];
+      observation = this.observations[pie.uid(fn)];
       if(!observation) return;
 
       if(!keys.length) {
-        delete this.observations[fn.pieId];
+        delete this.observations[pie.uid(fn)];
         return;
       }
 
       observation.keys = pie.array.subtract(observation.keys, keys);
 
       if(!observation.keys.length) {
-        delete this.observations[fn.pieId];
+        delete this.observations[pie.uid(fn)];
         return;
       }
     }.bind(this));

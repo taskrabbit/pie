@@ -24,14 +24,14 @@ describe("pie.validator", function() {
 
       trues.forEach(function(trueInput){
         it("should properly determine that " + JSON.stringify(options) + " returns true for an input of " + String(trueInput), function() {
-          var ro = new pie.validator.rangeOptions(this.validator.app, options);
+          var ro = pie.validator.rangeOptions.create(this.validator.app, options);
           expect(ro.matches(trueInput)).toEqual(true);
         });
       });
 
       falses.forEach(function(falseInput){
         it("should properly determine that " + JSON.stringify(options) + " returns false for an input of " + String(falseInput), function() {
-          var ro = new pie.validator.rangeOptions(this.validator.app, options);
+          var ro = pie.validator.rangeOptions.create(this.validator.app, options);
           expect(ro.matches(falseInput)).toEqual(false);
         });
       });
@@ -39,17 +39,17 @@ describe("pie.validator", function() {
     });
 
     it("should properly generate an 'eq' message", function() {
-      var ro = new pie.validator.rangeOptions(this.validator.app, {eq: 35});
+      var ro = pie.validator.rangeOptions.create(this.validator.app, {eq: 35});
       expect(ro.message()).toEqual("equal to 35");
     });
 
     it("should properly generate a 'lte' message", function() {
-      var ro = new pie.validator.rangeOptions(this.validator.app, {lte: 35});
+      var ro = pie.validator.rangeOptions.create(this.validator.app, {lte: 35});
       expect(ro.message()).toEqual("less than or equal to 35");
     });
 
     it("should properly generate a 'gte & lte' message", function() {
-      var ro = new pie.validator.rangeOptions(this.validator.app, {gte: 1, lte: 100});
+      var ro = pie.validator.rangeOptions.create(this.validator.app, {gte: 1, lte: 100});
       expect(ro.message()).toEqual("greater than or equal to 1 and less than or equal to 100");
     });
 

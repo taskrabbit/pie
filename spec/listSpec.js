@@ -1,7 +1,7 @@
 describe("pie.list", function() {
 
   beforeEach(function() {
-    this.items = new pie.list(['a', 'b', 'c', 'd']);
+    this.items = pie.list.create(['a', 'b', 'c', 'd']);
   });
 
   it("should properly determine length", function() {
@@ -29,19 +29,19 @@ describe("pie.list", function() {
   });
 
   it("should allow values to be cast into the desired casting class", function() {
-    var items = new pie.list([{foo: 'bar'}, {baz: 'bar'}], {cast: true});
+    var items = pie.list.create([{foo: 'bar'}, {baz: 'bar'}], {cast: true});
     var m = items.get(0);
 
-    expect(m.className).toEqual('model');
+    expect(m.__pieRole).toEqual('model');
     expect(m.get('foo')).toEqual('bar');
 
     m = items.get(1);
-    expect(m.className).toEqual('model');
+    expect(m.__pieRole).toEqual('model');
     expect(m.get('baz')).toEqual('bar');
 
     items.push({tar: 'ball'});
     m = items.get(2);
-    expect(m.className).toEqual('model');
+    expect(m.__pieRole).toEqual('model');
     expect(m.get('tar')).toEqual('ball');
   });
 

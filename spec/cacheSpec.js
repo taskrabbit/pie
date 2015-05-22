@@ -1,7 +1,7 @@
 describe("pie.cache", function() {
 
   beforeEach(function() {
-    this.cache = new pie.cache();
+    this.cache = pie.cache.create();
     this.now = this.cache.currentTime();
     spyOn(this.cache, 'currentTime').and.callFake(function(){
       return this.now;

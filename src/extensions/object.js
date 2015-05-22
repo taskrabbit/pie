@@ -114,7 +114,7 @@ pie.object.isEmpty = function(obj) {
 /* From jQuery */
 pie.object.isPlainObject = function(obj) {
 
-  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain ) {
+  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain || obj.__pieRole ) {
     return false;
   }
 
@@ -159,6 +159,14 @@ pie.object.isUndefined = function(obj) {
 };
 pie.object.isNotUndefined = function(obj) {
   return !pie.object.isUndefined(obj);
+};
+
+pie.object.isModel = function(obj) {
+  return obj && obj.__pieRole === 'model';
+};
+
+pie.object.isView = function(obj) {
+  return obj && obj.__pieRole === 'view';
 };
 
 // shallow merge
@@ -258,6 +266,52 @@ pie.object.instanceOf = function(instance, nameOfClass) {
   var klass = pie.object.getPath(window, nameOfClass);
   return klass && instance instanceof klass;
 };
+
+pie.object.reopen = (function(){
+
+  var fnTest = /xyz/.test(function(){ "xyz"; });
+  fnTest = fnTest ? /\b_super\b/ : /.*/;
+
+  var wrap = function (newF, oldF) {
+    /* jslint eqnull:true */
+
+    // if we're not defining anything new, return the old definition.
+    if(newF == null) return oldF;
+    // if there is no old definition
+    if(oldF == null) return newF;
+    // if we're not overriding with a function
+    if(!pie.object.isFunction(newF)) return newF;
+    // if we're not overriding a function
+    if(!pie.object.isFunction(oldF)) return newF;
+    // if it doesn't call _super, don't bother wrapping.
+    if(!fnTest.test(newF)) return newF;
+
+    if(oldF === newF) return newF;
+
+    return function superWrapper() {
+      var ret, sup = this._super;
+      this._super = oldF;
+      ret = newF.apply(this, arguments);
+      if(!sup) delete this._super;
+      else this._super = sup;
+      return ret;
+    };
+  };
+
+  return function(/* target, *extensions */) {
+    var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact', 'unique'),
+    target = extensions.shift(),
+    extender = function(k,fn) {
+      target[k] = wrap(fn, target[k]);
+    }.bind(this);
+
+    extensions.forEach(function(e) {
+      pie.object.forEach(e, extender);
+    }.bind(this));
+
+    return target;
+  };
+})();
 
 pie.object.reverseMerge = function(/* args */) {
   var args = pie.array.from(arguments);

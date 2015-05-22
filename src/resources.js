@@ -17,7 +17,7 @@ pie.resources = pie.model.extend('resources', {
   //
   // Provide an app and a source map (shortcut all the `resources.define()` calls).
   // ```
-  // new pie.resources(app, {googleMaps: '//maps.google.com/.../js'});
+  // pie.resources.create(app, {googleMaps: '//maps.google.com/.../js'});
   // ```
   init: function(app, srcMap) {
     this._super({
@@ -125,7 +125,13 @@ pie.resources = pie.model.extend('resources', {
     /* If options.callbackName is present, the invoking method self-references itself so it can clean itself up. */
     /* Because of this, we don't need to invoke the onload */
     if(!options.callbackName) {
-      script.onload = resourceOnload;
+      var done = false;
+      script.onload = script.onreadystatechange = function(){
+        if(!done && (!this.readyState || this.readyState==='loaded' || this.readyState==='complete')) {
+          done = true;
+          resourceOnload();
+        }
+      };
     }
 
     this._appendNode(script);
