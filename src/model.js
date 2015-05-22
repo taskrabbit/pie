@@ -118,7 +118,7 @@ pie.model = pie.base.extend('model', {
     }.bind(this);
 
     this.observe(wrap, props);
-    this.observations[wrap.pieId].computed = true;
+    this.observations[pie.uid(wrap)].computed = true;
 
     /* Initialize the computed properties value immediately. */
     this.set(name, fn.call(this));
@@ -349,9 +349,9 @@ pie.model = pie.base.extend('model', {
     fns.forEach(function(fn){
 
       /* Setting the uid is needed because we'll want to manage unobservation effectively. */
-      pie.setUid(fn);
+      pie.uid(fn);
 
-      this.observations[fn.pieId] = {
+      this.observations[pie.uid(fn)] = {
         fn: fn,
         keys: keys
       };
@@ -568,20 +568,20 @@ pie.model = pie.base.extend('model', {
     observation;
 
     fns.forEach(function(fn){
-      pie.setUid(fn);
+      pie.uid(fn);
 
-      observation = this.observations[fn.pieId];
+      observation = this.observations[pie.uid(fn)];
       if(!observation) return;
 
       if(!keys.length) {
-        delete this.observations[fn.pieId];
+        delete this.observations[pie.uid(fn)];
         return;
       }
 
       observation.keys = pie.array.subtract(observation.keys, keys);
 
       if(!observation.keys.length) {
-        delete this.observations[fn.pieId];
+        delete this.observations[pie.uid(fn)];
         return;
       }
     }.bind(this));

@@ -144,10 +144,11 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
     /* ensure the minimum delay has been reached */
     if(this.options.minDelay && now < (this.begin + this.options.minDelay)) return;
 
+    this.setLoading(false);
+
     /* ensure our view was not removed from our parent */
     if(this.newChild.parent !== this.parent) return;
 
-    this.setLoading(false);
     this.newChild.addToDom(this.targetEl);
     this.emitter.fire('afterAddNewChild');
   },

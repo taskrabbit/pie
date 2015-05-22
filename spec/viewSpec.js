@@ -5,7 +5,7 @@ describe("pie.view", function() {
   });
 
   it("should correctly build an event namespace", function() {
-    var uid = this.view.pieId;
+    var uid = this.view.__pieId;
     expect(uid).not.toBeFalsy();
     expect(this.view.eventNamespace()).toEqual('view' + uid);
   });
@@ -64,12 +64,12 @@ describe("pie.view", function() {
       this.view.onChange(model, this.view.setup.bind(this.view));
 
       f = this.view.changeCallbacks[0].args[0];
-      expect(model.observations[f.pieId]).toBeTruthy();
+      expect(model.observations[f.__pieId]).toBeTruthy();
 
       this.view.teardown();
 
       expect(this.view.changeCallbacks.length).toEqual(0);
-      expect(model.observations[f.pieId]).toBeFalsy();
+      expect(model.observations[f.__pieId]).toBeFalsy();
     });
 
     it("should observe events on it's el via this.on and remove the events", function() {

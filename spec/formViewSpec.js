@@ -24,7 +24,7 @@ describe("pie.formView", function() {
       });
 
       this.view = example.create({ setup: true });
-      expect(this.view.pieRole).toEqual('view');
+      expect(this.view.__pieRole).toEqual('view');
       expect(this.view.emitter.hasEvent('afterSetup')).toEqual(true);
     });
   });

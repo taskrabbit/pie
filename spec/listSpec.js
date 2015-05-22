@@ -32,16 +32,16 @@ describe("pie.list", function() {
     var items = pie.list.create([{foo: 'bar'}, {baz: 'bar'}], {cast: true});
     var m = items.get(0);
 
-    expect(m.pieRole).toEqual('model');
+    expect(m.__pieRole).toEqual('model');
     expect(m.get('foo')).toEqual('bar');
 
     m = items.get(1);
-    expect(m.pieRole).toEqual('model');
+    expect(m.__pieRole).toEqual('model');
     expect(m.get('baz')).toEqual('bar');
 
     items.push({tar: 'ball'});
     m = items.get(2);
-    expect(m.pieRole).toEqual('model');
+    expect(m.__pieRole).toEqual('model');
     expect(m.get('tar')).toEqual('ball');
   });
 

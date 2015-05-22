@@ -2,7 +2,9 @@ pie.base = {
 
   schema: [{
 
-    init: function(){},
+    init: function(){
+      pie.uid(this);
+    },
 
     __pieRole: 'object',
 
@@ -33,7 +35,7 @@ pie.base = {
       return e;
     }));
 
-    var schema = [this.schema, extensions];
+    var schema = [this.schema, {__className: name}, extensions];
 
     var o = {
       __className: name
@@ -58,7 +60,7 @@ pie.base = {
 
   _create: function(schema, args) {
     var o = {};
-    pie.setUid(o);
+    pie.uid(o);
 
     pie.object.reopen(o, schema);
 

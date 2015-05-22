@@ -15,7 +15,7 @@ pie.app = pie.base.extend('app', {
     pie.appInstance = pie.appInstance || this;
 
     /* Register with pie to allow for nifty global lookups. */
-    pie.apps[this.pieId] = this;
+    pie.apps[pie.uid(this)] = this;
 
     /* Default application options. */
     this.options = pie.object.deepMerge({

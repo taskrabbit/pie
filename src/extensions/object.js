@@ -161,6 +161,14 @@ pie.object.isNotUndefined = function(obj) {
   return !pie.object.isUndefined(obj);
 };
 
+pie.object.isModel = function(obj) {
+  return obj && obj.__pieRole === 'model';
+};
+
+pie.object.isView = function(obj) {
+  return obj && obj.__pieRole === 'view';
+};
+
 // shallow merge
 pie.object.merge = function() {
   var args = pie.array.from(arguments),

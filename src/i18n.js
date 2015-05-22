@@ -36,365 +36,368 @@
 // ```
 
 // _**Todo:** allow a default scope (eg, en, en-GB, etc). Currently the assumption is that only the relevant translations are loaded._
-pie.i18n = pie.model.extend('i18n', {
+pie.i18n = pie.model.extend('i18n', (function(){
 
-  init: function(app, options) {
-    var data = pie.object.merge({}, pie.i18n.defaultTranslations);
-    options = pie.object.deepMerge({
-      settings: {
-        interpolationStart: '%{',
-        interpolationEnd: '}',
-        nestedStart: '${',
-        nestedEnd: '}'
-      }
-    }, options || {}, {app: app});
+  var extension = {
 
-
-    var escapedInterpEnd = pie.string.escapeRegex(options.settings.interpolationEnd),
-    escapedNestedEnd = pie.string.escapeRegex(options.settings.nestedEnd);
-
-    options.settings.interpolationRegex = new RegExp(pie.string.escapeRegex(options.settings.interpolationStart) + '([^' + escapedNestedEnd + ']+)' + escapedInterpEnd, 'g');
-    options.settings.nestedRegex = new RegExp(pie.string.escapeRegex(options.settings.nestedStart) + '([^' + escapedNestedEnd + ']+)' + escapedNestedEnd, 'g');
-
-    this._super(data, options);
-  },
-
-  _ampm: function(num) {
-    return this.t('app.time.meridiems.' + (num >= 12 ? 'pm' : 'am'));
-  },
-
-
-  _countAlias: {
-    '0' : 'zero',
-    '1' : 'one',
-    '-1' : 'negone'
-  },
-
-
-  _dayName: function(d) {
-    return this.t('app.time.day_names.' + d);
-  },
-
-
-  _hour: function(h) {
-    if(h > 12) h -= 12;
-    if(!h) h += 12;
-    return h;
-  },
-
-
-  _monthName: function(m) {
-    return this.t('app.time.month_names.' + m);
-  },
-
-
-  _nestedTranslate: function(t, data) {
-    return this._expand(t, this.options.settings.nestedRegex, function(match, path) {
-      return this.translate(path, data);
-    }.bind(this));
-  },
-
-  _interpolateTranslation: function(t, data) {
-    return this._expand(t, this.options.settings.interpolationRegex, function(match, key) {
-      return pie.object.getPath(data, key);
-    });
-  },
-
-  _expand: function(t, regex, fn) {
-    try{
-      var val;
-      return t.replace(regex, function(match, key) {
-        val = fn(match, key);
-        if(val === undefined) throw new Error("Missing interpolation argument `" + key + "` for '" + t + "'");
-        return val;
-      });
-    } catch(e) {
-      this.app.errorHandler.handleI18nError(e, {
-        handledBy: "pie.i18n#_expand",
-        expandString: t,
-        regex: regex
-      });
-      return "";
-    }
-  },
-
-
-  /* assumes that dates either come in as dates, iso strings, or epoch timestamps */
-  _normalizedDate: function(d) {
-    if(String(d).match(/^\d+$/)) {
-      d = parseInt(d, 10);
-      if(String(d).length < 13) d *= 1000;
-      d = new Date(d);
-    } else if(pie.object.isString(d)) {
-      d = pie.date.timeFromISO(d);
-    } else {
-      /* let the system parse */
-      d = new Date(d);
-    }
-    return d;
-  },
-
-
-  _shortDayName: function(d) {
-    return this.t('app.time.short_day_names.' + d, {'default' : ''}) || this._dayName(d).slice(0, 3);
-  },
-
-
-  _shortMonthName: function(m) {
-    return this.t('app.time.short_month_names.' + m, {'default' : ''}) || this._monthName(m).slice(0, 3);
-  },
-
-
-  _pad: function(num, cnt, pad, prefix) {
-    var s = '',
-        p = cnt - num.toString().length;
-    if(pad === undefined) pad = ' ';
-    while(p>0){
-      s += prefix ? pad + s : s + pad;
-      p -= 1;
-    }
-    return s + num.toString();
-  },
-
-  _ordinal: function(number) {
-    var unit = number % 100;
-
-    if(unit >= 11 && unit <= 13) unit = 0;
-    else unit = number % 10;
-
-    return this.t('app.time.ordinals.o' + unit);
-  },
-
-  _timezoneAbbr: function(date) {
-    var str = date && date.toString();
-    return str && str.split(/\((.*)\)/)[1];
-  },
-
-
-  _utc: function(t) {
-    var t2 = new Date(t.getTime());
-    t2.setMinutes(t2.getMinutes() + t2.getTimezoneOffset());
-    return t2;
-  },
-
-  keyCheck: /^\.(.+)$/,
-
-  // ** pie.i18n.attempt **
-  //
-  // If the provided `key` looks like a translation key, prepended with a ".",
-  // try to look it up. If it does not or the provided key does not exist, return
-  // the provided key.
-  // ```
-  // i18n.attempt('.foo.bar.baz')
-  // ```
-  attempt: function(/* args */) {
-    var args = pie.array.from(arguments),
-    key = args[0],
-    m = key && key.match(this.keyCheck);
-
-    if(!m) return key;
-
-    args[0] = m[1]; /* swap out the formatted key for the real one */
-    return this.translate.apply(this, args);
-  },
-
-  // ** pie.i18n.load **
-  //
-  // Load translations into this instance.
-  // By default, a deep merge will occur, provide `false` for `shallow`
-  // if you would like a shallow merge to occur.
-  // ```
-  // i18n.load({foo: 'Bar %{baz}'});
-  // ```
-  load: function(data, shallow) {
-    var f = shallow ? pie.object.merge : pie.object.deepMerge;
-    f.call(null, this.data, data);
-  },
-
-  // ** pie.i18n.translate (pie.i18n.t) **
-  //
-  // Given a `path`, look up a translation.
-  // If the second argument `data` is provided, the `data` will be
-  // interpolated into the translation before returning.
-  // Arguments 3+ are string modification methods as defined by `pie.string`.
-  // `translate` is aliased as `t`.
-  // ```
-  // //=> Assuming 'foo.path' is defined as "This is %{name}"
-  // i18n.t('foo.path', {name: 'Bar'}, 'pluralize', 'upcase')
-  // //=> "THIS IS BAR'S"
-  // ```
-  translate: function(/* path, data, stringChange1, stringChange2 */) {
-    var changes = pie.array.change(arguments, 'from', 'compact'),
-    path = changes.shift(),
-    data = pie.object.isObject(changes[0]) ? changes.shift() : undefined,
-    translation = this.get(path),
-    count;
-
-    if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {
-      count = (data.count || 0).toString();
-      count = this._countAlias[count] || (count > 0 ? 'other' : 'negother');
-      translation = translation[count] === undefined ? translation.other : translation[count];
-    }
-
-    if(!translation) {
-
-      if(pie.object.has(data, 'default')) {
-        var def = pie.fn.valueFrom(data.default);
-        if(pie.object.isString(def)) {
-          translation = this.attempt(def);
-        } else {
-          translation = def;
+    init: function(app, options) {
+      var data = pie.object.merge({}, pie.i18n.defaultTranslations);
+      options = pie.object.deepMerge({
+        settings: {
+          interpolationStart: '%{',
+          interpolationEnd: '}',
+          nestedStart: '${',
+          nestedEnd: '}'
         }
-      } else if(translation == null) {
-        this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path), {
-          handledBy: "pie.i18n#translate",
-          translationPath: path
+      }, options || {}, {app: app});
+
+
+      var escapedInterpEnd = pie.string.escapeRegex(options.settings.interpolationEnd),
+      escapedNestedEnd = pie.string.escapeRegex(options.settings.nestedEnd);
+
+      options.settings.interpolationRegex = new RegExp(pie.string.escapeRegex(options.settings.interpolationStart) + '([^' + escapedNestedEnd + ']+)' + escapedInterpEnd, 'g');
+      options.settings.nestedRegex = new RegExp(pie.string.escapeRegex(options.settings.nestedStart) + '([^' + escapedNestedEnd + ']+)' + escapedNestedEnd, 'g');
+
+      this._super(data, options);
+    },
+
+    _ampm: function(num) {
+      return this.t('app.time.meridiems.' + (num >= 12 ? 'pm' : 'am'));
+    },
+
+
+    _countAlias: {
+      '0' : 'zero',
+      '1' : 'one',
+      '-1' : 'negone'
+    },
+
+
+    _dayName: function(d) {
+      return this.t('app.time.day_names.' + d);
+    },
+
+
+    _hour: function(h) {
+      if(h > 12) h -= 12;
+      if(!h) h += 12;
+      return h;
+    },
+
+
+    _monthName: function(m) {
+      return this.t('app.time.month_names.' + m);
+    },
+
+
+    _nestedTranslate: function(t, data) {
+      return this._expand(t, this.options.settings.nestedRegex, function(match, path) {
+        return this.translate(path, data);
+      }.bind(this));
+    },
+
+    _interpolateTranslation: function(t, data) {
+      return this._expand(t, this.options.settings.interpolationRegex, function(match, key) {
+        return pie.object.getPath(data, key);
+      });
+    },
+
+    _expand: function(t, regex, fn) {
+      try{
+        var val;
+        return t.replace(regex, function(match, key) {
+          val = fn(match, key);
+          if(val === undefined) throw new Error("Missing interpolation argument `" + key + "` for '" + t + "'");
+          return val;
+        });
+      } catch(e) {
+        this.app.errorHandler.handleI18nError(e, {
+          handledBy: "pie.i18n#_expand",
+          expandString: t,
+          regex: regex
         });
         return "";
       }
+    },
+
+
+    /* assumes that dates either come in as dates, iso strings, or epoch timestamps */
+    _normalizedDate: function(d) {
+      if(String(d).match(/^\d+$/)) {
+        d = parseInt(d, 10);
+        if(String(d).length < 13) d *= 1000;
+        d = new Date(d);
+      } else if(pie.object.isString(d)) {
+        d = pie.date.timeFromISO(d);
+      } else {
+        /* let the system parse */
+        d = new Date(d);
+      }
+      return d;
+    },
+
+
+    _shortDayName: function(d) {
+      return this.t('app.time.short_day_names.' + d, {'default' : ''}) || this._dayName(d).slice(0, 3);
+    },
+
+
+    _shortMonthName: function(m) {
+      return this.t('app.time.short_month_names.' + m, {'default' : ''}) || this._monthName(m).slice(0, 3);
+    },
+
+
+    _pad: function(num, cnt, pad, prefix) {
+      var s = '',
+          p = cnt - num.toString().length;
+      if(pad === undefined) pad = ' ';
+      while(p>0){
+        s += prefix ? pad + s : s + pad;
+        p -= 1;
+      }
+      return s + num.toString();
+    },
+
+    _ordinal: function(number) {
+      var unit = number % 100;
+
+      if(unit >= 11 && unit <= 13) unit = 0;
+      else unit = number % 10;
+
+      return this.t('app.time.ordinals.o' + unit);
+    },
+
+    _timezoneAbbr: function(date) {
+      var str = date && date.toString();
+      return str && str.split(/\((.*)\)/)[1];
+    },
+
+
+    _utc: function(t) {
+      var t2 = new Date(t.getTime());
+      t2.setMinutes(t2.getMinutes() + t2.getTimezoneOffset());
+      return t2;
+    },
+
+    keyCheck: /^\.(.+)$/,
+
+    // ** pie.i18n.attempt **
+    //
+    // If the provided `key` looks like a translation key, prepended with a ".",
+    // try to look it up. If it does not or the provided key does not exist, return
+    // the provided key.
+    // ```
+    // i18n.attempt('.foo.bar.baz')
+    // ```
+    attempt: function(/* args */) {
+      var args = pie.array.from(arguments),
+      key = args[0],
+      m = key && key.match(this.keyCheck);
+
+      if(!m) return key;
+
+      args[0] = m[1]; /* swap out the formatted key for the real one */
+      return this.translate.apply(this, args);
+    },
+
+    // ** pie.i18n.load **
+    //
+    // Load translations into this instance.
+    // By default, a deep merge will occur, provide `false` for `shallow`
+    // if you would like a shallow merge to occur.
+    // ```
+    // i18n.load({foo: 'Bar %{baz}'});
+    // ```
+    load: function(data, shallow) {
+      var f = shallow ? pie.object.merge : pie.object.deepMerge;
+      f.call(null, this.data, data);
+    },
+
+    // ** pie.i18n.translate (pie.i18n.t) **
+    //
+    // Given a `path`, look up a translation.
+    // If the second argument `data` is provided, the `data` will be
+    // interpolated into the translation before returning.
+    // Arguments 3+ are string modification methods as defined by `pie.string`.
+    // `translate` is aliased as `t`.
+    // ```
+    // //=> Assuming 'foo.path' is defined as "This is %{name}"
+    // i18n.t('foo.path', {name: 'Bar'}, 'pluralize', 'upcase')
+    // //=> "THIS IS BAR'S"
+    // ```
+    translate: function(/* path, data, stringChange1, stringChange2 */) {
+      var changes = pie.array.change(arguments, 'from', 'compact'),
+      path = changes.shift(),
+      data = pie.object.isObject(changes[0]) ? changes.shift() : undefined,
+      translation = this.get(path),
+      count;
+
+      if (pie.object.has(data, 'count') && pie.object.isObject(translation)) {
+        count = (data.count || 0).toString();
+        count = this._countAlias[count] || (count > 0 ? 'other' : 'negother');
+        translation = translation[count] === undefined ? translation.other : translation[count];
+      }
+
+      if(!translation) {
+
+        if(pie.object.has(data, 'default')) {
+          var def = pie.fn.valueFrom(data.default);
+          if(pie.object.isString(def)) {
+            translation = this.attempt(def);
+          } else {
+            translation = def;
+          }
+        } else if(translation == null) {
+          this.app.errorHandler.handleI18nError(new Error("Translation not found: " + path), {
+            handledBy: "pie.i18n#translate",
+            translationPath: path
+          });
+          return "";
+        }
+      }
+
+
+      if(pie.object.isString(translation)) {
+        translation = translation.indexOf(this.options.settings.nestedStart) === -1 ? translation : this._nestedTranslate(translation, data);
+        translation = translation.indexOf(this.options.settings.interpolationStart) === -1 ? translation : this._interpolateTranslation(translation, data);
+      }
+
+      if(changes.length) {
+        changes.unshift(translation);
+        translation = pie.string.change.apply(null, changes);
+      }
+
+      return translation;
+    },
+
+    // ** pie.i18n.timeago **
+    //
+    // Return a human representation of the time since the provided time `t`.
+    // You can also pass an alternate "relative to" time as the second argument.
+    // ```
+    // d.setDate(d.getDate() - 4);
+    // i18n.timeago(d)
+    // //=> "4 days ago"
+    //
+    // d.setDate(d.getDate() - 7);
+    // i18n.timeago(d)
+    // //=> "1 week ago"
+    //
+    // d.setDate(d.getDate() - 90);
+    // d2.setDate(d.getDate() + 2);
+    // i18n.timeago(d, d2)
+    // //=> "2 days ago"
+    // ```
+    timeago: function(t, now, scope) {
+      var tD = t,
+      nowD = now,
+      diff, c;
+
+      t = this._normalizedDate(t).getTime()  / 1000;
+      now = this._normalizedDate(now || new Date()).getTime() / 1000;
+
+      diff = now - t;
+
+      scope = scope || 'app';
+
+      if(diff < 60) { // less than a minute
+        return this.t(scope + '.timeago.now', {count: diff});
+      } else if (diff < 3600) { // less than an hour
+        c = Math.floor(diff / 60);
+        return this.t(scope + '.timeago.minutes', {count: c});
+      } else if (diff < 86400) { // less than a day
+        c = Math.floor(diff / 3600);
+        return this.t(scope + '.timeago.hours', {count: c});
+      } else if (diff < 86400 * 7) { // less than a week
+        c = Math.floor(diff / 86400);
+        return this.t(scope + '.timeago.days', {count: c});
+      } else if (diff < 86400 * 30) { // less than 30 days
+        c = Math.floor(diff / (86400 * 7));
+        return this.t(scope + '.timeago.weeks', {count: c});
+      } else if (diff < 86500 * 365) { // less than 365 days
+        c = (nowD.getFullYear() - tD.getFullYear()) * 12;
+        c -= tD.getMonth();
+        c += nowD.getMonth();
+        return this.t(scope + '.timeago.months', {count: c});
+      } else {
+        c = Math.floor(diff / (86400 * 365));
+        return this.t(scope + '.timeago.years', {count: c});
+      }
+    },
+
+    // ** pie.i18n.strftime (pie.i18n.l) **
+    //
+    // Given a `date`, format it based on the format `f`.
+    // The format can be:
+    //   * A named format, existing at app.time.formats.X
+    //   * A custom format following the guidelines of ruby's strftime
+    //
+    // *Ruby's strftime: http://ruby-doc.org/core-2.2.0/Time.html#method-i-strftime*
+    //
+    // ```
+    // i18n.l(date, 'shortDate');
+    // i18n.l(date, '%Y-%m');
+    // ```
+    strftime: function(date, f) {
+      date = this._normalizedDate(date);
+
+      /* named format from translations.time. */
+      if(!~f.indexOf('%')) f = this.t('app.time.formats.' + f, {"default" : f});
+
+      var weekDay           = date.getDay(),
+          day               = date.getDate(),
+          year              = date.getFullYear(),
+          month             = date.getMonth() + 1,
+          hour              = date.getHours(),
+          hour12            = this._hour(hour),
+          meridiem          = this._ampm(hour),
+          secs              = date.getSeconds(),
+          mins              = date.getMinutes(),
+          mills             = date.getMilliseconds(),
+          offset            = date.getTimezoneOffset(),
+          absOffsetHours    = Math.floor(Math.abs(offset / 60)),
+          absOffsetMinutes  = Math.abs(offset) - (absOffsetHours * 60),
+          timezoneoffset    = (offset > 0 ? "-" : "+") + this._pad(absOffsetHours, 2, '0') + this._pad(absOffsetMinutes, 2, '0');
+
+      f = f.replace("%a", this._shortDayName(weekDay))
+          .replace("%A",  this._dayName(weekDay))
+          .replace("%B",  this._monthName(month - 1))
+          .replace("%b",  this._shortMonthName(month - 1))
+          .replace("%d",  this._pad(day, 2, '0'))
+          .replace("%e",  this._pad(day, 2, ' '))
+          .replace("%-do", day + this._ordinal(day))
+          .replace("%-d", day)
+          .replace("%H",  this._pad(hour, 2, '0'))
+          .replace("%k",  this._pad(hour, 2, ' '))
+          .replace('%-H', hour)
+          .replace('%-k', hour)
+          .replace("%I",  this._pad(hour12, 2, '0'))
+          .replace("%l",  hour12)
+          .replace("%m",  this._pad(month, 2, '0'))
+          .replace("%-m", month)
+          .replace("%M",  this._pad(mins, 2, '0'))
+          .replace("%p",  meridiem.toUpperCase())
+          .replace("%P",  meridiem)
+          .replace("%S",  this._pad(secs, 2, '0'))
+          .replace("%-S", secs)
+          .replace('%L',  this._pad(mills, 3, '0'))
+          .replace('%-L', mills)
+          .replace("%w",  weekDay)
+          .replace("%y",  this._pad(year % 100))
+          .replace("%Y",  year)
+          .replace("%z",  timezoneoffset)
+          .replace("%:z", timezoneoffset.slice(0,3) + ':' + timezoneoffset.slice(3))
+          .replace("%Z",  this._timezoneAbbr(date));
+
+      return f;
     }
+  };
 
+  extension.t = extension.translate;
+  extension.l = extension.strftime;
 
-    if(pie.object.isString(translation)) {
-      translation = translation.indexOf(this.options.settings.nestedStart) === -1 ? translation : this._nestedTranslate(translation, data);
-      translation = translation.indexOf(this.options.settings.interpolationStart) === -1 ? translation : this._interpolateTranslation(translation, data);
-    }
-
-    if(changes.length) {
-      changes.unshift(translation);
-      translation = pie.string.change.apply(null, changes);
-    }
-
-    return translation;
-  },
-
-  // ** pie.i18n.timeago **
-  //
-  // Return a human representation of the time since the provided time `t`.
-  // You can also pass an alternate "relative to" time as the second argument.
-  // ```
-  // d.setDate(d.getDate() - 4);
-  // i18n.timeago(d)
-  // //=> "4 days ago"
-  //
-  // d.setDate(d.getDate() - 7);
-  // i18n.timeago(d)
-  // //=> "1 week ago"
-  //
-  // d.setDate(d.getDate() - 90);
-  // d2.setDate(d.getDate() + 2);
-  // i18n.timeago(d, d2)
-  // //=> "2 days ago"
-  // ```
-  timeago: function(t, now, scope) {
-    var tD = t,
-    nowD = now,
-    diff, c;
-
-    t = this._normalizedDate(t).getTime()  / 1000;
-    now = this._normalizedDate(now || new Date()).getTime() / 1000;
-
-    diff = now - t;
-
-    scope = scope || 'app';
-
-    if(diff < 60) { // less than a minute
-      return this.t(scope + '.timeago.now', {count: diff});
-    } else if (diff < 3600) { // less than an hour
-      c = Math.floor(diff / 60);
-      return this.t(scope + '.timeago.minutes', {count: c});
-    } else if (diff < 86400) { // less than a day
-      c = Math.floor(diff / 3600);
-      return this.t(scope + '.timeago.hours', {count: c});
-    } else if (diff < 86400 * 7) { // less than a week
-      c = Math.floor(diff / 86400);
-      return this.t(scope + '.timeago.days', {count: c});
-    } else if (diff < 86400 * 30) { // less than 30 days
-      c = Math.floor(diff / (86400 * 7));
-      return this.t(scope + '.timeago.weeks', {count: c});
-    } else if (diff < 86500 * 365) { // less than 365 days
-      c = (nowD.getFullYear() - tD.getFullYear()) * 12;
-      c -= tD.getMonth();
-      c += nowD.getMonth();
-      return this.t(scope + '.timeago.months', {count: c});
-    } else {
-      c = Math.floor(diff / (86400 * 365));
-      return this.t(scope + '.timeago.years', {count: c});
-    }
-  },
-
-  // ** pie.i18n.strftime (pie.i18n.l) **
-  //
-  // Given a `date`, format it based on the format `f`.
-  // The format can be:
-  //   * A named format, existing at app.time.formats.X
-  //   * A custom format following the guidelines of ruby's strftime
-  //
-  // *Ruby's strftime: http://ruby-doc.org/core-2.2.0/Time.html#method-i-strftime*
-  //
-  // ```
-  // i18n.l(date, 'shortDate');
-  // i18n.l(date, '%Y-%m');
-  // ```
-  strftime: function(date, f) {
-    date = this._normalizedDate(date);
-
-    /* named format from translations.time. */
-    if(!~f.indexOf('%')) f = this.t('app.time.formats.' + f, {"default" : f});
-
-    var weekDay           = date.getDay(),
-        day               = date.getDate(),
-        year              = date.getFullYear(),
-        month             = date.getMonth() + 1,
-        hour              = date.getHours(),
-        hour12            = this._hour(hour),
-        meridiem          = this._ampm(hour),
-        secs              = date.getSeconds(),
-        mins              = date.getMinutes(),
-        mills             = date.getMilliseconds(),
-        offset            = date.getTimezoneOffset(),
-        absOffsetHours    = Math.floor(Math.abs(offset / 60)),
-        absOffsetMinutes  = Math.abs(offset) - (absOffsetHours * 60),
-        timezoneoffset    = (offset > 0 ? "-" : "+") + this._pad(absOffsetHours, 2, '0') + this._pad(absOffsetMinutes, 2, '0');
-
-    f = f.replace("%a", this._shortDayName(weekDay))
-        .replace("%A",  this._dayName(weekDay))
-        .replace("%B",  this._monthName(month - 1))
-        .replace("%b",  this._shortMonthName(month - 1))
-        .replace("%d",  this._pad(day, 2, '0'))
-        .replace("%e",  this._pad(day, 2, ' '))
-        .replace("%-do", day + this._ordinal(day))
-        .replace("%-d", day)
-        .replace("%H",  this._pad(hour, 2, '0'))
-        .replace("%k",  this._pad(hour, 2, ' '))
-        .replace('%-H', hour)
-        .replace('%-k', hour)
-        .replace("%I",  this._pad(hour12, 2, '0'))
-        .replace("%l",  hour12)
-        .replace("%m",  this._pad(month, 2, '0'))
-        .replace("%-m", month)
-        .replace("%M",  this._pad(mins, 2, '0'))
-        .replace("%p",  meridiem.toUpperCase())
-        .replace("%P",  meridiem)
-        .replace("%S",  this._pad(secs, 2, '0'))
-        .replace("%-S", secs)
-        .replace('%L',  this._pad(mills, 3, '0'))
-        .replace('%-L', mills)
-        .replace("%w",  weekDay)
-        .replace("%y",  this._pad(year % 100))
-        .replace("%Y",  year)
-        .replace("%z",  timezoneoffset)
-        .replace("%:z", timezoneoffset.slice(0,3) + ':' + timezoneoffset.slice(3))
-        .replace("%Z",  this._timezoneAbbr(date));
-
-    return f;
-  },
-});
-
-/* Aliases */
-var extension = pie.array.last(pie.array.last(pie.i18n.schema));
-extension.t = extension.translate;
-extension.l = extension.strftime;
+  return extension;
+})());
 
 pie.i18n.defaultTranslations = {
   app: {

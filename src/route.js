@@ -24,7 +24,7 @@ pie.route = pie.model.extend('route', {
       pathTemplate: pie.string.normalizeUrl(path)
     }, options);
 
-    this.name = this.options.name || ("route-" + this.pieId);
+    this.name = this.options.name || ("route-" + pie.uid(this));
 
     this.compute('segments',            'pathTemplate');
     this.compute('pathRegex',           'pathTemplate');

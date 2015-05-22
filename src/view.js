@@ -118,7 +118,7 @@ pie.view = pie.base.extend('view', {
   // The namespace used for this view's events. All views have a separate namespace to ensure
   // event triggers are propagated efficiently.
   eventNamespace: function() {
-    return 'view'+ this.pieId;
+    return 'view'+ pie.uid(this);
   },
 
 
@@ -181,29 +181,30 @@ pie.view = pie.base.extend('view', {
 
   // **pie.view.observe**
   //
-  // Observe changes of an model, unobserving them when the view is removed.
+  // Observe changes of a model, unobserving them when the view is removed.
   // If the object is not observable, an error will be thrown.
-  // The first argument must be the observable model, the remaining arguments must match
-  // the expected arguments of model.observe.
+  // The first argument is the observable model OR the function to be executed.
+  // If the first argument is not a model, the model will be assumed to be `this.model`.
+  // The next arguments (first or second) should be a function name or a function.
+  // The remaining arguments are optional filter keys.
   // ```
   // view.observe(user, this.onNameChange.bind(this), 'firstName', 'lastName');
   // view.observe(context, this.onContextChange.bind(this));
   // ```
   observe: function() {
-    var parts = pie.array.partitionAt(arguments, pie.object.isFunction),
-    observables = parts[0],
-    args = parts[1];
+    var args = pie.array.from(arguments),
+    observable = pie.object.isModel(args[0]) ? args.shift() : this.model;
 
-    observables.forEach(function(observable){
-      if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
+    if(!pie.object.has(observable, 'observe', true)) throw new Error("Observable does not respond to observe");
 
-      this.changeCallbacks.push({
-        observable: observable,
-        args: args
-      });
+    if(pie.object.isString(args[0])) args[0] = this[args[0]].bind(this);
 
-      observable.observe.apply(observable, args);
-    }.bind(this));
+    this.changeCallbacks.push({
+      observable: observable,
+      args: args
+    });
+
+    observable.observe.apply(observable, args);
   },
 
   onChange: function() {
@@ -257,6 +258,15 @@ pie.view = pie.base.extend('view', {
     return this;
   },
 
+  // **pie.view.cancelSetup**
+  //
+  // Sometimes when a view is being set up it determines that the app has to redirect and/or it's
+  // no longer relevant to the page. If you do not conduct a full setup process this function will
+  // short circuit the process.
+  cancelSetup: function() {
+    this.emitter.fire('afterSetup');
+    return this;
+  },
 
   // **pie.view.teardown**
   //
