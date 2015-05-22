@@ -13,7 +13,7 @@
 //   * detach - when the view's el is removed from the DOM.
 pie.view = pie.base.extend('view', {
 
-  pieRole: 'view',
+  __pieRole: 'view',
 
   // **pie.view.init**
   //

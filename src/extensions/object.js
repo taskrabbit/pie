@@ -114,7 +114,7 @@ pie.object.isEmpty = function(obj) {
 /* From jQuery */
 pie.object.isPlainObject = function(obj) {
 
-  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain || obj.pieRole ) {
+  if ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain || obj.__pieRole ) {
     return false;
   }
 

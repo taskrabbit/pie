@@ -4,7 +4,7 @@ pie.base = {
 
     init: function(){},
 
-    pieRole: 'object',
+    __pieRole: 'object',
 
     reopen: function(){
       var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact');
@@ -17,7 +17,7 @@ pie.base = {
 
   }],
 
-  pieRole: 'class',
+  __pieRole: 'class',
 
   create: function() {
     return pie.base._create(this.schema, arguments);
@@ -29,7 +29,7 @@ pie.base = {
     name = pie.object.isString(extensions[0]) ? extensions.shift() : null;
 
     extensions = pie.array.flatten(extensions.map(function(e){
-      if(e.pieRole === 'class') return e.schema;
+      if(e.__pieRole === 'class') return e.schema;
       return e;
     }));
 
@@ -40,7 +40,7 @@ pie.base = {
     };
 
     o.schema = schema;
-    o.pieRole = 'class';
+    o.__pieRole = 'class';
 
     o.extend = function(){ return that.extend.apply(this, arguments); };
     o.create = function(){ return that.create.apply(this, arguments); };

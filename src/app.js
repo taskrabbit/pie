@@ -51,7 +51,7 @@ pie.app = pie.base.extend('app', {
       var k = this.options[key] || _default,
       opt = this.options[key + 'Options'] || {};
 
-      if(k.pieRole === 'class') {
+      if(k.__pieRole === 'class') {
         return k.create(this, opt);
       } else if (pie.object.isFunction(k)) {
         return k(this, opt);

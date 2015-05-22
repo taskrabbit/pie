@@ -74,11 +74,11 @@
 
 pie.model = pie.base.extend('model', {
 
-  pieRole: 'model',
+  __pieRole: 'model',
 
   init: function(d, options) {
 
-    if(d && d.pieRole === 'model') d = d.data;
+    if(d && d.__pieRole === 'model') d = d.data;
 
     this.data = pie.object.deepMerge({_version: 1}, d);
     this.options = options || {};

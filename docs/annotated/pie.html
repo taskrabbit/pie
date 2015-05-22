@@ -3021,7 +3021,7 @@ pie.object.isEmpty = <span class="hljs-function"><span class="hljs-keyword">func
 <span class="hljs-comment">/* From jQuery */</span>
 pie.object.isPlainObject = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
 
-  <span class="hljs-keyword">if</span> ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain || obj.pieRole ) {
+  <span class="hljs-keyword">if</span> ( !obj || !pie.object.isObject(obj) || obj.nodeType || pie.object.isWindow(obj) || obj.__notPlain || obj.__pieRole ) {
     <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
   }
 
@@ -5380,7 +5380,7 @@ pie.base = {
 
     init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{},
 
-    pieRole: <span class="hljs-string">'object'</span>,
+    __pieRole: <span class="hljs-string">'object'</span>,
 
     reopen: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
       <span class="hljs-keyword">var</span> extensions = pie.array.change(<span class="hljs-built_in">arguments</span>, <span class="hljs-string">'from'</span>, <span class="hljs-string">'flatten'</span>, <span class="hljs-string">'compact'</span>);
@@ -5393,7 +5393,7 @@ pie.base = {
 
   }],
 
-  pieRole: <span class="hljs-string">'class'</span>,
+  __pieRole: <span class="hljs-string">'class'</span>,
 
   create: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">return</span> pie.base._create(<span class="hljs-keyword">this</span>.schema, <span class="hljs-built_in">arguments</span>);
@@ -5405,7 +5405,7 @@ pie.base = {
     name = pie.object.isString(extensions[<span class="hljs-number">0</span>]) ? extensions.shift() : <span class="hljs-literal">null</span>;
 
     extensions = pie.array.flatten(extensions.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span></span>{
-      <span class="hljs-keyword">if</span>(e.pieRole === <span class="hljs-string">'class'</span>) <span class="hljs-keyword">return</span> e.schema;
+      <span class="hljs-keyword">if</span>(e.__pieRole === <span class="hljs-string">'class'</span>) <span class="hljs-keyword">return</span> e.schema;
       <span class="hljs-keyword">return</span> e;
     }));
 
@@ -5416,7 +5416,7 @@ pie.base = {
     };
 
     o.schema = schema;
-    o.pieRole = <span class="hljs-string">'class'</span>;
+    o.__pieRole = <span class="hljs-string">'class'</span>;
 
     o.extend = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ <span class="hljs-keyword">return</span> that.extend.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>); };
     o.create = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ <span class="hljs-keyword">return</span> that.create.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>); };
@@ -5540,7 +5540,7 @@ pie.app.create({
       <span class="hljs-keyword">var</span> k = <span class="hljs-keyword">this</span>.options[key] || _default,
       opt = <span class="hljs-keyword">this</span>.options[key + <span class="hljs-string">'Options'</span>] || {};
 
-      <span class="hljs-keyword">if</span>(k.pieRole === <span class="hljs-string">'class'</span>) {
+      <span class="hljs-keyword">if</span>(k.__pieRole === <span class="hljs-string">'class'</span>) {
         <span class="hljs-keyword">return</span> k.create(<span class="hljs-keyword">this</span>, opt);
       } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pie.object.isFunction(k)) {
         <span class="hljs-keyword">return</span> k(<span class="hljs-keyword">this</span>, opt);
@@ -6315,11 +6315,11 @@ for a matching function name within the model.</p>
 
 pie.model = pie.base.extend(<span class="hljs-string">'model'</span>, {
 
-  pieRole: <span class="hljs-string">'model'</span>,
+  __pieRole: <span class="hljs-string">'model'</span>,
 
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d, options)</span> </span>{
 
-    <span class="hljs-keyword">if</span>(d &amp;&amp; d.pieRole === <span class="hljs-string">'model'</span>) d = d.data;
+    <span class="hljs-keyword">if</span>(d &amp;&amp; d.__pieRole === <span class="hljs-string">'model'</span>) d = d.data;
 
     <span class="hljs-keyword">this</span>.data = pie.object.deepMerge({_version: <span class="hljs-number">1</span>}, d);
     <span class="hljs-keyword">this</span>.options = options || {};
@@ -7345,7 +7345,7 @@ View lifecycle:</p>
             
             <div class="content"><div class='highlight'><pre>pie.view = pie.base.extend(<span class="hljs-string">'view'</span>, {
 
-  pieRole: <span class="hljs-string">'view'</span>,</pre></div></div>
+  __pieRole: <span class="hljs-string">'view'</span>,</pre></div></div>
             
         </li>
         
