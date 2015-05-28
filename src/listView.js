@@ -29,7 +29,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
 
   // this ensures the class isn't created unless absolutely necessary.
   var listItemClass = function(){
-    return _listItemClass = _listItemClass || pie.view.extend('defaultListItemView', pie.mixins.activeView, {
+    return _listItemClass = _listItemClass || pie.activeView.extend('defaultListItemView', {
 
       init: function(options, itemData) {
         options = options || {};

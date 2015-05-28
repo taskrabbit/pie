@@ -10202,7 +10202,7 @@ Returns the removed item.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> listItemClass = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-    <span class="hljs-keyword">return</span> _listItemClass = _listItemClass || pie.view.extend(<span class="hljs-string">'defaultListItemView'</span>, pie.mixins.activeView, {
+    <span class="hljs-keyword">return</span> _listItemClass = _listItemClass || pie.activeView.extend(<span class="hljs-string">'defaultListItemView'</span>, {
 
       init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, itemData)</span> </span>{
         options = options || {};
