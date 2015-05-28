@@ -3982,7 +3982,7 @@ pie.mixins.activeView = {
       <span class="hljs-keyword">this</span>.onChange(<span class="hljs-keyword">this</span>.model, <span class="hljs-keyword">this</span>.render.bind(<span class="hljs-keyword">this</span>), field);
     }
 
-    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.renderOnSetup) {
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.renderOnSetup || <span class="hljs-keyword">this</span>.options.renderOnSetup === <span class="hljs-literal">undefined</span>) {
       <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'setup'</span>, <span class="hljs-keyword">this</span>.render.bind(<span class="hljs-keyword">this</span>));
     }
 
@@ -4853,8 +4853,7 @@ list = <span class="hljs-keyword">new</span> UserList({
 
         <span class="hljs-keyword">this</span>.model = pie.model.create(itemData);
         <span class="hljs-keyword">this</span>._super(pie.object.merge({
-          renderOnSetup: <span class="hljs-literal">true</span>,
-          el: <span class="hljs-built_in">document</span>.createElement(options.tagName || <span class="hljs-string">'div'</span>)
+          el: options.tagName ? <span class="hljs-built_in">document</span>.createElement(options.tagName) : <span class="hljs-literal">undefined</span>
         }, options));
       },
 
@@ -14348,7 +14347,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150522.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150528.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

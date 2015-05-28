@@ -37,8 +37,7 @@ pie.mixins.listView = (function(){
 
         this.model = pie.model.create(itemData);
         this._super(pie.object.merge({
-          renderOnSetup: true,
-          el: document.createElement(options.tagName || 'div')
+          el: options.tagName ? document.createElement(options.tagName) : undefined
         }, options));
       },
 

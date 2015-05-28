@@ -7,7 +7,7 @@ pie.mixins.activeView = {
       this.onChange(this.model, this.render.bind(this), field);
     }
 
-    if(this.options.renderOnSetup) {
+    if(this.options.renderOnSetup || this.options.renderOnSetup === undefined) {
       this.emitter.once('setup', this.render.bind(this));
     }
 
