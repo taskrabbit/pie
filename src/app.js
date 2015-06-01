@@ -249,7 +249,7 @@ pie.app = pie.base.extend('app', {
     if(e.delegateTarget.getAttribute('target')) return;
 
     // If the user is trying to do something beyond simple navigation, let the browser take over
-    if(e.ctrlKey || e.metaKey) return;
+    if(e.ctrlKey || e.metaKey || e.button > 0) return;
 
     // Extract the location from the link.
     var href = e.delegateTarget.getAttribute('href');

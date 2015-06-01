@@ -5390,7 +5390,7 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(e.ctrlKey || e.metaKey) <span class="hljs-keyword">return</span>;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(e.ctrlKey || e.metaKey || e.button &gt; <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span>;</pre></div></div>
             
         </li>
         
@@ -14303,7 +14303,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150528.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150601.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
