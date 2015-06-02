@@ -32,7 +32,7 @@ pie.view = pie.base.extend('view', {
     this.emitter = pie.emitter.create();
 
     if(this.options.uiTarget) {
-      this.emitter.once('afterSetup', this.addToDom.bind(this));
+      this.eonce('afterSetup', this.addToDom.bind(this));
     }
 
     this._super();

@@ -6670,7 +6670,7 @@ View lifecycle:</p>
     <span class="hljs-keyword">this</span>.emitter = pie.emitter.create();
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.uiTarget) {
-      <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'afterSetup'</span>, <span class="hljs-keyword">this</span>.addToDom.bind(<span class="hljs-keyword">this</span>));
+      <span class="hljs-keyword">this</span>.eonce(<span class="hljs-string">'afterSetup'</span>, <span class="hljs-keyword">this</span>.addToDom.bind(<span class="hljs-keyword">this</span>));
     }
 
     <span class="hljs-keyword">this</span>._super();
@@ -7168,10 +7168,10 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
     }
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.renderOnSetup || <span class="hljs-keyword">this</span>.options.renderOnSetup === <span class="hljs-literal">undefined</span>) {
-      <span class="hljs-keyword">this</span>.emitter.once(<span class="hljs-string">'setup'</span>, <span class="hljs-keyword">this</span>.render.bind(<span class="hljs-keyword">this</span>));
+      <span class="hljs-keyword">this</span>.eonce(<span class="hljs-string">'setup'</span>, <span class="hljs-keyword">this</span>.render.bind(<span class="hljs-keyword">this</span>));
     }
 
-    <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'render'</span>, <span class="hljs-keyword">this</span>._renderTemplateToEl.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'render'</span>, <span class="hljs-keyword">this</span>._renderTemplateToEl.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">this</span>._super();
   },
@@ -7185,7 +7185,7 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
     <span class="hljs-keyword">if</span>(events === <span class="hljs-literal">undefined</span>) events = [<span class="hljs-string">'afterRender'</span>];
 
     pie.array.from(events).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(e)</span></span>{
-      <span class="hljs-keyword">this</span>.emitter.on(e, f);
+      <span class="hljs-keyword">this</span>.eon(e, f);
     }.bind(<span class="hljs-keyword">this</span>));
     <span class="hljs-keyword">return</span> f;
   },
@@ -14307,7 +14307,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150601.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150602.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

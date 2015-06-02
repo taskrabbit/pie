@@ -13,10 +13,10 @@ pie.activeView = pie.view.extend('activeView', {
     }
 
     if(this.options.renderOnSetup || this.options.renderOnSetup === undefined) {
-      this.emitter.once('setup', this.render.bind(this));
+      this.eonce('setup', this.render.bind(this));
     }
 
-    this.emitter.on('render', this._renderTemplateToEl.bind(this));
+    this.eon('render', this._renderTemplateToEl.bind(this));
 
     this._super();
   },
@@ -30,7 +30,7 @@ pie.activeView = pie.view.extend('activeView', {
     if(events === undefined) events = ['afterRender'];
 
     pie.array.from(events).forEach(function(e){
-      this.emitter.on(e, f);
+      this.eon(e, f);
     }.bind(this));
     return f;
   },
