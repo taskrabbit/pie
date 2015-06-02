@@ -117,6 +117,10 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
     }
 
+    if(!headers['X-Requested-With']) {
+      headers['X-Requested-With'] = 'XMLHttpRequest';
+    }
+
     pie.object.forEach(headers, function(k,v) {
       xhr.setRequestHeader(k, v);
     });

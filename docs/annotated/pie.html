@@ -7473,6 +7473,10 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
     }
 
+    <span class="hljs-keyword">if</span>(!headers[<span class="hljs-string">'X-Requested-With'</span>]) {
+      headers[<span class="hljs-string">'X-Requested-With'</span>] = <span class="hljs-string">'XMLHttpRequest'</span>;
+    }
+
     pie.object.forEach(headers, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,v)</span> </span>{
       xhr.setRequestHeader(k, v);
     });
