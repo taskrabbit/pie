@@ -82,7 +82,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
     },
 
     setup: function() {
-      this.onChange(this.list, this.renderItems.bind(this), this.options.listOptions.modelAttribute);
+      this.observe(this.list, this.renderItems.bind(this), this.options.listOptions.modelAttribute);
       this.emitter.on('afterRender', this.renderItems.bind(this));
 
       this._super.apply(this, arguments);

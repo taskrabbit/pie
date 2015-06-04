@@ -7164,7 +7164,7 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.autoRender &amp;&amp; <span class="hljs-keyword">this</span>.model) {
       <span class="hljs-keyword">var</span> field = pie.object.isString(<span class="hljs-keyword">this</span>.options.autoRender) ? <span class="hljs-keyword">this</span>.options.autoRender : <span class="hljs-string">'_version'</span>;
-      <span class="hljs-keyword">this</span>.onChange(<span class="hljs-keyword">this</span>.model, <span class="hljs-keyword">this</span>.render.bind(<span class="hljs-keyword">this</span>), field);
+      <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.model, <span class="hljs-keyword">this</span>.render.bind(<span class="hljs-keyword">this</span>), field);
     }
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.renderOnSetup || <span class="hljs-keyword">this</span>.options.renderOnSetup === <span class="hljs-literal">undefined</span>) {
@@ -8770,6 +8770,8 @@ If you’re overriding formView behavior, here’s the general process which is 
     <span class="hljs-keyword">this</span>.options.fields   = <span class="hljs-keyword">this</span>.options.fields || [];
     <span class="hljs-keyword">this</span>.options.fields   = <span class="hljs-keyword">this</span>.options.fields.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(field)</span> </span>{
 
+      <span class="hljs-keyword">if</span>(pie.object.isString(field)) field = {name: field};
+
       <span class="hljs-keyword">if</span>(!field || !field.name) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"A `name` property must be provided for all fields."</span>);
 
       field.binding = field.binding || {};
@@ -10259,7 +10261,7 @@ Returns the removed item.</p>
     },
 
     setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">this</span>.onChange(<span class="hljs-keyword">this</span>.list, <span class="hljs-keyword">this</span>.renderItems.bind(<span class="hljs-keyword">this</span>), <span class="hljs-keyword">this</span>.options.listOptions.modelAttribute);
+      <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.list, <span class="hljs-keyword">this</span>.renderItems.bind(<span class="hljs-keyword">this</span>), <span class="hljs-keyword">this</span>.options.listOptions.modelAttribute);
       <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>.renderItems.bind(<span class="hljs-keyword">this</span>));
 
       <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
@@ -14307,7 +14309,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150602.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150603.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

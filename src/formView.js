@@ -81,6 +81,8 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
     this.options.fields   = this.options.fields || [];
     this.options.fields   = this.options.fields.map(function(field) {
 
+      if(pie.object.isString(field)) field = {name: field};
+
       if(!field || !field.name) throw new Error("A `name` property must be provided for all fields.");
 
       field.binding = field.binding || {};

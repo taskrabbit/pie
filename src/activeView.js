@@ -9,7 +9,7 @@ pie.activeView = pie.view.extend('activeView', {
 
     if(this.options.autoRender && this.model) {
       var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
-      this.onChange(this.model, this.render.bind(this), field);
+      this.observe(this.model, this.render.bind(this), field);
     }
 
     if(this.options.renderOnSetup || this.options.renderOnSetup === undefined) {
