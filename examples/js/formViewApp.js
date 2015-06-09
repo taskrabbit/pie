@@ -77,8 +77,8 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
   },
 
   setup: function() {
-    this.onChange(this.model, this.modelChanged.bind(this), '_version');
-    this.emitter.once('afterSetup', this.modelChanged.bind(this));
+    this.observe(this.model, 'modelChanged', '_version');
+    this.eonce('afterSetup', 'modelChanged');
 
     this.bind({
       attr: 'title'

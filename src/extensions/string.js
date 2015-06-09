@@ -79,7 +79,7 @@ pie.string.deserialize = (function(){
     pieces.forEach(function(piece){
       segments = piece.split('=');
       key = decodeURIComponent(segments[0] || '');
-      value = decodeURIComponent(segments[1] || '');
+      value = decodeURIComponent((segments[1] || '').replace(/\+/g, '%20'));
 
       if(parse) value = parseQueryValue(value);
 

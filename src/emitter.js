@@ -69,7 +69,7 @@ pie.emitter = pie.model.extend('emitter', {
     var invalidEventNameRegex = /^around/;
 
     return function(/* eventNames, fn */) {
-      var eventNames = pie.array.from(arguments),
+      var eventNames = pie.array.change(arguments, 'from', 'flatten'),
       fn = eventNames.pop(),
       observers;
 
@@ -98,6 +98,23 @@ pie.emitter = pie.model.extend('emitter', {
   // triggered, the function will be invoked and nothing will be added to the callbacks._
   _on: function(event, fn, options, meth) {
     options = options || {};
+
+    if(options.waitUntil) {
+
+      var origFn = fn,
+      waitUntil = pie.array.from(options.waitUntil),
+      o = pie.object.except(options, 'waitUntil');
+      o.immediate = true;
+
+      fn = function() {
+        this.waitUntil(waitUntil, function(){
+          this._on(event, origFn, o, meth);
+        }.bind(this));
+      }.bind(this);
+
+      fn.wrapper = true;
+    }
+
     var lastArgs = this.lastInvocation(event);
 
     if(options.now || (options.immediate && this.hasEvent(event))) {

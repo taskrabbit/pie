@@ -3080,6 +3080,14 @@ pie.object.isNotUndefined = <span class="hljs-function"><span class="hljs-keywor
   <span class="hljs-keyword">return</span> !pie.object.isUndefined(obj);
 };
 
+pie.object.isNode = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
+  <span class="hljs-keyword">return</span> obj <span class="hljs-keyword">instanceof</span> Node;
+};
+
+pie.object.isNotNode = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
+  <span class="hljs-keyword">return</span> !pie.object.isNode(obj);
+};
+
 pie.object.isModel = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
   <span class="hljs-keyword">return</span> obj &amp;&amp; obj.__pieRole === <span class="hljs-string">'model'</span>;
 };
@@ -6880,8 +6888,7 @@ view.on(<span class="hljs-string">'resize'</span>, <span class="hljs-literal">nu
         ns = <span class="hljs-keyword">this</span>.eventNamespace(),
         f2, el;
 
-    <span class="hljs-keyword">if</span>(!pie.object.isFunction(pie.array.get(fns, -<span class="hljs-number">1</span>))) el = fns.pop();
-    el = el || <span class="hljs-keyword">this</span>.el;
+    el = pie.object.isNode(pie.array.last(fns)) ? fns.pop() : <span class="hljs-keyword">this</span>.el;
 
     <span class="hljs-keyword">if</span>(!~<span class="hljs-keyword">this</span>.eventedEls.indexOf(el)) <span class="hljs-keyword">this</span>.eventedEls.push(el);
 
@@ -8171,7 +8178,7 @@ emitter.fireSequence(<span class="hljs-string">'bar'</span>);
     <span class="hljs-keyword">var</span> invalidEventNameRegex = <span class="hljs-regexp">/^around/</span>;
 
     <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* eventNames, fn */</span>)</span> </span>{
-      <span class="hljs-keyword">var</span> eventNames = pie.array.from(<span class="hljs-built_in">arguments</span>),
+      <span class="hljs-keyword">var</span> eventNames = pie.array.change(<span class="hljs-built_in">arguments</span>, <span class="hljs-string">'from'</span>, <span class="hljs-string">'flatten'</span>),
       fn = eventNames.pop(),
       observers;
 
@@ -8222,6 +8229,23 @@ triggered, the function will be invoked and nothing will be added to the callbac
             
             <div class="content"><div class='highlight'><pre>  _on: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event, fn, options, meth)</span> </span>{
     options = options || {};
+
+    <span class="hljs-keyword">if</span>(options.waitUntil) {
+
+      <span class="hljs-keyword">var</span> origFn = fn,
+      waitUntil = pie.array.from(options.waitUntil),
+      o = pie.object.except(options, <span class="hljs-string">'waitUntil'</span>);
+      o.immediate = <span class="hljs-literal">true</span>;
+
+      fn = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">this</span>.waitUntil(waitUntil, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+          <span class="hljs-keyword">this</span>._on(event, origFn, o, meth);
+        }.bind(<span class="hljs-keyword">this</span>));
+      }.bind(<span class="hljs-keyword">this</span>);
+
+      fn.wrapper = <span class="hljs-literal">true</span>;
+    }
+
     <span class="hljs-keyword">var</span> lastArgs = <span class="hljs-keyword">this</span>.lastInvocation(event);
 
     <span class="hljs-keyword">if</span>(options.now || (options.immediate &amp;&amp; <span class="hljs-keyword">this</span>.hasEvent(event))) {
@@ -13668,7 +13692,7 @@ Leaving the base function untouched.</p>
     }
 
     <span class="hljs-keyword">this</span>.toView = toView;
-    <span class="hljs-keyword">this</span>.view.onChange(<span class="hljs-keyword">this</span>.model, toView, opts.attr);
+    <span class="hljs-keyword">this</span>.view.observe(<span class="hljs-keyword">this</span>.model, toView, opts.attr);
   },
 
   applyValueToElements: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -14309,7 +14333,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150603.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150605.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

@@ -40,7 +40,7 @@ describe("pie.emitter", function() {
     expect(this.e.firedCount('pong')).toEqual(1);
   });
 
-  it("should allow a callback to wait until multiple events are fired", function(done) {
+  it("should allow a callback to wait until multiple events are fired via waitUntil", function(done) {
     var pingCalled = false, pongCalled = false, gnopCalled = false;
 
     this.e.on('ping', function() {
@@ -71,6 +71,47 @@ describe("pie.emitter", function() {
     expect(pongCalled).toEqual(false);
     this.e.fire('pong');
 
+  });
+
+  it("should allow a callback to wait until another event(s) is triggered by passing a waitUntil option", function(done) {
+    var pingCalled = 0, pongCalled = 0, gnopCalled = 0, cbCalled = 0;
+
+    this.e.on('ping', function() {
+      pingCalled++;
+    });
+
+    this.e.on('pong', function() {
+      pongCalled++;
+    });
+
+    this.e.on('gnop', function() {
+      gnopCalled++;
+    });
+
+    var cb = function() {
+      expect(pingCalled).toEqual(cbCalled + 1);
+      expect(pongCalled).toEqual(1);
+      expect(gnopCalled).toEqual(1);
+
+
+      if(cbCalled > 0) {
+        done();
+        return;
+      } else {
+        cbCalled++;
+        this.e.fire('ping');
+      }
+    }.bind(this);
+
+    this.e.fire('gnop');
+    this.e.on('ping', cb, {waitUntil: ['pong', 'gnop']});
+
+    this.e.fire('ping');
+    expect(gnopCalled).toEqual(1);
+    expect(pingCalled).toEqual(1);
+    expect(pongCalled).toEqual(0);
+    expect(cbCalled).toEqual(0);
+    this.e.fire('pong');
   });
 
   it("should not allow around* events for waitUntil", function() {

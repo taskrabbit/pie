@@ -161,6 +161,14 @@ pie.object.isNotUndefined = function(obj) {
   return !pie.object.isUndefined(obj);
 };
 
+pie.object.isNode = function(obj) {
+  return obj instanceof Node;
+};
+
+pie.object.isNotNode = function(obj) {
+  return !pie.object.isNode(obj);
+};
+
 pie.object.isModel = function(obj) {
   return obj && obj.__pieRole === 'model';
 };

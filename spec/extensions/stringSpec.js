@@ -10,6 +10,14 @@ describe("String extensions", function() {
       });
     });
 
+    it("should handle the old + format space format", function() {
+      var query = pie.string.deserialize("test=foo+bar+baz&baz=qux");
+      expect(query).toEqual({
+        test: 'foo bar baz',
+        baz: 'qux'
+      });
+    });
+
     it("should automatically determine it's starting point", function(){
       var query = pie.string.deserialize('example.com?foo=bar&biz=baz');
       expect(query).toEqual({

@@ -127,7 +127,7 @@ example.views.form = pie.activeView.extend({
     this.on('keyup', 'input', this.validate.bind(this));
 
     // observe changes to our validation
-    this.onChange(this.list, this.validationChanged.bind(this), 'validationErrors.nextItem');
+    this.observe(this.list, 'validationChanged', 'validationErrors.nextItem');
     this._super();
   },
 
@@ -173,7 +173,7 @@ example.views.list = pie.activeView.extend({
 
     // this.model is needed for autoRender
     // if you didn't use autoRender you would have to add
-    // this.onChange(this.list, this.render.bind(this), 'items') in init.
+    // this.observe(this.list, 'render', 'items') in init.
     this.list = this.model = listModel;
 
     // this time we use autoRender to automatically render this view
@@ -186,9 +186,9 @@ example.views.list = pie.activeView.extend({
 
   // set up our events, then invoke super.
   setup: function() {
-    this.on('click', '.js-complete-all', this.completeAll.bind(this));
-    this.onChange(this.list, this.listChanged.bind(this));
-    this.emitter.on('afterRender', this.updateSummary.bind(this));
+    this.on('click', '.js-complete-all', 'completeAll');
+    this.observe(this.list, 'listChanged');
+    this.eon('afterRender', 'updateSummary');
     this._super();
   },
 
@@ -269,7 +269,7 @@ example.views.item = pie.activeView.extend('item', {
   setup: function() {
     this.bind({attr: 'completed'});
 
-    this.onChange(this.item, this.completedChanged.bind(this), 'completed');
+    this.observe(this.item, 'completedChanged', 'completed');
 
     // any time a js-delete link is clicked, invoke deleteItem.
     this.on('click', '.js-delete', this.deleteItem.bind(this));

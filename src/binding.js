@@ -125,7 +125,7 @@ pie.binding = pie.base.extend('binding', {
     }
 
     this.toView = toView;
-    this.view.onChange(this.model, toView, opts.attr);
+    this.view.observe(this.model, toView, opts.attr);
   },
 
   applyValueToElements: function() {
