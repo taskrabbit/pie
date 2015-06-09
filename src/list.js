@@ -10,10 +10,10 @@
 // which will be provided as the second argument to the cast' constructor.
 pie.list = pie.model.extend('list', {
 
-  init: function(array, options) {
-    array = array || [];
-    this._super({}, options);
-    this.data.items = array.map(this._cast.bind(this));
+  init: function(arrayOrData, options) {
+    if(Array.isArray(arrayOrData)) arrayOrData = {items: arrayOrData};
+    this._super(arrayOrData, options);
+    this.data.items = pie.array.from(this.data.items).map(this._cast.bind(this));
   },
 
   // ** pie.list._cast **

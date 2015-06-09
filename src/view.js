@@ -18,14 +18,26 @@ pie.view = pie.base.extend('view', {
   // **pie.view.init**
   //
   // Options:
-  //   * el - (optional) the root element of the views control. if not provided, a new <div> will be created.
+  //   * el - (optional) the root element of the views control. if not provided, a new <div> will be created. `el` can be provided as an object. The tagName attribute will be use
   //   * app - (optional) the app this view is associated with.
   //   * uiTarget - (optional) element to attach to. if provided, after this view is set up it will automatically attach this element.
   //   * setup - (option) if truthy, this view's setup function will be called directly after initialization.
   init: function(options) {
     this.options = options || {},
     this.app = this.options.app || pie.appInstance;
-    this.el = this.options.el || document.createElement('div');
+
+    if(pie.object.isPlainObject(this.options.el)) {
+      this.el = document.createElement(this.options.el.tagName || 'div');
+      for(var key in this.options.el) {
+        if(key !== 'tagName') {
+          if(key === 'classes') this.el.classList.add.apply(this.el.classList, pie.array.change(this.options.el[key], 'from', 'flatten').join(' ').split(' '));
+          else this.el.setAttribute(key, this.options.el[key]);
+        }
+      }
+    } else {
+      this.el = this.options.el || document.createElement('div');
+    }
+
     this.eventedEls = [];
     this.changeCallbacks = [];
 

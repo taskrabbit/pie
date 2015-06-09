@@ -35,9 +35,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
         options = options || {};
 
         this.model = pie.model.create(itemData);
-        this._super(pie.object.merge({
-          el: options.tagName ? document.createElement(options.tagName) : undefined
-        }, options));
+        this._super(options);
       },
 
       renderData: function() {

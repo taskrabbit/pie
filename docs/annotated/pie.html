@@ -6660,7 +6660,7 @@ View lifecycle:</p>
               <p><strong>pie.view.init</strong></p>
 <p>Options:</p>
 <ul>
-<li>el - (optional) the root element of the views control. if not provided, a new <div> will be created.</li>
+<li>el - (optional) the root element of the views control. if not provided, a new <div> will be created. <code>el</code> can be provided as an object. The tagName attribute will be use</li>
 <li>app - (optional) the app this view is associated with.</li>
 <li>uiTarget - (optional) element to attach to. if provided, after this view is set up it will automatically attach this element.</li>
 <li>setup - (option) if truthy, this view’s setup function will be called directly after initialization.</li>
@@ -6671,7 +6671,19 @@ View lifecycle:</p>
             <div class="content"><div class='highlight'><pre>  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
     <span class="hljs-keyword">this</span>.options = options || {},
     <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>.options.app || pie.appInstance;
-    <span class="hljs-keyword">this</span>.el = <span class="hljs-keyword">this</span>.options.el || <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'div'</span>);
+
+    <span class="hljs-keyword">if</span>(pie.object.isPlainObject(<span class="hljs-keyword">this</span>.options.el)) {
+      <span class="hljs-keyword">this</span>.el = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-keyword">this</span>.options.el.tagName || <span class="hljs-string">'div'</span>);
+      <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> key <span class="hljs-keyword">in</span> <span class="hljs-keyword">this</span>.options.el) {
+        <span class="hljs-keyword">if</span>(key !== <span class="hljs-string">'tagName'</span>) {
+          <span class="hljs-keyword">if</span>(key === <span class="hljs-string">'classes'</span>) <span class="hljs-keyword">this</span>.el.classList.add.apply(<span class="hljs-keyword">this</span>.el.classList, pie.array.change(<span class="hljs-keyword">this</span>.options.el[key], <span class="hljs-string">'from'</span>, <span class="hljs-string">'flatten'</span>).join(<span class="hljs-string">' '</span>).split(<span class="hljs-string">' '</span>));
+          <span class="hljs-keyword">else</span> <span class="hljs-keyword">this</span>.el.setAttribute(key, <span class="hljs-keyword">this</span>.options.el[key]);
+        }
+      }
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">this</span>.el = <span class="hljs-keyword">this</span>.options.el || <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'div'</span>);
+    }
+
     <span class="hljs-keyword">this</span>.eventedEls = [];
     <span class="hljs-keyword">this</span>.changeCallbacks = [];
 
@@ -9728,10 +9740,10 @@ which will be provided as the second argument to the cast’ constructor.</li>
             
             <div class="content"><div class='highlight'><pre>pie.list = pie.model.extend(<span class="hljs-string">'list'</span>, {
 
-  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(array, options)</span> </span>{
-    array = array || [];
-    <span class="hljs-keyword">this</span>._super({}, options);
-    <span class="hljs-keyword">this</span>.data.items = array.map(<span class="hljs-keyword">this</span>._cast.bind(<span class="hljs-keyword">this</span>));
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arrayOrData, options)</span> </span>{
+    <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(arrayOrData)) arrayOrData = {items: arrayOrData};
+    <span class="hljs-keyword">this</span>._super(arrayOrData, options);
+    <span class="hljs-keyword">this</span>.data.items = pie.array.from(<span class="hljs-keyword">this</span>.data.items).map(<span class="hljs-keyword">this</span>._cast.bind(<span class="hljs-keyword">this</span>));
   },</pre></div></div>
             
         </li>
@@ -10238,9 +10250,7 @@ Returns the removed item.</p>
         options = options || {};
 
         <span class="hljs-keyword">this</span>.model = pie.model.create(itemData);
-        <span class="hljs-keyword">this</span>._super(pie.object.merge({
-          el: options.tagName ? <span class="hljs-built_in">document</span>.createElement(options.tagName) : <span class="hljs-literal">undefined</span>
-        }, options));
+        <span class="hljs-keyword">this</span>._super(options);
       },
 
       renderData: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{

@@ -4,6 +4,22 @@ describe("pie.view", function() {
     this.view = pie.view.create();
   });
 
+  it("should allow the el to be provided as a pojo", function() {
+    var v = pie.view.create({
+      el: {
+        tagName: 'li',
+        classes: ['foo bar baz', 'qux'],
+        id: 'bar'
+      }
+    });
+
+    expect(v.el.id).toEqual('bar');
+    expect(v.el.tagName).toEqual('LI');
+    expect(v.el.classList.contains('foo')).toEqual(true);
+    expect(v.el.classList.contains('qux')).toEqual(true);
+  });
+
+
   it("should correctly build an event namespace", function() {
     var uid = this.view.__pieId;
     expect(uid).not.toBeFalsy();
