@@ -3592,7 +3592,7 @@ foo[]=thing&amp;foo[]=bar
     pieces.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(piece)</span></span>{
       segments = piece.split(<span class="hljs-string">'='</span>);
       key = <span class="hljs-built_in">decodeURIComponent</span>(segments[<span class="hljs-number">0</span>] || <span class="hljs-string">''</span>);
-      value = <span class="hljs-built_in">decodeURIComponent</span>(segments[<span class="hljs-number">1</span>] || <span class="hljs-string">''</span>);
+      value = <span class="hljs-built_in">decodeURIComponent</span>((segments[<span class="hljs-number">1</span>] || <span class="hljs-string">''</span>).replace(<span class="hljs-regexp">/\+/g</span>, <span class="hljs-string">'%20'</span>));
 
       <span class="hljs-keyword">if</span>(parse) value = parseQueryValue(value);
 
@@ -14333,7 +14333,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150605.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150609.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
