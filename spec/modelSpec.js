@@ -333,6 +333,33 @@ describe("pie.model", function() {
 
     });
 
+    it("should not deliver multiple change record for child keys if the values did not change", function() {
+      var m = this.model, cnt = 0;
+
+      var o = function() {
+        cnt++;
+        expect(cnt).toEqual(1);
+        m.set('foo', {bar: 'baz'});
+      };
+
+      m.observe(o, 'foo.bar');
+
+      m.data.foo = {bar: 'baz', too: 'bar'};
+      m.set('foo', {bar: 'baz'});
+    });
+
+    it("should not deliver multiple records for keys that were added then deleted", function() {
+      var m = this.model,
+      spy = jasmine.createSpy();
+
+      m.observe(spy, 'foo');
+
+      m.set('foo', 'bar', {skipObservers: true});
+      m.set('foo', undefined);
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+
   });
 
   describe("inheritance", function() {

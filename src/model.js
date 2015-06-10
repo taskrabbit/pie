@@ -132,10 +132,24 @@ pie.model = pie.base.extend('model', {
     var existing = pie.array.detect(this.changeRecords, function(r){ return r.name === name; });
 
     if(existing) {
+      var remove = false;
       existing.value = value;
+
+      // if we previously deleted this value but it's been added back in, just report an update.
       if(existing.type === 'delete' && type === 'add') existing.type = 'update';
+      else if(existing.type === 'add' && type === 'delete') remove = true;
+      // if we previously delete this value but have now added an object, report a path update.
       else if(existing.type === 'delete' && type === 'pathUpdate') existing.type = 'pathUpdate';
+      // if we previously deleted this value but have now changed it, inherit the new type.
       else if(type === 'delete') existing.type = type;
+
+      // if the result is an update but the values are identical, remove the change record.
+      if(existing.type === 'update' && existing.oldValue === existing.value) remove = true;
+
+      if(remove) {
+        this.changeRecords = pie.array.remove(this.changeRecords, existing);
+      }
+
       return;
     }
 

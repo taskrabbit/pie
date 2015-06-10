@@ -60,7 +60,7 @@ pie.mixins.container = {
     fname = args.shift(),
     obj = this.parent;
 
-    while(obj && !(fname in obj)) {
+    while(obj && !pie.object.has(obj, fname, true)) {
       obj = obj.parent;
     }
 
@@ -68,7 +68,7 @@ pie.mixins.container = {
   },
 
   sendToChildren: function(/* fnName, arg1, arg2 */) {
-    var allArgs = pie.array.change(arguments, 'from'),
+    var allArgs = pie.array.from(arguments),
     fnName = allArgs[0],
     args = allArgs.slice(1);
 
