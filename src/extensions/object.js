@@ -166,7 +166,7 @@ pie.object.isPromise = function(obj) {
 };
 
 (function() {
-  var regex = /is(.+)/;
+  var regex = /^is(.+)/;
 
   Object.keys(pie.object).forEach(function(k) {
     var match = regex.match(k);
