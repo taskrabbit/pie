@@ -2501,6 +2501,7 @@ pie.fn._easeAnimation = <span class="hljs-function"><span class="hljs-keyword">f
     each(y, x);
 
     <span class="hljs-keyword">if</span>(bigT &gt;= endT) {
+      <span class="hljs-keyword">if</span>(y !== o.to) each(o.to, <span class="hljs-number">1</span>);
       <span class="hljs-keyword">if</span>(complete) complete();
     } <span class="hljs-keyword">else</span> {
       animate(runner);
@@ -14417,7 +14418,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150610.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150612.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
