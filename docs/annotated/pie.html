@@ -13783,7 +13783,7 @@ Leaving the base function untouched.</p>
   applyValueToElements: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.ignore) <span class="hljs-keyword">return</span>;
 
-    <span class="hljs-keyword">var</span> els = <span class="hljs-keyword">this</span>.view.qsa(<span class="hljs-keyword">this</span>.options.sel);
+    <span class="hljs-keyword">var</span> els = <span class="hljs-keyword">this</span>.options.sel ? <span class="hljs-keyword">this</span>.view.qsa(<span class="hljs-keyword">this</span>.options.sel) : [<span class="hljs-keyword">this</span>.view.el];
     <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; els.length; i++) {
       <span class="hljs-keyword">this</span>.getIntegration(els[i]).setValue(els[i], <span class="hljs-keyword">this</span>);
     }
