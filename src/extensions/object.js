@@ -131,18 +131,9 @@ pie.object.isPlainObject = function(obj) {
   return key === undefined || pie.object.has(obj, key);
 };
 
-pie.object.isNotPlainObject = function(obj) {
-  return !pie.object.isPlainObject(obj);
-};
-
-
 ['Object', 'Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Boolean'].forEach(function(name) {
   pie.object['is' + name] = function(obj) {
     return Object.prototype.toString.call(obj) === '[object ' + name + ']';
-  };
-
-  pie.object['isNot' + name] = function(obj) {
-    return !pie.object['is' + name](obj);
   };
 });
 
@@ -157,16 +148,9 @@ pie.object.isNotPlainObject = function(obj) {
 pie.object.isUndefined = function(obj) {
   return obj === void 0;
 };
-pie.object.isNotUndefined = function(obj) {
-  return !pie.object.isUndefined(obj);
-};
 
 pie.object.isNode = function(obj) {
   return obj instanceof Node;
-};
-
-pie.object.isNotNode = function(obj) {
-  return !pie.object.isNode(obj);
 };
 
 pie.object.isModel = function(obj) {
@@ -176,6 +160,24 @@ pie.object.isModel = function(obj) {
 pie.object.isView = function(obj) {
   return obj && obj.__pieRole === 'view';
 };
+
+pie.object.isPromise = function(obj) {
+  return obj && obj.__pieRole === 'promise';
+};
+
+(function() {
+  var regex = /is(.+)/;
+
+  Object.keys(pie.object).forEach(function(k) {
+    var match = regex.match(k);
+    if(match) {
+      pie.object['isNot' + match[1]] = function() {
+        return !pie.object['is' + match[1]];
+      };
+    }
+  });
+
+})();
 
 // shallow merge
 pie.object.merge = function() {

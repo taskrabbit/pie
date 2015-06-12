@@ -22,7 +22,7 @@ pie.base = {
   __pieRole: 'class',
 
   create: function() {
-    return pie.base._create(this.schema, arguments);
+    return pie.base._create(this, arguments);
   },
 
   extend: function() {
@@ -58,13 +58,16 @@ pie.base = {
     }.bind(this));
   },
 
-  _create: function(schema, args) {
+  _create: function(clazz, args) {
+    var schema = clazz.schema;
+
     var o = {};
     pie.uid(o);
 
     pie.object.reopen(o, schema);
 
     o.init.apply(o, args);
+    o.__class = clazz;
 
     if(!o.app) {
       if(o.options && o.options.app) o.app = o.options.app;

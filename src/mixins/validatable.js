@@ -41,7 +41,7 @@ pie.mixins.validatable = {
         } else if(pie.object.isFunction(conf)){
           resultConfigs.push({type: 'fn', options: {fn: conf}});
         // otherwise, we have an object
-        } else {
+        } else if(conf) {
 
           // iterate the keys, adding a validation for each
           Object.keys(conf).forEach(function(confKey){
@@ -51,7 +51,7 @@ pie.mixins.validatable = {
             // in this case, we convert the value to an option
             // {presence: true} -> {type: 'presence', {presence: true}}
             // {format: /.+/} -> {type: 'format', {format: /.+/}}
-            } else {
+            } else if(conf[confKey]) {
               resultConfigs.push({
                 type: confKey,
                 options: pie.object.merge({}, conf)
@@ -62,14 +62,18 @@ pie.mixins.validatable = {
 
       });
 
-      // append the validations to the existing ones
-      this.validations[k] = this.validations[k] || [];
-      this.validations[k] = this.validations[k].concat(resultConfigs);
 
-      this.observe(function(changes){
-        var change = changes.get(k);
-        return this.validationChangeObserver(change);
-      }.bind(this), k);
+      if(resultConfigs.length) {
+
+        // append the validations to the existing ones
+        this.validations[k] = this.validations[k] || [];
+        this.validations[k] = this.validations[k].concat(resultConfigs);
+
+        this.observe(function(changes){
+          var change = changes.get(k);
+          return this.validationChangeObserver(change);
+        }.bind(this), k);
+      }
 
     }.bind(this));
 

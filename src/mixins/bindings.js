@@ -12,8 +12,9 @@ pie.mixins.bindings = {
   // If we have an emitter, tap into the afterRender event and initialize the dom
   // with our model values.
   setup: function() {
-    this.emitter.on('setup', this.setupBindings.bind(this));
-    this.emitter.on('afterRender', this.initBindings.bind(this));
+    this.eon('setup', 'setupBindings');
+    this.eon('afterRender', 'initBindings');
+
     this._super.apply(this);
   },
 

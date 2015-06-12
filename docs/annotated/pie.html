@@ -3050,18 +3050,9 @@ if last one is own, then all properties are own.</p>
   <span class="hljs-keyword">return</span> key === <span class="hljs-literal">undefined</span> || pie.object.has(obj, key);
 };
 
-pie.object.isNotPlainObject = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
-  <span class="hljs-keyword">return</span> !pie.object.isPlainObject(obj);
-};
-
-
 [<span class="hljs-string">'Object'</span>, <span class="hljs-string">'Arguments'</span>, <span class="hljs-string">'Function'</span>, <span class="hljs-string">'String'</span>, <span class="hljs-string">'Number'</span>, <span class="hljs-string">'Date'</span>, <span class="hljs-string">'RegExp'</span>, <span class="hljs-string">'Boolean'</span>].forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
   pie.object[<span class="hljs-string">'is'</span> + name] = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
     <span class="hljs-keyword">return</span> <span class="hljs-built_in">Object</span>.prototype.toString.call(obj) === <span class="hljs-string">'[object '</span> + name + <span class="hljs-string">']'</span>;
-  };
-
-  pie.object[<span class="hljs-string">'isNot'</span> + name] = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
-    <span class="hljs-keyword">return</span> !pie.object[<span class="hljs-string">'is'</span> + name](obj);
   };
 });
 
@@ -3076,16 +3067,9 @@ pie.object.isNotPlainObject = <span class="hljs-function"><span class="hljs-keyw
 pie.object.isUndefined = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
   <span class="hljs-keyword">return</span> obj === <span class="hljs-keyword">void</span> <span class="hljs-number">0</span>;
 };
-pie.object.isNotUndefined = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
-  <span class="hljs-keyword">return</span> !pie.object.isUndefined(obj);
-};
 
 pie.object.isNode = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
   <span class="hljs-keyword">return</span> obj <span class="hljs-keyword">instanceof</span> Node;
-};
-
-pie.object.isNotNode = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
-  <span class="hljs-keyword">return</span> !pie.object.isNode(obj);
 };
 
 pie.object.isModel = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
@@ -3094,7 +3078,25 @@ pie.object.isModel = <span class="hljs-function"><span class="hljs-keyword">func
 
 pie.object.isView = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
   <span class="hljs-keyword">return</span> obj &amp;&amp; obj.__pieRole === <span class="hljs-string">'view'</span>;
-};</pre></div></div>
+};
+
+pie.object.isPromise = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
+  <span class="hljs-keyword">return</span> obj &amp;&amp; obj.__pieRole === <span class="hljs-string">'promise'</span>;
+};
+
+(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">var</span> regex = <span class="hljs-regexp">/is(.+)/</span>;
+
+  <span class="hljs-built_in">Object</span>.keys(pie.object).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k)</span> </span>{
+    <span class="hljs-keyword">var</span> match = regex.match(k);
+    <span class="hljs-keyword">if</span>(match) {
+      pie.object[<span class="hljs-string">'isNot'</span> + match[<span class="hljs-number">1</span>]] = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">return</span> !pie.object[<span class="hljs-string">'is'</span> + match[<span class="hljs-number">1</span>]];
+      };
+    }
+  });
+
+})();</pre></div></div>
             
         </li>
         
@@ -4032,8 +4034,9 @@ with our model values.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'setup'</span>, <span class="hljs-keyword">this</span>.setupBindings.bind(<span class="hljs-keyword">this</span>));
-    <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>.initBindings.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'setup'</span>, <span class="hljs-string">'setupBindings'</span>);
+    <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'afterRender'</span>, <span class="hljs-string">'initBindings'</span>);
+
     <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>);
   },</pre></div></div>
             
@@ -4419,7 +4422,7 @@ validates({name: [‘presence’, {format: /[a]/}]})</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        } <span class="hljs-keyword">else</span> {</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(conf) {</pre></div></div>
             
         </li>
         
@@ -4453,7 +4456,7 @@ validates({name: [‘presence’, {format: /[a]/}]})</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>            } <span class="hljs-keyword">else</span> {
+            <div class="content"><div class='highlight'><pre>            } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(conf[confKey]) {
               resultConfigs.push({
                 type: confKey,
                 options: pie.object.merge({}, conf)
@@ -4462,7 +4465,10 @@ validates({name: [‘presence’, {format: /[a]/}]})</p>
           });
         }
 
-      });</pre></div></div>
+      });
+
+
+      <span class="hljs-keyword">if</span>(resultConfigs.length) {</pre></div></div>
             
         </li>
         
@@ -4477,13 +4483,14 @@ validates({name: [‘presence’, {format: /[a]/}]})</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.validations[k] = <span class="hljs-keyword">this</span>.validations[k] || [];
-      <span class="hljs-keyword">this</span>.validations[k] = <span class="hljs-keyword">this</span>.validations[k].concat(resultConfigs);
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.validations[k] = <span class="hljs-keyword">this</span>.validations[k] || [];
+        <span class="hljs-keyword">this</span>.validations[k] = <span class="hljs-keyword">this</span>.validations[k].concat(resultConfigs);
 
-      <span class="hljs-keyword">this</span>.observe(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span></span>{
-        <span class="hljs-keyword">var</span> change = changes.get(k);
-        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.validationChangeObserver(change);
-      }.bind(<span class="hljs-keyword">this</span>), k);
+        <span class="hljs-keyword">this</span>.observe(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span></span>{
+          <span class="hljs-keyword">var</span> change = changes.get(k);
+          <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.validationChangeObserver(change);
+        }.bind(<span class="hljs-keyword">this</span>), k);
+      }
 
     }.bind(<span class="hljs-keyword">this</span>));
 
@@ -4697,7 +4704,7 @@ pie.base = {
   __pieRole: <span class="hljs-string">'class'</span>,
 
   create: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">return</span> pie.base._create(<span class="hljs-keyword">this</span>.schema, <span class="hljs-built_in">arguments</span>);
+    <span class="hljs-keyword">return</span> pie.base._create(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
   },
 
   extend: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -4733,13 +4740,16 @@ pie.base = {
     }.bind(<span class="hljs-keyword">this</span>));
   },
 
-  _create: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(schema, args)</span> </span>{
+  _create: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(clazz, args)</span> </span>{
+    <span class="hljs-keyword">var</span> schema = clazz.schema;
+
     <span class="hljs-keyword">var</span> o = {};
     pie.uid(o);
 
     pie.object.reopen(o, schema);
 
     o.init.apply(o, args);
+    o.__class = clazz;
 
     <span class="hljs-keyword">if</span>(!o.app) {
       <span class="hljs-keyword">if</span>(o.options &amp;&amp; o.options.app) o.app = o.options.app;
