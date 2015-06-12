@@ -169,7 +169,7 @@ pie.object.isPromise = function(obj) {
   var regex = /^is(.+)/;
 
   Object.keys(pie.object).forEach(function(k) {
-    var match = regex.match(k);
+    var match = k.match(regex);
     if(match) {
       pie.object['isNot' + match[1]] = function() {
         return !pie.object['is' + match[1]];
