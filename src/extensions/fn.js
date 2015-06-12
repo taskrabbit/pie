@@ -200,6 +200,7 @@ pie.fn._easeAnimation = function(each, o, complete) {
     each(y, x);
 
     if(bigT >= endT) {
+      if(y !== o.to) each(o.to, 1);
       if(complete) complete();
     } else {
       animate(runner);
