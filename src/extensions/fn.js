@@ -241,6 +241,8 @@ pie.fn.once = function(f) {
   };
 };
 
+pie.fn.noop = function(){};
+
 // **pie.fn.throttle**
 //
 // Trigger an event no more than the specified rate.
