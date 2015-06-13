@@ -408,4 +408,32 @@ describe("Array extensions", function() {
     });
   });
 
+  describe("inGroupsOf", function() {
+
+    it("should break the array into groups of the given count", function() {
+      var a = [0,1,2,3,4,5,6,7];
+      var b = pie.array.inGroupsOf(a, 2);
+      var c = pie.array.inGroupsOf(a, 3);
+
+      expect(b.length).toEqual(4);
+      expect(b[0][0]).toEqual(0);
+      expect(b[0][1]).toEqual(1);
+      expect(b[1][1]).toEqual(3);
+      expect(b[3][1]).toEqual(7);
+
+      expect(c.length).toEqual(3);
+      expect(c[0].length).toEqual(3);
+      expect(c[0][0]).toEqual(0);
+      expect(c[0][2]).toEqual(2);
+      expect(c[0][2]).toEqual(2);
+
+      expect(c[1].length).toEqual(3);
+
+      expect(c[2].length).toEqual(2);
+      expect(c[2][0]).toEqual(6);
+      expect(c[2][1]).toEqual(7);
+      expect(c[2][2]).toEqual(undefined);
+    });
+
+  })
 });
