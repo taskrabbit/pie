@@ -77,14 +77,11 @@ pie.promise = pie.base.extend({
           continue;
         }
 
-        if(pie.object.isPromise(result)) {
-          result.then(promise.resolve.bind(promise), promise.reject.bind(promise));
-          continue;
-        }
-
       }
 
-      if(this.state === 'FULFILLED') {
+      if(pie.object.isPromise(result)) {
+        result.then(promise.resolve.bind(promise), promise.reject.bind(promise));
+      } else if(this.state === 'FULFILLED') {
         promise.resolve(result);
       } else {
         promise.reject(result);

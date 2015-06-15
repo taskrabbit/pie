@@ -77,7 +77,7 @@ pie.dom.createElement = function(str) {
 // A cache created solely for caching element specific information,
 // easier for cleanup via `pie.dom.remove()`.
 pie.dom.cache = function() {
-  pie.elementCache = pie.elementCache || pie.cache.create();
+  pie.elementCache = pie.elementCache || pie.model.create();
   return pie.elementCache;
 };
 
@@ -506,20 +506,25 @@ pie.dom.trigger = function(el, e, forceEvent) {
 // ```
 pie.dom.prefixed = (function(){
   var prefixes = ['', 'webkit', 'moz', 'ms', 'o'],
-  returnVal = function(val, el){
+  returnVal = function(val, el, standard){
+    pie.dom.cache().set('browserPrefix.' + standard, val);
     return pie.object.isFunction(val) ? val.bind(el) : val;
   };
 
   return function(el, standardName) {
+
+    var cacheHit = pie.dom.cache().get('browserPrefix.' + standardName);
+    if(cacheHit) return returnVal(cacheHit, el, standardName);
+
     var prefix, i = 0,
     capd = pie.string.capitalize(standardName);
 
     for(; i < prefixes.length; i++) {
       prefix = prefixes[i];
 
-      if(el[prefix + standardName]) return returnVal(el[prefix + standardName], el);
-      if(el['-' + prefix + '-' + standardName]) return returnVal(el['-' + prefix + '-' + standardName], el);
-      if(el[prefix + capd]) return returnVal(el[prefix + capd], el);
+      if(el[prefix + standardName]) return returnVal(el[prefix + standardName], el, standardName);
+      if(el['-' + prefix + '-' + standardName]) return returnVal(el['-' + prefix + '-' + standardName], el, standardName);
+      if(el[prefix + capd]) return returnVal(el[prefix + capd], el, standardName);
     }
   };
 })();

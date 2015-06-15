@@ -67,7 +67,7 @@ pie.app = pie.base.extend('app', {
 
     // `app.cache` is a centralized cache store to be used by anyone.
     this.cache = classOption('cache', function(){
-      return pie.cache.create({}, {app: this});
+      return pie.model.create({}, {app: this});
     }.bind(this));
 
     // `app.storage` is used for local, session, cache, etc storage

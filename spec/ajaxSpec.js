@@ -106,7 +106,7 @@ describe("pie.ajax", function() {
     });
 
     it("should use the csrf token in the dom if it is present", function() {
-      this.ajax.app.cache.del('csrfToken');
+      this.ajax.app.cache.set('csrfToken', undefined);
       var meta = pie.dom.createElement('<meta name="csrf-token" content="abcdefg" />'), request;
       document.querySelector('head').appendChild(meta);
 

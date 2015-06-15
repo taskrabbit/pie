@@ -131,6 +131,8 @@ describe("pie.promise", function(){
         expect(e.message).toEqual("failed json fetch");
         done();
       });
+
+    jasmine.clock().tick(100);
   });
 
 });
