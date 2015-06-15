@@ -15,7 +15,7 @@ pie.router = pie.model.extend('router', {
       app: app
     }, options));
 
-    this.cache = pie.model.create();
+    this.cache = pie.cache.create();
     this.compute('rootRegex', 'root');
   },
 
@@ -171,9 +171,7 @@ pie.router = pie.model.extend('router', {
   // * **route** - the matching route object.
   // * ** * ** - all the information passed into the router for the matching route.
   parseUrl: function(path, parseQuery) {
-    var obj = this.cache.get(path);
-
-    if(!obj) {
+    var obj = this.cache.fetch(path, function(){
 
       var pieces, query, match, fullPath, pathWithRoot, interpolations;
 
@@ -192,7 +190,7 @@ pie.router = pie.model.extend('router', {
       pathWithRoot = pie.string.normalizeUrl(this.get('root') + path);
       interpolations = match && match.interpolations(path, parseQuery);
 
-      obj = pie.object.merge({
+      return pie.object.merge({
         path: path,
         fullPath: fullPath,
         pathWithRoot: pathWithRoot,
@@ -202,8 +200,7 @@ pie.router = pie.model.extend('router', {
         route: match
       }, match && match.options || this.missedConfig);
 
-      this.cache.set(path, obj);
-    }
+    }.bind(this));
 
     return pie.object.deepMerge({}, obj);
   }

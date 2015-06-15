@@ -129,12 +129,10 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
   _applyCsrfToken: function(xhr) {
 
-    var token = pie.fn.valueFrom(this.get('csrfToken'));
-
-    token = token || pie.fn.valueFrom(this.app.cache.getOrSet('csrfToken', function() {
+    var token = pie.fn.valueFrom(this.get('csrfToken')) || this.app.cache.fetch('csrfToken', function(){
       var el = pie.qs('meta[name="csrf-token"]');
       return el ? el.getAttribute('content') : null;
-    }));
+    });
 
     if(token) {
       xhr.setRequestHeader('X-CSRF-Token', token);

@@ -5080,7 +5080,7 @@ pie.app.create({
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.cache = classOption(<span class="hljs-string">'cache'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      <span class="hljs-keyword">return</span> pie.model.create({}, {app: <span class="hljs-keyword">this</span>});
+      <span class="hljs-keyword">return</span> pie.cache.create({}, {app: <span class="hljs-keyword">this</span>});
     }.bind(<span class="hljs-keyword">this</span>));</pre></div></div>
             
         </li>
@@ -6679,6 +6679,17 @@ app.config.get(<span class="hljs-string">'analyticsEnabled'</span>);
   }
 
 });
+pie.cache = pie.model.extend(<span class="hljs-string">'cache'</span>, {
+
+  fetch: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, fn)</span> </span>{
+    <span class="hljs-keyword">var</span> value = <span class="hljs-keyword">this</span>.get(path);
+    <span class="hljs-keyword">if</span>(value !== <span class="hljs-literal">undefined</span>) <span class="hljs-keyword">return</span> value;
+    value = pie.fn.valueFrom(fn);
+    <span class="hljs-keyword">this</span>.set(path, value);
+    <span class="hljs-keyword">return</span> value;
+  }
+
+});
 pie.dataStore = pie.base.extend(<span class="hljs-string">'dataStore'</span>, {
 
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, options)</span> </span>{
@@ -7768,12 +7779,10 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
   _applyCsrfToken: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(xhr)</span> </span>{
 
-    <span class="hljs-keyword">var</span> token = pie.fn.valueFrom(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'csrfToken'</span>));
-
-    token = token || pie.fn.valueFrom(<span class="hljs-keyword">this</span>.app.cache.getOrSet(<span class="hljs-string">'csrfToken'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> token = pie.fn.valueFrom(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'csrfToken'</span>)) || <span class="hljs-keyword">this</span>.app.cache.fetch(<span class="hljs-string">'csrfToken'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
       <span class="hljs-keyword">var</span> el = pie.qs(<span class="hljs-string">'meta[name="csrf-token"]'</span>);
       <span class="hljs-keyword">return</span> el ? el.getAttribute(<span class="hljs-string">'content'</span>) : <span class="hljs-literal">null</span>;
-    }));
+    });
 
     <span class="hljs-keyword">if</span>(token) {
       xhr.setRequestHeader(<span class="hljs-string">'X-CSRF-Token'</span>, token);
@@ -11384,7 +11393,7 @@ Options:</p>
       app: app
     }, options));
 
-    <span class="hljs-keyword">this</span>.cache = pie.model.create();
+    <span class="hljs-keyword">this</span>.cache = pie.cache.create();
     <span class="hljs-keyword">this</span>.compute(<span class="hljs-string">'rootRegex'</span>, <span class="hljs-string">'root'</span>);
   },</pre></div></div>
             
@@ -11637,9 +11646,7 @@ The result will  have the following attributes:</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  parseUrl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, parseQuery)</span> </span>{
-    <span class="hljs-keyword">var</span> obj = <span class="hljs-keyword">this</span>.cache.get(path);
-
-    <span class="hljs-keyword">if</span>(!obj) {
+    <span class="hljs-keyword">var</span> obj = <span class="hljs-keyword">this</span>.cache.fetch(path, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
 
       <span class="hljs-keyword">var</span> pieces, query, match, fullPath, pathWithRoot, interpolations;
 
@@ -11658,7 +11665,7 @@ The result will  have the following attributes:</p>
       pathWithRoot = pie.string.normalizeUrl(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'root'</span>) + path);
       interpolations = match &amp;&amp; match.interpolations(path, parseQuery);
 
-      obj = pie.object.merge({
+      <span class="hljs-keyword">return</span> pie.object.merge({
         path: path,
         fullPath: fullPath,
         pathWithRoot: pathWithRoot,
@@ -11668,8 +11675,7 @@ The result will  have the following attributes:</p>
         route: match
       }, match &amp;&amp; match.options || <span class="hljs-keyword">this</span>.missedConfig);
 
-      <span class="hljs-keyword">this</span>.cache.set(path, obj);
-    }
+    }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">return</span> pie.object.deepMerge({}, obj);
   }
