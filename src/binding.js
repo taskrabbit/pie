@@ -131,7 +131,7 @@ pie.binding = pie.base.extend('binding', {
   applyValueToElements: function() {
     if(this.ignore) return;
 
-    var els = this.options.sel ? this.view.qsa(this.options.sel) : [this.view.el];
+    var els = this.els();
     for(var i = 0; i < els.length; i++) {
       this.getIntegration(els[i]).setValue(els[i], this);
     }
@@ -172,11 +172,15 @@ pie.binding = pie.base.extend('binding', {
   readFields: function(opts) {
     if(!this.toModel) return;
 
-    var els = this.view.qsa(this.options.sel);
+    var els = this.els();
 
     for(var i = 0; i < els.length; i++) {
       this.toModel(els[i], opts);
     }
+  },
+
+  els: function() {
+    return pie.object.isString(this.options.sel) ? this.view.qsa(this.options.sel) : pie.array.from(this.options.sel);
   }
 
 });

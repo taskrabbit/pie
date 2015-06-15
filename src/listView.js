@@ -50,6 +50,10 @@ pie.listView = pie.activeView.extend('listView', (function(){
     return klass.create(options, itemData);
   };
 
+  var nameFactory = function(options, itemData, i) {
+    return "list-item-" + i;
+  };
+
   return {
 
     init: function() {
@@ -64,10 +68,12 @@ pie.listView = pie.activeView.extend('listView', (function(){
           minLoadingTime: null
         },
         itemOptions: {
-          viewFactory: viewFactory
+          viewFactory: viewFactory,
+          nameFactory: nameFactory
         },
         emptyOptions: {
-          viewFactory: viewFactory
+          viewFactory: viewFactory,
+          nameFactory: nameFactory
         }
       }, this.options);
 
@@ -99,24 +105,26 @@ pie.listView = pie.activeView.extend('listView', (function(){
       var container = this.listContainer(),
         opts = pie.object.dup(this.options.itemOptions),
         factory = opts.viewFactory,
+        nameFactory = opts.nameFactory,
         afterRenders = [],
         whenComplete = function() {
           this.setListLoadingStyle(false);
           this.emitter.fire('afterRenderItems');
         }.bind(this),
-        child;
+        child, name;
 
       delete opts.viewFactory;
 
       this.listData().forEach(function(data, i) {
         child = factory(opts, data, i);
+        name = nameFactory(opts, data, i);
 
         /* we subscribe to each child's after render to understand when our "loading" style can be removed. */
         afterRenders.push(function(cb) {
           child.emitter.once('afterRender', cb, {immediate: true});
         });
 
-        this.addChild('list-item-' + i, child);
+        this.addChild(name, child);
 
         /* we append to the dom before setup to preserve ordering. */
         child.addToDom(container);

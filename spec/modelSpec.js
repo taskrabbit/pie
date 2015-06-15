@@ -333,19 +333,20 @@ describe("pie.model", function() {
 
     });
 
-    it("should not deliver multiple change record for child keys if the values did not change", function() {
+    it("should not deliver multiple change record for child keys if the values did not change", function(done) {
       var m = this.model, cnt = 0;
 
       var o = function() {
         cnt++;
         expect(cnt).toEqual(1);
-        m.set('foo', {bar: 'baz'});
+        m.set('foo', {bar: 'bad', too: 'bad'});
+        done();
       };
 
       m.observe(o, 'foo.bar');
 
       m.data.foo = {bar: 'baz', too: 'bar'};
-      m.set('foo', {bar: 'baz'});
+      m.set('foo', {bar: 'bad'});
     });
 
     it("should not deliver multiple records for keys that were added then deleted", function() {

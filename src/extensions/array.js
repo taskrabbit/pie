@@ -384,6 +384,7 @@ pie.array.hasAny = function(/* a, *values */) {
 // arr = [{foo: true}, {bar: true}, {bar: true, foo: true}]
 // pie.array.indexOf(arr, 'foo')
 // //=> 0
+// ```
 pie.array.indexOf = function(a, f) {
   a = pie.array.from(a);
   var i = 0, l = a.length;
@@ -394,6 +395,34 @@ pie.array.indexOf = function(a, f) {
   }
 
   return -1;
+};
+
+// ** pie.array.inGroupsOf **
+//
+// Break the array into groups of the desired count.
+// If the length is not divisible by the desired count,
+// the last group will be shorter.
+// ```
+// var a = [0,1,2,3,4,5,6,7];
+// pie.array.inGroupsOf(a, 3);
+// //=> [[0,1,2], [3,4,5], [6,7]];
+// ```
+pie.array.inGroupsOf = function(a, count) {
+  a = pie.array.from(a);
+  var out = [], sub;
+  for(var i = 0; i < a.length; i++) {
+
+    if(i % count === 0) {
+      if(sub) out.push(sub);
+      sub = [];
+    }
+
+    sub.push(a[i]);
+  }
+
+  if(sub.length) out.push(sub);
+
+  return out;
 };
 
 // ** pie.array.intersect **
