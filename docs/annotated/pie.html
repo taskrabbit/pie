@@ -2599,7 +2599,9 @@ f();
 
     <span class="hljs-keyword">return</span> result;
   };
-};</pre></div></div>
+};
+
+pie.fn.noop = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{};</pre></div></div>
             
         </li>
         
@@ -4817,6 +4819,137 @@ variable to which this object is assigned.</p>
 
     <span class="hljs-keyword">return</span> o;
   }
+};
+pie.promise = pie.base.extend({
+
+  __pieRole: <span class="hljs-string">'promise'</span>,
+
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(resolver)</span> </span>{
+
+    <span class="hljs-keyword">this</span>.resolves = [];
+    <span class="hljs-keyword">this</span>.rejects  = [];
+
+    <span class="hljs-keyword">this</span>.result   = <span class="hljs-literal">undefined</span>;
+    <span class="hljs-keyword">this</span>.state    = <span class="hljs-string">'UNFULFILLED'</span>;
+
+    <span class="hljs-keyword">if</span>(resolver) {
+      setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">try</span> {
+          resolver(<span class="hljs-keyword">this</span>.resolve.bind(<span class="hljs-keyword">this</span>), <span class="hljs-keyword">this</span>.reject.bind(<span class="hljs-keyword">this</span>));
+        } <span class="hljs-keyword">catch</span>(ex) {
+          <span class="hljs-keyword">this</span>.reject(ex);
+        }
+      }.bind(<span class="hljs-keyword">this</span>), <span class="hljs-number">0</span>);
+    }
+  },
+
+  then: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(onResolve, onReject)</span> </span>{
+    <span class="hljs-keyword">var</span> child = <span class="hljs-keyword">this</span>.__class.create();
+
+    <span class="hljs-keyword">this</span>.resolves.push([onResolve, child]);
+    <span class="hljs-keyword">this</span>.rejects.push([onReject, child]);
+
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.state !== <span class="hljs-string">'UNFULFILLED'</span>) {
+      setTimeout(<span class="hljs-keyword">this</span>._flush.bind(<span class="hljs-keyword">this</span>), <span class="hljs-number">0</span>);
+    }
+
+    <span class="hljs-keyword">return</span> child;
+  },
+
+  <span class="hljs-keyword">catch</span>: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(reject)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.then(<span class="hljs-literal">undefined</span>, reject);
+  },
+
+  reject: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value)</span> </span>{
+    <span class="hljs-keyword">this</span>._transition(<span class="hljs-string">'FAILED'</span>, value);
+  },
+
+  resolve: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value)</span> </span>{
+    <span class="hljs-keyword">this</span>._transition(<span class="hljs-string">'FULFILLED'</span>, value);
+  },
+
+  _transition: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(state, value)</span> </span>{
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.state === <span class="hljs-string">'UNFULFILLED'</span>) {
+      <span class="hljs-keyword">this</span>.state = state;
+      <span class="hljs-keyword">this</span>.result = value;
+      <span class="hljs-keyword">this</span>._flush();
+    }
+  },
+
+  _flush: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> list = <span class="hljs-keyword">this</span>.state === <span class="hljs-string">'FULFILLED'</span> ? <span class="hljs-keyword">this</span>.resolves : <span class="hljs-keyword">this</span>.rejects;
+    <span class="hljs-keyword">var</span> tuple, callback, promise, result;
+
+    <span class="hljs-keyword">while</span>(list.length) {
+      tuple = list.pop();
+      callback = tuple[<span class="hljs-number">0</span>];
+      promise = tuple[<span class="hljs-number">1</span>];
+
+      <span class="hljs-keyword">if</span>(pie.object.isFunction(callback)) {
+        <span class="hljs-keyword">try</span> {
+          result = callback(<span class="hljs-keyword">this</span>.result);
+        } <span class="hljs-keyword">catch</span>(e) {
+          promise.reject(e);
+          <span class="hljs-keyword">continue</span>;
+        }
+
+        <span class="hljs-keyword">if</span>(result === promise) {
+          promise.reject(<span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">"The result of a promise's callback cannot be the promise. [2.3.1]"</span>));
+          <span class="hljs-keyword">continue</span>;
+        }
+
+        <span class="hljs-keyword">if</span>(pie.object.isPromise(result)) {
+          result.then(promise.resolve.bind(promise), promise.reject.bind(promise));
+        } <span class="hljs-keyword">else</span> {
+          promise.resolve(result);
+        }
+
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.state === <span class="hljs-string">'FULFILLED'</span>) {
+        promise.resolve(<span class="hljs-keyword">this</span>.result);
+      } <span class="hljs-keyword">else</span> {
+        promise.reject(<span class="hljs-keyword">this</span>.result);
+      }
+    }
+  }
+});
+
+pie.promise.all = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(iteratable)</span> </span>{
+  <span class="hljs-keyword">var</span> instance = <span class="hljs-keyword">new</span> pie.promise(),
+  promises = [],
+  values = [],
+  cnt = <span class="hljs-number">0</span>,
+  p;
+
+  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> k <span class="hljs-keyword">in</span> iteratable) {
+    <span class="hljs-keyword">if</span>(iteratable.hasOwnProperty(k)) {
+      p = iteratable[k];
+      <span class="hljs-keyword">if</span>(!pie.object.isPromise(p)) p = pie.promise.resolve(p);
+      promises.push(p);
+    }
+  }
+
+  promises.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(p, i)</span> </span>{
+    p.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(val)</span> </span>{
+      values[i] = val;
+      <span class="hljs-keyword">if</span>(cnt === values.length) instance.resolve(values);
+    }, instance.reject.bind(instance));
+  });
+
+  <span class="hljs-keyword">return</span> instance;
+};
+
+pie.promise.resolve = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(val)</span> </span>{
+  <span class="hljs-keyword">var</span> p = pie.promise.create();
+  p.state = <span class="hljs-string">'FULFILLED'</span>;
+  p.result = val;
+  <span class="hljs-keyword">return</span> p;
+};
+
+pie.promise.reject = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(val)</span> </span>{
+  <span class="hljs-keyword">var</span> p = pie.promise.create();
+  p.state = <span class="hljs-string">'FAILED'</span>;
+  p.result = val;
+  <span class="hljs-keyword">return</span> p;
 };</pre></div></div>
             
         </li>
