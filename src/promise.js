@@ -62,9 +62,9 @@ pie.promise = pie.base.extend({
       tuple = list.pop();
       callback = tuple[0];
       promise = tuple[1];
+      result = this.result;
 
       if(pie.object.isFunction(callback)) {
-
         try {
           result = callback(this.result);
         } catch(e) {
@@ -85,9 +85,9 @@ pie.promise = pie.base.extend({
       }
 
       if(this.state === 'FULFILLED') {
-        promise.resolve(this.result);
+        promise.resolve(result);
       } else {
-        promise.reject(this.result);
+        promise.reject(result);
       }
     }
   }

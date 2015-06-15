@@ -4884,9 +4884,9 @@ pie.promise = pie.base.extend({
       tuple = list.pop();
       callback = tuple[<span class="hljs-number">0</span>];
       promise = tuple[<span class="hljs-number">1</span>];
+      result = <span class="hljs-keyword">this</span>.result;
 
       <span class="hljs-keyword">if</span>(pie.object.isFunction(callback)) {
-
         <span class="hljs-keyword">try</span> {
           result = callback(<span class="hljs-keyword">this</span>.result);
         } <span class="hljs-keyword">catch</span>(e) {
@@ -4907,9 +4907,9 @@ pie.promise = pie.base.extend({
       }
 
       <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.state === <span class="hljs-string">'FULFILLED'</span>) {
-        promise.resolve(<span class="hljs-keyword">this</span>.result);
+        promise.resolve(result);
       } <span class="hljs-keyword">else</span> {
-        promise.reject(<span class="hljs-keyword">this</span>.result);
+        promise.reject(result);
       }
     }
   }
