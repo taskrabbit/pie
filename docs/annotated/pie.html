@@ -4913,18 +4913,21 @@ pie.promise = pie.base.extend({
   }
 });
 
+pie.promise.from = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(thing)</span> </span>{
+  <span class="hljs-keyword">if</span>(pie.object.isPromise(thing)) <span class="hljs-keyword">return</span> thing;
+  <span class="hljs-keyword">if</span>(pie.object.isFunction(thing)) <span class="hljs-keyword">return</span> pie.promise.create(thing);
+  <span class="hljs-keyword">return</span> pie.promise.resolve(thing);
+};
+
 pie.promise.all = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(iteratable)</span> </span>{
-  <span class="hljs-keyword">var</span> instance = <span class="hljs-keyword">new</span> pie.promise(),
+  <span class="hljs-keyword">var</span> instance = pie.promise.create(),
   promises = [],
   values = [],
-  cnt = <span class="hljs-number">0</span>,
-  p;
+  cnt = <span class="hljs-number">0</span>;
 
   <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> k <span class="hljs-keyword">in</span> iteratable) {
     <span class="hljs-keyword">if</span>(iteratable.hasOwnProperty(k)) {
-      p = iteratable[k];
-      <span class="hljs-keyword">if</span>(!pie.object.isPromise(p)) p = pie.promise.resolve(p);
-      promises.push(p);
+      promises.push(pie.promise.from(iteratable[k]));
     }
   }
 
@@ -4935,6 +4938,17 @@ pie.promise.all = <span class="hljs-function"><span class="hljs-keyword">functio
     }, instance.reject.bind(instance));
   });
 
+  <span class="hljs-keyword">return</span> instance;
+};
+
+pie.promise.race = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(iteratable)</span> </span>{
+  <span class="hljs-keyword">var</span> instance = pie.promise.create(), p;
+
+  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> k <span class="hljs-keyword">in</span> iteratable) {
+    <span class="hljs-keyword">if</span>(iteratable.hasOwnProperty(k)) {
+      pie.promise.from(iteratable[k]).then(instance.resolve.bind(<span class="hljs-keyword">this</span>), instance.reject.bind(<span class="hljs-keyword">this</span>));
+    }
+  }
   <span class="hljs-keyword">return</span> instance;
 };
 

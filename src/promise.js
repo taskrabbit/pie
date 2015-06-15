@@ -91,18 +91,21 @@ pie.promise = pie.base.extend({
   }
 });
 
+pie.promise.from = function(thing) {
+  if(pie.object.isPromise(thing)) return thing;
+  if(pie.object.isFunction(thing)) return pie.promise.create(thing);
+  return pie.promise.resolve(thing);
+};
+
 pie.promise.all = function(iteratable) {
-  var instance = new pie.promise(),
+  var instance = pie.promise.create(),
   promises = [],
   values = [],
-  cnt = 0,
-  p;
+  cnt = 0;
 
   for(var k in iteratable) {
     if(iteratable.hasOwnProperty(k)) {
-      p = iteratable[k];
-      if(!pie.object.isPromise(p)) p = pie.promise.resolve(p);
-      promises.push(p);
+      promises.push(pie.promise.from(iteratable[k]));
     }
   }
 
@@ -113,6 +116,17 @@ pie.promise.all = function(iteratable) {
     }, instance.reject.bind(instance));
   });
 
+  return instance;
+};
+
+pie.promise.race = function(iteratable) {
+  var instance = pie.promise.create(), p;
+
+  for(var k in iteratable) {
+    if(iteratable.hasOwnProperty(k)) {
+      pie.promise.from(iteratable[k]).then(instance.resolve.bind(this), instance.reject.bind(this));
+    }
+  }
   return instance;
 };
 
