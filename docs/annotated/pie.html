@@ -4944,7 +4944,7 @@ pie.promise.all = <span class="hljs-function"><span class="hljs-keyword">functio
 };
 
 pie.promise.race = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(iteratable)</span> </span>{
-  <span class="hljs-keyword">var</span> instance = pie.promise.create(), p;
+  <span class="hljs-keyword">var</span> instance = pie.promise.create();
 
   <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> k <span class="hljs-keyword">in</span> iteratable) {
     <span class="hljs-keyword">if</span>(iteratable.hasOwnProperty(k)) {
@@ -10527,6 +10527,10 @@ Returns the removed item.</p>
     <span class="hljs-keyword">return</span> klass.create(options, itemData);
   };
 
+  <span class="hljs-keyword">var</span> nameFactory = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, itemData, i)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-string">"list-item-"</span> + i;
+  };
+
   <span class="hljs-keyword">return</span> {
 
     init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -10541,10 +10545,12 @@ Returns the removed item.</p>
           minLoadingTime: <span class="hljs-literal">null</span>
         },
         itemOptions: {
-          viewFactory: viewFactory
+          viewFactory: viewFactory,
+          nameFactory: nameFactory
         },
         emptyOptions: {
-          viewFactory: viewFactory
+          viewFactory: viewFactory,
+          nameFactory: nameFactory
         }
       }, <span class="hljs-keyword">this</span>.options);
 
@@ -10576,24 +10582,26 @@ Returns the removed item.</p>
       <span class="hljs-keyword">var</span> container = <span class="hljs-keyword">this</span>.listContainer(),
         opts = pie.object.dup(<span class="hljs-keyword">this</span>.options.itemOptions),
         factory = opts.viewFactory,
+        nameFactory = opts.nameFactory,
         afterRenders = [],
         whenComplete = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
           <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">false</span>);
           <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterRenderItems'</span>);
         }.bind(<span class="hljs-keyword">this</span>),
-        child;
+        child, name;
 
       <span class="hljs-keyword">delete</span> opts.viewFactory;
 
       <span class="hljs-keyword">this</span>.listData().forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, i)</span> </span>{
         child = factory(opts, data, i);
+        name = nameFactory(opts, data, i);
 
         <span class="hljs-comment">/* we subscribe to each child's after render to understand when our "loading" style can be removed. */</span>
         afterRenders.push(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span> </span>{
           child.emitter.once(<span class="hljs-string">'afterRender'</span>, cb, {immediate: <span class="hljs-literal">true</span>});
         });
 
-        <span class="hljs-keyword">this</span>.addChild(<span class="hljs-string">'list-item-'</span> + i, child);
+        <span class="hljs-keyword">this</span>.addChild(name, child);
 
         <span class="hljs-comment">/* we append to the dom before setup to preserve ordering. */</span>
         child.addToDom(container);

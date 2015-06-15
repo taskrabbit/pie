@@ -122,7 +122,7 @@ pie.promise.all = function(iteratable) {
 };
 
 pie.promise.race = function(iteratable) {
-  var instance = pie.promise.create(), p;
+  var instance = pie.promise.create();
 
   for(var k in iteratable) {
     if(iteratable.hasOwnProperty(k)) {
