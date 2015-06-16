@@ -10423,8 +10423,8 @@ Returns the removed item.</p>
     },
 
     setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.list, <span class="hljs-keyword">this</span>.renderItems.bind(<span class="hljs-keyword">this</span>), <span class="hljs-keyword">this</span>.options.listOptions.modelAttribute);
-      <span class="hljs-keyword">this</span>.emitter.on(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>.renderItems.bind(<span class="hljs-keyword">this</span>));
+      <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.list, <span class="hljs-string">'renderItems'</span>, <span class="hljs-keyword">this</span>.options.listOptions.modelAttribute);
+      <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'afterRender'</span>, <span class="hljs-string">'renderItems'</span>);
 
       <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
     },
