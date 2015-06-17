@@ -4927,7 +4927,8 @@ pie.promise.all = <span class="hljs-function"><span class="hljs-keyword">functio
   <span class="hljs-keyword">var</span> instance = pie.promise.create(),
   promises = [],
   values = [],
-  cnt = <span class="hljs-number">0</span>;
+  cnt = <span class="hljs-number">0</span>,
+  total;
 
   <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> k <span class="hljs-keyword">in</span> iteratable) {
     <span class="hljs-keyword">if</span>(iteratable.hasOwnProperty(k)) {
@@ -4935,10 +4936,13 @@ pie.promise.all = <span class="hljs-function"><span class="hljs-keyword">functio
     }
   }
 
+  total = promises.length;
+
   promises.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(p, i)</span> </span>{
     p.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(val)</span> </span>{
       values[i] = val;
-      <span class="hljs-keyword">if</span>(cnt === values.length) instance.resolve(values);
+      cnt++;
+      <span class="hljs-keyword">if</span>(cnt === total) instance.resolve(values);
     }, instance.reject.bind(instance));
   });
 
@@ -14476,7 +14480,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150612.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150616.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

@@ -100,7 +100,8 @@ pie.promise.all = function(iteratable) {
   var instance = pie.promise.create(),
   promises = [],
   values = [],
-  cnt = 0;
+  cnt = 0,
+  total;
 
   for(var k in iteratable) {
     if(iteratable.hasOwnProperty(k)) {
@@ -108,10 +109,13 @@ pie.promise.all = function(iteratable) {
     }
   }
 
+  total = promises.length;
+
   promises.forEach(function(p, i) {
     p.then(function(val) {
       values[i] = val;
-      if(cnt === values.length) instance.resolve(values);
+      cnt++;
+      if(cnt === total) instance.resolve(values);
     }, instance.reject.bind(instance));
   });
 
