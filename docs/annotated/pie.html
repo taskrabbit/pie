@@ -1921,7 +1921,7 @@ remove <code>el</code> manually, not via <code>pie.dom.remove</code>.</p>
             
             <div class="content"><div class='highlight'><pre>pie.dom.remove = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el)</span> </span>{
   pie.uid(el);
-  pie.dom.cache().del(<span class="hljs-string">'element-'</span> + pie.uid(el));
+  pie.dom.cache().set(<span class="hljs-string">'element-'</span> + pie.uid(el), <span class="hljs-literal">undefined</span>);
   <span class="hljs-keyword">if</span>(el.parentNode) el.parentNode.removeChild(el);
 };</pre></div></div>
             
@@ -14480,7 +14480,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150616.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150618.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

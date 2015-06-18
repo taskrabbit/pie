@@ -324,7 +324,7 @@ pie.dom.prependChild = function(el, child) {
 // ```
 pie.dom.remove = function(el) {
   pie.uid(el);
-  pie.dom.cache().del('element-' + pie.uid(el));
+  pie.dom.cache().set('element-' + pie.uid(el), undefined);
   if(el.parentNode) el.parentNode.removeChild(el);
 };
 
