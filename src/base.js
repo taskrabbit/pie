@@ -35,7 +35,7 @@ pie.base = {
       return e;
     }));
 
-    var schema = [this.schema, {__className: name}, extensions];
+    var schema = [this.schema, extensions, {__className: name}];
 
     var o = {
       __className: name
