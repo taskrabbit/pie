@@ -1559,7 +1559,7 @@ easier for cleanup via <code>pie.dom.remove()</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.dom.cache = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-  pie.elementCache = pie.elementCache || pie.model.create();
+  pie.elementCache = pie.elementCache || pie.cache.create();
   <span class="hljs-keyword">return</span> pie.elementCache;
 };</pre></div></div>
             
@@ -14480,7 +14480,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150621.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150622.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
