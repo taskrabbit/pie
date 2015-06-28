@@ -75,6 +75,32 @@ pie.object.dup = function(obj, deep) {
   return pie.object[deep ? 'deepMerge' : 'merge']({}, obj);
 };
 
+pie.object.eq = function(a, b, strict) {
+  var i;
+
+  /* jslint eqeq:true */
+  if(Array.isArray(a) && Array.isArray(b)) {
+    if(a.length !== b.length) return false;
+    for(i = 0; i < a.length; i++) {
+      if(!pie.object.eq(a[i], b[i], strict)) return false;
+    }
+    return true;
+  }
+
+  if(pie.object.isObject(a) && pie.object.isObject(b)) {
+    var aKeys = Object.keys(a).sort(), bKeys = Object.keys(b).sort();
+
+    if(!pie.object.eq(aKeys, bKeys, strict)) return false;
+    for(i = 0; i < aKeys.length; i++) {
+      if(!pie.object.eq(a[aKeys[i]], b[aKeys[i]], strict)) return false;
+    }
+
+    return true;
+  }
+
+  return strict ? a === b : a == b;
+};
+
 pie.object.expand = function(o) {
   var out = {};
   pie.object.forEach(o, function(k, v){
@@ -95,6 +121,14 @@ pie.object.flatten = function(a, prefix, object) {
     }
   });
 
+  return b;
+};
+
+pie.object.prefix = function(a, prefix) {
+  var b = {};
+  pie.object.forEach(a, function(k,v) {
+    b[prefix + k] = v;
+  });
   return b;
 };
 

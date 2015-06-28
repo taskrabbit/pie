@@ -3028,6 +3028,32 @@ pie.object.dup = <span class="hljs-function"><span class="hljs-keyword">function
   <span class="hljs-keyword">return</span> pie.object[deep ? <span class="hljs-string">'deepMerge'</span> : <span class="hljs-string">'merge'</span>]({}, obj);
 };
 
+pie.object.eq = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, b, strict)</span> </span>{
+  <span class="hljs-keyword">var</span> i;
+
+  <span class="hljs-comment">/* jslint eqeq:true */</span>
+  <span class="hljs-keyword">if</span>(<span class="hljs-built_in">Array</span>.isArray(a) &amp;&amp; <span class="hljs-built_in">Array</span>.isArray(b)) {
+    <span class="hljs-keyword">if</span>(a.length !== b.length) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+    <span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; a.length; i++) {
+      <span class="hljs-keyword">if</span>(!pie.object.eq(a[i], b[i], strict)) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+  }
+
+  <span class="hljs-keyword">if</span>(pie.object.isObject(a) &amp;&amp; pie.object.isObject(b)) {
+    <span class="hljs-keyword">var</span> aKeys = <span class="hljs-built_in">Object</span>.keys(a).sort(), bKeys = <span class="hljs-built_in">Object</span>.keys(b).sort();
+
+    <span class="hljs-keyword">if</span>(!pie.object.eq(aKeys, bKeys, strict)) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+    <span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; aKeys.length; i++) {
+      <span class="hljs-keyword">if</span>(!pie.object.eq(a[aKeys[i]], b[aKeys[i]], strict)) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+  }
+
+  <span class="hljs-keyword">return</span> strict ? a === b : a == b;
+};
+
 pie.object.expand = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(o)</span> </span>{
   <span class="hljs-keyword">var</span> out = {};
   pie.object.forEach(o, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k, v)</span></span>{
@@ -3048,6 +3074,14 @@ pie.object.flatten = <span class="hljs-function"><span class="hljs-keyword">func
     }
   });
 
+  <span class="hljs-keyword">return</span> b;
+};
+
+pie.object.prefix = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(a, prefix)</span> </span>{
+  <span class="hljs-keyword">var</span> b = {};
+  pie.object.forEach(a, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,v)</span> </span>{
+    b[prefix + k] = v;
+  });
   <span class="hljs-keyword">return</span> b;
 };
 
@@ -14480,7 +14514,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150622.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150626.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

@@ -158,4 +158,80 @@ describe("Object extension", function() {
 
   });
 
+  describe('#eq', function() {
+
+    it("should compare simple values", function() {
+      expect(pie.object.eq(1,2)).toEqual(false);
+      expect(pie.object.eq(1,1)).toEqual(true);
+      expect(pie.object.eq(1,'1')).toEqual(true);
+      expect(pie.object.eq(1,'1', true)).toEqual(false);
+    });
+
+    it("should compare simple falsy values", function() {
+      expect(pie.object.eq(0, null)).toEqual(false);
+      expect(pie.object.eq(0, null, true)).toEqual(false);
+      expect(pie.object.eq(1, null)).toEqual(false);
+
+      expect(pie.object.eq(undefined, null)).toEqual(true);
+      expect(pie.object.eq(undefined, null, true)).toEqual(false);
+      expect(pie.object.eq(undefined, 0)).toEqual(false);
+      expect(pie.object.eq(undefined, 0, true)).toEqual(false);
+
+      expect(pie.object.eq(0, false)).toEqual(true);
+      expect(pie.object.eq(0, false, true)).toEqual(false);
+      expect(pie.object.eq(1, true)).toEqual(true);
+      expect(pie.object.eq(1, true, true)).toEqual(false);
+      expect(pie.object.eq(2, true)).toEqual(false);
+
+      expect(pie.object.eq(false, false)).toEqual(true);
+      expect(pie.object.eq(false, false, true)).toEqual(true);
+      expect(pie.object.eq(true, true)).toEqual(true);
+      expect(pie.object.eq(true, true, true)).toEqual(true);
+      expect(pie.object.eq(false, true)).toEqual(false);
+      expect(pie.object.eq(false, true, true)).toEqual(false);
+    });
+
+    it("should compare objects", function() {
+      expect(pie.object.eq({foo: 'bar'}, {foo: 'bar'})).toEqual(true);
+      expect(pie.object.eq({foo: 'bar'}, {foo: 'baz'})).toEqual(false);
+      expect(pie.object.eq({foo: 'baz'}, {foo: 'baz'}, true)).toEqual(true);
+      expect(pie.object.eq({foo: 'bar'}, {foo: 'baz'}, true)).toEqual(false);
+
+      expect(pie.object.eq({too: 'bad', foo: 'bar'}, {foo: 'bar', too: 'bad'})).toEqual(true);
+      expect(pie.object.eq({too: 'bad', foo: 'bar'}, {foo: 'bar', too: 'bad'}, true)).toEqual(true);
+      expect(pie.object.eq({too: 'bad', foo: 'bar'}, {foo: 'baz', too: 'bad'})).toEqual(false);
+      expect(pie.object.eq({too: 'bad', foo: 'bar'}, {foo: 'baz', too: 'bad'}, true)).toEqual(false);
+
+      expect(pie.object.eq({too: '1', foo: '1'}, {foo: 1, too: 1})).toEqual(true);
+      expect(pie.object.eq({too: '1', foo: '1'}, {foo: 1, too: 1}, true)).toEqual(false);
+
+      expect(pie.object.eq({too: '1', foo: 0}, {foo: '0', too: 1})).toEqual(true);
+
+      expect(pie.object.eq({foo: 1}, {foo: 1, too: 1})).toEqual(false);
+      expect(pie.object.eq({foo: 1, too: 1}, {foo: 1})).toEqual(false);
+    });
+
+    it("should compare arrays", function() {
+      expect(pie.object.eq([0,1], [0,1])).toEqual(true);
+      expect(pie.object.eq([0,1], [0,1], true)).toEqual(true);
+
+      expect(pie.object.eq([0,1], ['0','1'])).toEqual(true);
+      expect(pie.object.eq([0,1], ['0','1'], true)).toEqual(false);
+
+      expect(pie.object.eq([0,1], [1,0])).toEqual(false);
+      expect(pie.object.eq([0,1], [1,0]), true).toEqual(false);
+
+      expect(pie.object.eq([0,1], [0,1,null])).toEqual(false);
+      expect(pie.object.eq([0,1], [0,1,null]), true).toEqual(false);
+
+      expect(pie.object.eq([0,1,null], [0,1])).toEqual(false);
+      expect(pie.object.eq([0,1,null], [0,1]), true).toEqual(false);
+
+      expect(pie.object.eq([0,1], {'0' : true, '1' : true})).toEqual(false);
+      expect(pie.object.eq([0,1], '0,1')).toEqual(true);
+      expect(pie.object.eq([0,1], '0,1', true)).toEqual(false);
+    });
+
+  });
+
 });
