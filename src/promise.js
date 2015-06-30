@@ -111,13 +111,17 @@ pie.promise.all = function(iteratable) {
 
   total = promises.length;
 
-  promises.forEach(function(p, i) {
-    p.then(function(val) {
-      values[i] = val;
-      cnt++;
-      if(cnt === total) instance.resolve(values);
-    }, instance.reject.bind(instance));
-  });
+  if(total) {
+    promises.forEach(function(p, i) {
+      p.then(function(val) {
+        values[i] = val;
+        cnt++;
+        if(cnt === total) instance.resolve(values);
+      }, instance.reject.bind(instance));
+    });
+  } else {
+    instance.resolve(values);
+  }
 
   return instance;
 };

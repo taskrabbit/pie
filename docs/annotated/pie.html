@@ -4972,13 +4972,17 @@ pie.promise.all = <span class="hljs-function"><span class="hljs-keyword">functio
 
   total = promises.length;
 
-  promises.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(p, i)</span> </span>{
-    p.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(val)</span> </span>{
-      values[i] = val;
-      cnt++;
-      <span class="hljs-keyword">if</span>(cnt === total) instance.resolve(values);
-    }, instance.reject.bind(instance));
-  });
+  <span class="hljs-keyword">if</span>(total) {
+    promises.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(p, i)</span> </span>{
+      p.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(val)</span> </span>{
+        values[i] = val;
+        cnt++;
+        <span class="hljs-keyword">if</span>(cnt === total) instance.resolve(values);
+      }, instance.reject.bind(instance));
+    });
+  } <span class="hljs-keyword">else</span> {
+    instance.resolve(values);
+  }
 
   <span class="hljs-keyword">return</span> instance;
 };
