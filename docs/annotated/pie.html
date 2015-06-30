@@ -5467,12 +5467,11 @@ The view could have more options but would always end up invoking onConfirm or o
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  confirm: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
-    <span class="hljs-keyword">if</span>(<span class="hljs-built_in">window</span>.confirm(options.text)) {
-      <span class="hljs-keyword">if</span>(options.onConfirm) options.onConfirm();
-    } <span class="hljs-keyword">else</span> {
-      <span class="hljs-keyword">if</span>(options.onDeny) options.onDeny();
-    }
+            <div class="content"><div class='highlight'><pre>  confirm: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(text)</span> </span>{
+    <span class="hljs-keyword">return</span> pie.promise.create(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(resolve, reject)</span></span>{
+      <span class="hljs-keyword">if</span>(<span class="hljs-built_in">window</span>.confirm(text)) resolve();
+      <span class="hljs-keyword">else</span> reject();
+    });
   },
 
   debug: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -14514,7 +14513,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150626.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150630.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
