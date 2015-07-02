@@ -1494,7 +1494,26 @@ pie.dom.all(nodeList, <span class="hljs-string">'clicked='</span>, <span class="
             
             <div class="content"><div class='highlight'><pre>pie.dom.all = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* nodeList, methodName[, arg1, arg2, ...] */</span>)</span> </span>{
   <span class="hljs-keyword">return</span> pie.dom._all(<span class="hljs-built_in">arguments</span>, <span class="hljs-literal">false</span>);
-};</pre></div></div>
+};
+
+
+(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+  <span class="hljs-keyword">var</span> mod = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(method, originalArgs)</span> </span>{
+    <span class="hljs-keyword">var</span> args = pie.array.from(originalArgs);
+    <span class="hljs-keyword">var</span> el = args.shift();
+
+    <span class="hljs-keyword">var</span> classes = pie.array.map(pie.array.flatten(args).join(<span class="hljs-string">' '</span>).split(<span class="hljs-regexp">/[\s,]+/</span>), <span class="hljs-string">'trim'</span>, <span class="hljs-literal">true</span>);
+    classes.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span></span>{ el.classList[method](c); });
+  };
+
+  pie.dom.addClass = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* el, class1, class2 */</span>)</span> </span>{
+    mod(<span class="hljs-string">'add'</span>, <span class="hljs-built_in">arguments</span>);
+  };
+
+  pie.dom.removeClass = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* el, class1, class2 */</span>)</span> </span>{
+    mod(<span class="hljs-string">'remove'</span>, <span class="hljs-built_in">arguments</span>);
+  };
+})();</pre></div></div>
             
         </li>
         
@@ -6993,8 +7012,9 @@ View lifecycle:</p>
       <span class="hljs-keyword">this</span>.el = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-keyword">this</span>.options.el.tagName || <span class="hljs-string">'div'</span>);
       <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> key <span class="hljs-keyword">in</span> <span class="hljs-keyword">this</span>.options.el) {
         <span class="hljs-keyword">if</span>(key !== <span class="hljs-string">'tagName'</span>) {
-          <span class="hljs-keyword">if</span>(key === <span class="hljs-string">'classes'</span>) <span class="hljs-keyword">this</span>.el.classList.add.apply(<span class="hljs-keyword">this</span>.el.classList, pie.array.change(<span class="hljs-keyword">this</span>.options.el[key], <span class="hljs-string">'from'</span>, <span class="hljs-string">'flatten'</span>).join(<span class="hljs-string">' '</span>).split(<span class="hljs-string">' '</span>));
-          <span class="hljs-keyword">else</span> <span class="hljs-keyword">this</span>.el.setAttribute(key, <span class="hljs-keyword">this</span>.options.el[key]);
+          <span class="hljs-keyword">if</span>(key === <span class="hljs-string">'classes'</span>) {
+            pie.dom.addClass(<span class="hljs-keyword">this</span>.el, <span class="hljs-keyword">this</span>.options.el[key]);
+          } <span class="hljs-keyword">else</span> <span class="hljs-keyword">this</span>.el.setAttribute(key, <span class="hljs-keyword">this</span>.options.el[key]);
         }
       }
     } <span class="hljs-keyword">else</span> {
@@ -13300,8 +13320,8 @@ async=false means the new view won’t be added to the dom until the previous is
     <span class="hljs-keyword">var</span> add = isIn ? <span class="hljs-keyword">this</span>.options.inClass : <span class="hljs-keyword">this</span>.options.outClass,
         remove = isIn ? <span class="hljs-keyword">this</span>.options.outClass : <span class="hljs-keyword">this</span>.options.inClass;
 
-    <span class="hljs-keyword">if</span>(add) el.classList.add(add);
-    <span class="hljs-keyword">if</span>(remove) el.classList.remove(remove);
+    <span class="hljs-keyword">if</span>(add) pie.dom.addClass(el, add);
+    <span class="hljs-keyword">if</span>(remove) pie.dom.removeClass(el, remove);
   },</pre></div></div>
             
         </li>
@@ -14202,52 +14222,36 @@ use it to typecast each value.</p>
   };
 })();
 
-pie.binding.integrations[<span class="hljs-string">'class'</span>] = (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+pie.binding.integrations[<span class="hljs-string">'class'</span>] = {
+  getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* el, binding */</span>)</span> </span>{
+    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"class bindings can only be from the model to the view. Please declare toModel: false"</span>);
+  },
 
-  <span class="hljs-comment">/* will handle strings and arrays of strings */</span>
-  <span class="hljs-keyword">var</span> getClassNames = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(string)</span> </span>{
-    <span class="hljs-keyword">if</span>(!string) <span class="hljs-keyword">return</span> [];
-    string = <span class="hljs-built_in">String</span>(string);
-    <span class="hljs-keyword">return</span> pie.array.compact(pie.array.map(string.split(<span class="hljs-regexp">/[\,\s]/</span>), <span class="hljs-string">'trim'</span>, <span class="hljs-literal">true</span>), <span class="hljs-literal">true</span>);
-  };
+  setValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
+    <span class="hljs-keyword">var</span> className = binding.options.options.className;
 
-  <span class="hljs-keyword">return</span> {
-    getValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* el, binding */</span>)</span> </span>{
-      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"class bindings can only be from the model to the view. Please declare toModel: false"</span>);
-    },
-
-    setValue: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, binding)</span> </span>{
-      <span class="hljs-keyword">var</span> className = binding.options.options.className;
-
-      <span class="hljs-keyword">if</span>(className === <span class="hljs-string">'_value_'</span>) {
-        <span class="hljs-keyword">var</span> change = binding.lastChange;
-        <span class="hljs-keyword">if</span>(change) {
-          <span class="hljs-keyword">if</span>(change.oldValue) {
-            getClassNames(change.oldValue).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span> </span>{
-              el.classList.remove(c);
-            });
-          }
-
-          <span class="hljs-keyword">if</span>(change.value) {
-            getClassNames(change.value).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span> </span>{
-              el.classList.add(c);
-            });
-            <span class="hljs-keyword">return</span> change.value;
-          }
+    <span class="hljs-keyword">if</span>(className === <span class="hljs-string">'_value_'</span>) {
+      <span class="hljs-keyword">var</span> change = binding.lastChange;
+      <span class="hljs-keyword">if</span>(change) {
+        <span class="hljs-keyword">if</span>(change.oldValue) {
+          pie.dom.removeClass(el, change.oldValue);
         }
-      } <span class="hljs-keyword">else</span> {
-        <span class="hljs-keyword">var</span> value = binding.getModelValue();
-        className = className || binding.options.attr;
 
-        getClassNames(className).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(c)</span></span>{
-          el.classList[!!value ? <span class="hljs-string">'add'</span> : <span class="hljs-string">'remove'</span>](c);
-        });
-
-        <span class="hljs-keyword">return</span> className;
+        <span class="hljs-keyword">if</span>(change.value) {
+          pie.dom.addClass(el, change.value);
+          <span class="hljs-keyword">return</span> change.value;
+        }
       }
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">var</span> value = binding.getModelValue();
+      className = className || binding.options.attr;
+
+      pie.dom[!!value ? <span class="hljs-string">'addClass'</span> : <span class="hljs-string">'removeClass'</span>](el, className);
+
+      <span class="hljs-keyword">return</span> className;
     }
-  };
-})();
+  }
+};
 
 pie.binding.integrations.value = {</pre></div></div>
             
@@ -14580,6 +14584,29 @@ Otherwise, return the existing value.</p>
         
     </ul>
   </div>
+<script type="text/javascript">
+  var titles = Array.prototype.slice.call(document.querySelectorAll('[id^="section-"] h1'), 0);
+  var html = '<li class="docco-index" id="docco-index"><div class="annotation"><ul>', a = document.createElement('a');
+  a.textContent = 'Back to top';
+  a.href = '#docco-index';
+  a.style.color = '#cccccc';
+
+  titles.forEach(function(title) {
+    html += '<li><a href="#' + title.id + '">' + title.innerHTML.replace(/pie\s/i, '') + '</a></li>';
+    title.parentNode.insertBefore(a.cloneNode(true), title);
+  });
+
+  html += "</ul></div></li>";
+
+  var newEl = document.createElement('div');
+  newEl.innerHTML = html;
+  newEl = newEl.firstElementChild;
+
+  var title = document.querySelector('#title');
+  title.parentNode.insertBefore(newEl, title.nextSibling);
+
+
+</script>
 <script type="text/javascript">
   var titles = Array.prototype.slice.call(document.querySelectorAll('[id^="section-"] h1'), 0);
   var html = '<li class="docco-index" id="docco-index"><div class="annotation"><ul>', a = document.createElement('a');

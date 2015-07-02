@@ -30,8 +30,9 @@ pie.view = pie.base.extend('view', {
       this.el = document.createElement(this.options.el.tagName || 'div');
       for(var key in this.options.el) {
         if(key !== 'tagName') {
-          if(key === 'classes') this.el.classList.add.apply(this.el.classList, pie.array.change(this.options.el[key], 'from', 'flatten').join(' ').split(' '));
-          else this.el.setAttribute(key, this.options.el[key]);
+          if(key === 'classes') {
+            pie.dom.addClass(this.el, this.options.el[key]);
+          } else this.el.setAttribute(key, this.options.el[key]);
         }
       }
     } else {

@@ -230,8 +230,8 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
     var add = isIn ? this.options.inClass : this.options.outClass,
         remove = isIn ? this.options.outClass : this.options.inClass;
 
-    if(add) el.classList.add(add);
-    if(remove) el.classList.remove(remove);
+    if(add) pie.dom.addClass(el, add);
+    if(remove) pie.dom.removeClass(el, remove);
   },
 
   // WHEN options.async !== true

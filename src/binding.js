@@ -251,52 +251,36 @@ pie.ns('pie.binding.integrations').attribute = (function(){
   };
 })();
 
-pie.binding.integrations['class'] = (function(){
+pie.binding.integrations['class'] = {
+  getValue: function(/* el, binding */) {
+    throw new Error("class bindings can only be from the model to the view. Please declare toModel: false");
+  },
 
-  /* will handle strings and arrays of strings */
-  var getClassNames = function(string) {
-    if(!string) return [];
-    string = String(string);
-    return pie.array.compact(pie.array.map(string.split(/[\,\s]/), 'trim', true), true);
-  };
+  setValue: function(el, binding) {
+    var className = binding.options.options.className;
 
-  return {
-    getValue: function(/* el, binding */) {
-      throw new Error("class bindings can only be from the model to the view. Please declare toModel: false");
-    },
-
-    setValue: function(el, binding) {
-      var className = binding.options.options.className;
-
-      if(className === '_value_') {
-        var change = binding.lastChange;
-        if(change) {
-          if(change.oldValue) {
-            getClassNames(change.oldValue).forEach(function(c) {
-              el.classList.remove(c);
-            });
-          }
-
-          if(change.value) {
-            getClassNames(change.value).forEach(function(c) {
-              el.classList.add(c);
-            });
-            return change.value;
-          }
+    if(className === '_value_') {
+      var change = binding.lastChange;
+      if(change) {
+        if(change.oldValue) {
+          pie.dom.removeClass(el, change.oldValue);
         }
-      } else {
-        var value = binding.getModelValue();
-        className = className || binding.options.attr;
 
-        getClassNames(className).forEach(function(c){
-          el.classList[!!value ? 'add' : 'remove'](c);
-        });
-
-        return className;
+        if(change.value) {
+          pie.dom.addClass(el, change.value);
+          return change.value;
+        }
       }
+    } else {
+      var value = binding.getModelValue();
+      className = className || binding.options.attr;
+
+      pie.dom[!!value ? 'addClass' : 'removeClass'](el, className);
+
+      return className;
     }
-  };
-})();
+  }
+};
 
 pie.binding.integrations.value = {
 

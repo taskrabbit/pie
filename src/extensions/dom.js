@@ -43,6 +43,25 @@ pie.dom.all = function(/* nodeList, methodName[, arg1, arg2, ...] */) {
   return pie.dom._all(arguments, false);
 };
 
+
+(function(){
+  var mod = function(method, originalArgs) {
+    var args = pie.array.from(originalArgs);
+    var el = args.shift();
+
+    var classes = pie.array.map(pie.array.flatten(args).join(' ').split(/[\s,]+/), 'trim', true);
+    classes.forEach(function(c){ el.classList[method](c); });
+  };
+
+  pie.dom.addClass = function(/* el, class1, class2 */) {
+    mod('add', arguments);
+  };
+
+  pie.dom.removeClass = function(/* el, class1, class2 */) {
+    mod('remove', arguments);
+  };
+})();
+
 // **pie.dom.closest**
 //
 // Retrieve the closest ancestor of `el` which matches the provided `sel`.
