@@ -58,6 +58,10 @@ pie.i18n = pie.model.extend('i18n', (function(){
       options.settings.interpolationRegex = new RegExp(pie.string.escapeRegex(options.settings.interpolationStart) + '([^' + escapedNestedEnd + ']+)' + escapedInterpEnd, 'g');
       options.settings.nestedRegex = new RegExp(pie.string.escapeRegex(options.settings.nestedStart) + '([^' + escapedNestedEnd + ']+)' + escapedNestedEnd, 'g');
 
+      pie.object.forEach(this.strftimeMods, function(k,v){
+        this.strftimeMods[k] = v.bind(this);
+      }.bind(this));
+
       this._super(data, options);
     },
 
@@ -139,6 +143,33 @@ pie.i18n = pie.model.extend('i18n', (function(){
 
     _shortDayName: function(d) {
       return this.t('app.time.short_day_names.' + d, {'default' : ''}) || this._dayName(d).slice(0, 3);
+    },
+
+    _formattedDayName: function(d) {
+      if(this._isToday(d)) return this.t('app.time.today');
+      if(this._isTomorrow(d)) return this.t('app.time.tomorrow');
+      return this._dayName(d.getDay());
+    },
+
+    _formattedShortDayName: function(d) {
+      if(this._isToday(d)) return this.t('app.time.today');
+      if(this._isTomorrow(d)) return this.t('app.time.tomorrow');
+      return this._shortDayName(d.getDay());
+    },
+
+    _isToday: function(date) {
+      var now = new Date();
+      return now.getFullYear() === date.getFullYear() &&
+        now.getMonth() === date.getMonth() &&
+        now.getDate() === date.getDate();
+    },
+
+    _isTomorrow: function(date) {
+      var tom = new Date();
+      tom.setDate(tom.getDate() + 1);
+      return tom.getFullYear() === date.getFullYear() &&
+        tom.getMonth() === date.getMonth() &&
+        tom.getDate() === date.getDate();
     },
 
 
@@ -339,57 +370,59 @@ pie.i18n = pie.model.extend('i18n', (function(){
     // i18n.l(date, '%Y-%m');
     // ```
     strftime: function(date, f) {
-      date = this._normalizedDate(date);
+      this._date = this._normalizedDate(date);
 
       /* named format from translations.time. */
       if(!~f.indexOf('%')) f = this.t('app.time.formats.' + f, {"default" : f});
 
-      var weekDay           = date.getDay(),
-          day               = date.getDate(),
-          year              = date.getFullYear(),
-          month             = date.getMonth() + 1,
-          hour              = date.getHours(),
-          hour12            = this._hour(hour),
-          meridiem          = this._ampm(hour),
-          secs              = date.getSeconds(),
-          mins              = date.getMinutes(),
-          mills             = date.getMilliseconds(),
-          offset            = date.getTimezoneOffset(),
-          absOffsetHours    = Math.floor(Math.abs(offset / 60)),
-          absOffsetMinutes  = Math.abs(offset) - (absOffsetHours * 60),
-          timezoneoffset    = (offset > 0 ? "-" : "+") + this._pad(absOffsetHours, 2, '0') + this._pad(absOffsetMinutes, 2, '0');
+      pie.object.forEach(this.strftimeMods, function(pattern, fn) {
+        f = f.replace(pattern, fn);
+      });
 
-      f = f.replace("%a", this._shortDayName(weekDay))
-          .replace("%A",  this._dayName(weekDay))
-          .replace("%B",  this._monthName(month - 1))
-          .replace("%b",  this._shortMonthName(month - 1))
-          .replace("%d",  this._pad(day, 2, '0'))
-          .replace("%e",  this._pad(day, 2, ' '))
-          .replace("%-do", day + this._ordinal(day))
-          .replace("%-d", day)
-          .replace("%H",  this._pad(hour, 2, '0'))
-          .replace("%k",  this._pad(hour, 2, ' '))
-          .replace('%-H', hour)
-          .replace('%-k', hour)
-          .replace("%I",  this._pad(hour12, 2, '0'))
-          .replace("%l",  hour12)
-          .replace("%m",  this._pad(month, 2, '0'))
-          .replace("%-m", month)
-          .replace("%M",  this._pad(mins, 2, '0'))
-          .replace("%p",  meridiem.toUpperCase())
-          .replace("%P",  meridiem)
-          .replace("%S",  this._pad(secs, 2, '0'))
-          .replace("%-S", secs)
-          .replace('%L',  this._pad(mills, 3, '0'))
-          .replace('%-L', mills)
-          .replace("%w",  weekDay)
-          .replace("%y",  this._pad(year % 100))
-          .replace("%Y",  year)
-          .replace("%z",  timezoneoffset)
-          .replace("%:z", timezoneoffset.slice(0,3) + ':' + timezoneoffset.slice(3))
-          .replace("%Z",  this._timezoneAbbr(date));
-
+      delete this._date;
       return f;
+    },
+
+    strftimeMods: {
+      '%a'   : function(){  return this._shortDayName(this._date.getDay()); },
+      '%-a'  : function() { return this._formattedShortDayName(this._date, this._date.getDay()); },
+      '%A'   : function() { return this._dayName(this._date.getDay()); },
+      '%-A'  : function() { return this._formattedDayName(this._date, this._date.getDay()); },
+      '%B'   : function() { return this._monthName(this._date.getMonth()); },
+      '%b'   : function() { return this._shortMonthName(this._date.getMonth()); },
+      '%d'   : function() { return this._pad(this._date.getDate(), 2, '0'); },
+      '%-d'  : function() { return this._date.getDate(); },
+      '%+d'  : function() { return this._date.getDate() + this._ordinal(this._date.getDate()); },
+      '%e'   : function() { return this._pad(this._date.getDate(), 2, ' '); },
+      '%H'   : function() { return this._pad(this._date.getHours(), 2, '0'); },
+      '%-H'  : function() { return this._date.getHours(); },
+      '%k'   : function() { return this._pad(this._date.getHours(), 2, ' '); },
+      '%-k'  : function() { return this._date.getHours(); },
+      '%I'   : function() { return this._pad(this._hour(this._date.getHours()), 2, '0'); },
+      '%l'   : function() { return this._hour(this._date.getHours()); },
+      '%m'   : function() { return this._pad(this._date.getMonth() + 1, 2, '0'); },
+      '%-m'  : function() { return this._date.getMonth() + 1; },
+      '%M'   : function() { return this._pad(this._date.getMinutes(), 2, '0'); },
+      '%p'   : function() { return this._ampm(this._date.getHours()).toUpperCase(); },
+      '%P'   : function() { return this._ampm(this._date.getHours()); },
+      '%S'   : function() { return this._pad(this._date.getSeconds(), 2, '0'); },
+      '%-S'  : function() { return this._date.getSeconds(); },
+      '%L'   : function() { return this._pad(this._date.getMilliseconds(), 3, '0'); },
+      '%-L'  : function() { return this._date.getMilliseconds(); },
+      '%w'   : function() { return this._date.getDay(); },
+      '%y'   : function() { return this._pad(this._date.getFullYear() % 100, 2, '0'); },
+      '%Y'   : function() { return this._date.getFullYear(); },
+      '%Z'   : function() { return this._timezoneAbbr(this._date); },
+      '%z'   : function() {
+        var offset = this._date.getTimezoneOffset();
+        var absOffsetHours    = Math.floor(Math.abs(offset / 60));
+        var absOffsetMinutes  = Math.abs(offset) - (absOffsetHours * 60);
+        return (offset > 0 ? "-" : "+") + this._pad(absOffsetHours, 2, '0') + this._pad(absOffsetMinutes, 2, '0');
+      },
+      '%:z' : function() {
+        var tzOffset = this.strftimeMods['%z']();
+        return tzOffset.slice(0,3) + ':' + tzOffset.slice(3);
+      }
     }
   };
 
@@ -435,11 +468,12 @@ pie.i18n.defaultTranslations = {
     },
     time: {
       today: "Today",
+      tomorrow: "Tomorrow",
       formats: {
         isoDate:    '%Y-%m-%d',
         isoTime:    '%Y-%m-%dT%H:%M:%S.%L%:z',
         shortDate:  '%m/%d/%Y',
-        longDate:   '%B %-do, %Y'
+        longDate:   '%B %+d, %Y'
       },
       meridiems: {
         am: 'am',

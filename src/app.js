@@ -262,7 +262,7 @@ pie.app = pie.base.extend('app', {
 
     // Great, we can handle it. let the app decide whether to use pushstate or not
     e.preventDefault();
-    this.go(href);
+    this.go(href, !!e.delegateTarget.getAttribute('data-replace-state'));
   },
 
   parseUrl: function() {

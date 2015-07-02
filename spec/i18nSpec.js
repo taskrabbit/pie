@@ -395,12 +395,14 @@ describe("pie.i18n", function() {
 
       expectations = {
         '%a' : 'Mon',
+        '%-a' : 'Mon',
         '%A' : 'Monday',
+        '%-A' : 'Monday',
         '%B' : 'September',
         '%b' : 'Sep',
         '%d' : '08',
         '%e' : ' 8',
-        '%-do' : '8th',
+        '%+d' : '8th',
         '%-d' : '8',
         '%H' : '09',
         '%k' : ' 9',
@@ -433,6 +435,24 @@ describe("pie.i18n", function() {
           expect(response).toEqual(expectation);
         });
 
+      });
+
+      it("should replace %-a|A with proximal dates properly", function() {
+        var d = new Date();
+
+        var response = this.i18n.l(d, '%-A');
+        expect(response).toEqual('Today');
+
+        response = this.i18n.l(d, '%-a');
+        expect(response).toEqual('Today');
+
+        d.setDate(d.getDate() + 1);
+
+        response = this.i18n.l(d, '%-A');
+        expect(response).toEqual('Tomorrow');
+
+        response = this.i18n.l(d, '%-a');
+        expect(response).toEqual('Tomorrow');
       });
 
     });

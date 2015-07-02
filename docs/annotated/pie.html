@@ -5701,7 +5701,7 @@ app.go(‘/test-url’, ‘Thanks for your interest’) // navigates to /test-ur
             </div>
             
             <div class="content"><div class='highlight'><pre>    e.preventDefault();
-    <span class="hljs-keyword">this</span>.go(href);
+    <span class="hljs-keyword">this</span>.go(href, !!e.delegateTarget.getAttribute(<span class="hljs-string">'data-replace-state'</span>));
   },
 
   parseUrl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
@@ -9355,6 +9355,10 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
       options.settings.interpolationRegex = <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(pie.string.escapeRegex(options.settings.interpolationStart) + <span class="hljs-string">'([^'</span> + escapedNestedEnd + <span class="hljs-string">']+)'</span> + escapedInterpEnd, <span class="hljs-string">'g'</span>);
       options.settings.nestedRegex = <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(pie.string.escapeRegex(options.settings.nestedStart) + <span class="hljs-string">'([^'</span> + escapedNestedEnd + <span class="hljs-string">']+)'</span> + escapedNestedEnd, <span class="hljs-string">'g'</span>);
 
+      pie.object.forEach(<span class="hljs-keyword">this</span>.strftimeMods, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,v)</span></span>{
+        <span class="hljs-keyword">this</span>.strftimeMods[k] = v.bind(<span class="hljs-keyword">this</span>);
+      }.bind(<span class="hljs-keyword">this</span>));
+
       <span class="hljs-keyword">this</span>._super(data, options);
     },
 
@@ -9436,6 +9440,33 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
 
     _shortDayName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.short_day_names.'</span> + d, {<span class="hljs-string">'default'</span> : <span class="hljs-string">''</span>}) || <span class="hljs-keyword">this</span>._dayName(d).slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>);
+    },
+
+    _formattedDayName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
+      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._isToday(d)) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.today'</span>);
+      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._isTomorrow(d)) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.tomorrow'</span>);
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._dayName(d.getDay());
+    },
+
+    _formattedShortDayName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
+      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._isToday(d)) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.today'</span>);
+      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._isTomorrow(d)) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.tomorrow'</span>);
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._shortDayName(d.getDay());
+    },
+
+    _isToday: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(date)</span> </span>{
+      <span class="hljs-keyword">var</span> now = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>();
+      <span class="hljs-keyword">return</span> now.getFullYear() === date.getFullYear() &amp;&amp;
+        now.getMonth() === date.getMonth() &amp;&amp;
+        now.getDate() === date.getDate();
+    },
+
+    _isTomorrow: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(date)</span> </span>{
+      <span class="hljs-keyword">var</span> tom = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>();
+      tom.setDate(tom.getDate() + <span class="hljs-number">1</span>);
+      <span class="hljs-keyword">return</span> tom.getFullYear() === date.getFullYear() &amp;&amp;
+        tom.getMonth() === date.getMonth() &amp;&amp;
+        tom.getDate() === date.getDate();
     },
 
 
@@ -9681,57 +9712,59 @@ i18n.l(date, <span class="hljs-string">'%Y-%m'</span>);
             </div>
             
             <div class="content"><div class='highlight'><pre>    strftime: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(date, f)</span> </span>{
-      date = <span class="hljs-keyword">this</span>._normalizedDate(date);
+      <span class="hljs-keyword">this</span>._date = <span class="hljs-keyword">this</span>._normalizedDate(date);
 
       <span class="hljs-comment">/* named format from translations.time. */</span>
       <span class="hljs-keyword">if</span>(!~f.indexOf(<span class="hljs-string">'%'</span>)) f = <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.formats.'</span> + f, {<span class="hljs-string">"default"</span> : f});
 
-      <span class="hljs-keyword">var</span> weekDay           = date.getDay(),
-          day               = date.getDate(),
-          year              = date.getFullYear(),
-          month             = date.getMonth() + <span class="hljs-number">1</span>,
-          hour              = date.getHours(),
-          hour12            = <span class="hljs-keyword">this</span>._hour(hour),
-          meridiem          = <span class="hljs-keyword">this</span>._ampm(hour),
-          secs              = date.getSeconds(),
-          mins              = date.getMinutes(),
-          mills             = date.getMilliseconds(),
-          offset            = date.getTimezoneOffset(),
-          absOffsetHours    = <span class="hljs-built_in">Math</span>.floor(<span class="hljs-built_in">Math</span>.abs(offset / <span class="hljs-number">60</span>)),
-          absOffsetMinutes  = <span class="hljs-built_in">Math</span>.abs(offset) - (absOffsetHours * <span class="hljs-number">60</span>),
-          timezoneoffset    = (offset &gt; <span class="hljs-number">0</span> ? <span class="hljs-string">"-"</span> : <span class="hljs-string">"+"</span>) + <span class="hljs-keyword">this</span>._pad(absOffsetHours, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>) + <span class="hljs-keyword">this</span>._pad(absOffsetMinutes, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>);
+      pie.object.forEach(<span class="hljs-keyword">this</span>.strftimeMods, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(pattern, fn)</span> </span>{
+        f = f.replace(pattern, fn);
+      });
 
-      f = f.replace(<span class="hljs-string">"%a"</span>, <span class="hljs-keyword">this</span>._shortDayName(weekDay))
-          .replace(<span class="hljs-string">"%A"</span>,  <span class="hljs-keyword">this</span>._dayName(weekDay))
-          .replace(<span class="hljs-string">"%B"</span>,  <span class="hljs-keyword">this</span>._monthName(month - <span class="hljs-number">1</span>))
-          .replace(<span class="hljs-string">"%b"</span>,  <span class="hljs-keyword">this</span>._shortMonthName(month - <span class="hljs-number">1</span>))
-          .replace(<span class="hljs-string">"%d"</span>,  <span class="hljs-keyword">this</span>._pad(day, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>))
-          .replace(<span class="hljs-string">"%e"</span>,  <span class="hljs-keyword">this</span>._pad(day, <span class="hljs-number">2</span>, <span class="hljs-string">' '</span>))
-          .replace(<span class="hljs-string">"%-do"</span>, day + <span class="hljs-keyword">this</span>._ordinal(day))
-          .replace(<span class="hljs-string">"%-d"</span>, day)
-          .replace(<span class="hljs-string">"%H"</span>,  <span class="hljs-keyword">this</span>._pad(hour, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>))
-          .replace(<span class="hljs-string">"%k"</span>,  <span class="hljs-keyword">this</span>._pad(hour, <span class="hljs-number">2</span>, <span class="hljs-string">' '</span>))
-          .replace(<span class="hljs-string">'%-H'</span>, hour)
-          .replace(<span class="hljs-string">'%-k'</span>, hour)
-          .replace(<span class="hljs-string">"%I"</span>,  <span class="hljs-keyword">this</span>._pad(hour12, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>))
-          .replace(<span class="hljs-string">"%l"</span>,  hour12)
-          .replace(<span class="hljs-string">"%m"</span>,  <span class="hljs-keyword">this</span>._pad(month, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>))
-          .replace(<span class="hljs-string">"%-m"</span>, month)
-          .replace(<span class="hljs-string">"%M"</span>,  <span class="hljs-keyword">this</span>._pad(mins, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>))
-          .replace(<span class="hljs-string">"%p"</span>,  meridiem.toUpperCase())
-          .replace(<span class="hljs-string">"%P"</span>,  meridiem)
-          .replace(<span class="hljs-string">"%S"</span>,  <span class="hljs-keyword">this</span>._pad(secs, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>))
-          .replace(<span class="hljs-string">"%-S"</span>, secs)
-          .replace(<span class="hljs-string">'%L'</span>,  <span class="hljs-keyword">this</span>._pad(mills, <span class="hljs-number">3</span>, <span class="hljs-string">'0'</span>))
-          .replace(<span class="hljs-string">'%-L'</span>, mills)
-          .replace(<span class="hljs-string">"%w"</span>,  weekDay)
-          .replace(<span class="hljs-string">"%y"</span>,  <span class="hljs-keyword">this</span>._pad(year % <span class="hljs-number">100</span>))
-          .replace(<span class="hljs-string">"%Y"</span>,  year)
-          .replace(<span class="hljs-string">"%z"</span>,  timezoneoffset)
-          .replace(<span class="hljs-string">"%:z"</span>, timezoneoffset.slice(<span class="hljs-number">0</span>,<span class="hljs-number">3</span>) + <span class="hljs-string">':'</span> + timezoneoffset.slice(<span class="hljs-number">3</span>))
-          .replace(<span class="hljs-string">"%Z"</span>,  <span class="hljs-keyword">this</span>._timezoneAbbr(date));
-
+      <span class="hljs-keyword">delete</span> <span class="hljs-keyword">this</span>._date;
       <span class="hljs-keyword">return</span> f;
+    },
+
+    strftimeMods: {
+      <span class="hljs-string">'%a'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{  <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._shortDayName(<span class="hljs-keyword">this</span>._date.getDay()); },
+      <span class="hljs-string">'%-a'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._formattedShortDayName(<span class="hljs-keyword">this</span>._date, <span class="hljs-keyword">this</span>._date.getDay()); },
+      <span class="hljs-string">'%A'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._dayName(<span class="hljs-keyword">this</span>._date.getDay()); },
+      <span class="hljs-string">'%-A'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._formattedDayName(<span class="hljs-keyword">this</span>._date, <span class="hljs-keyword">this</span>._date.getDay()); },
+      <span class="hljs-string">'%B'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._monthName(<span class="hljs-keyword">this</span>._date.getMonth()); },
+      <span class="hljs-string">'%b'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._shortMonthName(<span class="hljs-keyword">this</span>._date.getMonth()); },
+      <span class="hljs-string">'%d'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getDate(), <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>); },
+      <span class="hljs-string">'%-d'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getDate(); },
+      <span class="hljs-string">'%+d'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getDate() + <span class="hljs-keyword">this</span>._ordinal(<span class="hljs-keyword">this</span>._date.getDate()); },
+      <span class="hljs-string">'%e'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getDate(), <span class="hljs-number">2</span>, <span class="hljs-string">' '</span>); },
+      <span class="hljs-string">'%H'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getHours(), <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>); },
+      <span class="hljs-string">'%-H'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getHours(); },
+      <span class="hljs-string">'%k'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getHours(), <span class="hljs-number">2</span>, <span class="hljs-string">' '</span>); },
+      <span class="hljs-string">'%-k'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getHours(); },
+      <span class="hljs-string">'%I'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._hour(<span class="hljs-keyword">this</span>._date.getHours()), <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>); },
+      <span class="hljs-string">'%l'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._hour(<span class="hljs-keyword">this</span>._date.getHours()); },
+      <span class="hljs-string">'%m'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getMonth() + <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>); },
+      <span class="hljs-string">'%-m'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getMonth() + <span class="hljs-number">1</span>; },
+      <span class="hljs-string">'%M'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getMinutes(), <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>); },
+      <span class="hljs-string">'%p'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._ampm(<span class="hljs-keyword">this</span>._date.getHours()).toUpperCase(); },
+      <span class="hljs-string">'%P'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._ampm(<span class="hljs-keyword">this</span>._date.getHours()); },
+      <span class="hljs-string">'%S'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getSeconds(), <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>); },
+      <span class="hljs-string">'%-S'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getSeconds(); },
+      <span class="hljs-string">'%L'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getMilliseconds(), <span class="hljs-number">3</span>, <span class="hljs-string">'0'</span>); },
+      <span class="hljs-string">'%-L'</span>  : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getMilliseconds(); },
+      <span class="hljs-string">'%w'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getDay(); },
+      <span class="hljs-string">'%y'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._pad(<span class="hljs-keyword">this</span>._date.getFullYear() % <span class="hljs-number">100</span>, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>); },
+      <span class="hljs-string">'%Y'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._date.getFullYear(); },
+      <span class="hljs-string">'%Z'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._timezoneAbbr(<span class="hljs-keyword">this</span>._date); },
+      <span class="hljs-string">'%z'</span>   : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">var</span> offset = <span class="hljs-keyword">this</span>._date.getTimezoneOffset();
+        <span class="hljs-keyword">var</span> absOffsetHours    = <span class="hljs-built_in">Math</span>.floor(<span class="hljs-built_in">Math</span>.abs(offset / <span class="hljs-number">60</span>));
+        <span class="hljs-keyword">var</span> absOffsetMinutes  = <span class="hljs-built_in">Math</span>.abs(offset) - (absOffsetHours * <span class="hljs-number">60</span>);
+        <span class="hljs-keyword">return</span> (offset &gt; <span class="hljs-number">0</span> ? <span class="hljs-string">"-"</span> : <span class="hljs-string">"+"</span>) + <span class="hljs-keyword">this</span>._pad(absOffsetHours, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>) + <span class="hljs-keyword">this</span>._pad(absOffsetMinutes, <span class="hljs-number">2</span>, <span class="hljs-string">'0'</span>);
+      },
+      <span class="hljs-string">'%:z'</span> : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        <span class="hljs-keyword">var</span> tzOffset = <span class="hljs-keyword">this</span>.strftimeMods[<span class="hljs-string">'%z'</span>]();
+        <span class="hljs-keyword">return</span> tzOffset.slice(<span class="hljs-number">0</span>,<span class="hljs-number">3</span>) + <span class="hljs-string">':'</span> + tzOffset.slice(<span class="hljs-number">3</span>);
+      }
     }
   };
 
@@ -9777,11 +9810,12 @@ pie.i18n.defaultTranslations = {
     },
     time: {
       today: <span class="hljs-string">"Today"</span>,
+      tomorrow: <span class="hljs-string">"Tomorrow"</span>,
       formats: {
         isoDate:    <span class="hljs-string">'%Y-%m-%d'</span>,
         isoTime:    <span class="hljs-string">'%Y-%m-%dT%H:%M:%S.%L%:z'</span>,
         shortDate:  <span class="hljs-string">'%m/%d/%Y'</span>,
-        longDate:   <span class="hljs-string">'%B %-do, %Y'</span>
+        longDate:   <span class="hljs-string">'%B %+d, %Y'</span>
       },
       meridiems: {
         am: <span class="hljs-string">'am'</span>,
@@ -14518,7 +14552,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150630.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150702.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
