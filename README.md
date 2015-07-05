@@ -16,7 +16,7 @@ Kinda mvc-ish, there's an app object, views, router, i18n, resource loader, mode
 
 ### How big is it?
 
-Excuse me? It's ~100k before gzip, 30k after gzip.
+Excuse me? It's ~100k before compression, 30k after minifcation and gzip.
 
 ### Work on pie too
 

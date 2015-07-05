@@ -112,7 +112,7 @@ lib.views.page = pie.activeView.extend('page', {
 
 });
 
-window.app = new pie.app({
+window.app = pie.app.create({
   navigationContainer: 'body',
   routerOptions: {
     root: '/docs/guide'
@@ -125,7 +125,7 @@ window.app = new pie.app({
 // get a "nav" view in there. this is "outside" of the normal routed application since it's always present.
 // alternatively, we could create a "layout" view to manage this and the current subview.
 app.emitter.once('beforeStart', function() {
-  var nav = new lib.views.nav();
+  var nav = lib.views.nav.create();
   app.addChild('nav', nav);
 });
 
