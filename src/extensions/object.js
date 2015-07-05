@@ -36,22 +36,6 @@ pie.object.deepMerge = function() {
 };
 
 
-// grab the sub-object from the provided object less the provided keys.
-// pie.object.except({foo: 'bar', biz: 'baz'}, 'biz') => {'foo': 'bar'}
-pie.object.except = function(){
-  var keys = pie.array.from(arguments),
-  a = keys.shift(),
-  b = {};
-
-  keys = pie.array.flatten(keys);
-
-  Object.keys(a).forEach(function(k){
-    if(keys.indexOf(k) < 0) b[k] = a[k];
-  });
-
-  return b;
-};
-
 // delete a path,
 pie.object.deletePath = function(obj, path, propagate) {
 
@@ -99,6 +83,22 @@ pie.object.eq = function(a, b, strict) {
   }
 
   return strict ? a === b : a == b;
+};
+
+// grab the sub-object from the provided object less the provided keys.
+// pie.object.except({foo: 'bar', biz: 'baz'}, 'biz') => {'foo': 'bar'}
+pie.object.except = function(){
+  var keys = pie.array.from(arguments),
+  a = keys.shift(),
+  b = {};
+
+  keys = pie.array.flatten(keys);
+
+  Object.keys(a).forEach(function(k){
+    if(keys.indexOf(k) < 0) b[k] = a[k];
+  });
+
+  return b;
 };
 
 pie.object.expand = function(o) {

@@ -7,7 +7,8 @@ describe("pie.emitter", function() {
   it("should allow a callback of an event to be registered", function() {
     var f = function(){};
     this.e.on('ping', f);
-    expect(this.e.get('eventCallbacks.ping')).toEqual([{fn: f}]);
+    expect(this.e.get('eventCallbacks.ping.0.fn')).toEqual(f);
+    expect(this.e.get('eventCallbacks.ping.0.event')).toEqual('ping');
   });
 
   it("should allow an event to be cleared", function() {

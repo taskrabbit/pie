@@ -40,7 +40,7 @@ pie.view = pie.base.extend('view', {
     }
 
     this.eventedEls = [];
-    this.changeCallbacks = [];
+    this.changeCallbacks = {};
 
     this.emitter = pie.emitter.create();
 
@@ -108,8 +108,16 @@ pie.view = pie.base.extend('view', {
   // Register an event with the emitter.
   eon: function() {
     var args = this._normalizedEmitterArgs(arguments);
-    this.emitter.on.apply(this.emitter, args);
+    return this.emitter.on.apply(this.emitter, args);
   },
+
+  // **pie.view.eoff**
+  //
+  // Unregister an event from the emitter.
+  eoff: function(uid) {
+    return this.emitter.off(uid);
+  },
+
 
   // **pie.view.eonce**
   //
@@ -211,12 +219,24 @@ pie.view = pie.base.extend('view', {
 
     if(pie.object.isString(args[0])) args[0] = this[args[0]].bind(this);
 
-    this.changeCallbacks.push({
+    var callback = {
       observable: observable,
       args: args
-    });
+    };
+
+    var uid = pie.uid(callback);
+
+    this.changeCallbacks[uid] = callback;
 
     observable.observe.apply(observable, args);
+
+    return uid;
+  },
+
+  unobserve: function(uid) {
+    var a = this.changeCallbacks[uid];
+    delete this.changeCallbacks[uid];
+    a.observable.unobserve.apply(a.observable, a.args);
   },
 
   onChange: function() {
@@ -321,14 +341,9 @@ pie.view = pie.base.extend('view', {
     });
   },
 
-
   /* release all change callbacks. */
   _unobserveChangeCallbacks: function() {
-    var a;
-    while(this.changeCallbacks.length) {
-      a = this.changeCallbacks.pop();
-      a.observable.unobserve.apply(a.observable, a.args);
-    }
+    Object.keys(this.changeCallbacks).forEach(this.unobserve.bind(this));
   }
 
 }, pie.mixins.container);

@@ -122,13 +122,19 @@ pie.emitter = pie.model.extend('emitter', {
       if(options.onceOnly) return;
     }
 
-    this.getOrSet('eventCallbacks.' + event, [])[meth](pie.object.merge({fn: fn}, options));
+    var storage = pie.object.merge({fn: fn, event: event}, options);
+    var uid = pie.uid(storage);
+
+    this.getOrSet('eventCallbacks.' + event, [])[meth](storage);
+    this.get('eventCallbacks')[uid] = storage;
+
+    return uid;
   },
 
   // Same method signature of `_on`, but handles the inclusion of the `onceOnly` option.
   _once: function(event, fn, options, meth) {
     options = pie.object.merge({onceOnly: true}, options);
-    this._on(event, fn, options, meth);
+    return this._on(event, fn, options, meth);
   },
 
   // ** pie.emitter.on **
@@ -139,7 +145,14 @@ pie.emitter = pie.model.extend('emitter', {
   // emitter.on('afterFoo', function(){});
   // ```
   on: function(event, fn, options) {
-    this._on(event, fn, options, 'push');
+    return this._on(event, fn, options, 'push');
+  },
+
+  off: function(uid) {
+    var storage = this.get('eventCallbacks.' + uid);
+    if(!storage) return;
+    pie.array.remove(this.get('eventCallbacks.' + storage.event), storage);
+    this.set('eventCallbacks.' + uid, undefined);
   },
 
   // ** pie.emitter.prepend **
@@ -149,7 +162,7 @@ pie.emitter = pie.model.extend('emitter', {
   // emitter.prepend('foo', function(){});
   // ```
   prepend: function(event, fn, options) {
-    this._on(event, fn, options, 'unshift');
+    return this._on(event, fn, options, 'unshift');
   },
 
   // ** pie.emitter.once **
@@ -159,7 +172,7 @@ pie.emitter = pie.model.extend('emitter', {
   // emitter.once('foo', function(){}, {immediate: true});
   // ```
   once: function(event, fn, options) {
-    this._once(event, fn, options, 'push');
+    return this._once(event, fn, options, 'push');
   },
 
   // ** pie.emitter.prependOnce **
@@ -169,7 +182,7 @@ pie.emitter = pie.model.extend('emitter', {
   // emitter.prependOnce('foo', function(){});
   // ```
   prependOnce: function(event, fn, options) {
-    this._once(event, fn, options, 'unshift');
+    return this._once(event, fn, options, 'unshift');
   },
 
   // #### Event Triggering

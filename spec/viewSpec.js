@@ -77,14 +77,14 @@ describe("pie.view", function() {
     it("should remove all observers when removed from it's parent", function() {
       var model = pie.model.create(), f;
 
-      this.view.observe(model, 'setup');
+      var uid = this.view.observe(model, 'setup');
 
-      f = this.view.changeCallbacks[0].args[0];
+      f = this.view.changeCallbacks[uid].args[0];
       expect(model.observations[f.__pieId]).toBeTruthy();
 
       this.view.teardown();
 
-      expect(this.view.changeCallbacks.length).toEqual(0);
+      expect(Object.keys(this.view.changeCallbacks).length).toEqual(0);
       expect(model.observations[f.__pieId]).toBeFalsy();
     });
 

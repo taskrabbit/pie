@@ -4,12 +4,20 @@ pie.binding = pie.base.extend('binding', {
     this.view = view;
     this.model = model;
     this.options = options;
-  },
+    this.emitterUids = [];
 
-  setup: function() {
     this.normalizeOptions();
     this.setupViewCallbacks();
     this.setupModelCallbacks();
+  },
+
+  teardown: function() {
+    var v = this.view;
+    this.emitterUids.forEach(v.eoff.bind(v));
+
+    if(this.modelObserverUid) {
+      v.unobserve(this.modelObserverUid);
+    }
   },
 
   normalizeOptions: function() {
@@ -107,7 +115,7 @@ pie.binding = pie.base.extend('binding', {
     // Multiple events could be supplied, separated by a space.
     opts.trigger.split(' ').forEach(function(event){
       // Use the view's event management to register the callback.
-      this.view.on(event, opts.triggerSel, toModel);
+      this.emitterUids.push(this.view.on(event, opts.triggerSel, toModel));
     }.bind(this));
   },
 
@@ -125,7 +133,7 @@ pie.binding = pie.base.extend('binding', {
     }
 
     this.toView = toView;
-    this.view.observe(this.model, toView, opts.attr);
+    this.modelObserverUid = this.view.observe(this.model, toView, opts.attr);
   },
 
   applyValueToElements: function() {

@@ -62,6 +62,31 @@ pie.dom.all = function(/* nodeList, methodName[, arg1, arg2, ...] */) {
   };
 })();
 
+
+pie.dom.attrs = function(el, setters, prefix) {
+  prefix = prefix || '';
+
+  if(setters) {
+    pie.object.forEach(setters, function(k,v) {
+      if(v == null) {
+        el.removeAttribute(prefix + k);
+      } else {
+        el.setAttribute(prefix + k);
+      }
+    });
+  }
+
+  var out = {};
+
+  pie.object.forEach(el.attributes, function(k,v) {
+    if(!prefix || k.indexOf(prefix) === 0) {
+      out[k.substr(prefix.length)] = v;
+    }
+  });
+
+  return out;
+};
+
 // **pie.dom.closest**
 //
 // Retrieve the closest ancestor of `el` which matches the provided `sel`.
@@ -98,6 +123,11 @@ pie.dom.createElement = function(str) {
 pie.dom.cache = function() {
   pie.elementCache = pie.elementCache || pie.cache.create();
   return pie.elementCache;
+};
+
+pie.dom.data = function(el, setters) {
+  return pie.dom.attrs(el, setters, 'data-');
+
 };
 
 // **pie.dom.getAll**
