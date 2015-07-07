@@ -10,7 +10,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
       viewTransitionOptions: {}
     }, options);
 
-    this.urlModel = this.app.parsedUrl;
+    this.urlModel = this.app.url;
     this.emitter  = this.app.emitter;
 
     this._super();

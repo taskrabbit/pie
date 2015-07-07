@@ -37,7 +37,7 @@ pie.router = pie.model.extend('router', {
   // //=> /things/page/3.json?q=newQuery
   // ```
   changedUrl: function(changes) {
-    var current = this.app.parsedUrl;
+    var current = this.app.url;
     return this.path(current.get('route.name') || current.get('path'), pie.object.merge({}, current.get('data'), changes));
   },
 
@@ -173,7 +173,7 @@ pie.router = pie.model.extend('router', {
   parseUrl: function(path, parseQuery) {
     var obj = this.cache.fetch(path, function(){
 
-      var pieces, query, match, fullPath, pathWithRoot, interpolations;
+      var pieces, query, match, opts, fullPath, pathWithRoot, interpolations;
 
       pieces = path.split('?');
 
@@ -190,15 +190,17 @@ pie.router = pie.model.extend('router', {
       pathWithRoot = pie.string.normalizeUrl(this.get('root') + path);
       interpolations = match && match.interpolations(path, parseQuery);
 
+      opts = match && match.options || this.missedConfig || {};
+
       return pie.object.merge({
         path: path,
         fullPath: fullPath,
         pathWithRoot: pathWithRoot,
         interpolations: interpolations || {},
         query: query,
-        data: pie.object.merge({}, interpolations, query),
+        data: pie.object.merge({}, interpolations, query, opts.data),
         route: match
-      }, match && match.options || this.missedConfig);
+      }, pie.object.except(opts, 'data'));
 
     }.bind(this));
 

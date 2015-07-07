@@ -88,8 +88,11 @@ pie.app = pie.base.extend('app', {
     // `app.errorHandler` is the object responsible for
     this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
-    // After a navigation change, app.parsedUrl is the new parsed route
-    this.parsedUrl = pie.model.create({});
+    // After a navigation change, app.url is the new parsed route
+    this.url = pie.model.create({});
+
+    // **deprecated**
+    this.parsedUrl = this.url;
 
     // `app.router` is used to determine which view should be rendered based on the url
     this.router = classOption('router', pie.router);
@@ -119,8 +122,8 @@ pie.app = pie.base.extend('app', {
     // We observe the navigator and tell the router to parse the new url
     this.navigator.observe(this.parseUrl.bind(this));
 
-    // Watch for changes to the parsedUrl
-    this.parsedUrl.observe(this.parsedUrlChanged.bind(this));
+    // Watch for changes to the url
+    this.url.observe(this.urlChanged.bind(this));
 
 
     // Before we get going, observe link navigation & show any notifications stored
@@ -174,11 +177,17 @@ pie.app = pie.base.extend('app', {
   // app.go(['/test-url', {foo: 'bar'}]) // navigates to /test-url?foo=bar
   // app.go('/test-url', true, 'Thanks for your interest') // replaces state with /test-url and shows the provided notification
   // app.go('/test-url', 'Thanks for your interest') // navigates to /test-url and shows the provided notification
+  // app.go({id: 4}) // navigates to the current path but with the {id} option changed to 4.
   go: function(){
     var args = pie.array.from(arguments), path, notificationArgs, replaceState;
 
     /* Path is always first. */
     path = args.shift();
+
+    /* if an object is provided as a path, assume we want to update our current url with the new options */
+    if(pie.object.isPlainObject(path)) {
+      path = this.router.changedUrl(path);
+    }
 
 
     /* Next we check for a query object */
@@ -191,7 +200,7 @@ pie.app = pie.base.extend('app', {
       path = this.router.path.apply(this.router, pie.array.from(path));
     }
 
-    if(path === this.parsedUrl.get('fullPath')) return;
+    if(path === this.url.get('fullPath')) return;
 
     /* If the next argument is a boolean, we care about replaceState */
     if(pie.object.isBoolean(args[0])) {
@@ -258,7 +267,7 @@ pie.app = pie.base.extend('app', {
     if(!href || /^(#|[a-z]+:\/\/)/.test(href)) return;
 
     // Ensure that relative links are evaluated as relative
-    if(href.charAt(0) === '?') href = this.parsedUrl.get('fullPath') + href;
+    if(href.charAt(0) === '?') href = this.url.get('fullPath') + href;
 
     // Great, we can handle it. let the app decide whether to use pushstate or not
     e.preventDefault();
@@ -268,11 +277,11 @@ pie.app = pie.base.extend('app', {
   parseUrl: function() {
     var fromRouter = this.router.parseUrl(this.navigator.get('fullPath'));
 
-    this.parsedUrl.setData(fromRouter);
+    this.url.setData(fromRouter);
   },
 
 
-  parsedUrlChanged: function(changeSet) {
+  urlChanged: function(changeSet) {
     if(changeSet.has('fullPath')) {
       this.emitter.fire('urlChanged');
     }

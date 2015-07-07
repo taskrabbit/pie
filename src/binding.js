@@ -55,7 +55,9 @@ pie.binding = pie.base.extend('binding', {
   },
 
   getModelValue: function() {
-    return this.model.get(this.options.attr);
+    var val = this.model.get(this.options.attr);
+    if(this.options.decorator) val = this.options.decorator(val);
+    return val;
   },
 
   // The type caster based on the `dataType`.

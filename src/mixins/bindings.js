@@ -24,8 +24,13 @@ pie.mixins.bindings = {
   // this.bind({ attr: 'first_name' }, { attr: 'last_name' })
   // ```;
   bind: function() {
+    var opts;
     for(var i = 0; i < arguments.length; i++) {
-      this._bindings.push(pie.binding.create(this, arguments[i].model || this.model, arguments[i]));
+      opts = arguments[i];
+      if(!opts.model) opts.model = this.model;
+      if(pie.object.isString(opts.model)) opts.model = this[opts.model];
+      if(pie.object.isString(opts.decorator)) opts.decorator = this[opts.decorator] || this.app.helpers.fetch(opts.decorator);
+      this._bindings.push(pie.binding.create(this, opts.model, opts));
     }
   },
 
@@ -66,7 +71,6 @@ pie.mixins.bindings = {
 
   parseStringBinding: function(inputString) {
     var opts = pie.object.expand(pie.string.deserialize(inputString));
-    if(opts.model) opts.model = this[opts.model];
     return opts;
   },
 

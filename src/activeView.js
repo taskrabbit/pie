@@ -59,7 +59,7 @@ pie.activeView = pie.view.extend('activeView', {
       return;
     }
 
-    instance = factory();
+    instance = factory(current);
 
     // if we are dealing with the same instance, make sure we don't remove it, only add it.
     if(current === instance) current = null;
