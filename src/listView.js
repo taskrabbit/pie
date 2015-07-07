@@ -83,11 +83,14 @@ pie.listView = pie.activeView.extend('listView', (function(){
 
       this.list = this.list || pie.list.create([]);
       this.model = this.model || this.list;
+      this.listChildren = [];
     },
 
     setup: function() {
       this.observe(this.list, 'renderItems', this.options.listOptions.modelAttribute);
       this.eon('afterRender', 'renderItems');
+      this.eon('beforeRenderItems', function(){ this.setListLoadingStyle(true); }.bind(this));
+      this.eon('afterRenderItems', function(){ this.setListLoadingStyle(false); }.bind(this));
 
       this._super.apply(this, arguments);
     },
@@ -108,15 +111,14 @@ pie.listView = pie.activeView.extend('listView', (function(){
         nameFactory = opts.nameFactory,
         afterRenders = [],
         whenComplete = function() {
-          children.forEach(function(child){ child.addToDom(container); });
-          this.setListLoadingStyle(false);
+          this.listChildren.forEach(function(child){ child.addToDom(container); });
           this.emitter.fire('afterRenderItems');
         }.bind(this),
         children, child, name;
 
       delete opts.viewFactory;
 
-      children = this.listData().map(function(data, i) {
+      this.listChildren = this.listData().map(function(data, i) {
         child = factory(opts, data, i);
         name = nameFactory(opts, data, i);
 
@@ -138,20 +140,21 @@ pie.listView = pie.activeView.extend('listView', (function(){
       var opts = pie.object.dup(this.options.emptyOptions),
       factory = opts.viewFactory,
       whenComplete = function(){
-        this.setListLoadingStyle(false);
         this.emitter.fire('afterRenderItems');
       }.bind(this);
 
       delete opts.viewFactory;
 
       if(!factory) {
-        this.emitter.fire('afterRenderItems');
+        whenComplete();
         return;
       }
 
-      var child = factory(opts, {});
+      var child = factory(opts, {}),
+      name = nameFactory(opts, {}, 0);
 
-      this.addChild('list-item-empty', child);
+      this.listChildren = [child];
+      this.addChild(name, child);
 
       child.emitter.once('afterRender', whenComplete, {immediate: true});
 
@@ -160,20 +163,17 @@ pie.listView = pie.activeView.extend('listView', (function(){
     },
 
     removeItems: function() {
-      var regex = /^list\-item\-/, child;
-
-      pie.array.grep(Object.keys(this.childNames), regex).forEach(function(name) {
-        child = this.getChild(name);
+      var child;
+      while(child = this.listChildren.pop()) {
         this.removeChild(child);
         child.teardown();
-      }.bind(this));
+      }
     },
 
     renderItems: function() {
       this.emitter.fire('beforeRenderItems');
       this.emitter.fireAround('aroundRenderItems', function() {
         this.emitter.fire('renderItems');
-        this.setListLoadingStyle(true);
         this.removeItems();
         this.addItems();
       }.bind(this));

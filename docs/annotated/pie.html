@@ -10660,11 +10660,14 @@ Returns the removed item.</p>
 
       <span class="hljs-keyword">this</span>.list = <span class="hljs-keyword">this</span>.list || pie.list.create([]);
       <span class="hljs-keyword">this</span>.model = <span class="hljs-keyword">this</span>.model || <span class="hljs-keyword">this</span>.list;
+      <span class="hljs-keyword">this</span>.listChildren = [];
     },
 
     setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
       <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.list, <span class="hljs-string">'renderItems'</span>, <span class="hljs-keyword">this</span>.options.listOptions.modelAttribute);
       <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'afterRender'</span>, <span class="hljs-string">'renderItems'</span>);
+      <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'beforeRenderItems'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">true</span>); }.bind(<span class="hljs-keyword">this</span>));
+      <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'afterRenderItems'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">false</span>); }.bind(<span class="hljs-keyword">this</span>));
 
       <span class="hljs-keyword">this</span>._super.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
     },
@@ -10685,15 +10688,14 @@ Returns the removed item.</p>
         nameFactory = opts.nameFactory,
         afterRenders = [],
         whenComplete = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-          children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span></span>{ child.addToDom(container); });
-          <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">false</span>);
+          <span class="hljs-keyword">this</span>.listChildren.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span></span>{ child.addToDom(container); });
           <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterRenderItems'</span>);
         }.bind(<span class="hljs-keyword">this</span>),
         children, child, name;
 
       <span class="hljs-keyword">delete</span> opts.viewFactory;
 
-      children = <span class="hljs-keyword">this</span>.listData().map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, i)</span> </span>{
+      <span class="hljs-keyword">this</span>.listChildren = <span class="hljs-keyword">this</span>.listData().map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, i)</span> </span>{
         child = factory(opts, data, i);
         name = nameFactory(opts, data, i);
 
@@ -10715,20 +10717,21 @@ Returns the removed item.</p>
       <span class="hljs-keyword">var</span> opts = pie.object.dup(<span class="hljs-keyword">this</span>.options.emptyOptions),
       factory = opts.viewFactory,
       whenComplete = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-        <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">false</span>);
         <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterRenderItems'</span>);
       }.bind(<span class="hljs-keyword">this</span>);
 
       <span class="hljs-keyword">delete</span> opts.viewFactory;
 
       <span class="hljs-keyword">if</span>(!factory) {
-        <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterRenderItems'</span>);
+        whenComplete();
         <span class="hljs-keyword">return</span>;
       }
 
-      <span class="hljs-keyword">var</span> child = factory(opts, {});
+      <span class="hljs-keyword">var</span> child = factory(opts, {}),
+      name = nameFactory(opts, {}, <span class="hljs-number">0</span>);
 
-      <span class="hljs-keyword">this</span>.addChild(<span class="hljs-string">'list-item-empty'</span>, child);
+      <span class="hljs-keyword">this</span>.listChildren = [child];
+      <span class="hljs-keyword">this</span>.addChild(name, child);
 
       child.emitter.once(<span class="hljs-string">'afterRender'</span>, whenComplete, {immediate: <span class="hljs-literal">true</span>});
 
@@ -10737,20 +10740,17 @@ Returns the removed item.</p>
     },
 
     removeItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">var</span> regex = <span class="hljs-regexp">/^list\-item\-/</span>, child;
-
-      pie.array.grep(<span class="hljs-built_in">Object</span>.keys(<span class="hljs-keyword">this</span>.childNames), regex).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(name)</span> </span>{
-        child = <span class="hljs-keyword">this</span>.getChild(name);
+      <span class="hljs-keyword">var</span> child;
+      <span class="hljs-keyword">while</span>(child = <span class="hljs-keyword">this</span>.listChildren.pop()) {
         <span class="hljs-keyword">this</span>.removeChild(child);
         child.teardown();
-      }.bind(<span class="hljs-keyword">this</span>));
+      }
     },
 
     renderItems: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
       <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'beforeRenderItems'</span>);
       <span class="hljs-keyword">this</span>.emitter.fireAround(<span class="hljs-string">'aroundRenderItems'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
         <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'renderItems'</span>);
-        <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">true</span>);
         <span class="hljs-keyword">this</span>.removeItems();
         <span class="hljs-keyword">this</span>.addItems();
       }.bind(<span class="hljs-keyword">this</span>));
