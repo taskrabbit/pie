@@ -10685,14 +10685,15 @@ Returns the removed item.</p>
         nameFactory = opts.nameFactory,
         afterRenders = [],
         whenComplete = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+          children.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span></span>{ child.addToDom(container); });
           <span class="hljs-keyword">this</span>.setListLoadingStyle(<span class="hljs-literal">false</span>);
           <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'afterRenderItems'</span>);
         }.bind(<span class="hljs-keyword">this</span>),
-        child, name;
+        children, child, name;
 
       <span class="hljs-keyword">delete</span> opts.viewFactory;
 
-      <span class="hljs-keyword">this</span>.listData().forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, i)</span> </span>{
+      children = <span class="hljs-keyword">this</span>.listData().map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data, i)</span> </span>{
         child = factory(opts, data, i);
         name = nameFactory(opts, data, i);
 
@@ -10702,11 +10703,9 @@ Returns the removed item.</p>
         });
 
         <span class="hljs-keyword">this</span>.addChild(name, child);
-
-        <span class="hljs-comment">/* we append to the dom before setup to preserve ordering. */</span>
-        child.addToDom(container);
         child.setup();
 
+        <span class="hljs-keyword">return</span> child;
       }.bind(<span class="hljs-keyword">this</span>));
 
       pie.fn.async(afterRenders, pie.fn.delay(whenComplete, <span class="hljs-keyword">this</span>.options.listOptions.minLoadingTime));
@@ -11676,7 +11675,7 @@ app.router.changedUrl({page: <span class="hljs-number">3</span>, q: <span class=
             
             <div class="content"><div class='highlight'><pre>  changedUrl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(changes)</span> </span>{
     <span class="hljs-keyword">var</span> current = <span class="hljs-keyword">this</span>.app.url;
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.path(current.get(<span class="hljs-string">'route.name'</span>) || current.get(<span class="hljs-string">'path'</span>), pie.object.merge({}, current.get(<span class="hljs-string">'data'</span>), changes));
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.path(current.get(<span class="hljs-string">'route.name'</span>) || current.get(<span class="hljs-string">'path'</span>), pie.object.merge({}, current.get(<span class="hljs-string">'interpolations'</span>), current.get(<span class="hljs-string">'query'</span>), changes));
   },</pre></div></div>
             
         </li>

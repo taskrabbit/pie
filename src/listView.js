@@ -108,14 +108,15 @@ pie.listView = pie.activeView.extend('listView', (function(){
         nameFactory = opts.nameFactory,
         afterRenders = [],
         whenComplete = function() {
+          children.forEach(function(child){ child.addToDom(container); });
           this.setListLoadingStyle(false);
           this.emitter.fire('afterRenderItems');
         }.bind(this),
-        child, name;
+        children, child, name;
 
       delete opts.viewFactory;
 
-      this.listData().forEach(function(data, i) {
+      children = this.listData().map(function(data, i) {
         child = factory(opts, data, i);
         name = nameFactory(opts, data, i);
 
@@ -125,11 +126,9 @@ pie.listView = pie.activeView.extend('listView', (function(){
         });
 
         this.addChild(name, child);
-
-        /* we append to the dom before setup to preserve ordering. */
-        child.addToDom(container);
         child.setup();
 
+        return child;
       }.bind(this));
 
       pie.fn.async(afterRenders, pie.fn.delay(whenComplete, this.options.listOptions.minLoadingTime));
