@@ -165,7 +165,7 @@ pie.dom.isWindow = function(el) {
 // //=> true
 // ```
 pie.dom.matches = function(el, sel) {
-  if(pie.object.isNode(sel)) return el === sel;
+  if(pie.object.isDom(sel)) return el === sel;
 
   var fn = pie.dom.prefixed(el, 'matches');
   if(fn) return fn(sel);

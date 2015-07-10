@@ -173,7 +173,7 @@ pie.view = pie.base.extend('view', {
         ns = this.eventNamespace(),
         f2, el;
 
-    el = pie.object.isNode(pie.array.last(fns)) ? fns.pop() : this.el;
+    el = pie.object.isDom(pie.array.last(fns)) ? fns.pop() : this.el;
 
     if(!~this.eventedEls.indexOf(el)) this.eventedEls.push(el);
 

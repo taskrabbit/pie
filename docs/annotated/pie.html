@@ -1687,7 +1687,7 @@ pie.dom.matches(form, <span class="hljs-string">'form'</span>);
             </div>
             
             <div class="content"><div class='highlight'><pre>pie.dom.matches = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(el, sel)</span> </span>{
-  <span class="hljs-keyword">if</span>(pie.object.isNode(sel)) <span class="hljs-keyword">return</span> el === sel;
+  <span class="hljs-keyword">if</span>(pie.object.isDom(sel)) <span class="hljs-keyword">return</span> el === sel;
 
   <span class="hljs-keyword">var</span> fn = pie.dom.prefixed(el, <span class="hljs-string">'matches'</span>);
   <span class="hljs-keyword">if</span>(fn) <span class="hljs-keyword">return</span> fn(sel);
@@ -3199,6 +3199,10 @@ pie.object.isUndefined = <span class="hljs-function"><span class="hljs-keyword">
 
 pie.object.isNode = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
   <span class="hljs-keyword">return</span> obj <span class="hljs-keyword">instanceof</span> Node;
+};
+
+pie.object.isDom = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
+  <span class="hljs-keyword">return</span> pie.object.isNode(obj) || pie.object.isWindow(obj);
 };
 
 pie.object.isModel = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(obj)</span> </span>{
@@ -7361,7 +7365,7 @@ view.on(<span class="hljs-string">'resize'</span>, <span class="hljs-literal">nu
         ns = <span class="hljs-keyword">this</span>.eventNamespace(),
         f2, el;
 
-    el = pie.object.isNode(pie.array.last(fns)) ? fns.pop() : <span class="hljs-keyword">this</span>.el;
+    el = pie.object.isDom(pie.array.last(fns)) ? fns.pop() : <span class="hljs-keyword">this</span>.el;
 
     <span class="hljs-keyword">if</span>(!~<span class="hljs-keyword">this</span>.eventedEls.indexOf(el)) <span class="hljs-keyword">this</span>.eventedEls.push(el);
 
@@ -7740,7 +7744,10 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(current === instance) current = <span class="hljs-literal">null</span>;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(current === instance) {
+      <span class="hljs-keyword">if</span>(cb) cb();
+      <span class="hljs-keyword">return</span>;
+    }</pre></div></div>
             
         </li>
         

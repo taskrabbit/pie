@@ -187,6 +187,10 @@ pie.object.isNode = function(obj) {
   return obj instanceof Node;
 };
 
+pie.object.isDom = function(obj) {
+  return pie.object.isNode(obj) || pie.object.isWindow(obj);
+};
+
 pie.object.isModel = function(obj) {
   return obj && obj.__pieRole === 'model';
 };

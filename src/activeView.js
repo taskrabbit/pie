@@ -62,7 +62,10 @@ pie.activeView = pie.view.extend('activeView', {
     instance = factory(current);
 
     // if we are dealing with the same instance, make sure we don't remove it, only add it.
-    if(current === instance) current = null;
+    if(current === instance) {
+      if(cb) cb();
+      return;
+    }
 
     // there's a child and a target.
     trans = transitionClass.create(this, pie.object.merge(options.viewTransitionOptions, {
