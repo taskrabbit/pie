@@ -80,10 +80,8 @@ pie.mixins.validatable = {
     if(validationStrategy !== undefined) this.validationStrategy = validationStrategy;
   },
 
-  // Invoke validateAll with a set of optional callbacks for the success case and the failure case.
-  // this.validateAll(function(){ alert('Success!'); }, function(){ alert('Errors!'); });
-  // validateAll will perform all registered validations, asynchronously. When all validations have completed, the callbacks
-  // will be invoked.
+  // validateAll will perform all registered validations, asynchronously. When all validations have completed, the
+  // returned promise will be resolved or rejected based on the result of running validations.
   validateAll: function() {
     keys = Object.keys(this.validations),
 
@@ -91,7 +89,7 @@ pie.mixins.validatable = {
     promises = keys.map(this.validate.bind(this));
 
     // return a promise to ensure we make our point about asynchronous validation.
-    return pie.promise.all(promises);
+    return pie.promise.all(promises).bind(this);
   },
 
 
@@ -113,8 +111,8 @@ pie.mixins.validatable = {
     value = this.get(k),
 
     // grab the validator for each validation then invoke it.
-    // if true or false is returned immediately, we invoke the callback otherwise we assume
-    // the validation is running asynchronously and it will invoke the callback with the result.
+    // if true or false is returned immediately, we resolve. otherwise we assume
+    // the validation is running asynchronously and will provide a promise.
     promises = validations.map(function(validation) {
       return pie.promise.create(function(resolve, reject) {
         var validator = validators[validation.type];
@@ -123,14 +121,14 @@ pie.mixins.validatable = {
         if(result === true) resolve();
         else if(result === false) reject(validators.errorMessage(validation.type, validation.options));
         else result.then(resolve, reject);
-      });
-    });
+      }).bind(this);
+    }.bind(this));
 
-    return pie.promise.all(promises).
+    return pie.promise.all(promises).bind(this).
       then(function(){
         this.reportValidationError(k, undefined);
         return true;
-      }.bind(this)).
+      }).
       catch(function(messages){
         this.reportValidationError(k, messages);
         return false;
