@@ -81,7 +81,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     // upcase before we validate inclusion.
     if(this.get('verb')) this.set('verb', this.get('verb').toUpperCase());
 
-    return this.validateAll().bind(this).catch(function(){
+    return this.validateAll().catch(function(){
       throw new Error(JSON.stringify(this.get('validationErrors')));
     });
   },
