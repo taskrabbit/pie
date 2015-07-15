@@ -385,10 +385,9 @@ pie.array.hasAny = function(/* a, *values */) {
 // pie.array.indexOf(arr, 'foo')
 // //=> 0
 // ```
-pie.array.indexOf = function(a, f) {
+pie.array.indexOf = function(a, f, startIdx) {
   a = pie.array.from(a);
-  var i = 0, l = a.length;
-  for(;i<l;i++) {
+  for(var i = (startIdx || 0); i < a.length; i++) {
     if(pie.object.getValue(a[i], f)) {
       return i;
     }
@@ -396,6 +395,24 @@ pie.array.indexOf = function(a, f) {
 
   return -1;
 };
+
+// ** pie.array.lastIndexOf **
+//
+// Find the last index of the item that matches `f`.
+// The function `f` can be a function or an attribute.
+// ```
+// arr = [{foo: true}, {bar: true}, {bar: true, foo: true}]
+// pie.array.lastIndexOf(arr, 'foo')
+// //=> 2
+// ```
+pie.array.lastIndexOf = function(a, f, startIdx) {
+  a = pie.array.from(a);
+  for(var i = (startIdx === undefined ? a.length - 1 : startIdx); i >= 0; i--) {
+    if(pie.object.getValue(a[i], f)) {
+      return i;
+    }
+  }
+}
 
 // ** pie.array.inGroupsOf **
 //
