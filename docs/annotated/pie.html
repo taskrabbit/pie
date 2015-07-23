@@ -12935,9 +12935,10 @@ validator.number(<span class="hljs-number">20</span>, {gt: <span class="hljs-num
 
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.withStandardChecks(value, options, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
 
+      value = <span class="hljs-built_in">String</span>(value).trim();
       <span class="hljs-comment">/* not using parseFloat because it accepts multiple decimals */</span>
       <span class="hljs-comment">/* ip addresses would be considered numbers if parseFloat was used */</span>
-      <span class="hljs-keyword">if</span>(!<span class="hljs-regexp">/^([\-])?([\d]+)?\.?[\d]+$/</span>.test(<span class="hljs-built_in">String</span>(value))) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+      <span class="hljs-keyword">if</span>(!<span class="hljs-regexp">/^([\-])?([\d]+)?\.?[\d]+$/</span>.test(value)) <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
 
       <span class="hljs-keyword">var</span> number = <span class="hljs-built_in">parseFloat</span>(value),
       ro = pie.validator.rangeOptions.create(<span class="hljs-keyword">this</span>.app, options);
@@ -14744,7 +14745,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150715.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150723.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

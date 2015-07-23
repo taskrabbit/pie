@@ -402,9 +402,10 @@ pie.validator = pie.base.extend('validator', {
 
     return this.withStandardChecks(value, options, function(){
 
+      value = String(value).trim();
       /* not using parseFloat because it accepts multiple decimals */
       /* ip addresses would be considered numbers if parseFloat was used */
-      if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(String(value))) return false;
+      if(!/^([\-])?([\d]+)?\.?[\d]+$/.test(value)) return false;
 
       var number = parseFloat(value),
       ro = pie.validator.rangeOptions.create(this.app, options);
