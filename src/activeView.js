@@ -3,6 +3,7 @@ pie.activeView = pie.view.extend('activeView', {
   init: function(options) {
     if(pie.object.isString(options)) options = {template: options};
     this._super(options);
+    this.refs = {};
   },
 
   setup: function() {
@@ -14,6 +15,11 @@ pie.activeView = pie.view.extend('activeView', {
 
     if(this.options.renderOnSetup || this.options.renderOnSetup === undefined) {
       this.eonce('setup', this.render.bind(this));
+    }
+
+    if(this.options.refs) {
+      this.setupRefs();
+      this.on('afterRender', 'clearRefCache');
     }
 
     this.eon('render', this._renderTemplateToEl.bind(this));
@@ -112,6 +118,41 @@ pie.activeView = pie.view.extend('activeView', {
 
   templateName: function() {
     return this.options.template;
+  },
+
+  setupRefs: function() {
+    var refs = {};
+    var self = this;
+
+    Object.defineProperty(refs, '_cache', {
+      iteratable: false,
+      writable: true
+    });
+
+    refs.fetch = function(name){
+      delete refs._cache[name];
+      return refs[name];
+    };
+
+    refs._cache = {};
+
+    pie.object.forEach(self.options.refs, function(k,v) {
+
+      Object.defineProperty(refs, k, {
+        iteratable: false,
+        get: function() {
+          if(pie.object.has(refs._cache, k)) return refs._cache[k];
+          return refs._cache[k] = self.qs(v);
+        }
+      });
+
+    });
+
+    self[self.options.refsName || 'dom'] = refs;
+  },
+
+  clearRefCache: function() {
+    this[this.options.refsName || 'dom']._cache = {};
   }
 
 });
