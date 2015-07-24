@@ -19,7 +19,7 @@ pie.activeView = pie.view.extend('activeView', {
 
     if(this.options.refs) {
       this.setupRefs();
-      this.on('afterRender', 'clearRefCache');
+      this.emitter.prepend('afterRender', this.clearRefCache.bind(this));
     }
 
     this.eon('render', this._renderTemplateToEl.bind(this));

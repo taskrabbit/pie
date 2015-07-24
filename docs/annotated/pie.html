@@ -7691,7 +7691,7 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.refs) {
       <span class="hljs-keyword">this</span>.setupRefs();
-      <span class="hljs-keyword">this</span>.on(<span class="hljs-string">'afterRender'</span>, <span class="hljs-string">'clearRefCache'</span>);
+      <span class="hljs-keyword">this</span>.emitter.prepend(<span class="hljs-string">'afterRender'</span>, <span class="hljs-keyword">this</span>.clearRefCache.bind(<span class="hljs-keyword">this</span>));
     }
 
     <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'render'</span>, <span class="hljs-keyword">this</span>._renderTemplateToEl.bind(<span class="hljs-keyword">this</span>));
