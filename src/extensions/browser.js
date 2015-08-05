@@ -26,6 +26,13 @@ pie.browser.agent = function() {
     b.safari = true;
   }
 
+  match = /(ipad|ipod|iphone)/.exec( ua );
+  
+  if (match && match[1]) {
+    b.iDevice = match[1];
+    b[b.iDevice] = true;
+  }
+
   return pie.browser.__agent = b;
 };
 
