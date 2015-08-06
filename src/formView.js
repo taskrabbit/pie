@@ -144,7 +144,7 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   // ** pie.formView.onInvalid **
   //
   // For the inheriting class to override.
-  onInvalid: function(/* form */) {},
+  onInvalid: function() {},
 
 
   // ** pie.formView.onValid **
@@ -152,10 +152,10 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   // What happens when the model validations pass.
   // By default, the data is prepared for submission via `prepareSubmissionData`
   // and sent to `performSubmit`.
-  onValid: function(form) {
+  onValid: function() {
     this.prepareSubmissionData().then(function(data) {
 
-      this.performSubmit(form, data).then(
+      this.performSubmit(data).then(
         this._onSuccess.bind(this),
         this._onFailure.bind(this)
       );
@@ -173,10 +173,9 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   // ```
   // formView.performSubmit(<form>, {foo: 'bar'}, function(isSuccess, data){ console.log(isSuccess, data); });
   // ```
-  performSubmit: function(form, data, cb) {
+  performSubmit: function(data) {
     var request = app.ajax.ajax(pie.object.merge({
-      url: form.getAttribute('action'),
-      verb: form.getAttribute('method') || 'post',
+      verb: 'post',
       data: data
     }, this.ajaxOptions()));
 
@@ -193,7 +192,7 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   //
   // The data to be sent to the server.
   // By default these are the defined fields extracted out of the model.
-  prepareSubmissionData: function(cb) {
+  prepareSubmissionData: function() {
     var fieldNames = pie.array.map(this.options.fields, 'name'),
     data = this.model.gets(fieldNames);
 
@@ -222,7 +221,7 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
 
     this.emitter.fire('submit');
 
-    this.validateModel.then(this._onValid.bind(this), this._onInvalid.bind(this));
+    this.validateModel().then(this._onValid.bind(this), this._onInvalid.bind(this));
   }
 
 });

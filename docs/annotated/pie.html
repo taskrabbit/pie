@@ -8313,10 +8313,12 @@ Callbacks are invoked with the parsed response &amp; the xhr object.</p>
   },
 
   promise: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">return</span> pie.promise.create(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(resolve, reject)</span> </span>{
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._promise) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._promise;
+    <span class="hljs-keyword">this</span>._promise = pie.promise.create(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(resolve, reject)</span> </span>{
       <span class="hljs-keyword">this</span>.dataSuccess(resolve);
       <span class="hljs-keyword">this</span>.error(reject);
     }.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._promise;
   }
 
 }, pie.mixins.validatable);
@@ -9230,7 +9232,7 @@ If you’re overriding formView behavior, here’s the general process which is 
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  onInvalid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* form */</span>)</span> </span>{},</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  onInvalid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{},</pre></div></div>
             
         </li>
         
@@ -9248,10 +9250,10 @@ and sent to <code>performSubmit</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  onValid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  onValid: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">this</span>.prepareSubmissionData().then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data)</span> </span>{
 
-      <span class="hljs-keyword">this</span>.performSubmit(form, data).then(
+      <span class="hljs-keyword">this</span>.performSubmit(data).then(
         <span class="hljs-keyword">this</span>._onSuccess.bind(<span class="hljs-keyword">this</span>),
         <span class="hljs-keyword">this</span>._onFailure.bind(<span class="hljs-keyword">this</span>)
       );
@@ -9278,10 +9280,9 @@ a signature of <code>cb(success?, responseData)</code></p>
 </code></pre>
             </div>
             
-            <div class="content"><div class='highlight'><pre>  performSubmit: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form, data, cb)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  performSubmit: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(data)</span> </span>{
     <span class="hljs-keyword">var</span> request = app.ajax.ajax(pie.object.merge({
-      url: form.getAttribute(<span class="hljs-string">'action'</span>),
-      verb: form.getAttribute(<span class="hljs-string">'method'</span>) || <span class="hljs-string">'post'</span>,
+      verb: <span class="hljs-string">'post'</span>,
       data: data
     }, <span class="hljs-keyword">this</span>.ajaxOptions()));
 
@@ -9309,7 +9310,7 @@ By default these are the defined fields extracted out of the model.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  prepareSubmissionData: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  prepareSubmissionData: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> fieldNames = pie.array.map(<span class="hljs-keyword">this</span>.options.fields, <span class="hljs-string">'name'</span>),
     data = <span class="hljs-keyword">this</span>.model.gets(fieldNames);
 
@@ -9360,7 +9361,7 @@ we invoke our <code>onValid</code> function, otherwise the <code>onInvalid</code
 
     <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'submit'</span>);
 
-    <span class="hljs-keyword">this</span>.validateModel.then(<span class="hljs-keyword">this</span>._onValid.bind(<span class="hljs-keyword">this</span>), <span class="hljs-keyword">this</span>._onInvalid.bind(<span class="hljs-keyword">this</span>));
+    <span class="hljs-keyword">this</span>.validateModel().then(<span class="hljs-keyword">this</span>._onValid.bind(<span class="hljs-keyword">this</span>), <span class="hljs-keyword">this</span>._onInvalid.bind(<span class="hljs-keyword">this</span>));
   }
 
 });</pre></div></div>
@@ -11117,14 +11118,13 @@ resources.load(<span class="hljs-string">'googleMaps'</span>, <span class="hljs-
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  _loadajax: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  _loadajax: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
     <span class="hljs-keyword">var</span> ajaxOptions = pie.object.merge({
       verb: <span class="hljs-string">'GET'</span>,
       url: options.src
     }, options);
 
-    <span class="hljs-keyword">var</span> request = <span class="hljs-keyword">this</span>.app.ajax.ajax(ajaxOptions);
-    request.success(resourceOnload);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.app.ajax.ajax(ajaxOptions).promise();
   },</pre></div></div>
             
         </li>
@@ -11146,13 +11146,13 @@ Options:</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  _loadimage: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
-    <span class="hljs-keyword">var</span> img = <span class="hljs-keyword">new</span> Image();
-    img.onload = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-      resourceOnload(pie.object.merge({
-        img: img
-      }, options));
-    };
-    img.src = options.src;
+    <span class="hljs-keyword">return</span> pie.promise.create(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(resolve, reject)</span></span>{
+      <span class="hljs-keyword">var</span> img = <span class="hljs-keyword">new</span> Image();
+      img.onload = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ resolve(pie.object.merge({ img: img }, options)); };
+      img.onerror = reject;
+      img.src = options.src;
+    });
+
   },</pre></div></div>
             
         </li>
@@ -11177,7 +11177,7 @@ Options:</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  _loadlink: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  _loadlink: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
     <span class="hljs-keyword">var</span> link = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'link'</span>);
 
     link.href = options.src;
@@ -11189,7 +11189,7 @@ Options:</p>
 
     <span class="hljs-comment">/* Need to record that we added this thing. */</span>
     <span class="hljs-comment">/* The resource may not actually be present yet. */</span>
-    resourceOnload();
+    <span class="hljs-keyword">return</span> pie.promise.resolve();
   },</pre></div></div>
             
         </li>
@@ -11212,26 +11212,31 @@ Options:</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  _loadscript: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options, resourceOnload)</span> </span>{
+            <div class="content"><div class='highlight'><pre>  _loadscript: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> </span>{
 
-    <span class="hljs-keyword">var</span> script = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'script'</span>);
+    <span class="hljs-keyword">return</span> pie.promise.create(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(resolve, reject)</span> </span>{
+      <span class="hljs-keyword">var</span> script = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'script'</span>);
 
-    <span class="hljs-keyword">if</span>(options.noAsync) script.async = <span class="hljs-literal">false</span>;
+      <span class="hljs-keyword">if</span>(options.noAsync) script.async = <span class="hljs-literal">false</span>;
 
-    <span class="hljs-comment">/* If options.callbackName is present, the invoking method self-references itself so it can clean itself up. */</span>
-    <span class="hljs-comment">/* Because of this, we don't need to invoke the onload */</span>
-    <span class="hljs-keyword">if</span>(!options.callbackName) {
-      <span class="hljs-keyword">var</span> done = <span class="hljs-literal">false</span>;
-      script.onload = script.onreadystatechange = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-        <span class="hljs-keyword">if</span>(!done &amp;&amp; (!<span class="hljs-keyword">this</span>.readyState || <span class="hljs-keyword">this</span>.readyState===<span class="hljs-string">'loaded'</span> || <span class="hljs-keyword">this</span>.readyState===<span class="hljs-string">'complete'</span>)) {
-          done = <span class="hljs-literal">true</span>;
-          resourceOnload();
-        }
-      };
-    }
+      <span class="hljs-comment">/* If options.callbackName is present, the invoking method self-references itself so it can clean itself up. */</span>
+      <span class="hljs-comment">/* Because of this, we don't need to invoke the onload */</span>
+      <span class="hljs-keyword">if</span>(!options.callbackName) {
+        <span class="hljs-keyword">var</span> done = <span class="hljs-literal">false</span>;
+        script.onload = script.onreadystatechange = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+          <span class="hljs-keyword">if</span>(!done &amp;&amp; (!<span class="hljs-keyword">this</span>.readyState || <span class="hljs-keyword">this</span>.readyState===<span class="hljs-string">'loaded'</span> || <span class="hljs-keyword">this</span>.readyState===<span class="hljs-string">'complete'</span>)) {
+            done = <span class="hljs-literal">true</span>;
+            resolve();
+          }
+        };
 
-    <span class="hljs-keyword">this</span>._appendNode(script);
-    script.src = options.src;
+        script.onerror = reject;
+      }
+
+      <span class="hljs-keyword">this</span>._appendNode(script);
+      script.src = options.src;
+
+    }.bind(<span class="hljs-keyword">this</span>));
   },</pre></div></div>
             
         </li>
@@ -11276,70 +11281,37 @@ resources.load({src: <span class="hljs-string">'/templates.html'</span>, dataSuc
             
             <div class="content"><div class='highlight'><pre>  load: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(<span class="hljs-comment">/* src1, src2, src3, onload */</span>)</span> </span>{
     <span class="hljs-keyword">var</span> sources = pie.array.change(<span class="hljs-built_in">arguments</span>, <span class="hljs-string">'from'</span>, <span class="hljs-string">'flatten'</span>, <span class="hljs-string">'compact'</span>),
-    onload = pie.object.isFunction(pie.array.last(sources)) ? sources.pop() : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{},
-    fns;
+    promises;
 
     sources = sources.map(<span class="hljs-keyword">this</span>._normalizeSrc.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-comment">/* we generate a series of functions to be invoked by pie.fn.async */</span>
     <span class="hljs-comment">/* each function's responsibility is to invoke the provided callback when the resource is loaded */</span>
-    fns = sources.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span></span>{
+    promises = sources.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span></span>{
 
       <span class="hljs-comment">/* we could be dealing with an alias, so make sure to grab the real source */</span>
       options = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'srcMap.'</span> + options.src) || options;
 
-      <span class="hljs-comment">/* we cache the status of the resource in our `loaded` object. */</span>
-      <span class="hljs-keyword">var</span> src = options.src,
-      loadedKey = <span class="hljs-string">'loaded.'</span> + src;
+      <span class="hljs-comment">/* we cache the loading promise on our promises object */</span>
+      <span class="hljs-keyword">var</span> promise = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'promises.'</span> + options.src);
+      <span class="hljs-keyword">var</span> type = options.type || <span class="hljs-keyword">this</span>._inferredResourceType(options.src)
 
-      <span class="hljs-comment">/* the pie.fn.async function */</span>
-      <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(cb)</span> </span>{
-        <span class="hljs-keyword">var</span> loadedVal = <span class="hljs-keyword">this</span>.get(loadedKey);
+      <span class="hljs-keyword">if</span>(!promise) {
+        promise = <span class="hljs-keyword">this</span>[<span class="hljs-string">'_load'</span> + type](options);
 
-        <span class="hljs-comment">/* if the loadedKey's value is true, we've already loaded this resource */</span>
-        <span class="hljs-keyword">if</span>(loadedVal === <span class="hljs-literal">true</span>) {
-          cb();
-          <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
-        }
-
-        <span class="hljs-comment">/* otherwise, if it's present, it's an array of callbacks to be invoked when the resource is loaded (fifo) */</span>
-        <span class="hljs-keyword">if</span>(loadedVal) {
-          loadedVal.push(cb);
-          <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
-        }
-
-        <span class="hljs-comment">/* holy balls, this is the first time. set the array up */</span>
-        <span class="hljs-keyword">this</span>.set(loadedKey, [cb]);
-
-        <span class="hljs-comment">/* determine the type of resource to be loaded */</span>
-        <span class="hljs-keyword">var</span> type = options.type || <span class="hljs-keyword">this</span>._inferredResourceType(options.src),
-
-        <span class="hljs-comment">/* upon load, we invoke all the registered callbacks for the resource */</span>
-        resourceOnload = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-
-          <span class="hljs-keyword">this</span>.get(loadedKey).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{ <span class="hljs-keyword">if</span>(fn) fn(); });
-
-          <span class="hljs-comment">/* make sure we set the loadedKey to true so we know we don't have to do this again */</span>
-          <span class="hljs-keyword">this</span>.set(loadedKey, <span class="hljs-literal">true</span>);
-
-          <span class="hljs-comment">/* if we set up a global callbackName we make sure it's removed */</span>
-          <span class="hljs-keyword">if</span>(options.callbackName) <span class="hljs-keyword">delete</span> <span class="hljs-built_in">window</span>[options.callbackName];
-        }.bind(<span class="hljs-keyword">this</span>);
-
-        <span class="hljs-comment">/* if a global callback name is desired, set it to our onload handler */</span>
+        <span class="hljs-comment">/* if a global callback name is desired, set it up then tear it down when the promise resolves */</span>
         <span class="hljs-keyword">if</span>(options.callbackName) {
-          <span class="hljs-built_in">window</span>[options.callbackName] = resourceOnload;
+          <span class="hljs-built_in">window</span>[options.callbackName] = promise.resolve.bind(promise);
+          promise = promise.then(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ <span class="hljs-keyword">delete</span> <span class="hljs-built_in">window</span>[options.callbackName]; });
         }
 
-        <span class="hljs-comment">/* start the resource */</span>
-        <span class="hljs-keyword">this</span>[<span class="hljs-string">'_load'</span> + type](options, resourceOnload);
+        <span class="hljs-keyword">this</span>.set(<span class="hljs-string">'promises.'</span> + options.src, promise);
+      }
 
-        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
-      }.bind(<span class="hljs-keyword">this</span>);
+      <span class="hljs-keyword">return</span> promise;
     }.bind(<span class="hljs-keyword">this</span>));
 
-    <span class="hljs-comment">/* now start loading all the resources */</span>
-    pie.fn.async(fns, onload);
+    <span class="hljs-keyword">return</span> pie.promise.all(promises);
   }
 });</pre></div></div>
             
@@ -14716,7 +14688,7 @@ Otherwise, return the existing value.</p>
 };
 
 
-  pie.VERSION = <span class="hljs-string">"0.0.20150723.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.0.20150805.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>
@@ -14744,6 +14716,29 @@ Otherwise, return the existing value.</p>
         
     </ul>
   </div>
+<script type="text/javascript">
+  var titles = Array.prototype.slice.call(document.querySelectorAll('[id^="section-"] h1'), 0);
+  var html = '<li class="docco-index" id="docco-index"><div class="annotation"><ul>', a = document.createElement('a');
+  a.textContent = 'Back to top';
+  a.href = '#docco-index';
+  a.style.color = '#cccccc';
+
+  titles.forEach(function(title) {
+    html += '<li><a href="#' + title.id + '">' + title.innerHTML.replace(/pie\s/i, '') + '</a></li>';
+    title.parentNode.insertBefore(a.cloneNode(true), title);
+  });
+
+  html += "</ul></div></li>";
+
+  var newEl = document.createElement('div');
+  newEl.innerHTML = html;
+  newEl = newEl.firstElementChild;
+
+  var title = document.querySelector('#title');
+  title.parentNode.insertBefore(newEl, title.nextSibling);
+
+
+</script>
 <script type="text/javascript">
   var titles = Array.prototype.slice.call(document.querySelectorAll('[id^="section-"] h1'), 0);
   var html = '<li class="docco-index" id="docco-index"><div class="annotation"><ul>', a = document.createElement('a');

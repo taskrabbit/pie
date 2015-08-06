@@ -310,10 +310,12 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   },
 
   promise: function() {
-    return pie.promise.create(function(resolve, reject) {
+    if(this._promise) return this._promise;
+    this._promise = pie.promise.create(function(resolve, reject) {
       this.dataSuccess(resolve);
       this.error(reject);
     }.bind(this));
+    return this._promise;
   }
 
 }, pie.mixins.validatable);

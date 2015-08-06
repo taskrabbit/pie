@@ -135,4 +135,31 @@ describe("pie.promise", function(){
     jasmine.clock().tick(100);
   });
 
+  it("if a then returns a promise, the following thens should wait for it", function() {
+    var p1 = pie.promise.create();
+    var p3 = pie.promise.create();
+    var p2 = p1.then(function() {
+      return p3;
+    });
+
+    p1.resolve();
+
+    expect(p1.state).toEqual('FULFILLED');
+    expect(p2.state).toEqual('UNFULFILLED');
+    expect(p3.state).toEqual('UNFULFILLED');
+
+    jasmine.clock().tick(1);
+
+    expect(p1.state).toEqual('FULFILLED');
+    expect(p2.state).toEqual('UNFULFILLED');
+    expect(p3.state).toEqual('UNFULFILLED');
+
+    p3.resolve();
+
+    expect(p1.state).toEqual('FULFILLED');
+    expect(p2.state).toEqual('FULFILLED');
+    expect(p3.state).toEqual('FULFILLED');
+
+  });
+
 });
