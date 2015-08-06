@@ -9,6 +9,7 @@ pie.promise = pie.base.extend({
 
     this.result   = undefined;
     this.state    = 'UNFULFILLED';
+    this.ctxt     = undefined;
 
     if(resolver) {
       setTimeout(function(){
@@ -21,8 +22,14 @@ pie.promise = pie.base.extend({
     }
   },
 
+  bind: function(binding) {
+    this.ctxt = binding;
+    return this;
+  },
+
   then: function(onResolve, onReject) {
     var child = this.__class.create();
+    child.bind(this.ctxt);
 
     this.resolves.push([onResolve, child]);
     this.rejects.push([onReject, child]);
@@ -63,6 +70,14 @@ pie.promise = pie.base.extend({
       callback = tuple[0];
       promise = tuple[1];
       result = this.result;
+
+      if(promise.ctxt) {
+        if(pie.object.isString(callback)) {
+          callback = promise.ctxt[callback].bind(promise.ctxt);
+        } else if (pie.object.isFunction(callback)) {
+          callback = callback.bind(promise.ctxt);
+        }
+      }
 
       if(pie.object.isFunction(callback)) {
         try {

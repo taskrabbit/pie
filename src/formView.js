@@ -144,7 +144,7 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   // ** pie.formView.onInvalid **
   //
   // For the inheriting class to override.
-  onInvalid: function(/* form */) {},
+  onInvalid: function() {},
 
 
   // ** pie.formView.onValid **
@@ -152,17 +152,13 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   // What happens when the model validations pass.
   // By default, the data is prepared for submission via `prepareSubmissionData`
   // and sent to `performSubmit`.
-  onValid: function(form) {
-    this.prepareSubmissionData(function(data) {
+  onValid: function() {
+    this.prepareSubmissionData().then(function(data) {
 
-      this.performSubmit(form, data, function(bool, data) {
-
-        if(bool) {
-          this._onSuccess(data);
-        } else {
-          this._onFailure(data);
-        }
-      }.bind(this));
+      this.performSubmit(data).then(
+        this._onSuccess.bind(this),
+        this._onFailure.bind(this)
+      );
 
     }.bind(this));
 
@@ -177,20 +173,13 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   // ```
   // formView.performSubmit(<form>, {foo: 'bar'}, function(isSuccess, data){ console.log(isSuccess, data); });
   // ```
-  performSubmit: function(form, data, cb) {
+  performSubmit: function(data) {
     var request = app.ajax.ajax(pie.object.merge({
-      url: form.getAttribute('action'),
-      verb: form.getAttribute('method') || 'post',
+      verb: 'post',
       data: data
     }, this.ajaxOptions()));
 
-    request.dataSuccess(function(d){
-      cb(true, d);
-    });
-
-    request.extraError(function(xhr) {
-      cb(false, xhr.data);
-    });
+    return request.promise();
   },
 
   /* for the inheriting class to override. */
@@ -203,12 +192,11 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   //
   // The data to be sent to the server.
   // By default these are the defined fields extracted out of the model.
-  prepareSubmissionData: function(cb) {
+  prepareSubmissionData: function() {
     var fieldNames = pie.array.map(this.options.fields, 'name'),
     data = this.model.gets(fieldNames);
 
-    if(cb) cb(data);
-    return data;
+    return pie.promise.resolve(data);
   },
 
   // ** pie.formView.validateModel **
@@ -216,8 +204,8 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   // Perform validations on the model & invoke `cb` when complete.
   // By default, `model.validateAll` will be invoked but this can be overridden
   // to talk to external services, etc.
-  validateModel: function(cb) {
-    this.model.validateAll(cb);
+  validateModel: function() {
+    return this.model.validateAll();
   },
 
   // ** pie.formView.validateAndSubmitForm **
@@ -229,19 +217,11 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   validateAndSubmitForm: function(e) {
     this.consumeEvent(e);
 
-    var form = e && e.delegateTarget;
-
-    this.applyFieldsToModel(form);
+    this.applyFieldsToModel();
 
     this.emitter.fire('submit');
 
-    this.validateModel(function(bool) {
-      if(bool) {
-        this._onValid(form);
-      } else {
-        this._onInvalid(form);
-      }
-    }.bind(this));
+    this.validateModel().then(this._onValid.bind(this), this._onInvalid.bind(this));
   }
 
 });

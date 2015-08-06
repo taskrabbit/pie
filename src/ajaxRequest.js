@@ -77,13 +77,12 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this.sets(options);
   },
 
-  _validateOptions: function(cb) {
+  _validateOptions: function() {
     // upcase before we validate inclusion.
     if(this.get('verb')) this.set('verb', this.get('verb').toUpperCase());
 
-    this.validateAll(function(bool){
-      if(!bool) throw new Error(JSON.stringify(this.get('validationErrors')));
-      cb();
+    return this.validateAll().catch(function(){
+      throw new Error(JSON.stringify(this.get('validationErrors')));
     }.bind(this));
   },
 
@@ -216,7 +215,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   // By passing `skipSend = false` you can manage the `send()` invocation manually.
   build: function(options, skipSend) {
     this._parseOptions(options);
-    this._validateOptions(function(){
+    this._validateOptions().then(function(){
       this._buildXhr();
       if(!skipSend) this.send();
     }.bind(this));
@@ -309,5 +308,14 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     this._append('uploadProgress', arguments, false);
     return this;
   },
+
+  promise: function() {
+    if(this._promise) return this._promise;
+    this._promise = pie.promise.create(function(resolve, reject) {
+      this.dataSuccess(resolve);
+      this.error(reject);
+    }.bind(this));
+    return this._promise;
+  }
 
 }, pie.mixins.validatable);

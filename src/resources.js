@@ -57,14 +57,13 @@ pie.resources = pie.model.extend('resources', {
   // Options:
   // * **src** - the url of the request
   // * ** * ** - any valid ajax options
-  _loadajax: function(options, resourceOnload) {
+  _loadajax: function(options) {
     var ajaxOptions = pie.object.merge({
       verb: 'GET',
       url: options.src
     }, options);
 
-    var request = this.app.ajax.ajax(ajaxOptions);
-    request.success(resourceOnload);
+    return this.app.ajax.ajax(ajaxOptions).promise();
   },
 
   // **pie.resources.\_loadimage**
@@ -73,13 +72,13 @@ pie.resources = pie.model.extend('resources', {
   // Options:
   // * **src** - the url of the image.
   _loadimage: function(options, resourceOnload) {
-    var img = new Image();
-    img.onload = function(){
-      resourceOnload(pie.object.merge({
-        img: img
-      }, options));
-    };
-    img.src = options.src;
+    return pie.promise.create(function(resolve, reject){
+      var img = new Image();
+      img.onload = function(){ resolve(pie.object.merge({ img: img }, options)); };
+      img.onerror = reject;
+      img.src = options.src;
+    });
+
   },
 
   // **pie.resources.\_loadlink**
@@ -93,7 +92,7 @@ pie.resources = pie.model.extend('resources', {
   // * **contentType** - _(optional)_ defaulting to `text/css`, it's the type attribute of the `<link>`
   //
   // _Note that since `<link>` tags don't provide a callback, the onload happens immediately._
-  _loadlink: function(options, resourceOnload) {
+  _loadlink: function(options) {
     var link = document.createElement('link');
 
     link.href = options.src;
@@ -105,7 +104,7 @@ pie.resources = pie.model.extend('resources', {
 
     /* Need to record that we added this thing. */
     /* The resource may not actually be present yet. */
-    resourceOnload();
+    return pie.promise.resolve();
   },
 
   // **pie.resources.\_loadscript**
@@ -116,26 +115,31 @@ pie.resources = pie.model.extend('resources', {
   // * **src** - the url of the script.
   // * **callbackName** - _(optional)_ the global callback name the loading library will invoke
   // * **noAsync** - _(optional)_ if true, the script will be loaded synchronously.
-  _loadscript: function(options, resourceOnload) {
+  _loadscript: function(options) {
 
-    var script = document.createElement('script');
+    return pie.promise.create(function(resolve, reject) {
+      var script = document.createElement('script');
 
-    if(options.noAsync) script.async = false;
+      if(options.noAsync) script.async = false;
 
-    /* If options.callbackName is present, the invoking method self-references itself so it can clean itself up. */
-    /* Because of this, we don't need to invoke the onload */
-    if(!options.callbackName) {
-      var done = false;
-      script.onload = script.onreadystatechange = function(){
-        if(!done && (!this.readyState || this.readyState==='loaded' || this.readyState==='complete')) {
-          done = true;
-          resourceOnload();
-        }
-      };
-    }
+      /* If options.callbackName is present, the invoking method self-references itself so it can clean itself up. */
+      /* Because of this, we don't need to invoke the onload */
+      if(!options.callbackName) {
+        var done = false;
+        script.onload = script.onreadystatechange = function(){
+          if(!done && (!this.readyState || this.readyState==='loaded' || this.readyState==='complete')) {
+            done = true;
+            resolve();
+          }
+        };
 
-    this._appendNode(script);
-    script.src = options.src;
+        script.onerror = reject;
+      }
+
+      this._appendNode(script);
+      script.src = options.src;
+
+    }.bind(this));
   },
 
   // ** pie.resources.define **
@@ -162,69 +166,36 @@ pie.resources = pie.model.extend('resources', {
   // ```
   load: function(/* src1, src2, src3, onload */) {
     var sources = pie.array.change(arguments, 'from', 'flatten', 'compact'),
-    onload = pie.object.isFunction(pie.array.last(sources)) ? sources.pop() : function(){},
-    fns;
+    promises;
 
     sources = sources.map(this._normalizeSrc.bind(this));
 
     /* we generate a series of functions to be invoked by pie.fn.async */
     /* each function's responsibility is to invoke the provided callback when the resource is loaded */
-    fns = sources.map(function(options){
+    promises = sources.map(function(options){
 
       /* we could be dealing with an alias, so make sure to grab the real source */
       options = this.get('srcMap.' + options.src) || options;
 
-      /* we cache the status of the resource in our `loaded` object. */
-      var src = options.src,
-      loadedKey = 'loaded.' + src;
+      /* we cache the loading promise on our promises object */
+      var promise = this.get('promises.' + options.src);
+      var type = options.type || this._inferredResourceType(options.src)
 
-      /* the pie.fn.async function */
-      return function(cb) {
-        var loadedVal = this.get(loadedKey);
+      if(!promise) {
+        promise = this['_load' + type](options);
 
-        /* if the loadedKey's value is true, we've already loaded this resource */
-        if(loadedVal === true) {
-          cb();
-          return true;
-        }
-
-        /* otherwise, if it's present, it's an array of callbacks to be invoked when the resource is loaded (fifo) */
-        if(loadedVal) {
-          loadedVal.push(cb);
-          return false;
-        }
-
-        /* holy balls, this is the first time. set the array up */
-        this.set(loadedKey, [cb]);
-
-        /* determine the type of resource to be loaded */
-        var type = options.type || this._inferredResourceType(options.src),
-
-        /* upon load, we invoke all the registered callbacks for the resource */
-        resourceOnload = function() {
-
-          this.get(loadedKey).forEach(function(fn) { if(fn) fn(); });
-
-          /* make sure we set the loadedKey to true so we know we don't have to do this again */
-          this.set(loadedKey, true);
-
-          /* if we set up a global callbackName we make sure it's removed */
-          if(options.callbackName) delete window[options.callbackName];
-        }.bind(this);
-
-        /* if a global callback name is desired, set it to our onload handler */
+        /* if a global callback name is desired, set it up then tear it down when the promise resolves */
         if(options.callbackName) {
-          window[options.callbackName] = resourceOnload;
+          window[options.callbackName] = promise.resolve.bind(promise);
+          promise = promise.then(function(){ delete window[options.callbackName]; });
         }
 
-        /* start the resource */
-        this['_load' + type](options, resourceOnload);
+        this.set('promises.' + options.src, promise);
+      }
 
-        return false;
-      }.bind(this);
+      return promise;
     }.bind(this));
 
-    /* now start loading all the resources */
-    pie.fn.async(fns, onload);
+    return pie.promise.all(promises);
   }
 });
