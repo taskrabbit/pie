@@ -162,4 +162,18 @@ describe("pie.promise", function(){
 
   });
 
+  it("should allow an object to be bound to the promise chain", function() {
+    var o = {
+      foo: jasmine.createSpy(),
+      bar: jasmine.createSpy()
+    };
+
+    var p = pie.promise.resolve().bind(o).then('foo').then('bar');
+    
+    jasmine.clock().tick(1);
+
+    expect(o.foo).toHaveBeenCalled();
+    expect(o.bar).toHaveBeenCalled();
+  });
+
 });

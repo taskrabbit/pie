@@ -4946,6 +4946,7 @@ pie.promise = pie.base.extend({
 
     <span class="hljs-keyword">this</span>.result   = <span class="hljs-literal">undefined</span>;
     <span class="hljs-keyword">this</span>.state    = <span class="hljs-string">'UNFULFILLED'</span>;
+    <span class="hljs-keyword">this</span>.ctxt     = <span class="hljs-literal">undefined</span>;
 
     <span class="hljs-keyword">if</span>(resolver) {
       setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
@@ -4958,8 +4959,14 @@ pie.promise = pie.base.extend({
     }
   },
 
+  bind: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(binding)</span> </span>{
+    <span class="hljs-keyword">this</span>.ctxt = binding;
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },
+
   then: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(onResolve, onReject)</span> </span>{
     <span class="hljs-keyword">var</span> child = <span class="hljs-keyword">this</span>.__class.create();
+    child.bind(<span class="hljs-keyword">this</span>.ctxt);
 
     <span class="hljs-keyword">this</span>.resolves.push([onResolve, child]);
     <span class="hljs-keyword">this</span>.rejects.push([onReject, child]);
@@ -5000,6 +5007,14 @@ pie.promise = pie.base.extend({
       callback = tuple[<span class="hljs-number">0</span>];
       promise = tuple[<span class="hljs-number">1</span>];
       result = <span class="hljs-keyword">this</span>.result;
+
+      <span class="hljs-keyword">if</span>(promise.ctxt) {
+        <span class="hljs-keyword">if</span>(pie.object.isString(callback)) {
+          callback = promise.ctxt[callback].bind(promise.ctxt);
+        } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pie.object.isFunction(callback)) {
+          callback = callback.bind(promise.ctxt);
+        }
+      }
 
       <span class="hljs-keyword">if</span>(pie.object.isFunction(callback)) {
         <span class="hljs-keyword">try</span> {
