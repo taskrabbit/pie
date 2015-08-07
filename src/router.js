@@ -9,21 +9,12 @@ pie.router = pie.model.extend('router', {
   // Options:
   // * **root** - the root to be prepended to all constructed routes. Defaults to `'/'`.
   init: function(app, options) {
-    this._super({
-      root: options && options.root || '/'
-    }, pie.object.merge({
-      app: app
-    }, options));
+    this._super({}, pie.object.merge({app: app}, options));
 
     this.cache = pie.cache.create();
-    this.compute('rootRegex', 'root');
-  },
+    this.state = this.app.state;
 
-  // **pie.router.rootRegex**
-  //
-  // A regex for testing whether a path starts with the declared root
-  rootRegex: function() {
-    return new RegExp('^' + this.get('root'));
+    this.state.observe(this.evaluateState.bind(this), 'id');
   },
 
   // **pie.router.changedUrl**
@@ -157,6 +148,11 @@ pie.router = pie.model.extend('router', {
       c = c || a.get('pathTemplate').localeCompare(b.get('pathTemplate'));
       return c;
     });
+  },
+
+  evaluateState: function() {
+    var id = this.state.get('id');
+    this.state.set('route', this.findRoute(id));
   },
 
   // **pie.router.parseUrl**
