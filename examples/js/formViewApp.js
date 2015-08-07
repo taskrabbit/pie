@@ -1,5 +1,5 @@
 /* global bindings */
-window.app = new pie.app({
+window.app = pie.app.create({
   routeHandlerOptions: {
     viewNamespace: 'forms'
   }
@@ -114,7 +114,7 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
     this._super();
   },
 
-  modelChanged: function(changes) {
+  modelChanged: function() {
     var str = JSON.stringify(this.model.data, null, '  ');
     this.qs('textarea[name="json"]').value = str;
     this.qs('textarea[name="submission"]').value = '';
@@ -122,14 +122,10 @@ pie.ns('forms').layout = pie.formView.extend('layout', {
 
   // By default, this will conduct an ajax request with the "ajax" options provided in the constructor.
   // Since we're just showing an example, we're just outputting the submission data on the page.
-  onValid: function() {
-    this.prepareSubmissionData(function(d) {
-      var str = JSON.stringify(d, null, '  ');
-      this.qs('textarea[name="submission"]').value = str;
-    }.bind(this));
+  performSubmit: function(d) {
+    var str = JSON.stringify(d, null, '  ');
+    this.qs('textarea[name="submission"]').value = str;
+    return pie.promise.resolve();
   }
 
 });
-
-
-

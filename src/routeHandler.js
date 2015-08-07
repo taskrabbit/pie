@@ -13,7 +13,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     this.state = this.app.state;
     this.emitter  = this.app.emitter;
 
-    this.state.observe(this.onStateChange.bind(this));
+    this.state.observe(this.onRouteChange.bind(this), 'route');
     this._super();
   },
 
@@ -30,7 +30,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     return this.app.getChild("currentView");
   },
 
-  onStateChange: function() {
+  onRouteChange: function() {
     var route = this.state.get('route');
     this.handleRedirect(route) || this.handleView(route);
   },
@@ -102,7 +102,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
 
       transition.transition(function(){
         // The instance is now our 'currentView'
-        this.emitter.fire('afterViewChanged', changeSet);
+        this.emitter.fire('afterViewChanged');
       }.bind(this));
 
     }.bind(this));

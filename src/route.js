@@ -20,9 +20,9 @@
 pie.route = pie.model.extend('route', {
 
   init: function(path, options) {
-    this._super({
+    this._super(pie.object.merge({}, options, {
       pathTemplate: pie.string.normalizeUrl(path)
-    }, options);
+    }));
 
     this.name = this.options.name || ("route-" + pie.uid(this));
 

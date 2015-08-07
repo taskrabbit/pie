@@ -192,7 +192,7 @@ pie.app = pie.base.extend('app', {
     if(this.state.test('id', id)) return;
 
     this.state.sets({
-      id: path,
+      id: id,
       history: !replaceState
     });
   },

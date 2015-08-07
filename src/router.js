@@ -17,21 +17,6 @@ pie.router = pie.model.extend('router', {
     this.state.observe(this.evaluateState.bind(this), 'id');
   },
 
-  // **pie.router.changedUrl**
-  //
-  // Get a url based on the app's current one but with the changes provided.
-  // This will even catch interpolated values.
-  // ```
-  // // Given a route of `/things/page/:page.json`
-  // // and the current path == `/things/page/1.json?q=test`
-  // app.router.changedUrl({page: 3, q: 'newQuery'});
-  // //=> /things/page/3.json?q=newQuery
-  // ```
-  changedUrl: function(changes) {
-    var current = this.app.url;
-    return this.path(current.get('route.name') || current.get('path'), pie.object.merge({}, current.get('interpolations'), current.get('query'), changes));
-  },
-
   // **pie.router.findRoute**
   //
   // Find the most relevant route based on `nameOrPath`.
@@ -123,12 +108,6 @@ pie.router = pie.model.extend('router', {
 
     params = pie.object.merge(params, r.interpolations(nameOrPath), data);
     path = r.path(params, interpolateOnly);
-
-    // apply the root.
-    if(!pie.string.PROTOCOL_TEST.test(path) && !this.get('rootRegex').test(path)) {
-      path = this.get('root') + path;
-      path = pie.string.normalizeUrl(path);
-    }
 
     return path;
   },

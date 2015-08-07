@@ -41,11 +41,11 @@ pie.navigator = pie.model.extend('navigator', {
 
   navigatorStateId: function(id) {
     id = id || this.state.get('id')
-    return pie.string.normalizeUrl( this.get('root') + '/' +  id);
+    return pie.string.normalizeUrl( this.get('root') +  id);
   },
 
   navigateApp: function() {
-    var path = window.location.href;
+    var path = window.location.pathname + window.location.search;
     var match = this.get('rootRegex').exec(path);
     if(match) path = match[1];
     this.app.go(path, true);

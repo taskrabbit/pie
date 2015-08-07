@@ -48,8 +48,9 @@ pie.dom.all = function(/* nodeList, methodName[, arg1, arg2, ...] */) {
   var mod = function(method, originalArgs) {
     var args = pie.array.from(originalArgs);
     var el = args.shift();
-
-    var classes = pie.array.map(pie.array.flatten(args).join(' ').split(/[\s,]+/), 'trim', true);
+    var classes = pie.array.flatten(args).join(' ').split(/[\s,]+/);
+    classes = pie.array.map(classes, 'trim', true);
+    classes = pie.array.compact(classes, true);
     classes.forEach(function(c){ el.classList[method](c); });
   };
 
