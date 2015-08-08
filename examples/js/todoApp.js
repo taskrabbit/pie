@@ -35,6 +35,7 @@ app.router.map({
 // MODELS
 
 todoList = pie.list.extend({
+
   init: function() {
     this._super([], {cast: true});
 
@@ -49,18 +50,18 @@ todoList = pie.list.extend({
 
   onListChange: function(changeSet) {
     var lengthChange = changeSet.get('length');
-    if(lengthChange) this.set('totalItems', lengthChange.value);
+    if(lengthChange) this.set('totalCount', lengthChange.value);
 
     var addChanges = changeSet.queryAll({type: 'add'});
     for(var i = 0; i < addChanges.length; i++) {
-      if(addChanges[i].name.test(/^\d+$/)) {
+      if(/^\d+$/.test(addChanges[i].name)) {
         addChanges[i].value.observe(this.boundObserver, 'completed');
       }
     }
 
     var removeChanges = changeSet.queryAll({type: 'delete'});
     for(var i = 0; i < removeChanges.length; i++) {
-      if(removeChanges[i].name.test(/^\d+$/)) {
+      if(/^\d+$/.test(removeChanges[i].name)) {
         removeChanges[i].value.unobserve(this.boundObserver);
       }
     }
@@ -199,7 +200,7 @@ example.views.list = pie.listView.extend({
     this.consumeEvent(e);
 
     this.list.forEach(function(item){
-      item.set('completed', 1);
+      item.set('completed', true);
     });
   },
 

@@ -31,7 +31,7 @@
     <script type="text/javascript">
       window.app = pie.app.create({
         'uiTarget' : '#main',
-        'notificationUiTarget' : '#notifications'
+        navigator: false
       });
 
       app.i18n.load({
@@ -67,8 +67,7 @@
 
           this._super({
             template: 'list',
-            setup: true,
-            uiTarget: document.body
+            setup: true
           });
 
         },

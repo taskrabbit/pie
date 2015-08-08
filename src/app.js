@@ -21,7 +21,6 @@ pie.app = pie.base.extend('app', {
     this.options = pie.object.deepMerge({
       uiTarget: 'body',
       unsupportedPath: '/browser/unsupported',
-      notificationStorageKey: 'js-alerts',
       verifySupport: true
     }, options);
 
@@ -48,10 +47,12 @@ pie.app = pie.base.extend('app', {
     // ```
     // which will result in `this.i18n = instance; this.i18n.app = this;`
     var classOption = function(key, _default){
-      var k = this.options[key] || _default,
+      var k = this.options[key],
       opt = this.options[key + 'Options'] || {};
 
       if(k === false) return;
+
+      k = k || _default;
 
       if(k.__pieRole === 'class') {
         return k.create(this, opt);
@@ -91,7 +92,7 @@ pie.app = pie.base.extend('app', {
     this.errorHandler = classOption('errorHandler', pie.errorHandler);
 
     // The model that represents the current state of the app.
-    this.state = pie.model.create();
+    this.state = pie.appState.create();
 
     // `app.router` is used to determine which view should be rendered based on the url
     this.router = classOption('router', pie.router);
@@ -150,18 +151,25 @@ pie.app = pie.base.extend('app', {
   },
 
   // Use this to build paths.
-  path: function(/* path?, query? */) {
-    var parts = pie.array.partition(arguments, pie.object.isString, pie.object.isPlainObject);
-    var path = parts[0][0];
-    var query = parts[1][0];
+  path: function(path, query) {
+    if(pie.object.isObject(path)) {
+      query = path;
+      path = undefined;
+    }
+
+    if(path && path.indexOf('?') >= 0) {
+      var split = path.split('?');
+      query = pie.object.merge(pie.string.deserialize(split[1]), query);
+      path = split[0];
+    }
 
     // if we don't know our path but have been given a query, try to build a path based on the existing route
     if(path == null && query) {
-      var currentRoute = this.state.get('route');
+      var currentRoute = this.state.get('__route');
 
       if(currentRoute) {
         path = currentRoute.get('pathTemplate');
-        query = pie.object.merge({}, this.state.get('data'), query);
+        query = pie.object.merge({}, this.state.get('__info'), query);
       }
     }
 
@@ -169,7 +177,7 @@ pie.app = pie.base.extend('app', {
 
     // if a router is present, we can allow the passing of named routes.
     if(this.router) path = this.router.path(path, query);
-    else if(!pie.object.isEmpty(query)) path = pie.string.urlConcat(path, pie.object.srialize(query));
+    else if(!pie.object.isEmpty(query)) path = pie.string.urlConcat(path, pie.object.serialize(query));
 
     return path;
   },
@@ -182,19 +190,13 @@ pie.app = pie.base.extend('app', {
   // app.go('/things/:id', {id: 4});
   // ```
   //
-  go: function(/* path?, query?, replaceState? */){
+  go: function(/* path?, query?, skipHistory? */){
     var id = this.path.apply(this, arguments);
 
-    var replaceState = pie.array.last(arguments);
-    if(!pie.object.isBoolean(replaceState)) replaceState = false;
+    var skipHistory = pie.array.last(arguments);
+    if(!pie.object.isBoolean(skipHistory)) skipHistory = false;
 
-    // no change
-    if(this.state.test('id', id)) return;
-
-    this.state.sets({
-      id: id,
-      history: !replaceState
-    });
+    this.state.transition(id, skipHistory);
   },
 
   // Callback for when a link is clicked in our app
@@ -214,7 +216,7 @@ pie.app = pie.base.extend('app', {
 
     this.go(href, !!e.delegateTarget.getAttribute('data-replace-state'));
 
-    if(this.state.is('route')) e.preventDefault();
+    if(this.state.is('__route')) e.preventDefault();
   },
 
   // When a link is clicked, go there without a refresh if we recognize the route.

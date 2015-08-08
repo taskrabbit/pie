@@ -5,49 +5,30 @@
 pie.navigator = pie.model.extend('navigator', {
 
   init: function(app, options) {
-    this._super({
-      root: options && options.root || '/'
-    }, pie.object.merge({ app: app }, options));
+    this._super({}, pie.object.merge({ app: app }, options));
 
     this.state = this.app.state;
-
-    this.compute('rootRegex', 'root');
-    this.state.observe(this.evaluateState.bind(this), 'id', 'route');
+    this.state.observe(this.evaluateState.bind(this), '__fullId', '__route');
 
     this.app.emitter.once('start', this.start.bind(this));
   },
 
-
-  // **pie.router.rootRegex**
-  //
-  // A regex for testing whether a path starts with the declared root
-  rootRegex: function() {
-    return new RegExp('^' + this.get('root') + '(.+)');
-  },
-
   evaluateState: function() {
-    if(this.state.is('route')) this.softGo();
+    if(this.state.is('__route')) this.softGo();
     else this.hardGo();
   },
 
   softGo: function() {
-    var replace = !this.state.is('history');
-    window.history[replace ? 'replaceState' : 'pushState']({}, document.title, this.navigatorStateId());
+    var replace = !this.state.is('__history');
+    window.history[replace ? 'replaceState' : 'pushState']({}, document.title, this.state.get('__fullId'));
   },
 
   hardGo: function() {
-    window.location.href = this.navigatorStateId();
-  },
-
-  navigatorStateId: function(id) {
-    id = id || this.state.get('id')
-    return pie.string.normalizeUrl( this.get('root') +  id);
+    window.location.href = this.state.get('__fullId');
   },
 
   navigateApp: function() {
     var path = window.location.pathname + window.location.search;
-    var match = this.get('rootRegex').exec(path);
-    if(match) path = match[1];
     this.app.go(path, true);
   },
 

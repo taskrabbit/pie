@@ -423,5 +423,3 @@ pie.binding.integrations.html = {
   }
 
 };
-
-

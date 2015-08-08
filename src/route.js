@@ -19,15 +19,20 @@
 // ```
 pie.route = pie.model.extend('route', {
 
-  init: function(path, options) {
-    this._super(pie.object.merge({}, options, {
-      pathTemplate: pie.string.normalizeUrl(path)
-    }));
+  init: function(path, config) {
+    var uid = pie.uid(this);
 
-    this.name = this.options.name || ("route-" + pie.uid(this));
+    this._super({
+      pathTemplate: pie.string.normalizeUrl(path),
+      config: config,
+      name: config && config.name || ("route-" + uid)
+    });
+
+    this.set('config.name', undefined);
 
     this.compute('segments',            'pathTemplate');
     this.compute('pathRegex',           'pathTemplate');
+    this.compute('hasInterpolations',   'pathTemplate');
     this.compute('weight',              'segments');
   },
 
@@ -47,7 +52,7 @@ pie.route = pie.model.extend('route', {
     var t = this.get('pathTemplate');
     t = pie.string.escapeRegex(t);
     t = t.replace(/(:[^\/\?]+)/g,'([^\\/\\?]+)');
-    t = t.replace(/(\\\*[^\/]+)/g, '(.+)');
+    t = t.replace(/(\\\*[^\/]+)/g, '(.*)');
     return new RegExp('^' + t + '$');
   },
 
@@ -76,6 +81,10 @@ pie.route = pie.model.extend('route', {
     return +w;
   },
 
+  hasInterpolations: function() {
+    return /[:\*]/.test(this.get('pathTemplate'));
+  },
+
   // **pie.route.interpolations**
   //
   // Under the assumption that the path is already normalized and we've "matched" it,
@@ -86,10 +95,13 @@ pie.route = pie.model.extend('route', {
   // r.interolations('/foo/bar');
   // //=> {id: 'bar'}
   // ```
-  interpolations: function(path, parseValues) {
+  interpolations: function(path) {
+    var interpolations = {};
+
+    if(!this.is('hasInterpolations')) return interpolations;
+
     var splitPaths = path.split('/'),
     tmpls = this.get('segments'),
-    interpolations = {},
     splitPath, tmpl;
 
     for(var i = 0; i < splitPaths.length; i++){
@@ -104,8 +116,6 @@ pie.route = pie.model.extend('route', {
         }
       }
     }
-
-    if(parseValues) interpolations = pie.string.deserialize(pie.object.serialize(interpolations), true);
 
     return interpolations;
   },
@@ -134,35 +144,29 @@ pie.route = pie.model.extend('route', {
   // //=> '/foo/bar'
   // r.path({id: 'baz', page: 2});
   // //=> '/foo/baz?page=2'
-  // r.path({id: 'qux', page: 2}, true);
-  // //=> '/foo/qux'
   // ```
-  path: function(data, interpolateOnly) {
-    var usedKeys = [],
-    s = this.get('pathTemplate'),
-    params,
-    unusedData;
+  path: function(query) {
+    var usedKeys = [], path = this.get('pathTemplate');
 
-    data = data || {};
-
-    s = s.replace(/[:\*]([a-zA-Z0-9_]+)/g, function(match, key){
+    path = path.replace(/([:\*])([a-zA-Z0-9_]+)/g, function(match, indicator, key){
       usedKeys.push(key);
-      if(data[key] === undefined || data[key] === null || data[key].toString().length === 0) {
+
+      if(indicator === '*') return query && pie.object.has(query, key) ? query[key] : '';
+
+      if(!query || query[key] == null ||  !String(query[key]).length) {
         throw new Error("[PIE] missing route interpolation: " + match);
       }
-      return data[key];
+      return query[key];
     });
 
-    s = pie.string.normalizeUrl(s);
+    var unusedData = usedKeys.length ? pie.object.except(query, usedKeys) : query;
 
-    unusedData = pie.object.except(data, usedKeys);
-    params = pie.object.serialize(pie.object.compact(unusedData, true));
-
-    if(!interpolateOnly && params.length) {
-      s = pie.string.urlConcat(s, params);
+    if(!pie.object.isEmpty(unusedData)) {
+      var params = pie.object.serialize(pie.object.compact(unusedData, true));
+      if(params.length) path = pie.string.urlConcat(path, params);
     }
 
-    return s;
+    return path;
   }
 
 });

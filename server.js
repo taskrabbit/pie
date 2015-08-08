@@ -15,6 +15,14 @@ app.get(/^\/docs\/guide\/*/, function(request, response) {
   response.sendFile(__dirname + '/docs/guide/index.html');
 });
 
+app.get('/examples/navigation.html', function(request, response) {
+  response.redirect(302, '/examples/navigation/view-a');
+});
+
+app.get(/^\/examples\/navigation.*/, function(request, response) {
+  response.sendFile(__dirname + '/examples/navigation.html');
+});
+
 app.get("/examples/transitions.html", function(request, response) {
   response.redirect(302, '/examples/transitions/a.html');
 });
