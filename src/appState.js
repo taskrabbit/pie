@@ -10,11 +10,6 @@ pie.appState = pie.model.extend('appState', {
     return out;
   },
 
-  buildFullId: function(base, info) {
-    if(pie.object.isEmpty(info)) return base;
-    return base + '?' + pie.object.serialize(info);
-  },
-
   thingsThatCareAboutStateChanges: function() {
     return [this.app.router];
   },
@@ -25,8 +20,7 @@ pie.appState = pie.model.extend('appState', {
     query = split[1];
 
     // no change
-    if(this.test('__id', base)) return;
-
+    if(this.test('__fullId', id)) return;
 
     if(query) query = pie.string.deserialize(query);
 
@@ -43,7 +37,7 @@ pie.appState = pie.model.extend('appState', {
 
     pie.object.merge(changes, {
       __id: base,
-      __fullId: this.buildFullId(base, info),
+      __fullId: id,
       __history: !skipHistory,
       __info: info
     });

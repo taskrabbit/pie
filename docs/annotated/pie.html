@@ -8245,11 +8245,6 @@ pie.appState = pie.model.extend(<span class="hljs-string">'appState'</span>, {
     <span class="hljs-keyword">return</span> out;
   },
 
-  buildFullId: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(base, info)</span> </span>{
-    <span class="hljs-keyword">if</span>(pie.object.isEmpty(info)) <span class="hljs-keyword">return</span> base;
-    <span class="hljs-keyword">return</span> base + <span class="hljs-string">'?'</span> + pie.object.serialize(info);
-  },
-
   thingsThatCareAboutStateChanges: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">return</span> [<span class="hljs-keyword">this</span>.app.router];
   },
@@ -8272,8 +8267,7 @@ pie.appState = pie.model.extend(<span class="hljs-string">'appState'</span>, {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.test(<span class="hljs-string">'__id'</span>, base)) <span class="hljs-keyword">return</span>;
-
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.test(<span class="hljs-string">'__fullId'</span>, id)) <span class="hljs-keyword">return</span>;
 
     <span class="hljs-keyword">if</span>(query) query = pie.string.deserialize(query);
 
@@ -8290,7 +8284,7 @@ pie.appState = pie.model.extend(<span class="hljs-string">'appState'</span>, {
 
     pie.object.merge(changes, {
       __id: base,
-      __fullId: <span class="hljs-keyword">this</span>.buildFullId(base, info),
+      __fullId: id,
       __history: !skipHistory,
       __info: info
     });
