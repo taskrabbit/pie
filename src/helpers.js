@@ -28,6 +28,7 @@ pie.helpers = pie.model.extend('helpers', {
 
     this.register('t', i18n.t.bind(i18n));
     this.register('l', i18n.l.bind(i18n));
+    this.register('state', this.app.state);
     this.register('timeago', i18n.timeago.bind(i18n));
     this.register('path', this.app.path.bind(this.app));
     this.register('get', pie.object.getPath);

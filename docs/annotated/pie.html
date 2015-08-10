@@ -9303,6 +9303,7 @@ helpers.register(<span class="hljs-string">'reverse'</span>, <span class="hljs-f
 
     <span class="hljs-keyword">this</span>.register(<span class="hljs-string">'t'</span>, i18n.t.bind(i18n));
     <span class="hljs-keyword">this</span>.register(<span class="hljs-string">'l'</span>, i18n.l.bind(i18n));
+    <span class="hljs-keyword">this</span>.register(<span class="hljs-string">'state'</span>, <span class="hljs-keyword">this</span>.app.state);
     <span class="hljs-keyword">this</span>.register(<span class="hljs-string">'timeago'</span>, i18n.timeago.bind(i18n));
     <span class="hljs-keyword">this</span>.register(<span class="hljs-string">'path'</span>, <span class="hljs-keyword">this</span>.app.path.bind(<span class="hljs-keyword">this</span>.app));
     <span class="hljs-keyword">this</span>.register(<span class="hljs-string">'get'</span>, pie.object.getPath);
