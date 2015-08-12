@@ -7587,7 +7587,7 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
   },
 
   _renderTemplateToEl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> templateName = <span class="hljs-keyword">this</span>.templateName();
+    <span class="hljs-keyword">var</span> templateName = pie.fn.valueFrom(<span class="hljs-keyword">this</span>.templateName);
 
     <span class="hljs-keyword">if</span>(templateName) {
       <span class="hljs-keyword">this</span>.app.templates.renderAsync(templateName, <span class="hljs-keyword">this</span>.renderData(), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(content)</span></span>{

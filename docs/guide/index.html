@@ -9,46 +9,35 @@
 
   </head>
   <body>
-    <div class="page-nav"></div>
+    <script type="text/pie-template" id="layout">
+      <div class="page-nav js-nav"></div>
 
-    <div class="page-container">
-      <div class="page"></div>
-    </div>
+      <div class="page-container">
+        <div class="page js-page"></div>
+      </div>
 
-    <a href="#" class="nav-toggle">&nbsp;</a>
+      <a href="#" class="nav-toggle js-nav-toggle">&nbsp;</a>
+    </script>
 
     <script type="text/pie-template" id="nav">
       <div class="page-nav-inner">
 
-        <a href="[%= h.path('root') %]" class="home">Pie.js</a>
+        <a href="[%= h.path('root') %]" class="home">[%= h.t('nav.home') %]</a>
 
         <hr />
 
         <ul>
-          <li>
-            <a href="[%= h.path('root') %]">Getting Started</a>
+
+          <li data-page="[%= app.PAGES[0] %]">
+            <a href="[%= h.path('root') %]">[%= h.t('nav.root') %]</a>
           </li>
-          <li>
-            <a href="[%= h.path('page', {page: 'object-model'}) %]">Object Model</a>
+
+          [% pie.array.get(app.PAGES, 1, -1).forEach(function(page){ %]
+          <li data-page="[%= page %]">
+            <a href="[%= h.path('page', {page: page}) %]">[%= h.t('nav.' + page) %]</a>
           </li>
-          <li>
-            <a href="[%= h.path('page', {page: 'models'}) %]">Models</a>
-          </li>
-          <li>
-            <a href="[%= h.path('page', {page: 'views'}) %]">Views</a>
-          </li>
-          <li>
-            <a href="[%= h.path('page', {page: 'templates'}) %]">Templates</a>
-          </li>
-          <li>
-            <a href="[%= h.path('page', {page: 'routing'}) %]">Routing</a>
-          </li>
-          <li>
-            <a href="[%= h.path('page', {page: 'i18n'}) %]">i18n</a>
-          </li>
-          <li>
-            <a href="[%= h.path('page', {page: 'utils'}) %]">Utils</a>
-          </li>
+          [% }) %]
+
         </ul>
 
 
@@ -56,7 +45,7 @@
 
         <ul class="secondary-nav">
           <li>
-            <a href="../annotated/pie.html">Annotated Source</a>
+            <a href="../annotated/pie.html">[%= h.t('nav.annotated') %]</a>
           </li>
         </ul>
       </div>

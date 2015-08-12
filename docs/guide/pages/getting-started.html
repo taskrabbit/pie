@@ -8,34 +8,19 @@
     The app instance contains the services which manage the high level interactions with the browser. Services like
     <em>pushState</em>, <em>localStorage</em>, <em>ajax</em>, <em>i18n</em>, and <em>routing</em>.
   </p>
-  <code class="gist">
-  window.app = new pie.app({
-    uiTarget: '#page'
-  });
-  </code>
+
+  [%= h.gist('appInstance.js') %]
+
   <p>
     This is the focal point of your application. When the <em>DOMContentLoaded</em> event is fired, your application will begin managing it's state. Instantiation of a <em>[%= ns %].app</em> results in the instantiation of many services. If you need to provide options to one of these services, you simply provide the service's name + <em>Options</em> to the app's options. For instance, to provide options to the router, your would:
   </p>
 
-  <code class="gist">
-  new pie.app({
-    routerOptions: {
-      root: '/foo/'
-    }
-  })
-  </code>
+  [%= h.gist('appInstanceWithRouterOptions.js') %]
+
   <p>If, however, you have implemented your own version of a service, you can provide the class or instance directly:</p>
 
-  <code class="gist">
-  new pie.app({
-    i18n: new lib.myCustomI18nClass(),
-    router: lib.myCustomRouterClass,
-    routerOptions: {
-      root: '/foo/'
-    }
-  })
-  </code>
-
+  [%= h.gist('appInstanceWithRouterClass.js') %]
+  
   <h3>Setting Up Your Routes</h3>
   <p>A router is used to map urls to top-level views within your app. Your app instance observes navigation as it takes place via <em>pushState</em>, <em>popState</em>, and <em>replaceState</em>. When one of these events occur, the app observers it's <em>navigator</em> and asks the <em>router</em> to parse the new url. Url's are matched based on their path so that's what you need to define when setting up your mappings:</p>
 
@@ -67,42 +52,7 @@
 
   <h3>Simple Example App</h3>
   <p>This example app shows how an app is created, two routes are mapped, and views are declared.</p>
-  <code class="gist">
 
-  &lt;script type="text/pie-template" id="home"&gt;
-    &lt;p&gt;Hello, world!, read some &lt;a href="[%= h.path('docs') %]"&gt;docs&lt;/a&gt;!&lt;/p&gt;
-  &lt;/script&gt;
+  [%= h.gist('gettingStartedExample.html') %]
 
-  &lt;script type="text/pie-template" id="docs"&gt;
-    &lt;p&gt;Lorem ipsum. Back to &lt;a href="[%= h.path('home') %]"&gt;home&lt;/a&gt;!&lt;/p&gt;
-  &lt;/script&gt;
-
-  &lt;script&gt;
-    window.app = new pie.app();
-
-    app.router.map({
-      '/'     : {view: 'home', name: 'home'},
-      '/docs' : {view: 'docs', name: 'docs'}
-    });
-
-    pie.ns('lib.views').home = pie.activeView.extend({
-      init: function(){
-        this._super({
-          template: 'home',
-          renderOnSetup: true
-        });
-      }
-    });
-
-    pie.ns('lib.views').docs = pie.activeView.extend({
-      init: function(){
-        this._super({
-          template: 'docs',
-          renderOnSetup: true
-        });
-      }
-    });
-  &lt;/script&gt;
-  </code>
 </div>
-
