@@ -7863,6 +7863,7 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
     verb = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'verb'</span>),
     data = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'data'</span>),
     tracker = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'tracker'</span>),
+    timeout = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'timeout'</span>),
     self = <span class="hljs-keyword">this</span>;
 
     <span class="hljs-keyword">if</span>(verb === <span class="hljs-keyword">this</span>.VERBS.get &amp;&amp; data) {
@@ -7882,7 +7883,10 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
     xhr.open(verb, url, <span class="hljs-literal">true</span>);
 
     <span class="hljs-keyword">this</span>._applyHeaders(xhr);
+    <span class="hljs-keyword">if</span>(timeout) xhr.timeout = timeout;
+
     <span class="hljs-keyword">this</span>.emitter.fire(<span class="hljs-string">'setup'</span>, xhr, <span class="hljs-keyword">this</span>);
+
 
     xhr.onload = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
       <span class="hljs-keyword">if</span>(tracker) tracker(xhr, self);
@@ -7899,6 +7903,8 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
 
       self._onComplete(xhr);
     };
+
+    xhr.onerror = xhr.ontimeout = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ self._onError(xhr) };
 
     <span class="hljs-keyword">this</span>.xhr = xhr;
 

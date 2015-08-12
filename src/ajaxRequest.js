@@ -166,6 +166,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     verb = this.get('verb'),
     data = this.get('data'),
     tracker = this.get('tracker'),
+    timeout = this.get('timeout'),
     self = this;
 
     if(verb === this.VERBS.get && data) {
@@ -185,7 +186,10 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
     xhr.open(verb, url, true);
 
     this._applyHeaders(xhr);
+    if(timeout) xhr.timeout = timeout;
+
     this.emitter.fire('setup', xhr, this);
+
 
     xhr.onload = function() {
       if(tracker) tracker(xhr, self);
@@ -202,6 +206,8 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
 
       self._onComplete(xhr);
     };
+
+    xhr.onerror = xhr.ontimeout = function(){ self._onError(xhr) };
 
     this.xhr = xhr;
 
