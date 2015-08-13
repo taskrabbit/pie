@@ -1,4 +1,4 @@
-describe("String extensions", function() {
+describe("pie.string", function() {
 
   describe("#deserialize", function() {
 
@@ -242,6 +242,26 @@ describe("String extensions", function() {
       var tmpl = pie.string.template("<#! var foo = 2; #>Hi, <#~ data.bar #>. You have <#+ foo #> messages.");
       var output = tmpl({bar: '<i>Doug</i>'});
       expect(output).toEqual("Hi, &lt;i&gt;Doug&lt;/i&gt;. You have 2 messages.");
+    });
+
+  });
+
+  describe('#matches', function() {
+
+    it("should find multiple matches", function() {
+      var s = "fool foo bar baz foods foo";
+      var r = /foo([a-z]{1})/;
+      var result = pie.string.matches(s, r);
+      expect(result[0]).toEqual('l');
+      expect(result[1]).toEqual('d');
+    });
+
+    it("should persist flags", function(){
+      var s = "FooL foo bar baz FoOds foo";
+      var r = /foo([a-z]{1})/i;
+      var result = pie.string.matches(s, r);
+      expect(result[0]).toEqual('L');
+      expect(result[1]).toEqual('d');
     });
 
   });

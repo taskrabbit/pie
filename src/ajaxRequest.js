@@ -207,7 +207,10 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       self._onComplete(xhr);
     };
 
-    xhr.onerror = xhr.ontimeout = function(){ self._onError(xhr) };
+    xhr.onerror = xhr.ontimeout = function(){
+      self._onError(xhr);
+      self._onComplete(xhr);
+    };
 
     this.xhr = xhr;
 
@@ -294,6 +297,7 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
   setModel: function() {
     var fns = pie.array.from(arguments).map(function(m){ return m.sets.bind(m); });
     this._append('setModel', fns, true);
+    return this;
   },
 
   // Register a callback when the request succeeds.

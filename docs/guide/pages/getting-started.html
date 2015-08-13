@@ -3,6 +3,7 @@
 
 <div class="copy">
   <h1>Getting Started</h1>
+
   <p>
     The first step to building an app with <em>[%= project %]</em> is defining your app instance.
     The app instance contains the services which manage the high level interactions with the browser. Services like
@@ -20,35 +21,28 @@
   <p>If, however, you have implemented your own version of a service, you can provide the class or instance directly:</p>
 
   [%= h.gist('appInstanceWithRouterClass.js') %]
-  
-  <h3>Setting Up Your Routes</h3>
-  <p>A router is used to map urls to top-level views within your app. Your app instance observes navigation as it takes place via <em>pushState</em>, <em>popState</em>, and <em>replaceState</em>. When one of these events occur, the app observers it's <em>navigator</em> and asks the <em>router</em> to parse the new url. Url's are matched based on their path so that's what you need to define when setting up your mappings:</p>
+
+  <p>Similarly, if you want to opt out of including a service, you can supply <em>false</em> as the option:</p>
+
+  [%= h.gist('appInstanceWithRouterFalse.js') %]
+
+  <h3>App state</h3>
+
+  <p>The most core element of the [%= project %] framework is the <em>appState</em> object. It holds information about what the app should be rendering at any given time. By default, the browser's path + query are combined to generate unique states. That said, if you decide to opt out of a navigator via a <code>navigator: false</code> option, your appState will have nothing to do with the browser. Here's this app's current state:</p>
+
+  <code class="hljs">
+    <pre>[%= hljs.highlight('json', JSON.stringify(pie.object.merge({}, app.state.data, {__route: 'CurrentRouteInstance'}), null, 2)).value %]</pre>
+  </code>
+
+  <h3>Handling State Changes</h3>
+
+  <p>Each app optionally has a router at <em>app.router</em>. It is used to map state identifiers to declared routes within your app. When the state is about to change, it is given the opportunity to modify the changes that will be made to your state object. By default, if a route matches the new identifier, it is added as the <code>__route</code> key.</p>
+
+  <p>A separate object, our <em>app.routeHandler</em> watches for route changes and manages the top level view in your dom. By default the app.routeHandler will look for a <code>view</code> key in your route and instantiate the view defined at <code>lib.views.#{view}</code>.</p>
+
+  <p>If you have an <em>app.navigator</em> defined in your app, it will observe changes in browser state via the history api and tell the app to change it's state. Similarly, it will observe changes to app.state and update the browser via the history api.</p>
 
   [%= h.gist('routerMappings.js') %]
-
-  <p>As you can see, you simply provide an object to <em>[%= ns %].router.map</em> which contains path keys, and object values.</p>
-  <p>Life isn't always quite as simple as the above example, so let's give you a more realistic one:</p>
-
-  [%= h.gist('routerMappingsComplex.js') %]
-
-  <p>So, with these changes what has happened?</p>
-
-  <ul>
-    <li>All routes will now map to a "sublayout" view since the second argument to <em>[%= ns %].router.map</em> is simply merged into the provided route configurations.</li>
-    <li>A route by the name of "basic.foo" exists, allowing a path to be constructed via <em>app.router.path('basic.foo')</em></li>
-    <li>A route by the name of "api.basicPath" exists, which will not map to a view, but will be constructable via the router.</li>
-  </ul>
-
-  <h3>Route Parsing</h3>
-
-  <p>Now that we've mapped our routes, let's explore url parsing. Parsing is as simple as providing a url to the router which is then transformed into a route object.</p>
-  [%= h.gist('routeParsing.js') %]
-  <p>You'll notice that the interpolations, query, and path information are easily accessible. You'll also notice that a route instance is provided back to you for the sake of extensibility.</p>
-
-  <h3>URL-to-View Routing Process</h3>
-  <p>As mentioned earlier, your app is observing url changes and asking the router to parse the new url. When that happens, the app's <em>routeHandler</em> object is asked to handle the new route. By default, the route handler will look for a <em>view</em> key in the route that is used to determine which top-level view to load.</p>
-  <p>By default, the routeHandler looks for views in a <em>lib.views</em> namespace. This namespace is configurable via the handler's <em>viewNamespace</em> option. So, in the case of our example, if a user navigated to <em>/basic/path</em> the handler would attempt to instantiate an instance of the view class defined at <em>lib.views.sublayout</em> and that instance could then use <em>app.parsedUrl</em> to retrieve the current parsed version of the route.</p>
-  <p>If the new route maps to the same view as the previous, the handler will attempt to invoke a <em>navigationUpdated</em> function on the existing view. By default [%= ns %].views will trigger a navigationUpdated event on their emitter as well as propagate the invocation down to it's children.</p>
 
   <h3>Simple Example App</h3>
   <p>This example app shows how an app is created, two routes are mapped, and views are declared.</p>

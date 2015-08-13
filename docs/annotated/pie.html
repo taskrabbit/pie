@@ -3849,6 +3849,20 @@ pie.string.lowerize = <span class="hljs-function"><span class="hljs-keyword">fun
   <span class="hljs-keyword">return</span> str.charAt(<span class="hljs-number">0</span>).toLowerCase() + str.slice(<span class="hljs-number">1</span>);
 };
 
+pie.string.matches = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, regex)</span> </span>{
+  <span class="hljs-keyword">var</span> flags = <span class="hljs-string">"g"</span>;
+  <span class="hljs-keyword">if</span>(regex.ignoreCase) flags += <span class="hljs-string">"i"</span>;
+  <span class="hljs-keyword">if</span>(regex.multiline) flags += <span class="hljs-string">"m"</span>;
+
+  regex = <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(regex.source, flags);
+
+  <span class="hljs-keyword">var</span> matches = [], match = regex.exec(str);
+  <span class="hljs-keyword">while</span> (match != <span class="hljs-literal">null</span>) {
+    matches.push(match[<span class="hljs-number">1</span>]);
+    match = regex.exec(str);
+  }
+  <span class="hljs-keyword">return</span> matches;
+};
 
 pie.string.modularize = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> </span>{
   <span class="hljs-keyword">return</span> str.replace(<span class="hljs-regexp">/([^_])_([^_])/g</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(match, a, b)</span></span>{ <span class="hljs-keyword">return</span> a + b.toUpperCase(); });
@@ -5102,7 +5116,47 @@ pie.promise.reject = <span class="hljs-function"><span class="hljs-keyword">func
   p.state = <span class="hljs-string">'FAILED'</span>;
   p.result = val;
   <span class="hljs-keyword">return</span> p;
-};</pre></div></div>
+};
+pie.pathHelper = pie.base.extend(<span class="hljs-string">'pathHelper'</span>, {
+
+  hostRegex: <span class="hljs-regexp">/^(https?:\/\/)([^\/]+)(.+)/</span>,
+
+  currentHost: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">window</span>.location.host;
+  },
+
+  isCurrentHost: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(incoming)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.currentHost() === incoming;
+  },
+
+  stripHost: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(incoming, options)</span> </span>{
+    <span class="hljs-keyword">var</span> m = incoming.match(<span class="hljs-keyword">this</span>.hostRegex);
+    <span class="hljs-keyword">if</span>(!m) <span class="hljs-keyword">return</span> incoming;
+    <span class="hljs-keyword">if</span>(options &amp;&amp; options.onlyCurrent &amp;&amp; <span class="hljs-keyword">this</span>.isCurrentHost(m[<span class="hljs-number">1</span>])) <span class="hljs-keyword">return</span> m[<span class="hljs-number">2</span>];
+    <span class="hljs-keyword">if</span>(options &amp;&amp; options.onlyOther &amp;&amp; !<span class="hljs-keyword">this</span>.isCurrentHost(m[<span class="hljs-number">1</span>])) <span class="hljs-keyword">return</span> m[<span class="hljs-number">2</span>];
+    <span class="hljs-keyword">return</span> m[<span class="hljs-number">2</span>];
+  },
+
+  hasHost: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(incoming)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.hostRegex.test(incoming);
+  },
+
+  pathAndQuery: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, query)</span> </span>{
+    <span class="hljs-keyword">var</span> o = {
+      path: path,
+      query: query
+    };
+
+    <span class="hljs-keyword">if</span>(path &amp;&amp; path.indexOf(<span class="hljs-string">'?'</span>) &gt;= <span class="hljs-number">0</span>) {
+      <span class="hljs-keyword">var</span> split = path.split(<span class="hljs-string">'?'</span>);
+      o.query = pie.object.merge(pie.string.deserialize(split[<span class="hljs-number">1</span>]), query);
+      o.path = split[<span class="hljs-number">0</span>];
+    }
+
+    <span class="hljs-keyword">return</span> o;
+  }
+
+});</pre></div></div>
             
         </li>
         
@@ -5432,7 +5486,9 @@ rendered by this app’s <code>templates</code> object.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.validator = classOption(<span class="hljs-string">'validator'</span>, pie.validator);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>.validator = classOption(<span class="hljs-string">'validator'</span>, pie.validator);
+
+    <span class="hljs-keyword">this</span>.pathHelper = classOption(<span class="hljs-string">'pathHelper'</span>, pie.pathHelper);</pre></div></div>
             
         </li>
         
@@ -5515,16 +5571,15 @@ and rejected if the dialog is denied.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  path: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path, query)</span> </span>{
+
     <span class="hljs-keyword">if</span>(pie.object.isObject(path)) {
       query = path;
       path = <span class="hljs-literal">undefined</span>;
     }
 
-    <span class="hljs-keyword">if</span>(path &amp;&amp; path.indexOf(<span class="hljs-string">'?'</span>) &gt;= <span class="hljs-number">0</span>) {
-      <span class="hljs-keyword">var</span> split = path.split(<span class="hljs-string">'?'</span>);
-      query = pie.object.merge(pie.string.deserialize(split[<span class="hljs-number">1</span>]), query);
-      path = split[<span class="hljs-number">0</span>];
-    }</pre></div></div>
+    <span class="hljs-keyword">if</span>(!pie.object.isObject(query)) query = <span class="hljs-literal">undefined</span>;
+
+    <span class="hljs-keyword">var</span> pq = <span class="hljs-keyword">this</span>.pathHelper.pathAndQuery(path, query);</pre></div></div>
             
         </li>
         
@@ -5539,16 +5594,17 @@ and rejected if the dialog is denied.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(path == <span class="hljs-literal">null</span> &amp;&amp; query) {
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(pq.path == <span class="hljs-literal">null</span> &amp;&amp; pq.query) {
       <span class="hljs-keyword">var</span> currentRoute = <span class="hljs-keyword">this</span>.state.get(<span class="hljs-string">'__route'</span>);
 
       <span class="hljs-keyword">if</span>(currentRoute) {
-        path = currentRoute.get(<span class="hljs-string">'pathTemplate'</span>);
-        query = pie.object.merge({}, <span class="hljs-keyword">this</span>.state.get(<span class="hljs-string">'__info'</span>), query);
+        pq.path = currentRoute.get(<span class="hljs-string">'pathTemplate'</span>);
+        pq.query = pie.object.merge({}, <span class="hljs-keyword">this</span>.state.get(<span class="hljs-string">'__info'</span>), pq.query);
       }
     }
 
-    path = path || <span class="hljs-string">'/'</span>;</pre></div></div>
+    pq.path = pq.path || <span class="hljs-string">'/'</span>;
+    pq.path = <span class="hljs-keyword">this</span>.pathHelper.stripHost(pq.path, {onlyCurrent: <span class="hljs-literal">true</span>});</pre></div></div>
             
         </li>
         
@@ -5559,14 +5615,14 @@ and rejected if the dialog is denied.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-180">&#182;</a>
               </div>
-              <p>if a router is present, we can allow the passing of named routes.</p>
+              <p>if a router is present and we’re dealing with a relative path we can allow the passing of named routes.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.router) path = <span class="hljs-keyword">this</span>.router.path(path, query);
-    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(!pie.object.isEmpty(query)) path = pie.string.urlConcat(path, pie.object.serialize(query));
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.pathHelper.hasHost(pq.path) &amp;&amp; <span class="hljs-keyword">this</span>.router) pq.path = <span class="hljs-keyword">this</span>.router.path(pq.path, query);
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(!pie.object.isEmpty(pq.query)) pq.path = pie.string.urlConcat(pq.path, pie.object.serialize(pq.query));
 
-    <span class="hljs-keyword">return</span> path;
+    <span class="hljs-keyword">return</span> pq.path;
   },</pre></div></div>
             
         </li>
@@ -5720,7 +5776,9 @@ app.go(<span class="hljs-string">'/things/:id'</span>, {id: <span class="hljs-nu
       <span class="hljs-built_in">Array</span>.prototype.forEach &amp;&amp;
       <span class="hljs-built_in">Object</span>.keys &amp;&amp;
       <span class="hljs-built_in">Number</span>.prototype.toFixed);
-  }
+  },
+
+
 }, pie.mixins.container);</pre></div></div>
             
         </li>
@@ -7587,7 +7645,7 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
   },
 
   _renderTemplateToEl: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> templateName = pie.fn.valueFrom(<span class="hljs-keyword">this</span>.templateName);
+    <span class="hljs-keyword">var</span> templateName = pie.fn.valueFrom(<span class="hljs-keyword">this</span>.templateName, <span class="hljs-keyword">this</span>);
 
     <span class="hljs-keyword">if</span>(templateName) {
       <span class="hljs-keyword">this</span>.app.templates.renderAsync(templateName, <span class="hljs-keyword">this</span>.renderData(), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(content)</span></span>{
@@ -7904,7 +7962,10 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
       self._onComplete(xhr);
     };
 
-    xhr.onerror = xhr.ontimeout = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ self._onError(xhr) };
+    xhr.onerror = xhr.ontimeout = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+      self._onError(xhr);
+      self._onComplete(xhr);
+    };
 
     <span class="hljs-keyword">this</span>.xhr = xhr;
 
@@ -8099,6 +8160,7 @@ If you would like the default &amp; your error callback, use extraError.</p>
   setModel: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> fns = pie.array.from(<span class="hljs-built_in">arguments</span>).map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span></span>{ <span class="hljs-keyword">return</span> m.sets.bind(m); });
     <span class="hljs-keyword">this</span>._append(<span class="hljs-string">'setModel'</span>, fns, <span class="hljs-literal">true</span>);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },</pre></div></div>
             
         </li>
@@ -8255,10 +8317,7 @@ pie.appState = pie.model.extend(<span class="hljs-string">'appState'</span>, {
     <span class="hljs-keyword">return</span> [<span class="hljs-keyword">this</span>.app.router];
   },
 
-  transition: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(id, skipHistory)</span> </span>{
-    <span class="hljs-keyword">var</span> split = id.split(<span class="hljs-string">'?'</span>),
-    base = split[<span class="hljs-number">0</span>],
-    query = split[<span class="hljs-number">1</span>];</pre></div></div>
+  transition: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(id, skipHistory)</span> </span>{</pre></div></div>
             
         </li>
         
@@ -8275,12 +8334,12 @@ pie.appState = pie.model.extend(<span class="hljs-string">'appState'</span>, {
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.test(<span class="hljs-string">'__fullId'</span>, id)) <span class="hljs-keyword">return</span>;
 
-    <span class="hljs-keyword">if</span>(query) query = pie.string.deserialize(query);
+    <span class="hljs-keyword">var</span> pq = <span class="hljs-keyword">this</span>.app.pathHelper.pathAndQuery(id);
 
-    <span class="hljs-keyword">var</span> changes = [query];
+    <span class="hljs-keyword">var</span> changes = [pq.query];
 
     <span class="hljs-keyword">this</span>.thingsThatCareAboutStateChanges().forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(thing)</span> </span>{
-      changes.push(thing.stateWillChange(base, query));
+      changes.push(thing.stateWillChange(pq.path, pq.query));
     });
 
 
@@ -8289,7 +8348,7 @@ pie.appState = pie.model.extend(<span class="hljs-string">'appState'</span>, {
     <span class="hljs-keyword">var</span> info = <span class="hljs-keyword">this</span>.parseInfo(changes);
 
     pie.object.merge(changes, {
-      __id: base,
+      __id: pq.path,
       __fullId: id,
       __history: !skipHistory,
       __info: info
@@ -11600,7 +11659,7 @@ nameOrPath = ‘view-b’</p>
     }
 
     <span class="hljs-keyword">if</span>(!route) {
-      route = pie.route.create(nameOrPath.split(<span class="hljs-string">'?'</span>)[<span class="hljs-number">0</span>]);
+      route = pie.route.create(nameOrPath);
       <span class="hljs-keyword">this</span>.registerRoute(route);</pre></div></div>
             
         </li>

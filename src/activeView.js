@@ -87,7 +87,7 @@ pie.activeView = pie.view.extend('activeView', {
   },
 
   _renderTemplateToEl: function() {
-    var templateName = pie.fn.valueFrom(this.templateName);
+    var templateName = pie.fn.valueFrom(this.templateName, this);
 
     if(templateName) {
       this.app.templates.renderAsync(templateName, this.renderData(), function(content){

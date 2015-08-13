@@ -15,19 +15,16 @@ pie.appState = pie.model.extend('appState', {
   },
 
   transition: function(id, skipHistory) {
-    var split = id.split('?'),
-    base = split[0],
-    query = split[1];
 
     // no change
     if(this.test('__fullId', id)) return;
 
-    if(query) query = pie.string.deserialize(query);
+    var pq = this.app.pathHelper.pathAndQuery(id);
 
-    var changes = [query];
+    var changes = [pq.query];
 
     this.thingsThatCareAboutStateChanges().forEach(function(thing) {
-      changes.push(thing.stateWillChange(base, query));
+      changes.push(thing.stateWillChange(pq.path, pq.query));
     });
 
 
@@ -36,7 +33,7 @@ pie.appState = pie.model.extend('appState', {
     var info = this.parseInfo(changes);
 
     pie.object.merge(changes, {
-      __id: base,
+      __id: pq.path,
       __fullId: id,
       __history: !skipHistory,
       __info: info

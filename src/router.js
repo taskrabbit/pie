@@ -137,7 +137,7 @@ pie.router = pie.model.extend('router', {
     }
 
     if(!route) {
-      route = pie.route.create(nameOrPath.split('?')[0]);
+      route = pie.route.create(nameOrPath);
       this.registerRoute(route);
     // if we had a route, we might have interpolations
     } else {

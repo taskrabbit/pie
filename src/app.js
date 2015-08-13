@@ -119,6 +119,8 @@ pie.app = pie.base.extend('app', {
     // `app.validator` a validator intance to be used in conjunction with this app's model activity.
     this.validator = classOption('validator', pie.validator);
 
+    this.pathHelper = classOption('pathHelper', pie.pathHelper);
+
 
     // Before we get going, observe link navigation & show any notifications stored
     // in app.storage.
@@ -152,34 +154,34 @@ pie.app = pie.base.extend('app', {
 
   // Use this to build paths.
   path: function(path, query) {
+
     if(pie.object.isObject(path)) {
       query = path;
       path = undefined;
     }
 
-    if(path && path.indexOf('?') >= 0) {
-      var split = path.split('?');
-      query = pie.object.merge(pie.string.deserialize(split[1]), query);
-      path = split[0];
-    }
+    if(!pie.object.isObject(query)) query = undefined;
+
+    var pq = this.pathHelper.pathAndQuery(path, query);
 
     // if we don't know our path but have been given a query, try to build a path based on the existing route
-    if(path == null && query) {
+    if(pq.path == null && pq.query) {
       var currentRoute = this.state.get('__route');
 
       if(currentRoute) {
-        path = currentRoute.get('pathTemplate');
-        query = pie.object.merge({}, this.state.get('__info'), query);
+        pq.path = currentRoute.get('pathTemplate');
+        pq.query = pie.object.merge({}, this.state.get('__info'), pq.query);
       }
     }
 
-    path = path || '/';
+    pq.path = pq.path || '/';
+    pq.path = this.pathHelper.stripHost(pq.path, {onlyCurrent: true});
 
-    // if a router is present, we can allow the passing of named routes.
-    if(this.router) path = this.router.path(path, query);
-    else if(!pie.object.isEmpty(query)) path = pie.string.urlConcat(path, pie.object.serialize(query));
+    // if a router is present and we're dealing with a relative path we can allow the passing of named routes.
+    if(!this.pathHelper.hasHost(pq.path) && this.router) pq.path = this.router.path(pq.path, query);
+    else if(!pie.object.isEmpty(pq.query)) pq.path = pie.string.urlConcat(pq.path, pie.object.serialize(pq.query));
 
-    return path;
+    return pq.path;
   },
 
   // Use this to navigate around the app.
@@ -240,5 +242,7 @@ pie.app = pie.base.extend('app', {
       Array.prototype.forEach &&
       Object.keys &&
       Number.prototype.toFixed);
-  }
+  },
+
+
 }, pie.mixins.container);

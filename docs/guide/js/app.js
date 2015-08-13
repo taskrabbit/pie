@@ -49,11 +49,9 @@ lib.views.layout = pie.activeView.extend('layout', {
     var gistId = this.app.i18n.t('gist');
     var url = 'https://api.github.com/gists/' + gistId + '';
 
-    this.app.ajax.get({
-      url: url,
-      setModel: this.gist,
-      complete: cb
-    });
+    this.app.ajax.get(url).
+      setModel(this.gist).
+      complete(cb);
   }
 
 });
@@ -124,7 +122,7 @@ window.app = pie.app.create({
 });
 
 // this just a random constant
-app.PAGES = ['getting-started', 'models', 'object-model', 'views', 'templates', 'routing', 'i18n', 'utils'];
+app.PAGES = ['getting-started', 'object-model', 'models', 'views', 'templates', 'routing', 'i18n', 'utils'];
 
 // set up our page routes.
 app.router.map({
