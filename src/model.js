@@ -80,7 +80,7 @@ pie.model = pie.base.extend('model', {
 
     if(d && d.__pieRole === 'model') d = d.data;
 
-    this.data = pie.object.deepMerge({_version: 1}, d);
+    this.data = pie.object.deepMerge({__version: 1}, d);
     this.options = options || {};
     this.app = this.app || this.options.app || pie.appInstance;
     this.observations = {};
@@ -156,7 +156,8 @@ pie.model = pie.base.extend('model', {
     var change = {
       name: name,
       type: type,
-      value: value
+      value: value,
+      object: this
     };
 
     if(oldValue != null) change.oldValue = oldValue;
@@ -358,7 +359,7 @@ pie.model = pie.base.extend('model', {
     fns = part[0],
     keys = part[1];
 
-    if(!keys.length) keys = ['_version'];
+    if(!keys.length) keys = ['__version'];
 
     fns.forEach(function(fn){
 
@@ -377,7 +378,7 @@ pie.model = pie.base.extend('model', {
 
   // ** pie.model.reset **
   //
-  // Reset a model to it's empty state, without affecting the `_version` attribute.
+  // Reset a model to it's empty state, without affecting the `__version` attribute.
   // Optionally, you can pass any options which are valid to `sets`.
   // ```
   // model.reset({skipObservers: true});
@@ -386,7 +387,7 @@ pie.model = pie.base.extend('model', {
     var keys = Object.keys(this.data), o = {};
 
     keys.forEach(function(k){
-      if(k === '_version') return;
+      if(k === '__version') return;
       o[k] = undefined;
     });
 
@@ -499,7 +500,7 @@ pie.model = pie.base.extend('model', {
   // model.setData({bar: 'foo'})
   // //=> change records will include a deleted foo, and an updated bar.
   // model.data
-  // //=> {_version: 3, bar: 'foo'}
+  // //=> {__version: 3, bar: 'foo'}
   // ```
   setData: function(obj, options) {
     var existing = Object.keys(pie.object.flatten(this.data)),
@@ -507,7 +508,7 @@ pie.model = pie.base.extend('model', {
     removed = pie.array.subtract(existing, given),
     rmOptions = pie.object.merge({}, options, {skipObservers: true});
 
-    removed = pie.array.remove(removed, '_version');
+    removed = pie.array.remove(removed, '__version');
 
     removed.forEach(function(rm){
       this.set(rm, undefined, rmOptions);
@@ -552,7 +553,7 @@ pie.model = pie.base.extend('model', {
 
   // ** pie.model.touch **
   //
-  // Bumps the _version by 1 and delivers change records to observers of _version
+  // Bumps the __version by 1 and delivers change records to observers of __version
   // ```
   // model.touch();
   // ```
@@ -563,10 +564,10 @@ pie.model = pie.base.extend('model', {
 
   // ** pie.model.trackVersion **
   //
-  // Increment the `_version` of this model.
+  // Increment the `__version` of this model.
   // Observers are skipped since this is invoked while change records are delivered.
   trackVersion: function() {
-    this.set('_version', this.get('_version') + 1, {skipObservers: true});
+    this.set('__version', this.get('__version') + 1, {skipObservers: true});
   },
 
   // ** pie.model.unobserve **

@@ -179,9 +179,12 @@ pie.router = pie.model.extend('router', {
   ensureRoot: function(path) {
     if(path.match(this.get('rootRegex'))) return path;
 
-    // if path is representative of root, use our root.
-    if(path === '/' || path === '') return this.get('root');
-    return pie.string.normalizeUrl(this.get('root') + path);
+    var root = this.get('root');
+    /* if path is representative of root, use our root. */
+    if(path === '/' || path === '') return root;
+    /* if the path is our root, but missing the trailing slash, use our root. */
+    if(path === root.substr(0, root.length-1)) return root;
+    return pie.string.normalizeUrl(root + path);
   }
 
 }, pie.mixins.container);

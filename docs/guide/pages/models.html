@@ -15,37 +15,27 @@
 
   [%= h.gist("modelAccessors.js") %]
 
-  <p>
-    [%= project %] models allow for path management as well.
-  </p>
+  <p>[%= project %] models allow for path management as well.</p>
 
   [%= h.gist("modelPaths.js") %]
 
   <h3>Computed Properties</h3>
-  <p>
-    Models are given the ability to define properties which are computed based on other properties of the model. This is accomplished via the <em>compute</em> method.
-  </p>
+  <p>Models are given the ability to define properties which are computed based on other properties of the model. This is accomplished via the <em>compute</em> method.</p>
 
   [%= h.gist("modelComputed.js") %]
 
-  <p>
-    The <em>compute</em> method accepts the property name, functional definition, and the dependent properties (or paths). If the functional definition is ommitted, a function of the provided name will be retrieved from the instance itself. This is useful when dealing with inheritance.
-  </p>
+  <p>The <em>compute</em> method accepts the property name, functional definition, and the dependent properties (or paths). If the functional definition is ommitted, a function of the provided name will be retrieved from the instance itself. This is useful when dealing with inheritance.</p>
 
   [%= h.gist("modelComputed2.js") %]
 
   <h3>Observation</h3>
-  <p>
-    Attributes, paths, and subpaths of a model can be observed. Observers are invoked after a <em>set</em>, <em>sets</em>, or <em>merge</em> operation is conducted. When invoked, observers receive an array of change records. The array is enhanced with extra functionality as defined by the <em>changeSet</em> mixin.
-  </p>
+  <p>Attributes, paths, and subpaths of a model can be observed. Observers are invoked after a <em>set</em>, <em>sets</em>, or <em>merge</em> operation is conducted. When invoked, observers receive an array of change records. The array is enhanced with extra functionality as defined by the <em>changeSet</em> mixin.</p>
 
   [%= h.gist("modelObserver.js") %]
 
   <h5>ChangeSets</h5>
 
-  <p>
-    When an observer is triggered it's always provided with a changeSet object. This object is an array, with some extra functionality. Here's what you can do with a changeSet.
-  </p>
+  <p>When an observer is triggered it's always provided with a changeSet object. This object is an array, with some extra functionality. Here's what you can do with a changeSet.</p>
 
   <ul>
     <li>

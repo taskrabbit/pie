@@ -66,11 +66,11 @@ describe("pie.model", function() {
     it('should set all existing values to undefined, removing them from data', function() {
       this.model.sets({foo: 'bar', baz: 'bash', qux: 'lux'});
       var k = Object.keys(this.model.data).sort();
-      expect(k).toEqual(['_version', 'baz', 'foo', 'qux']);
+      expect(k).toEqual(['__version', 'baz', 'foo', 'qux']);
 
       this.model.reset();
       k = Object.keys(this.model.data).sort();
-      expect(k).toEqual(['_version']);
+      expect(k).toEqual(['__version']);
     });
 
     it("should trigger an observer for the reset", function(done) {
@@ -78,7 +78,7 @@ describe("pie.model", function() {
 
       this.model.observe(function(changes){
         expect(changes.length).toEqual(3);
-        expect(changes.hasAll('foo', 'baz', '_version')).toEqual(true);
+        expect(changes.hasAll('foo', 'baz', '__version')).toEqual(true);
         done();
       });
 
@@ -177,7 +177,7 @@ describe("pie.model", function() {
         var change = changes.get('foo');
 
         expect(changes.length).toEqual(2);
-        expect(changes.get('_version')).toBeTruthy();
+        expect(changes.get('__version')).toBeTruthy();
 
         expect(change).toEqual({
           type: 'add',
@@ -475,25 +475,25 @@ describe("pie.model", function() {
 
   describe("versioning", function() {
 
-    it("should increment the _version whenever change records are delivered", function() {
-      var v = this.model.get('_version');
+    it("should increment the __version whenever change records are delivered", function() {
+      var v = this.model.get('__version');
       expect(v).toEqual(1);
 
       this.model.set('foo', 'bar');
-      v = this.model.get('_version');
+      v = this.model.get('__version');
       expect(v).toEqual(2);
     });
 
     it("should not increment until change records are delivered", function() {
-      var v = this.model.get('_version');
+      var v = this.model.get('__version');
       expect(v).toEqual(1);
 
       this.model.set('foo', 'bar', {skipObservers: true});
-      v = this.model.get('_version');
+      v = this.model.get('__version');
       expect(v).toEqual(1);
 
       this.model.set('foo', 'baz');
-      v = this.model.get('_version');
+      v = this.model.get('__version');
       expect(v).toEqual(2);
     });
 

@@ -1,6 +1,6 @@
 pie.appState = pie.model.extend('appState', {
 
-  infoIgnore: /^(__|_version)/,
+  infoIgnore: /^__/,
 
   parseInfo: function(d) {
     var out = {}, r = this.infoIgnore;

@@ -3,8 +3,11 @@
 [% var possess = pie.string.change(project, 'capitalize', 'possessive'); %]
 
 <div class="copy">
+
   <h1>The Object Model</h1>
+
   <p>If you've used Ember, Base2, Backbone, Prototype, etc, [%= possess %] object model should feel familiar. "Classes" are simply ordered collections of mixins. There are no prototypes. <em>You never use the new keyword.</em></p>
+
   <p>This may seem weird to start, but there's a lot of benefit from doing it this way.</p>
 
   <ol>
@@ -22,11 +25,9 @@
 
   <p>See, easy as... most libraries. Let's try something a little more interesting now:</p>
 
-  [%= h.gist('complexClass.js') %]
+  [%= h.gist('classWithMixin.js') %]
 
-  <p>Ignoring all the <em>[%= ns %].model</em> specifics, let's see what's happening here.</p>
-
-  <p>First, we're creating a subclass of [%= ns %].model by using <em>[%= ns %].model.extend</em>. Assuming the class is an ancestor of [%= ns %].base, you're able to subclass via the <em>extend</em> function. So, if I wanted to inherit from the User class, I would simply use <em>User.extend(...)</em>. The first argument provided to extend() is an optional string representing the name of the class. By providing this unique string it makes it much easier to debug. If supplied, it will also be provided to both the class and instances of the class as the <em>__className</em> attribute. The next N arguments are the extensions to the class' schema.</p>
+  <p>So what's happening here? First, we're creating a subclass of [%= ns %].model by using <em>[%= ns %].model.extend</em>. Assuming the class is an ancestor of [%= ns %].base, you're able to subclass via the <em>extend</em> function. So, if I wanted to inherit from the User class, I would simply use <em>User.extend(...)</em>. The first argument provided to extend() is an optional string representing the name of the class. By providing this unique string it makes it much easier to debug. If supplied, it will also be provided to both the class and instances of the class as the <em>__className</em> attribute. The next N arguments are the extensions to the class' schema.</p>
 
   <p>As mentioned before, all alterations to a class are simply mixins. So the class "definition" itself is a basic object which is added to the collection of mixins represented by the class.</p>
 

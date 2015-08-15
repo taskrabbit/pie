@@ -3,13 +3,14 @@ pie.activeView = pie.view.extend('activeView', {
   init: function(options) {
     if(pie.object.isString(options)) options = {template: options};
     this._super(options);
+    if(!this.model && this.options.model) this.model = this.options.model;
     this.refs = {};
   },
 
   setup: function() {
 
     if(this.options.autoRender && this.model) {
-      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '__version';
       this.observe(this.model, this.render.bind(this), field);
     }
 

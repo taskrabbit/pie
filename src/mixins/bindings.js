@@ -84,7 +84,7 @@ pie.mixins.bindings = {
 
 
   /* Iterate each binding and propagate the dom value to the model. */
-  /* A single set of change records will be produced (`_version` will only increment by 1). */
+  /* A single set of change records will be produced (`__version` will only increment by 1). */
   readBoundFields: function() {
     var opts = {skipObservers: true}, models;
     this._bindings.forEach(function(binding) { binding.readFields(opts); });
