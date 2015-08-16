@@ -17,8 +17,8 @@
 //   * **modelAttribute -** the attribute to extract list data from. Defaults to `items` to work with pie.list.
 //   * **minLoadingTime -** if a loading class is added, the minimum time it should be shown. Defaults to 0.
 // * itemOptions
-//   * **viewFactory -** a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data & the parent's renderData as the renderData.
-//   * **template -** assuming a substitute viewFactory is not provided, this is the template (name) to apply to the default activeView.
+//   * **factory -** a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data & the parent's renderData as the renderData.
+//   * **template -** assuming a substitute factory is not provided, this is the template (name) to apply to the default activeView.
 //   * **any option -** any set of option you'd like to pass to your view.
 // * emptyOptions
 //   * **any option -** these options are identical to the itemOptions.
@@ -46,15 +46,15 @@ pie.listView = pie.activeView.extend('listView', (function(){
           minLoadingTime: null
         },
         itemOptions: {
-          viewFactory: viewFactory
+          factory: viewFactory
         },
         emptyOptions: {
-          viewFactory: viewFactory
+          factory: viewFactory
         }
       }, this.options);
 
-      if(!this.options.itemOptions.viewFactory) {
-        throw new Error("No viewFactory provided");
+      if(!this.options.itemOptions.factory) {
+        throw new Error("No view factory provided");
       }
 
       this.list = this.list || pie.list.create([]);
@@ -97,6 +97,8 @@ pie.listView = pie.activeView.extend('listView', (function(){
           child.removeFromDom();
           child.addToDom(containerEl);
         }.bind(this));
+
+        this.manageEmptyItem();
       }.bind(this));
     },
 
@@ -114,10 +116,10 @@ pie.listView = pie.activeView.extend('listView', (function(){
       containerEl = containerEl || this.listContainer();
 
       var opts = pie.object.dup(this.options.itemOptions),
-      factory = opts.viewFactory,
+      factory = opts.factory,
       child;
 
-      delete opts.viewFactory;
+      delete opts.factory;
 
       child = factory(opts, item);
 
@@ -150,7 +152,6 @@ pie.listView = pie.activeView.extend('listView', (function(){
       } else if (change.type === 'reorder') {
         // blow away our indexes, but don't rebuild our children.
         this.listItems.sendToChildren('removeFromDom');
-        this.listItems.removeChildren();
         // this will find our existing children and add them back into our dom
         this.bootstrapItems(containerEl);
       }
@@ -174,9 +175,9 @@ pie.listView = pie.activeView.extend('listView', (function(){
 
     addEmptyItem: function() {
       var opts = pie.object.dup(this.options.emptyOptions),
-      factory = opts.viewFactory;
+      factory = opts.factory;
 
-      delete opts.viewFactory;
+      delete opts.factory;
 
       if(!factory) return;
 

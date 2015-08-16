@@ -423,3 +423,14 @@ pie.binding.integrations.html = {
   }
 
 };
+
+pie.binding.integrations.fn = {
+  getValue: function(el) {
+    throw new Error("fn integrations do not provide a dom-to-model integration. Please use the `toModel: false` option.");
+  },
+
+  setValue: function(el, binding) {
+    var value = binding.getModelValue();
+    return binding.options.options.fn(el, value, binding);
+  }
+}

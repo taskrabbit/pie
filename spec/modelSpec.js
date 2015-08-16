@@ -171,6 +171,28 @@ describe("pie.model", function() {
       expect(observer.calls.count()).toEqual(1);
     });
 
+    it("should only create change records for keys that are under observation", function() {
+      var shouldSeeVersion = false,
+      testCount = 0;
+
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(1 + (shouldSeeVersion ? 1 : 0));
+        expect(changeSet.has('foo')).toEqual(true);
+        expect(changeSet.has('__version')).toEqual(shouldSeeVersion);
+        testCount += 1;
+      };
+
+      this.model.observe(observer, 'foo');
+      this.model.set('foo', 'bar');
+
+      shouldSeeVersion = true;
+
+      this.model.observe(observer, '__version');
+      this.model.set('foo', 'baz');
+
+      expect(testCount).toEqual(2);
+    });
+
 
     it("should send an array of changes, not triggering multiple times", function(done) {
       var observer = jasmine.createSpy('observer');
@@ -194,7 +216,7 @@ describe("pie.model", function() {
 
       }.bind(this));
 
-      this.model.observe(observer, 'foo');
+      this.model.observe(observer, 'foo', '__version');
 
       this.model.set('foo', 'bar', {skipObservers: true});
       this.model.set('foo', 'baz');
@@ -301,7 +323,7 @@ describe("pie.model", function() {
     it("should include changes to the computed properties for observers registered before the properties", function(done) {
       var observer = jasmine.createSpy('observer'), i = 0;
 
-      this.model.observe(observer, 'first_name');
+      this.model.observe(observer, 'first_name', 'full_name');
 
       this.model.compute('full_name', function(){
         return this.get('first_name') + (++i);
@@ -483,6 +505,8 @@ describe("pie.model", function() {
   describe("versioning", function() {
 
     it("should increment the __version whenever change records are delivered", function() {
+      this.model.observe(jasmine.createSpy(), '__version');
+
       var v = this.model.get('__version');
       expect(v).toEqual(1);
 
@@ -492,6 +516,8 @@ describe("pie.model", function() {
     });
 
     it("should not increment until change records are delivered", function() {
+      this.model.observe(jasmine.createSpy(), '__version');
+
       var v = this.model.get('__version');
       expect(v).toEqual(1);
 

@@ -68,7 +68,7 @@ describe("pie.list", function() {
         expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('item:add');
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].index).toEqual(1);
         expect(this.changes[0].oldValue).toEqual('b');
         expect(this.changes[0].value).toEqual('foo');
@@ -94,7 +94,7 @@ describe("pie.list", function() {
         expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('item:add');
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].index).toEqual(4);
         expect(this.changes[0].oldValue).toEqual(undefined);
         expect(this.changes[0].value).toEqual('foo');
@@ -120,7 +120,7 @@ describe("pie.list", function() {
         expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('item:delete');
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].index).toEqual(1);
         expect(this.changes[0].oldValue).toEqual('b');
         expect(this.changes[0].value).toEqual('c');
@@ -145,7 +145,7 @@ describe("pie.list", function() {
         this.items.set(1, 'foo');
         expect(this.changes.length).toEqual(3);
         expect(this.changes[0].type).toEqual('item:update');
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].index).toEqual(1);
       });
 
@@ -153,18 +153,18 @@ describe("pie.list", function() {
         this.items.set('items', ['e', 'f', 'g', 'h', 'i', 'j']);
         expect(this.changes.length).toEqual(9); // 6, one for each index, 1 for items, 1 for the length, and 1 for the _version;
 
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].type).toEqual('item:update');
 
-        expect(this.changes[3].name).toEqual('items');
+        expect(this.changes[3].name).toEqual('items*');
         expect(this.changes[3].index).toEqual(3);
         expect(this.changes[3].type).toEqual('item:update');
 
-        expect(this.changes[4].name).toEqual('items');
+        expect(this.changes[4].name).toEqual('items*');
         expect(this.changes[4].index).toEqual(4);
         expect(this.changes[4].type).toEqual('item:add');
 
-        expect(this.changes[5].name).toEqual('items');
+        expect(this.changes[5].name).toEqual('items*');
         expect(this.changes[5].index).toEqual(5);
         expect(this.changes[5].type).toEqual('item:add');
 
@@ -186,11 +186,11 @@ describe("pie.list", function() {
 
         expect(this.changes.length).toEqual(8); // 6, one for each index, 1 for items, and 1 for the _version;
 
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].index).toEqual(0);
         expect(this.changes[0].type).toEqual('item:update');
 
-        expect(this.changes[5].name).toEqual('items');
+        expect(this.changes[5].name).toEqual('items*');
         expect(this.changes[5].index).toEqual(5);
         expect(this.changes[5].type).toEqual('item:update');
 
@@ -207,19 +207,19 @@ describe("pie.list", function() {
 
         expect(this.changes.length).toEqual(9); // 6, one for each index, 1 for items, 1 for the length, and 1 for the _version;
 
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].index).toEqual(5);
         expect(this.changes[0].type).toEqual('item:delete');
 
-        expect(this.changes[2].name).toEqual('items');
+        expect(this.changes[2].name).toEqual('items*');
         expect(this.changes[2].index).toEqual(3);
         expect(this.changes[2].type).toEqual('item:delete');
 
-        expect(this.changes[3].name).toEqual('items');
+        expect(this.changes[3].name).toEqual('items*');
         expect(this.changes[3].index).toEqual(2);
         expect(this.changes[3].type).toEqual('item:update');
 
-        expect(this.changes[5].name).toEqual('items');
+        expect(this.changes[5].name).toEqual('items*');
         expect(this.changes[5].index).toEqual(0);
         expect(this.changes[5].type).toEqual('item:update');
 
@@ -255,7 +255,7 @@ describe("pie.list", function() {
         expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('item:delete');
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].index).toEqual(0);
         expect(this.changes[0].oldValue).toEqual('a');
         expect(this.changes[0].value).toEqual('b');
@@ -281,7 +281,7 @@ describe("pie.list", function() {
         expect(this.changes.length).toEqual(4);
 
         expect(this.changes[0].type).toEqual('item:add');
-        expect(this.changes[0].name).toEqual('items');
+        expect(this.changes[0].name).toEqual('items*');
         expect(this.changes[0].index).toEqual(0);
         expect(this.changes[0].oldValue).toEqual('a');
         expect(this.changes[0].value).toEqual('foo');

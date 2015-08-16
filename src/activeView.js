@@ -45,10 +45,10 @@ pie.activeView = pie.view.extend('activeView', {
   _renderChild: function(options, cb) {
     var factory = options.factory,
     transitionClass = options.viewTransitionClass || pie.simpleViewTransition,
-    childName = options.childName,
+    childName = options.name,
     current = this.getChild(childName),
     instance = current,
-    target = options.target || options.targetEl,
+    target = options.sel,
     filter = pie.object.isString(options.filter) ? this[options.filter].bind(this) : options.filter,
     trans;
 

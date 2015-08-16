@@ -70,30 +70,19 @@ pie.list = pie.model.extend('list', {
   _trackMutations: function(options, fn) {
 
     var oldLength = this.data.items.length,
-    changes = pie.array.from(fn.call()),
+    newLength;
+
+    fn.call();
+
     newLength = this.data.items.length;
 
     if(!options || !options.skipTrackMutations) {
       if(oldLength !== newLength) {
-        changes.push({
-          name: 'length',
-          type: 'update',
-          object: this,
-          oldValue: oldLength,
-          value: newLength
-        });
+        this.addChangeRecord('length', 'update', oldLength, newLength)
       }
 
-      changes.push({
-        name: 'items',
-        type: 'update',
-        object: this,
-        oldValue: this.data.items,
-        value: this.data.items
-      });
+      this.addChangeRecord('items', 'update', this.data.items, this.data.items);
     }
-
-    this.changeRecords = this.changeRecords.concat(changes);
 
     if(options && options.skipObservers) return this;
     return this.deliverChangeRecords();
@@ -103,17 +92,9 @@ pie.list = pie.model.extend('list', {
     var item = changeSet[0].object;
     if(!item) return;
 
-    // todo, set a uid based index on the child object which would make this much faster.
+    // todo, create a uid based index hash which would make this much faster.
     var idx = this.indexOf(item);
-    this.changeRecords.push({
-      name: 'items',
-      type: 'item:change',
-      index: idx,
-      object: this,
-      changes: changeSet,
-      oldValue: item,
-      value: item
-    });
+    this.addChangeRecord('items*', 'item:change', item, item, {changes: changeSet, index: idx});
 
     this.deliverChangeRecords();
   },
@@ -133,17 +114,15 @@ pie.list = pie.model.extend('list', {
     return this.get('items').filter(f);
   },
 
-  sort: function(f) {
-    var items = this.get('items');
-    items.sort(f);
-    this.changeRecords.push({
-      name: 'items',
-      type: 'reorder',
-      object: this,
-      oldValue: items,
-      value: items
-    });
-    return this.deliverChangeRecords();
+  sort: function(f, options) {
+    return this._trackMutations(options, function(){
+
+      var items = this.get('items');
+      items.sort(f);
+
+      this.addChangeRecord('items', 'reorder', items, items);
+
+    }.bind(this));
   },
 
   // ** pie.list.get **
@@ -176,19 +155,12 @@ pie.list = pie.model.extend('list', {
 
       value = this._cast(value);
 
-      var idx = this._normalizedIndex(key),
-      change = {
-        name: 'items',
-        type: 'item:add',
-        object: this,
-        index: idx,
-        oldValue: this.data.items[idx],
-        value: value
-      };
+      var idx = this._normalizedIndex(key);
+
+      this.addChangeRecord('items*', 'item:add', this.data.items[idx], value, {index: idx});
 
       this.data.items.splice(idx, 0, value);
 
-      return change;
     }.bind(this));
   },
 
@@ -209,19 +181,12 @@ pie.list = pie.model.extend('list', {
     if(!l) return;
 
     this._trackMutations(options, function() {
-      var change = {
-        name: 'items',
-        type: 'item:delete',
-        object: this,
-        value: undefined
-      };
 
-      change.oldValue = value = this.data.items.pop();
-      change.index = this.data.items.length;
+      value = this.data.items.pop();
+      this.addChangeRecord('items*', 'item:delete', value, undefined, {index: this.data.items.length});
 
       this._unobserveItem(value);
 
-      return change;
     }.bind(this));
 
     return value;
@@ -236,18 +201,9 @@ pie.list = pie.model.extend('list', {
 
       value = this._cast(value);
 
-      var change = {
-        name: 'items',
-        type: 'item:add',
-        object: this,
-        index: this.data.items.length,
-        value: value,
-        oldValue: undefined
-      };
+      this.addChangeRecord('items*', 'item:add', undefined, value, {index: this.data.items.length});
 
       this.data.items.push(value);
-
-      return change;
     }.bind(this));
   },
 
@@ -260,21 +216,14 @@ pie.list = pie.model.extend('list', {
     var value;
 
     this._trackMutations(options, function(){
-      var idx = this._normalizedIndex(key),
-      change = {
-        name: 'items',
-        type: 'item:delete',
-        object: this,
-        index: idx
-      };
+      var idx = this._normalizedIndex(key);
 
-      change.oldValue = value = this.data.items[idx];
+      value = this.data.items[idx];
       this.data.items.splice(idx, 1);
-      change.value = this.data.items[idx];
 
       this._unobserveItem(value);
 
-      return change;
+      this.addChangeRecord('items*', 'item:delete', value, this.data.items[idx], {index: idx});
     }.bind(this));
 
     return value;
@@ -293,19 +242,13 @@ pie.list = pie.model.extend('list', {
     }
 
     return this._trackMutations(options, function(){
-      var change = {
-        name: 'items',
-        type: 'item:update',
-        object: this,
-        index: idx,
-        oldValue: this.data.items[idx]
-      };
 
       value = this._cast(value);
 
-      this.data.items[idx] = change.value = value;
+      this.addChangeRecord('items*', 'item:update', this.data.items[idx], value, {index: idx});
 
-      return change;
+      this.data.items[idx] = value;
+
     }.bind(this));
   },
 

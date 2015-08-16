@@ -84,6 +84,7 @@ pie.model = pie.base.extend('model', {
     this.options = options || {};
     this.app = this.app || this.options.app || pie.appInstance;
     this.observations = {};
+    this.observedKeyCounts = {};
     this.changeRecords = [];
     this.deliveringRecords = 0;
 
@@ -128,8 +129,10 @@ pie.model = pie.base.extend('model', {
   //
   // Add a change record to this model. If a change record of the same name already exists,
   // update the existing value.
-  addChangeRecord: function(name, type, oldValue, value) {
-    var existing = pie.array.detect(this.changeRecords, function(r){ return r.name === name; });
+  addChangeRecord: function(name, type, oldValue, value, extras) {
+    if(!this.hasObserver(name)) return;
+
+    var existing = !/\*$/.test(name) && pie.array.detect(this.changeRecords, function(r){ return r.name === name; });
 
     if(existing) {
       var remove = false;
@@ -150,6 +153,8 @@ pie.model = pie.base.extend('model', {
         this.changeRecords = pie.array.remove(this.changeRecords, existing);
       }
 
+      if(extras) pie.object.merge(existing, extras);
+
       return;
     }
 
@@ -161,6 +166,7 @@ pie.model = pie.base.extend('model', {
     };
 
     if(oldValue != null) change.oldValue = oldValue;
+    if(extras) pie.object.merge(change, extras);
 
     this.changeRecords.push(change);
   },
@@ -312,6 +318,10 @@ pie.model = pie.base.extend('model', {
     return !args.length;
   },
 
+  hasObserver: function(key) {
+    return !!this.observedKeyCounts['__version'] || !!this.observedKeyCounts[key];
+  },
+
   // ** pie.model.is **
   //
   // Boolean check the value at `path`.
@@ -357,9 +367,15 @@ pie.model = pie.base.extend('model', {
     var args = pie.array.change(arguments, 'from', 'flatten'),
     part = pie.array.partition(args, pie.object.isFunction),
     fns = part[0],
-    keys = part[1];
+    keys = part[1],
+    cnt;
 
     if(!keys.length) keys = ['__version'];
+
+    keys.forEach(function(k) {
+      cnt = this.observedKeyCounts[k];
+      this.observedKeyCounts[k] = (cnt || 0) + 1;
+    }.bind(this));
 
     fns.forEach(function(fn){
 
@@ -567,7 +583,11 @@ pie.model = pie.base.extend('model', {
   // Increment the `__version` of this model.
   // Observers are skipped since this is invoked while change records are delivered.
   trackVersion: function() {
-    this.set('__version', this.get('__version') + 1, {skipObservers: true});
+    var oldVal = this.data.__version,
+    newVal = oldVal + 1;
+    this.data.__version = newVal;
+    this.addChangeRecord('__version', 'update', oldVal, newVal);
+    return this;
   },
 
   // ** pie.model.unobserve **
@@ -580,7 +600,13 @@ pie.model = pie.base.extend('model', {
     part = pie.array.partition(args, pie.object.isFunction),
     fns = part[0],
     keys = part[1],
-    observation;
+    observation,
+    cnt;
+
+    keys.forEach(function(k) {
+      cnt = this.observedKeyCounts[k];
+      if(cnt) this.observedKeyCounts[k] = cnt - 1;
+    }.bind(this))
 
     fns.forEach(function(fn){
       pie.uid(fn);
