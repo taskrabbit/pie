@@ -70,10 +70,10 @@ pie.listView = pie.activeView.extend('listView', (function(){
       this.observe(this.list, 'manageListUpdates', 'items');
       this.observe(this.list, 'manageEmptyItem', 'length');
 
-      this.eon('afterRender', 'bootstrapItems');
+      this.eon('render:after', 'bootstrapItems');
 
-      this.eon('beforeRenderItems', function(){ this.setListLoadingStyle(true); }.bind(this));
-      this.eon('afterRenderItems', function(){ this.setListLoadingStyle(false); }.bind(this));
+      this.eon('renderItems:before', function(){ this.setListLoadingStyle(true); }.bind(this));
+      this.eon('renderItems:after', function(){ this.setListLoadingStyle(false); }.bind(this));
 
       this._super.apply(this, arguments);
     },

@@ -9,9 +9,9 @@
 // emitter.on('foo', function(){} );
 // emitter.prepend('foo', function(){} );
 //
-// emitter.once('afterBar', function(){} );
-// emitter.prependOnce('beforeBar', function(){} );
-// emitter.once('aroundBar', function(cb){} );
+// emitter.once('bar:after', function(){} );
+// emitter.prependOnce('bar:before', function(){} );
+// emitter.once('bar:around', function(cb){} );
 //
 // emitter.fire('foo');
 // emitter.fireSequence('bar');
@@ -62,11 +62,11 @@ pie.emitter = pie.model.extend('emitter', {
   //
   // Wait until all `eventNames` have been fired before invoking `fn`.
   // ```
-  // emitter.waitUntil('afterSetup', 'afterRender', this.highlightNav.bind(this));
+  // emitter.waitUntil('setup:after', 'render:after', this.highlightNav.bind(this));
   // ```
   waitUntil: (function(){
 
-    var invalidEventNameRegex = /^around/;
+    var invalidEventNameRegex = /:around$/;
 
     return function(/* eventNames, fn */) {
       var eventNames = pie.array.change(arguments, 'from', 'flatten'),
@@ -142,7 +142,7 @@ pie.emitter = pie.model.extend('emitter', {
   // Public interface for invoking `_on` & pushing an event to the end of the callback chain.
   // ```
   // emitter.on('foo', function(){});
-  // emitter.on('afterFoo', function(){});
+  // emitter.on('foo:after', function(){});
   // ```
   on: function(event, fn, options) {
     return this._on(event, fn, options, 'push');
@@ -239,12 +239,12 @@ pie.emitter = pie.model.extend('emitter', {
   // ```
   // emitter.fireSequence('foo', barFn);
   // //=> invokes the following sequence:
-  // // fires "beforeFoo", fires "aroundFoo", invokes barFn, fires "foo", fires "afterFoo"
+  // // fires "foo", fires "foo:around", invokes barFn, fires "foo", fires "foo:after"
   // ```
   fireSequence: function(event, fn) {
-    var before = pie.string.modularize("before_" + event),
-        after  = pie.string.modularize("after_" + event),
-        around = pie.string.modularize('around_' + event);
+    var before = event + ':before',
+        after  = event + ':after',
+        around = event + ':around';
 
     this.fire(before);
     this.fireAround(around, function() {
@@ -261,9 +261,9 @@ pie.emitter = pie.model.extend('emitter', {
   // ```
   // cb1 = function(cb){ console.log('cb1!'); cb(); };
   // cb2 = function(cb){ console.log('cb2!'); cb(); };
-  // emitter.on('aroundFoo', cb1);
-  // emitter.on('aroundFoo', cb2);
-  // emitter.fireAround('aroundFoo', function(){ console.log('done!'); });
+  // emitter.on('foo:around', cb1);
+  // emitter.on('foo:around', cb2);
+  // emitter.fireAround('foo:around', function(){ console.log('done!'); });
   // //=> console would log "cb1!", "cb2!", "done!"
   // ```
   fireAround: function(event, onComplete) {

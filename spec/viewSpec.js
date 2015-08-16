@@ -55,8 +55,8 @@ describe("pie.view", function() {
     it("should remove it's el from the dom, but not call pie.dom.remove on it's el", function() {
       document.body.appendChild(this.view.el);
 
-      this.view.emitter.on('beforeDetach', this.spy);
-      this.view.emitter.on('afterDetach', this.spy);
+      this.view.emitter.on('detach:before', this.spy);
+      this.view.emitter.on('detach:after', this.spy);
 
       this.view.removeFromDom();
 

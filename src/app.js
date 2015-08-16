@@ -125,7 +125,7 @@ pie.app = pie.base.extend('app', {
     // Before we get going, observe link navigation & show any notifications stored
     // in app.storage.
     // Wrapped in a function for testing purposes.
-    this.emitter.once('beforeStart', function(){ this.setupSinglePageLinks(); }.bind(this));
+    this.emitter.once('start:before', function(){ this.setupSinglePageLinks(); }.bind(this));
 
     if(!this.options.noAutoStart) {
       // Once the dom is loaded, start the app.

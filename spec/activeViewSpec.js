@@ -56,7 +56,7 @@ describe("pie.activeView", function() {
     it("should allow rendering to be blocked", function(done) {
       spyOn(this.view, '_renderTemplateToEl');
 
-      this.view.emitter.on('aroundRender', function(cb) {
+      this.view.emitter.on('render:around', function(cb) {
         expect(this.view._renderTemplateToEl).not.toHaveBeenCalled();
         cb();
         expect(this.view._renderTemplateToEl).toHaveBeenCalled();

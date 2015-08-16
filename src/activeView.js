@@ -20,7 +20,7 @@ pie.activeView = pie.view.extend('activeView', {
 
     if(this.options.refs) {
       this.setupRefs();
-      this.emitter.prepend('afterRender', this.clearRefCache.bind(this));
+      this.emitter.prepend('render:after', this.clearRefCache.bind(this));
     }
 
     this.eon('render', this._renderTemplateToEl.bind(this));
@@ -34,7 +34,7 @@ pie.activeView = pie.view.extend('activeView', {
     }.bind(this);
 
     var events = options.events;
-    if(events === undefined) events = ['afterRender'];
+    if(events === undefined) events = ['render:after'];
 
     pie.array.from(events).forEach(function(e){
       this.eon(e, f);
@@ -93,10 +93,10 @@ pie.activeView = pie.view.extend('activeView', {
     if(templateName) {
       this.app.templates.renderAsync(templateName, this.renderData(), function(content){
         this.el.innerHTML = content;
-        this.emitter.fire('afterRender');
+        this.emitter.fire('render:after');
       }.bind(this));
     } else {
-      this.emitter.fire('afterRender');
+      this.emitter.fire('render:after');
     }
   },
 
@@ -109,9 +109,9 @@ pie.activeView = pie.view.extend('activeView', {
   },
 
   render: function() {
-    this.emitter.fire('beforeRender');
-    this.emitter.fireAround('aroundRender', function(){
-      // afterRender should be fired by the render implementation.
+    this.emitter.fire('render:before');
+    this.emitter.fireAround('render:around', function(){
+      // render:after should be fired by the render implementation.
       // There's the possibility that a template needs to be fetched from a remote source.
       this.emitter.fire('render');
     }.bind(this));

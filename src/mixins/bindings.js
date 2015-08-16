@@ -10,10 +10,10 @@ pie.mixins.bindings = {
     this.options.bindingAttribute = this.options.bindingAttribute || 'data-bind';
   },
 
-  // If we have an emitter, tap into the afterRender event and initialize the dom
+  // If we have an emitter, tap into the render:after event and initialize the dom
   // with our model values.
   setup: function() {
-    this.eon('afterRender', 'initBindings');
+    this.eon('render:after', 'initBindings');
 
     this._super.apply(this);
   },

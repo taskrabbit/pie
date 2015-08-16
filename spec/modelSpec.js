@@ -98,7 +98,8 @@ describe("pie.model", function() {
         expect(changes.get('foo')).toEqual({
           'type' : 'add',
           'name' : 'foo',
-          'value' : 'bar'
+          'value' : 'bar',
+          'object' : this.model
         });
 
 
@@ -134,7 +135,8 @@ describe("pie.model", function() {
           'type' : 'update',
           'name' : 'foo',
           'oldValue' : 'bar',
-          'value' : 'bar'
+          'value' : 'bar',
+          'object' : this.model
         });
 
         done();
@@ -182,7 +184,8 @@ describe("pie.model", function() {
         expect(change).toEqual({
           type: 'add',
           name: 'foo',
-          value: 'baz'
+          value: 'baz',
+          object: this.model
         });
 
         expect(observer.calls.count()).toEqual(1);
@@ -428,13 +431,15 @@ describe("pie.model", function() {
             type: 'update',
             name: 'full_name',
             oldValue: '',
-            value: 'Doug Wilson'
+            value: 'Doug Wilson',
+            object: this.foo
           });
 
           expect(first).toEqual({
             type: 'add',
             name: 'first_name',
-            value: 'Doug'
+            value: 'Doug',
+            object: this.foo
           });
 
         } else if(portion === 2) {
@@ -442,14 +447,16 @@ describe("pie.model", function() {
             type: 'update',
             name: 'full_name',
             oldValue: 'Doug Wilson',
-            value: 'William Wilson'
+            value: 'William Wilson',
+            object: this.foo
           });
         } else {
           expect(full).toEqual({
             type: 'update',
             name: 'full_name',
             oldValue: 'William Wilson',
-            value: 'William Tell'
+            value: 'William Tell',
+            object: this.foo
           });
 
           done();

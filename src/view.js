@@ -45,7 +45,7 @@ pie.view = pie.base.extend('view', {
     this.emitter = pie.emitter.create();
 
     if(this.options.uiTarget) {
-      this.eonce('afterSetup', this.addToDom.bind(this));
+      this.eonce('setup:after', this.addToDom.bind(this));
     }
 
     this._super();
@@ -296,7 +296,7 @@ pie.view = pie.base.extend('view', {
   // no longer relevant to the page. If you do not conduct a full setup process this function will
   // short circuit the process.
   cancelSetup: function() {
-    this.emitter.fire('afterSetup');
+    this.emitter.fire('setup:after');
     return this;
   },
 
