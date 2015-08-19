@@ -40,7 +40,6 @@ pie.listView = pie.activeView.extend('listView', (function(){
 
       this.options = pie.object.deepMerge({
         listOptions: {
-          containerSel: 'ul, ol, .js-items-container',
           loadingClass: 'is-loading',
           modelAttribute: 'items',
           minLoadingTime: null
@@ -67,7 +66,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
     },
 
     setup: function() {
-      this.observe(this.list, 'manageListUpdates', 'items');
+      this.observe(this.list, 'manageListUpdates', 'items*', 'items');
       this.observe(this.list, 'manageEmptyItem', 'length');
 
       this.eon('render:after', 'bootstrapItems');
@@ -196,8 +195,10 @@ pie.listView = pie.activeView.extend('listView', (function(){
     },
 
     listContainer: function() {
-      var option = this.options.listOptions.containerSel;
-      return option && this.qs(option) || this.el;
+      var option = this.options.listOptions.sel;
+      if(pie.object.isString(option)) option = this.qs(option);
+      if(!option) return this.el;
+      return option;
     }
 
   };

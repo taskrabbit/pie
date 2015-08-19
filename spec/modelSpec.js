@@ -193,6 +193,14 @@ describe("pie.model", function() {
       expect(testCount).toEqual(2);
     });
 
+    it("should create change records for subpaths if the a parent path is being observed", function() {
+      var observer = jasmine.createSpy();
+      this.model.observe(observer, 'foo');
+      this.model.set('foo.bar', 'baz');
+
+      expect(observer).toHaveBeenCalled();
+    });
+
 
     it("should send an array of changes, not triggering multiple times", function(done) {
       var observer = jasmine.createSpy('observer');

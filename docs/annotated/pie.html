@@ -6230,7 +6230,13 @@ Path keys will be transformed into objects.</p>
   },
 
   hasObserver: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(key)</span> </span>{
-    <span class="hljs-keyword">return</span> !!<span class="hljs-keyword">this</span>.observedKeyCounts[<span class="hljs-string">'__version'</span>] || !!<span class="hljs-keyword">this</span>.observedKeyCounts[key];
+    <span class="hljs-keyword">if</span>(!!<span class="hljs-keyword">this</span>.observedKeyCounts[<span class="hljs-string">'__version'</span>]) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+    <span class="hljs-keyword">if</span>(!!<span class="hljs-keyword">this</span>.observedKeyCounts[key]) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+    <span class="hljs-keyword">if</span>(~key.indexOf(<span class="hljs-string">'.'</span>)) {
+      <span class="hljs-keyword">var</span> paths = pie.string.pathSteps(key);
+      <span class="hljs-keyword">if</span>(pie.array.areAny(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(p)</span></span>{ <span class="hljs-keyword">return</span> !!<span class="hljs-keyword">this</span>.observedKeyCounts[p]; })) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
   },</pre></div></div>
             
         </li>
@@ -6646,7 +6652,7 @@ for those provided.</p>
     keys.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k)</span> </span>{
       cnt = <span class="hljs-keyword">this</span>.observedKeyCounts[k];
       <span class="hljs-keyword">if</span>(cnt) <span class="hljs-keyword">this</span>.observedKeyCounts[k] = cnt - <span class="hljs-number">1</span>;
-    }.bind(<span class="hljs-keyword">this</span>))
+    }.bind(<span class="hljs-keyword">this</span>));
 
     fns.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span></span>{
       pie.uid(fn);
@@ -8362,8 +8368,7 @@ pie.appState = pie.model.extend(<span class="hljs-string">'appState'</span>, {
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.test(<span class="hljs-string">'__fullId'</span>, id)) <span class="hljs-keyword">return</span>;
 
     <span class="hljs-keyword">var</span> pq = <span class="hljs-keyword">this</span>.app.pathHelper.pathAndQuery(id);
-
-    <span class="hljs-keyword">var</span> changes = [pq.query];
+    <span class="hljs-keyword">var</span> changes = [{}, pq.query];
 
     <span class="hljs-keyword">this</span>.thingsThatCareAboutStateChanges().forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(thing)</span> </span>{
       changes.push(thing.stateWillChange(pq.path, pq.query));
@@ -8376,6 +8381,7 @@ pie.appState = pie.model.extend(<span class="hljs-string">'appState'</span>, {
 
     pie.object.merge(changes, {
       __id: pq.path,
+      __query: pq.query,
       __fullId: id,
       __history: !skipHistory,
       __info: info
@@ -10265,6 +10271,10 @@ list._normalizeIndex(-<span class="hljs-number">1</span>) <span class="hljs-comm
       <span class="hljs-keyword">this</span>.addChangeRecord(<span class="hljs-string">'items'</span>, <span class="hljs-string">'reorder'</span>, items, items);
 
     }.bind(<span class="hljs-keyword">this</span>));
+  },
+
+  detect: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{
+    <span class="hljs-keyword">return</span> pie.array.detect(<span class="hljs-keyword">this</span>.get(<span class="hljs-string">'items'</span>), fn);
   },</pre></div></div>
             
         </li>
@@ -10446,6 +10456,23 @@ Returns the removed item.</p>
     }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">return</span> value;
+  },
+
+  removeAll: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn)</span> </span>{
+    <span class="hljs-keyword">if</span>(!fn) {
+      <span class="hljs-keyword">this</span>.setItems([]);
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+    }
+
+    <span class="hljs-keyword">var</span> items = <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'items'</span>);
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; items.length; i++) {
+      <span class="hljs-keyword">if</span>(fn(items[i])) {
+        <span class="hljs-keyword">this</span>.remove(i)
+        i--;
+      }
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },</pre></div></div>
             
         </li>
@@ -10621,7 +10648,6 @@ Returns the removed item.</p>
 
       <span class="hljs-keyword">this</span>.options = pie.object.deepMerge({
         listOptions: {
-          containerSel: <span class="hljs-string">'ul, ol, .js-items-container'</span>,
           loadingClass: <span class="hljs-string">'is-loading'</span>,
           modelAttribute: <span class="hljs-string">'items'</span>,
           minLoadingTime: <span class="hljs-literal">null</span>
@@ -10660,7 +10686,7 @@ Returns the removed item.</p>
     },
 
     setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.list, <span class="hljs-string">'manageListUpdates'</span>, <span class="hljs-string">'items'</span>);
+      <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.list, <span class="hljs-string">'manageListUpdates'</span>, <span class="hljs-string">'items*'</span>, <span class="hljs-string">'items'</span>);
       <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.list, <span class="hljs-string">'manageEmptyItem'</span>, <span class="hljs-string">'length'</span>);
 
       <span class="hljs-keyword">this</span>.eon(<span class="hljs-string">'render:after'</span>, <span class="hljs-string">'bootstrapItems'</span>);
@@ -10815,8 +10841,10 @@ Returns the removed item.</p>
     },
 
     listContainer: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-      <span class="hljs-keyword">var</span> option = <span class="hljs-keyword">this</span>.options.listOptions.containerSel;
-      <span class="hljs-keyword">return</span> option &amp;&amp; <span class="hljs-keyword">this</span>.qs(option) || <span class="hljs-keyword">this</span>.el;
+      <span class="hljs-keyword">var</span> option = <span class="hljs-keyword">this</span>.options.listOptions.sel;
+      <span class="hljs-keyword">if</span>(pie.object.isString(option)) option = <span class="hljs-keyword">this</span>.qs(option);
+      <span class="hljs-keyword">if</span>(!option) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.el;
+      <span class="hljs-keyword">return</span> option;
     }
 
   };
@@ -10926,7 +10954,7 @@ UI notifications.</p>
   init: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(app, options)</span> </span>{
     <span class="hljs-keyword">this</span>.options = options || {};
     <span class="hljs-keyword">this</span>.app = app || <span class="hljs-keyword">this</span>.options.app || pie.appInstance;
-    <span class="hljs-keyword">this</span>.notifications = pie.list.create([]);
+    <span class="hljs-keyword">this</span>.notifications = pie.list.create([], {cast: <span class="hljs-literal">true</span>});
 
     <span class="hljs-keyword">this</span>._super();
   },</pre></div></div>
@@ -10945,15 +10973,8 @@ UI notifications.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  clear: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(type)</span> </span>{
-    <span class="hljs-keyword">if</span>(type) {
-      <span class="hljs-keyword">this</span>.notifications.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(n)</span> </span>{
-        <span class="hljs-keyword">this</span>.remove(n.id);
-      }.bind(<span class="hljs-keyword">this</span>));
-    } <span class="hljs-keyword">else</span> {
-      <span class="hljs-keyword">while</span>(<span class="hljs-keyword">this</span>.notifications.length()) {
-        <span class="hljs-keyword">this</span>.remove(<span class="hljs-keyword">this</span>.notifications.get(<span class="hljs-number">0</span>).id);
-      }
-    }
+    <span class="hljs-keyword">var</span> filter = type ? <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span></span>{ <span class="hljs-keyword">return</span> m.test(<span class="hljs-string">'type'</span>, type); } : <span class="hljs-literal">undefined</span>;
+    <span class="hljs-keyword">this</span>.notifications.removeAll(filter);
   },</pre></div></div>
             
         </li>
@@ -10981,17 +11002,15 @@ You can provide a number in milliseconds as the autoClose value as well.</p>
     messages = messages.map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span></span>{ <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.app.i18n.attempt(m); }.bind(<span class="hljs-keyword">this</span>));
 
     <span class="hljs-keyword">var</span> msg = {
-      id: pie.unique(),
       messages: messages,
       type: type
     };
 
+    msg.id = pie.uid(msg);
     <span class="hljs-keyword">this</span>.notifications.push(msg);
 
     <span class="hljs-keyword">if</span>(autoRemove) {
-      setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
-        <span class="hljs-keyword">this</span>.remove(msg.id);
-      }.bind(<span class="hljs-keyword">this</span>), autoRemove);
+      setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{ <span class="hljs-keyword">this</span>.remove(msg.id); }.bind(<span class="hljs-keyword">this</span>), autoRemove);
     }
 
   },
@@ -11003,13 +11022,8 @@ You can provide a number in milliseconds as the autoClose value as well.</p>
   },
 
   remove: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(msgId)</span> </span>{
-    <span class="hljs-keyword">var</span> msgIdx = pie.array.indexOf(<span class="hljs-keyword">this</span>.notifications.get(<span class="hljs-string">'items'</span>), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(m)</span> </span>{
-      <span class="hljs-keyword">return</span> m.id === msgId;
-    });
-
-    <span class="hljs-keyword">if</span>(~msgIdx) {
-      <span class="hljs-keyword">this</span>.notifications.remove(msgIdx);
-    }
+    <span class="hljs-keyword">var</span> idx = pie.array.indexOf(<span class="hljs-keyword">this</span>.notifications.get(<span class="hljs-string">'items'</span>), <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(n)</span></span>{ <span class="hljs-keyword">return</span> n.get(<span class="hljs-string">'id'</span>) == msgId; });
+    <span class="hljs-keyword">if</span>(~idx) <span class="hljs-keyword">this</span>.notifications.remove(idx);
   }
 });</pre></div></div>
             

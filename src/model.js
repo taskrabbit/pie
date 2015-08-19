@@ -319,7 +319,13 @@ pie.model = pie.base.extend('model', {
   },
 
   hasObserver: function(key) {
-    return !!this.observedKeyCounts['__version'] || !!this.observedKeyCounts[key];
+    if(!!this.observedKeyCounts['__version']) return true;
+    if(!!this.observedKeyCounts[key]) return true;
+    if(~key.indexOf('.')) {
+      var paths = pie.string.pathSteps(key);
+      if(pie.array.areAny(function(p){ return !!this.observedKeyCounts[p]; })) return true;
+    }
+    return false;
   },
 
   // ** pie.model.is **
@@ -606,7 +612,7 @@ pie.model = pie.base.extend('model', {
     keys.forEach(function(k) {
       cnt = this.observedKeyCounts[k];
       if(cnt) this.observedKeyCounts[k] = cnt - 1;
-    }.bind(this))
+    }.bind(this));
 
     fns.forEach(function(fn){
       pie.uid(fn);

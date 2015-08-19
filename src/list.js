@@ -125,6 +125,10 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
   },
 
+  detect: function(fn) {
+    return pie.array.detect(this.get('items'), fn);
+  },
+
   // ** pie.list.get **
   //
   // Get an item at a specific index.
@@ -227,6 +231,23 @@ pie.list = pie.model.extend('list', {
     }.bind(this));
 
     return value;
+  },
+
+  removeAll: function(fn) {
+    if(!fn) {
+      this.setItems([]);
+      return this;
+    }
+
+    var items = this.get('items');
+    for(var i = 0; i < items.length; i++) {
+      if(fn(items[i])) {
+        this.remove(i)
+        i--;
+      }
+    }
+
+    return this;
   },
 
   // ** pie.list.set **

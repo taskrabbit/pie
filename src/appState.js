@@ -20,8 +20,7 @@ pie.appState = pie.model.extend('appState', {
     if(this.test('__fullId', id)) return;
 
     var pq = this.app.pathHelper.pathAndQuery(id);
-
-    var changes = [pq.query];
+    var changes = [{}, pq.query];
 
     this.thingsThatCareAboutStateChanges().forEach(function(thing) {
       changes.push(thing.stateWillChange(pq.path, pq.query));
@@ -34,6 +33,7 @@ pie.appState = pie.model.extend('appState', {
 
     pie.object.merge(changes, {
       __id: pq.path,
+      __query: pq.query,
       __fullId: id,
       __history: !skipHistory,
       __info: info
