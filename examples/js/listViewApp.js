@@ -1,42 +1,43 @@
 /* global bindings */
-window.app = new pie.app({
-  uiTarget: '#main'
+window.app = pie.app.create({
+  routeHandlerOptions: {
+    uiTarget: '#main'
+  }
 });
 
 app.router.map({
-  '/examples/list-view.html' : {view: 'layout'}
+  '/*path' : {view: 'layout'}
 });
 
 pie.ns('lib.views')
 
 lib.views.layout = pie.listView.extend('layout', {
   init: function() {
-    this.list = new pie.list(this.listItems);
+    this.list = pie.list.create(this.listItems, {cast: true});
 
     this._super({
-      item: {
+      itemOptions: {
         template: 'item',
-      },
-      renderOnSetup: true
+      }
     });
   },
 
   setup: function() {
-    this.emitter.waitUntil('afterRender', 'afterAttach', this.injectShuffleButton.bind(this));
-    this._super.apply(this, arguments);
+    this.eon('render', 'addElements');
+    this.on('click', '.js-shuffle', 'shuffleItems');
+
+    this._super();
   },
 
-  injectShuffleButton: function() {
-    this.el.insertAdjacentHTML('beforeEnd', '<button class="js-shuffle">Shuffle Items</button>');
-    this.on('click', '.js-shuffle', this.shuffleItems.bind(this));
+  // we don't have a template, we're just adding the button.
+  addElements: function() {
+    this.el.insertAdjacentHTML('beforeEnd', '<ul></ul><button class="js-shuffle">Shuffle Items</button>');
   },
 
   shuffleItems: function() {
-    var items = this.listItems.sort(function() {
+    this.list.sort(function() {
       return .5 - Math.random();
     });
-
-    this.list.set('items', items);
   },
 
 

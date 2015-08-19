@@ -21,6 +21,7 @@ pie.navigator = pie.model.extend('navigator', {
   softGo: function() {
     var replace = !this.state.is('__history');
     window.history[replace ? 'replaceState' : 'pushState']({}, document.title, this.state.get('__fullId'));
+    pie.dom.trigger(document.body, 'pieHistoryChange');
   },
 
   hardGo: function() {
@@ -36,7 +37,10 @@ pie.navigator = pie.model.extend('navigator', {
   //
   // Setup the pushstate observations and get our app's state bootstrapped.
   start: function() {
-    pie.dom.on(window, 'popstate', this.navigateApp.bind(this));
+    // on popstate we trigger a pieHistoryChange event so any other navigator-enabled apps
+    pie.dom.on(window, 'popstate', function(){ pie.dom.trigger(document.body, 'pieHistoryChange'); });
+    pie.dom.on(document.body, 'pieHistoryChange', this.navigateApp.bind(this));
+
     this.navigateApp();
   }
 });
