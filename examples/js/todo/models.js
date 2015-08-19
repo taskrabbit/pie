@@ -114,13 +114,9 @@ lib.models.todoList = pie.list.extend('todoList', {
   },
 
 
-  // a custom capability of this store - it knows how to remove
+  // a custom capability of this store - it knows how to remove completed items
   removeAllCompleted: function() {
-    var resultingList = this.get('items').filter(function(m){
-      return !m.is('completed');
-    }.bind(this));
-
-    this.setItems(resultingList);
+    this.removeAll(function(m){ return m.is('completed'); }.bind(this));
   }
 
 });
