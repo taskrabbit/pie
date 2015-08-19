@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>pie TODO Example</title>
+
+    <link rel="stylesheet" href="/examples/css/todo.css" />
+
+  </head>
+  <body>
+
+    <script type="text/pie-template" id="layout">
+      <div class="layout">
+        <div class="js-input-container"></div>
+        <div class="js-list-container"></div>
+        <div class="layout__controls">
+
+          <div class="layout__control layout__control--incomplete">
+            <span class="js-incomplete-count"></span>
+          </div>
+
+          <div class="layout__control layout__control--complete-all js-complete-all-container">
+            <a href="#" class="js-complete-all">[%= h.t('completeAllAction') %]</a>
+          </div>
+
+          <div class="layout__control layout__control--remove js-remove-container">
+            <a href="#" class="js-remove-completed">[%= h.t('removeAction') %]</a>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script type="text/pie-template" id="input">
+      <form class="input">
+        <input name="title" placeholder="add a todo..." autocomplete="off" />
+      </form>
+    </script>
+
+    <script type="text/pie-template" id="task">
+      <div class="task__completed">
+        <input type="checkbox" name="completed" />
+      </div>
+      <div class="task__title">
+        [%- data.title %]
+      </div>
+    </script>
+
+    <script type="text/pie-template" id="empty">
+      <span>[%= h.t('emptyState') %]</span>
+    </script>
+
+
+
+    <script type="text/javascript" src="/build/pie.js"></script>
+
+    <script type="text/javascript" src="/examples/js/todo/models.js"></script>
+    <script type="text/javascript" src="/examples/js/todo/stores.js"></script>
+    <script type="text/javascript" src="/examples/js/todo/views.js"></script>
+    <script type="text/javascript" src="/examples/js/todo/app.js"></script>
+
+  </body>
+</html>
