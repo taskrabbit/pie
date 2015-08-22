@@ -1,36 +1,43 @@
 // # Pie Navigator
 // The navigator is in charge of observing browser navigation and updating it's data.
 // It's also the place to conduct push/replaceState history changes.
-// The navigator is simply a model, enabling observation, computed values, etc.
-pie.navigator = pie.model.extend('navigator', {
+pie.navigator = pie.base.extend('navigator', {
 
   init: function(app, options) {
-    this._super({}, pie.object.merge({ app: app }, options));
+    this._super();
+
+    this.app = app;
+    this.options = options;
 
     this.state = this.app.state;
-    this.state.observe(this.evaluateState.bind(this), '__fullId', '__route');
 
     this.app.emitter.once('start', this.start.bind(this));
   },
 
   evaluateState: function() {
-    if(this.state.is('__route')) this.softGo();
+
+    if(this.state.test('__fullId', this.browserPath())) return;
+
+    var route = this.state.get('__route');
+    if(this.app.routeHandler.canRouteBeHandled(route)) this.softGo();
     else this.hardGo();
   },
 
   softGo: function() {
     var replace = !this.state.is('__history');
     window.history[replace ? 'replaceState' : 'pushState']({}, document.title, this.state.get('__fullId'));
-    pie.dom.trigger(document.body, 'pieHistoryChange');
   },
 
   hardGo: function() {
     window.location.href = this.state.get('__fullId');
   },
 
+  browserPath: function() {
+    return window.location.pathname + window.location.search;
+  },
+
   navigateApp: function() {
-    var path = window.location.pathname + window.location.search;
-    this.app.go(path, true);
+    this.app.go(this.browserPath(), true);
   },
 
   // ** pie.navigator.start **
@@ -38,9 +45,9 @@ pie.navigator = pie.model.extend('navigator', {
   // Setup the pushstate observations and get our app's state bootstrapped.
   start: function() {
     // on popstate we trigger a pieHistoryChange event so any other navigator-enabled apps
-    pie.dom.on(window, 'popstate', function(){ pie.dom.trigger(document.body, 'pieHistoryChange'); });
-    pie.dom.on(document.body, 'pieHistoryChange', this.navigateApp.bind(this));
+    pie.dom.on(window, 'popstate', this.navigateApp.bind(this));
 
+    this.state.observe(this.evaluateState.bind(this), '__fullId', '__route');
     this.navigateApp();
   }
 });

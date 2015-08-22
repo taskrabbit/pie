@@ -1,6 +1,6 @@
 pie.base = {
 
-  schema: [{
+  __schema: [{
 
     init: function(){
       pie.uid(this);
@@ -31,17 +31,17 @@ pie.base = {
     name = pie.object.isString(extensions[0]) ? extensions.shift() : null;
 
     extensions = pie.array.flatten(extensions.map(function(e){
-      if(e.__pieRole === 'class') return e.schema;
+      if(e.__pieRole === 'class') return e.__schema;
       return e;
     }));
 
-    var schema = [this.schema, extensions, {__className: name}];
+    var schema = pie.array.change([this.__schema, extensions, {__className: name}], 'flatten', 'unique');
 
     var o = {
       __className: name
     };
 
-    o.schema = schema;
+    o.__schema = schema;
     o.__pieRole = 'class';
 
     o.extend = function(){ return that.extend.apply(this, arguments); };
@@ -54,12 +54,12 @@ pie.base = {
   reopen: function() {
     var extensions = pie.array.change(arguments, 'from', 'flatten', 'compact');
     extensions.forEach(function(e){
-      this.schema.push(e);
+      this.__schema.push(e);
     }.bind(this));
   },
 
   _create: function(clazz, args) {
-    var schema = clazz.schema;
+    var schema = clazz.__schema;
 
     var o = {};
     pie.uid(o);

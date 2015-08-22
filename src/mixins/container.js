@@ -93,7 +93,7 @@ pie.mixins.container = {
       delete child.parent;
 
       this.sortChildren();
-      
+
       if(pie.object.has(child, 'removedFromParent', true)) child.removedFromParent.call(child, this);
     }
 
@@ -128,7 +128,7 @@ pie.mixins.container = {
     var str = "\n", nextIndent = indent + (indent ? 4 : 1);
     str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this._indexWithinParent || this.__className) + ' (' + (this.__className || pie.uid(this)) + ')', indent);
 
-    this.children.forEach(function(child) {
+    this.children.slice(0, 10).forEach(function(child) {
       str += "\n" + pad('|', nextIndent);
       str += child.__tree(nextIndent);
     });

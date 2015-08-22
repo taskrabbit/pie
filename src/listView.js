@@ -137,9 +137,14 @@ pie.listView = pie.activeView.extend('listView', (function(){
     },
 
     manageListUpdates: function(changeSet) {
-      var containerEl = this.listContainer();
-      changeSet.forEach(function(change){
-        this.manageListUpdate(change, containerEl);
+      this.emitter.fireSequence('renderItems', function() {
+
+        var containerEl = this.listContainer();
+
+        changeSet.forEach(function(change){
+          this.manageListUpdate(change, containerEl);
+        }.bind(this));
+
       }.bind(this));
     },
 
@@ -147,7 +152,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
       if(change.type === 'item:add') {
         this.addItem(change.value, change.index, containerEl);
       } else if (change.type === 'item:delete') {
-        this.removeItem(change.oldValue)
+        this.removeItem(change.oldValue);
       } else if (change.type === 'reorder') {
         // blow away our indexes, but don't rebuild our children.
         this.listItems.sendToChildren('removeFromDom');
@@ -199,6 +204,11 @@ pie.listView = pie.activeView.extend('listView', (function(){
       if(pie.object.isString(option)) option = this.qs(option);
       if(!option) return this.el;
       return option;
+    },
+
+    teardownChildren: function() {
+      this._super();
+      this._super.call(this.listItems);
     }
 
   };

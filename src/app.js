@@ -65,6 +65,9 @@ pie.app = pie.base.extend('app', {
     }.bind(this);
 
 
+    // The model that represents the current state of the app.
+    this.state = pie.appState.create();
+    
     // `app.config` is a model used to manage configuration objects.
     this.config = classOption('config', pie.config);
 
@@ -90,9 +93,6 @@ pie.app = pie.base.extend('app', {
 
     // `app.errorHandler` is the object responsible for
     this.errorHandler = classOption('errorHandler', pie.errorHandler);
-
-    // The model that represents the current state of the app.
-    this.state = pie.appState.create();
 
     // `app.router` is used to determine which view should be rendered based on the url
     this.router = classOption('router', pie.router);
@@ -170,7 +170,7 @@ pie.app = pie.base.extend('app', {
 
       if(currentRoute) {
         pq.path = currentRoute.get('pathTemplate');
-        pq.query = pie.object.merge({}, this.state.get('__info'), pq.query);
+        pq.query = pie.object.merge({}, this.state.get('__query'), this.state.get('__interpolations'), pq.query);
       }
     }
 
@@ -178,7 +178,7 @@ pie.app = pie.base.extend('app', {
     pq.path = this.pathHelper.stripHost(pq.path, {onlyCurrent: true});
 
     // if a router is present and we're dealing with a relative path we can allow the passing of named routes.
-    if(!this.pathHelper.hasHost(pq.path) && this.router) pq.path = this.router.path(pq.path, query);
+    if(!this.pathHelper.hasHost(pq.path) && this.router) pq.path = this.router.path(pq.path, pq.query);
     else if(!pie.object.isEmpty(pq.query)) pq.path = pie.string.urlConcat(pq.path, pie.object.serialize(pq.query));
 
     return pq.path;
@@ -216,9 +216,8 @@ pie.app = pie.base.extend('app', {
     // If we're going nowhere, somewhere else, or to an anchor on the page, let the browser take over
     if(!href || /^(#|[a-z]+:\/\/)/.test(href)) return;
 
+    e.preventDefault();
     this.go(href, !!e.delegateTarget.getAttribute('data-replace-state'));
-
-    if(this.state.is('__route')) e.preventDefault();
   },
 
   // When a link is clicked, go there without a refresh if we recognize the route.

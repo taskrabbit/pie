@@ -122,6 +122,7 @@ describe("pie.promise", function(){
       expect(e.message).toEqual("failed json fetch");
       done();
     });
+    jasmine.clock().tick(100);
   });
 
   it("should propagate errors to the child promises", function(done) {
@@ -169,7 +170,7 @@ describe("pie.promise", function(){
     };
 
     var p = pie.promise.resolve().bind(o).then('foo').then('bar');
-    
+
     jasmine.clock().tick(1);
 
     expect(o.foo).toHaveBeenCalled();

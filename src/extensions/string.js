@@ -124,6 +124,10 @@ pie.string.endsWith = function(str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;
 };
 
+pie.string.startsWith = function(str, prefix) {
+  return str.indexOf(prefix) === 0;
+};
+
 // designed to be used with the "%{expression}" placeholders
 pie.string.expand = function(str, data, raiseOnMiss) {
   data = data || {};

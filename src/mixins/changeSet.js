@@ -5,8 +5,10 @@ pie.mixins.changeSet = {
   },
 
   has: function(name) {
+    var glob = pie.string.endsWith(name, '.*') ? name.replace('.*', '') : undefined;
+    
     return pie.array.areAny(this, function(change) {
-      return change.name === name;
+      return glob ? pie.string.startsWith(change.name, glob + '.') : change.name === name;
     });
   },
 

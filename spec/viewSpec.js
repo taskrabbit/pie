@@ -153,20 +153,4 @@ describe("pie.view", function() {
 
   });
 
-  it("should invoke navigationUpdated on all it's children when invoked on itself", function() {
-    var a = {navigationUpdated: jasmine.createSpy('navigationUpdated')},
-    b = {navigationUpdated: jasmine.createSpy('navigationUpdated')};
-
-    this.view.addChild('a', a);
-    this.view.addChild('b', b);
-
-    expect(this.view.children.length).toEqual(2);
-
-    this.view.navigationUpdated();
-
-    expect(a.navigationUpdated).toHaveBeenCalled();
-    expect(b.navigationUpdated).toHaveBeenCalled();
-  });
-
-
 });

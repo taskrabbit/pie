@@ -13,9 +13,9 @@ pie.pathHelper = pie.base.extend('pathHelper', {
   stripHost: function(incoming, options) {
     var m = incoming.match(this.hostRegex);
     if(!m) return incoming;
-    if(options && options.onlyCurrent && this.isCurrentHost(m[1])) return m[2];
-    if(options && options.onlyOther && !this.isCurrentHost(m[1])) return m[2];
-    return m[2];
+    if(options && options.onlyCurrent && this.isCurrentHost(m[1])) return m[3];
+    if(options && options.onlyOther && !this.isCurrentHost(m[1])) return m[3];
+    return m[3];
   },
 
   hasHost: function(incoming) {

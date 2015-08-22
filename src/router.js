@@ -38,7 +38,8 @@ pie.router = pie.model.extend('router', {
       var changes = { __route: route };
 
       if(route) {
-        pie.object.merge(changes, route.get('config.state'), route.interpolations(path));
+        var interpolations = route.interpolations(path);
+        pie.object.merge(changes, {__interpolations: interpolations}, route.get('config.state'), interpolations);
       }
 
       return changes;

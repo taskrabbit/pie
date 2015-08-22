@@ -130,9 +130,12 @@ pie.model = pie.base.extend('model', {
   // Add a change record to this model. If a change record of the same name already exists,
   // update the existing value.
   addChangeRecord: function(name, type, oldValue, value, extras) {
-    if(!this.hasObserver(name)) return;
 
-    var existing = !/\*$/.test(name) && pie.array.detect(this.changeRecords, function(r){ return r.name === name; });
+    this.isDirty = true;
+
+    if(!this.shouldAddChangeRecordForAttribute(name)) return;
+
+    var existing = !/\*$/.test(name) && pie.array.detect(this.changeRecords, function(r){ return r && r.name === name; });
 
     if(existing) {
       var remove = false;
@@ -175,7 +178,7 @@ pie.model = pie.base.extend('model', {
   //
   // After updates have been made we deliver our change records to our observers
   deliverChangeRecords: function(options) {
-    if(!this.changeRecords.length) return this;
+    if(!this.isDirty) return this;
     if(this.deliveringRecords) return this;
 
     /* This is where the version tracking is incremented. */
@@ -183,12 +186,13 @@ pie.model = pie.base.extend('model', {
 
 
     var changeSet = this.changeRecords,
+    emptyChangeSet = this.observedKeyCounts['~'] ? pie.object.merge([], pie.mixins.changeSet) : undefined,
     observers = pie.object.values(this.observations),
     invoker = function(obj) {
-      if(changeSet.hasAny.apply(changeSet, obj.keys)) {
-        obj.fn.call(null, changeSet);
-      }
-    },
+      if(~obj.keys.indexOf('*')) obj.fn.call(null, changeSet);
+      else if(changeSet.hasAny.apply(changeSet, obj.keys)) obj.fn.call(null, changeSet);
+      else if(~obj.keys.indexOf('~')) obj.fn.call(null, emptyChangeSet);
+    }.bind(this),
     o, idx;
 
     /* We modify the `changeSet` array with the `pie.mixins.changeSet`. */
@@ -215,7 +219,9 @@ pie.model = pie.base.extend('model', {
 
     /* Now we can decrement our deliveringRecords flag and attempt to deliver any leftover records */
     this.deliveringRecords--;
-    this.deliverChangeRecords(options);
+    if(this.changeRecords.length) this.deliverChangeRecords(options);
+
+    this.isDirty = false;
 
     return this;
 
@@ -318,13 +324,15 @@ pie.model = pie.base.extend('model', {
     return !args.length;
   },
 
-  hasObserver: function(key) {
-    if(!!this.observedKeyCounts['__version']) return true;
+  shouldAddChangeRecordForAttribute: function(key) {
+    if(!!this.observedKeyCounts['*']) return true;
     if(!!this.observedKeyCounts[key]) return true;
+
     if(~key.indexOf('.')) {
-      var paths = pie.string.pathSteps(key);
-      if(pie.array.areAny(function(p){ return !!this.observedKeyCounts[p]; })) return true;
+      var paths = pie.string.pathSteps(key).slice(1);
+      if(pie.array.areAny(paths, function(p){ return !!this.observedKeyCounts[p + '.*']; }.bind(this))) return true;
     }
+
     return false;
   },
 
@@ -376,7 +384,7 @@ pie.model = pie.base.extend('model', {
     keys = part[1],
     cnt;
 
-    if(!keys.length) keys = ['__version'];
+    if(!keys.length) keys = ['~'];
 
     keys.forEach(function(k) {
       cnt = this.observedKeyCounts[k];
@@ -634,5 +642,5 @@ pie.model = pie.base.extend('model', {
     }.bind(this));
 
     return this;
-  }
+  },
 });

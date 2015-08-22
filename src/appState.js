@@ -33,7 +33,7 @@ pie.appState = pie.model.extend('appState', {
 
     pie.object.merge(changes, {
       __id: pq.path,
-      __query: pq.query,
+      __query: pq.query || {},
       __fullId: id,
       __history: !skipHistory,
       __info: info

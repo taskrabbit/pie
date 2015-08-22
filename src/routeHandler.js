@@ -21,19 +21,27 @@ pie.routeHandler = pie.base.extend('routeHandler', {
     return this.app.getChild("currentView");
   },
 
+  canRouteBeHandled: function(route) {
+    return this.canHandleRedirect(route) || this.canHandleView(route);
+  },
+
+  canHandleRedirect: function(route) {
+    return route && route.is('config.redirect');
+  },
+
+  canHandleView: function(route) {
+    return route && route.is('config.view');
+  },
+
   onRouteChange: function() {
     var route = this.state.get('__route');
-    this.handleRedirect(route) || this.handleView(route);
+    if(this.canHandleRedirect(route)) return this.handleRedirect(route);
+    this.handleView(route);
   },
 
   handleRedirect: function(route) {
-    var redirectTo = route && route.get('config.redirect');
-    if(redirectTo) {
-      this.app.go(redirectTo);
-      return true;
-    } else {
-      return false;
-    }
+    var redirectTo = route.get('config.redirect');
+    this.app.go(redirectTo);
   },
 
   handleView: function(route) {
@@ -71,7 +79,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
         // The instance to be added. If the class is not defined, this could and should blow up.
         child = viewClass.create({ app: this.app });
 
-        // Cache an identifier on the view so we can invoke navigationUpdated instead of reloading
+        // Cache an identifier on the view so we can use the current view if there's sub-navigiation.
         // if the url changes but the view does not
         child._pieName = route.get('config.' + this.options.viewKey);
       }

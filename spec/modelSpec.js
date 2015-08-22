@@ -77,8 +77,7 @@ describe("pie.model", function() {
       this.model.sets({foo: 'bar', baz: 'bash'});
 
       this.model.observe(function(changes){
-        expect(changes.length).toEqual(3);
-        expect(changes.hasAll('foo', 'baz', '__version')).toEqual(true);
+        expect(changes.length).toEqual(0);
         done();
       });
 
@@ -193,12 +192,59 @@ describe("pie.model", function() {
       expect(testCount).toEqual(2);
     });
 
-    it("should create change records for subpaths if the a parent path is being observed", function() {
-      var observer = jasmine.createSpy();
+    it("should create change records for parents if the a parent path is being observed", function(done) {
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(1);
+        expect(changeSet.has('foo.bar')).toEqual(false);
+        done();
+      };
       this.model.observe(observer, 'foo');
       this.model.set('foo.bar', 'baz');
+    });
 
-      expect(observer).toHaveBeenCalled();
+    it("should not create change records for subpaths when they are not observed", function(done) {
+      var observer = function(changeSet) {
+        expect(changeSet.length).toEqual(1);
+        expect(changeSet.has('foo.bar.baz')).toEqual(false);
+        expect(changeSet.has('foo.bar')).toEqual(true);
+        done();
+      }
+
+      this.model.observe(observer, 'foo.bar');
+      this.model.set('foo.bar', {baz: 'qux'});
+    });
+
+    it("should send change records to ~ subscribers even if there are no changeRecords recorded", function(done) {
+      var observer = function(changeSet) {
+        expect(changeSet.length).toEqual(0);
+        done();
+      };
+
+      this.model.observe(observer);
+      this.model.set('foo', 'bar', {skipObservers: true});
+      expect(this.model.changeRecords.length).toEqual(0)
+      this.model.deliverChangeRecords();
+    });
+
+    it("should not send change records to anyone if no actual changes have been made", function() {
+      var observer = jasmine.createSpy();
+      this.model.set('foo', 'bar');
+      this.model.observe(observer);
+      this.model.set('foo', 'bar');
+      expect(this.model.changeRecords.length).toEqual(0)
+      expect(observer).not.toHaveBeenCalled();
+    });
+
+    it("should create change records for subpaths if the a parent path is being glob observed", function(done) {
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(2);
+        expect(changeSet.has('foo.bar.baz')).toEqual(true);
+        expect(changeSet.has('foo.bar')).toEqual(true);
+        expect(changeSet.has('foo')).toEqual(false);
+        done();
+      };
+      this.model.observe(observer, 'foo.*');
+      this.model.set('foo.bar', {baz: true});
     });
 
 
@@ -246,7 +292,7 @@ describe("pie.model", function() {
         done();
       };
 
-      this.model.observe(observer);
+      this.model.observe(observer, '*');
 
       this.model.set('foo', 'bar', {skipObservers: true});
       this.model.set('too', 'bar');
@@ -324,7 +370,7 @@ describe("pie.model", function() {
       };
 
       this.model.set('foo', {bar: 'baz'});
-      this.model.observe(observe);
+      this.model.observe(observe, '*');
       this.model.set('foo', {too: 'far'});
     });
 

@@ -13,8 +13,8 @@ pie.list = pie.model.extend('list', {
   init: function(arrayOrData, options) {
     if(Array.isArray(arrayOrData)) arrayOrData = {items: arrayOrData};
     this._super(arrayOrData, options);
-    this.data.items = pie.array.from(this.data.items).map(this._cast.bind(this));
     this.boundChangeObserver = this.onItemChange.bind(this);
+    this.data.items = pie.array.from(this.data.items).map(this._cast.bind(this));
   },
 
   // ** pie.list._cast **
@@ -44,7 +44,7 @@ pie.list = pie.model.extend('list', {
 
   _unobserveItem: function(child) {
     if(this.options.observeItems === false) return;
-    if(!child.unobserve) return;
+    if(!child || !child.unobserve) return;
     child.unobserve(this.boundChangeObserver);
   },
 
@@ -262,13 +262,15 @@ pie.list = pie.model.extend('list', {
       return this._super(key, value, options);
     }
 
+    var innerOptions = pie.object.merge({}, options, {skipTrackMutations: true, skipObservers: true});
+
     return this._trackMutations(options, function(){
 
-      value = this._cast(value);
+      this.remove(key, innerOptions);
 
-      this.addChangeRecord('items*', 'item:update', this.data.items[idx], value, {index: idx});
+      if(value === undefined) return;
 
-      this.data.items[idx] = value;
+      this.insert(key, value, innerOptions);
 
     }.bind(this));
   },
@@ -283,35 +285,12 @@ pie.list = pie.model.extend('list', {
 
     return this._trackMutations(options, function(){
 
-      var currentLength = this.data.items.length,
-      newLength = arr.length,
-      i;
+      while(this.length()) {
+        this.pop(innerOptions);
+      }
 
-      /* if the old list is longer than the new, we create change records from the end to the beginning */
-      if(currentLength > newLength) {
-        i = currentLength;
-
-        while(i > newLength) {
-          this.pop(innerOptions);
-          i--;
-        }
-
-        for(i = newLength - 1; i >= 0; i--) {
-          this.set(i, arr[i], innerOptions);
-        }
-
-      /* otherwise, we create change records from the beginning to the end */
-      } else {
-
-        for(i = 0; i < currentLength; i++) {
-          this.set(i, arr[i], innerOptions);
-        }
-
-        i = currentLength;
-        while(i < newLength) {
-          this.push(arr[i], innerOptions);
-          i++;
-        }
+      for(var i = 0; i < arr.length; i++) {
+        this.push(arr[i], innerOptions);
       }
 
     }.bind(this));
