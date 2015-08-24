@@ -7140,7 +7140,7 @@ prepended. If preprendInstead is an element, the child will be prepended before 
             </div>
             
             <div class="content"><div class='highlight'><pre>  eon: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> args = <span class="hljs-keyword">this</span>._normalizedEmitterArgs(<span class="hljs-built_in">arguments</span>);
+    <span class="hljs-keyword">var</span> args = <span class="hljs-keyword">this</span>._normalizedEmitterArgs(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>);
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.emitter.on.apply(<span class="hljs-keyword">this</span>.emitter, args);
   },</pre></div></div>
             
@@ -7177,13 +7177,18 @@ prepended. If preprendInstead is an element, the child will be prepended before 
             </div>
             
             <div class="content"><div class='highlight'><pre>  eonce: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> args = <span class="hljs-keyword">this</span>._normalizedEmitterArgs(<span class="hljs-built_in">arguments</span>);
+    <span class="hljs-keyword">var</span> args = <span class="hljs-keyword">this</span>._normalizedEmitterArgs(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>);
     <span class="hljs-keyword">this</span>.emitter.once.apply(<span class="hljs-keyword">this</span>.emitter, args);
   },
 
-  _normalizedEmitterArgs: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(args)</span> </span>{
+  ewait: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> args = <span class="hljs-keyword">this</span>._normalizedEmitterArgs(<span class="hljs-built_in">arguments</span>, <span class="hljs-built_in">arguments</span>.length-<span class="hljs-number">1</span>);
+    <span class="hljs-keyword">this</span>.emitter.waitUntil.apply(<span class="hljs-keyword">this</span>.emitter, args);
+  },
+
+  _normalizedEmitterArgs: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(args, fnStartIdx)</span> </span>{
     <span class="hljs-keyword">return</span> pie.array.from(args).map(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(arg, i)</span> </span>{
-      <span class="hljs-keyword">if</span>(pie.object.isString(arg) &amp;&amp; i &gt; <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>[arg].bind(<span class="hljs-keyword">this</span>);
+      <span class="hljs-keyword">if</span>(pie.object.isString(arg) &amp;&amp; i &gt;= fnStartIdx) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>[arg].bind(<span class="hljs-keyword">this</span>);
       <span class="hljs-keyword">return</span> arg;
     }.bind(<span class="hljs-keyword">this</span>));
   },</pre></div></div>

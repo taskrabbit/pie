@@ -97,7 +97,7 @@ pie.view = pie.base.extend('view', {
   //
   // Register an event with the emitter.
   eon: function() {
-    var args = this._normalizedEmitterArgs(arguments);
+    var args = this._normalizedEmitterArgs(arguments, 1);
     return this.emitter.on.apply(this.emitter, args);
   },
 
@@ -113,13 +113,18 @@ pie.view = pie.base.extend('view', {
   //
   // Register an event once with the emitter.
   eonce: function() {
-    var args = this._normalizedEmitterArgs(arguments);
+    var args = this._normalizedEmitterArgs(arguments, 1);
     this.emitter.once.apply(this.emitter, args);
   },
 
-  _normalizedEmitterArgs: function(args) {
+  ewait: function() {
+    var args = this._normalizedEmitterArgs(arguments, arguments.length-1);
+    this.emitter.waitUntil.apply(this.emitter, args);
+  },
+
+  _normalizedEmitterArgs: function(args, fnStartIdx) {
     return pie.array.from(args).map(function(arg, i) {
-      if(pie.object.isString(arg) && i > 0) return this[arg].bind(this);
+      if(pie.object.isString(arg) && i >= fnStartIdx) return this[arg].bind(this);
       return arg;
     }.bind(this));
   },
