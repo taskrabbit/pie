@@ -70,7 +70,7 @@ pie.view = pie.base.extend('view', {
     if(target !== this.el.parentNode) {
       this.emitter.fireSequence('attach', function(){
         if(prependInstead === true && target.firstChild) target.insertBefore(this.el, target.firstChild);
-        else if(prependInstead) target.insertBefore(this.el, prependInstead);
+        else if(prependInstead && prependInstead !== true) target.insertBefore(this.el, prependInstead);
         else target.appendChild(this.el);
       }.bind(this));
     }

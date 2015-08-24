@@ -7093,7 +7093,7 @@ prepended. If preprendInstead is an element, the child will be prepended before 
     <span class="hljs-keyword">if</span>(target !== <span class="hljs-keyword">this</span>.el.parentNode) {
       <span class="hljs-keyword">this</span>.emitter.fireSequence(<span class="hljs-string">'attach'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
         <span class="hljs-keyword">if</span>(prependInstead === <span class="hljs-literal">true</span> &amp;&amp; target.firstChild) target.insertBefore(<span class="hljs-keyword">this</span>.el, target.firstChild);
-        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(prependInstead) target.insertBefore(<span class="hljs-keyword">this</span>.el, prependInstead);
+        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(prependInstead &amp;&amp; prependInstead !== <span class="hljs-literal">true</span>) target.insertBefore(<span class="hljs-keyword">this</span>.el, prependInstead);
         <span class="hljs-keyword">else</span> target.appendChild(<span class="hljs-keyword">this</span>.el);
       }.bind(<span class="hljs-keyword">this</span>));
     }
@@ -10116,13 +10116,13 @@ second is the options-provided castOptions.</p>
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.observeItems === <span class="hljs-literal">false</span>) <span class="hljs-keyword">return</span>;
     <span class="hljs-keyword">if</span>(!child.observe) <span class="hljs-keyword">return</span>;
 
-    child.observe(<span class="hljs-keyword">this</span>.boundChangeObserver);
+    child.observe(<span class="hljs-keyword">this</span>.boundChangeObserver, <span class="hljs-string">'__version'</span>);
   },
 
   _unobserveItem: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(child)</span> </span>{
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.observeItems === <span class="hljs-literal">false</span>) <span class="hljs-keyword">return</span>;
     <span class="hljs-keyword">if</span>(!child || !child.unobserve) <span class="hljs-keyword">return</span>;
-    child.unobserve(<span class="hljs-keyword">this</span>.boundChangeObserver);
+    child.unobserve(<span class="hljs-keyword">this</span>.boundChangeObserver, <span class="hljs-string">'__version'</span>);
   },</pre></div></div>
             
         </li>

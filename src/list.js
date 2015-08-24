@@ -39,13 +39,13 @@ pie.list = pie.model.extend('list', {
     if(this.options.observeItems === false) return;
     if(!child.observe) return;
 
-    child.observe(this.boundChangeObserver);
+    child.observe(this.boundChangeObserver, '__version');
   },
 
   _unobserveItem: function(child) {
     if(this.options.observeItems === false) return;
     if(!child || !child.unobserve) return;
-    child.unobserve(this.boundChangeObserver);
+    child.unobserve(this.boundChangeObserver, '__version');
   },
 
   // ** pie.list._normalizeIndex **
