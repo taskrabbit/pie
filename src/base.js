@@ -35,7 +35,7 @@ pie.base = {
       return e;
     }));
 
-    var schema = pie.array.change([this.__schema, extensions, {__className: name}], 'flatten', 'unique');
+    var schema = pie.array.unique([this.__schema, extensions, {__className: name}]);
 
     var o = {
       __className: name

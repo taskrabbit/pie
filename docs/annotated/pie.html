@@ -4893,7 +4893,7 @@ pie.base = {
       <span class="hljs-keyword">return</span> e;
     }));
 
-    <span class="hljs-keyword">var</span> schema = pie.array.change([<span class="hljs-keyword">this</span>.__schema, extensions, {__className: name}], <span class="hljs-string">'flatten'</span>, <span class="hljs-string">'unique'</span>);
+    <span class="hljs-keyword">var</span> schema = pie.array.unique([<span class="hljs-keyword">this</span>.__schema, extensions, {__className: name}]);
 
     <span class="hljs-keyword">var</span> o = {
       __className: name
