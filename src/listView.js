@@ -17,42 +17,20 @@
 //   * **modelAttribute -** the attribute to extract list data from. Defaults to `items` to work with pie.list.
 //   * **minLoadingTime -** if a loading class is added, the minimum time it should be shown. Defaults to 0.
 // * itemOptions
-//   * **viewFactory -** a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data & the parent's renderData as the renderData.
-//   * **template -** assuming a substitute viewFactory is not provided, this is the template (name) to apply to the default activeView.
+//   * **factory -** a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data & the parent's renderData as the renderData.
+//   * **template -** assuming a substitute factory is not provided, this is the template (name) to apply to the default activeView.
 //   * **any option -** any set of option you'd like to pass to your view.
 // * emptyOptions
 //   * **any option -** these options are identical to the itemOptions.
 //
 pie.listView = pie.activeView.extend('listView', (function(){
 
-  var _listItemClass;
-
-  // this ensures the class isn't created unless absolutely necessary.
-  var listItemClass = function(){
-    return _listItemClass = _listItemClass || pie.activeView.extend('defaultListItemView', {
-
-      init: function(options, itemData) {
-        options = options || {};
-
-        this.model = pie.model.create(itemData);
-        this._super(options);
-      },
-
-      renderData: function() {
-        return pie.object.deepMerge({}, this.bubble('renderData'), this._super());
-      }
-
-    });
-  };
-
   var viewFactory = function(options, itemData){
-    var klass = listItemClass();
-    return klass.create(options, itemData);
+    options = pie.object.merge({ model: itemData }, options);
+    return pie.activeView.create(options);
   };
 
-  var nameFactory = function(options, itemData, i) {
-    return "list-item-" + i;
-  };
+  var listChildContainer = pie.base.extend('listChildContainer', pie.mixins.container);
 
   return {
 
@@ -62,121 +40,156 @@ pie.listView = pie.activeView.extend('listView', (function(){
 
       this.options = pie.object.deepMerge({
         listOptions: {
-          containerSel: 'ul, ol, .js-items-container',
           loadingClass: 'is-loading',
           modelAttribute: 'items',
           minLoadingTime: null
         },
         itemOptions: {
-          viewFactory: viewFactory,
-          nameFactory: nameFactory
+          factory: viewFactory
         },
         emptyOptions: {
-          viewFactory: viewFactory,
-          nameFactory: nameFactory
+          factory: viewFactory
         }
       }, this.options);
 
-      if(!this.options.itemOptions.viewFactory) {
-        throw new Error("No viewFactory provided");
+      if(!this.options.itemOptions.factory) {
+        throw new Error("No view factory provided");
       }
 
       this.list = this.list || pie.list.create([]);
       this.model = this.model || this.list;
-      this.listChildren = [];
+
+      this.listItems = listChildContainer.create();
+
+      // to ensure bubbling gets to us.
+      this.addChild('listItems', this.listItems);
     },
 
     setup: function() {
-      this.observe(this.list, 'renderItems', this.options.listOptions.modelAttribute);
-      this.eon('afterRender', 'renderItems');
-      this.eon('beforeRenderItems', function(){ this.setListLoadingStyle(true); }.bind(this));
-      this.eon('afterRenderItems', function(){ this.setListLoadingStyle(false); }.bind(this));
+      this.observe(this.list, 'manageListUpdates', 'items*', 'items');
+      this.observe(this.list, 'manageEmptyItem', 'length');
+
+      this.eon('render:after', 'bootstrapItems');
+
+      this.eon('renderItems:before', function(){ this.setListLoadingStyle(true); }.bind(this));
+      this.eon('renderItems:after', function(){ this.setListLoadingStyle(false); }.bind(this));
 
       this._super.apply(this, arguments);
     },
 
-    addItems: function() {
-      if(this.listData().length) {
-        this._addListItems();
-      } else {
-        this._addEmptyItem();
-      }
+    findChildByItem: function(item) {
+      return this.listItems.getChild(this.childName(item));
     },
 
-    _addListItems: function() {
+    childName: function(item) {
+      return 'item-' + pie.uid(item);
+    },
 
-      var container = this.listContainer(),
-        opts = pie.object.dup(this.options.itemOptions),
-        factory = opts.viewFactory,
-        nameFactory = opts.nameFactory,
-        afterRenders = [],
-        whenComplete = function() {
-          this.listChildren.forEach(function(child){ child.addToDom(container); });
-          this.emitter.fire('afterRenderItems');
-        }.bind(this),
-        children, child, name;
+    bootstrapItems: function(containerEl) {
+      this.emitter.fireSequence('renderItems', function() {
+        var uid, child, containerEl;
 
-      delete opts.viewFactory;
+        containerEl = containerEl || this.listContainer();
 
-      this.listChildren = this.listData().map(function(data, i) {
-        child = factory(opts, data, i);
-        name = nameFactory(opts, data, i);
+        this.list.forEach(function(item, i) {
+          child = this.findChildByItem(item) || this.buildItemChild(item, i, containerEl);
+          child.removeFromDom();
+          child.addToDom(containerEl);
+        }.bind(this));
 
-        /* we subscribe to each child's after render to understand when our "loading" style can be removed. */
-        afterRenders.push(function(cb) {
-          child.emitter.once('afterRender', cb, {immediate: true});
-        });
-
-        this.addChild(name, child);
-        child.setup();
-
-        return child;
+        this.manageEmptyItem();
       }.bind(this));
-
-      pie.fn.async(afterRenders, pie.fn.delay(whenComplete, this.options.listOptions.minLoadingTime));
     },
 
-    _addEmptyItem: function() {
-      var opts = pie.object.dup(this.options.emptyOptions),
-      factory = opts.viewFactory,
-      whenComplete = function(){
-        this.emitter.fire('afterRenderItems');
-      }.bind(this);
+    addItem: function(item, idx, containerEl) {
+      containerEl = containerEl || this.listContainer();
 
-      delete opts.viewFactory;
+      var child = this.buildItemChild(item, idx, containerEl);
+      var idx = child._indexWithinParent;
+      var nextChild = this.listItems.getChild(idx + 1);
 
-      if(!factory) {
-        whenComplete();
-        return;
-      }
+      child.addToDom(containerEl, nextChild && nextChild.el);
+    },
 
-      var child = factory(opts, {}),
-      name = nameFactory(opts, {}, 0);
+    buildItemChild: function(item, idx, containerEl) {
+      containerEl = containerEl || this.listContainer();
 
-      this.listChildren = [child];
-      this.addChild(name, child);
+      var opts = pie.object.dup(this.options.itemOptions),
+      factory = opts.factory,
+      child;
 
-      child.emitter.once('afterRender', whenComplete, {immediate: true});
+      delete opts.factory;
 
-      child.addToDom(this.listContainer());
+      child = factory(opts, item);
+
+      this.listItems.addChild(this.childName(item), child, idx);
       child.setup();
+
+      return child;
     },
 
-    removeItems: function() {
-      var child;
-      while(child = this.listChildren.pop()) {
-        this.removeChild(child);
+    removeItem: function(item) {
+      var child = this.findChildByItem(item);
+      if(child) {
+        this.listItems.removeChild(child);
         child.teardown();
       }
     },
 
-    renderItems: function() {
-      this.emitter.fire('beforeRenderItems');
-      this.emitter.fireAround('aroundRenderItems', function() {
-        this.emitter.fire('renderItems');
-        this.removeItems();
-        this.addItems();
+    manageListUpdates: function(changeSet) {
+      this.emitter.fireSequence('renderItems', function() {
+
+        var containerEl = this.listContainer();
+
+        changeSet.forEach(function(change){
+          this.manageListUpdate(change, containerEl);
+        }.bind(this));
+
       }.bind(this));
+    },
+
+    manageListUpdate: function(change, containerEl) {
+      if(change.type === 'item:add') {
+        this.addItem(change.value, change.index, containerEl);
+      } else if (change.type === 'item:delete') {
+        this.removeItem(change.oldValue);
+      } else if (change.type === 'reorder') {
+        // blow away our indexes, but don't rebuild our children.
+        this.listItems.sendToChildren('removeFromDom');
+        // this will find our existing children and add them back into our dom
+        this.bootstrapItems(containerEl);
+      }
+    },
+
+    manageEmptyItem: function() {
+      if(this.list.length()) {
+        this.removeEmptyItem();
+      } else {
+        this.addEmptyItem();
+      }
+    },
+
+    removeEmptyItem: function() {
+      var empty = this.getChild("empty");
+      if(empty) {
+        this.removeChild(empty);
+        empty.teardown();
+      }
+    },
+
+    addEmptyItem: function() {
+      var opts = pie.object.dup(this.options.emptyOptions),
+      factory = opts.factory;
+
+      delete opts.factory;
+
+      if(!factory) return;
+
+      var child = factory(opts, {});
+
+      this.addChild('empty', child);
+      child.addToDom(this.listContainer());
+      child.setup();
     },
 
     setListLoadingStyle: function(bool) {
@@ -186,13 +199,16 @@ pie.listView = pie.activeView.extend('listView', (function(){
       this.listContainer().classList[bool ? 'add' : 'remove'](className);
     },
 
-    listData: function() {
-      return this.list.get(this.options.listOptions.modelAttribute) || [];
+    listContainer: function() {
+      var option = this.options.listOptions.sel;
+      if(pie.object.isString(option)) option = this.qs(option);
+      if(!option) return this.el;
+      return option;
     },
 
-    listContainer: function() {
-      var option = this.options.listOptions.containerSel;
-      return option && this.qs(option) || this.el;
+    teardownChildren: function() {
+      this._super();
+      this._super.call(this.listItems);
     }
 
   };

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pie Navigation</title>
+
+    <style type="text/css">
+    </style>
+  </head>
+  <body>
+
+    <div id="main">
+      <h1>Browser App</h1>
+    </div>
+    <br />
+    <hr />
+    <br />
+    <div id="subapp">
+      <h2>Subapp (no navigator)</h2>
+    </div>
+
+    <script type="text/javascript" src="/build/pie.js"></script>
+
+    <script type="text/pie-template" id="viewA">
+      <h2>Im View A</h2>
+      <a href="[%= h.path('viewB') %]">Go to viewB</a>
+    </script>
+
+    <script type="text/pie-template" id="viewB">
+      <h2>Im View B</h2>
+      <a href="[%= h.path('viewA') %]">Go to viewA</a>
+    </script>
+
+    <script type="text/pie-template" id="ugh">
+      <h2>UGH</h2>
+      <a href="[%= h.path('viewA') %]">Go to viewA</a>
+      <span>|</span>
+      <a href="[%= h.path('viewB') %]">Go to viewB</a>
+    </script>
+
+    <script type="text/javascript" src="/examples/js/navigationApp.js"></script>
+
+  </body>
+</html>

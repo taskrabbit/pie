@@ -121,11 +121,11 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
 
       this.bind(field.binding);
 
-      validation = field.validation;
+      validation = field.validation || field.validations;
 
       if(validation) {
         validation = {};
-        validation[field.name] = field.validation;
+        validation[field.name] = field.validation || field.validations;
         this.model.validates(validation, this.options.validationStrategy);
       }
     }.bind(this));

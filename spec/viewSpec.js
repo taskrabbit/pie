@@ -55,8 +55,8 @@ describe("pie.view", function() {
     it("should remove it's el from the dom, but not call pie.dom.remove on it's el", function() {
       document.body.appendChild(this.view.el);
 
-      this.view.emitter.on('beforeDetach', this.spy);
-      this.view.emitter.on('afterDetach', this.spy);
+      this.view.emitter.on('detach:before', this.spy);
+      this.view.emitter.on('detach:after', this.spy);
 
       this.view.removeFromDom();
 
@@ -152,21 +152,5 @@ describe("pie.view", function() {
     });
 
   });
-
-  it("should invoke navigationUpdated on all it's children when invoked on itself", function() {
-    var a = {navigationUpdated: jasmine.createSpy('navigationUpdated')},
-    b = {navigationUpdated: jasmine.createSpy('navigationUpdated')};
-
-    this.view.addChild('a', a);
-    this.view.addChild('b', b);
-
-    expect(this.view.children.length).toEqual(2);
-
-    this.view.navigationUpdated();
-
-    expect(a.navigationUpdated).toHaveBeenCalled();
-    expect(b.navigationUpdated).toHaveBeenCalled();
-  });
-
 
 });

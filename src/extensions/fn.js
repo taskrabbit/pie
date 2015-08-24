@@ -129,6 +129,7 @@ pie.fn.ease = function(each, o, complete) {
 
   if(o.name === 'none') {
     each(o.to, 1);
+    if(complete) complete();
     return;
   }
 

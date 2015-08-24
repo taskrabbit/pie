@@ -3,13 +3,14 @@ pie.activeView = pie.view.extend('activeView', {
   init: function(options) {
     if(pie.object.isString(options)) options = {template: options};
     this._super(options);
+    if(!this.model && this.options.model) this.model = this.options.model;
     this.refs = {};
   },
 
   setup: function() {
 
     if(this.options.autoRender && this.model) {
-      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '_version';
+      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '__version';
       this.observe(this.model, this.render.bind(this), field);
     }
 
@@ -19,7 +20,7 @@ pie.activeView = pie.view.extend('activeView', {
 
     if(this.options.refs) {
       this.setupRefs();
-      this.emitter.prepend('afterRender', this.clearRefCache.bind(this));
+      this.emitter.prepend('render:after', this.clearRefCache.bind(this));
     }
 
     this.eon('render', this._renderTemplateToEl.bind(this));
@@ -33,7 +34,7 @@ pie.activeView = pie.view.extend('activeView', {
     }.bind(this);
 
     var events = options.events;
-    if(events === undefined) events = ['afterRender'];
+    if(events === undefined) events = ['render:after'];
 
     pie.array.from(events).forEach(function(e){
       this.eon(e, f);
@@ -44,10 +45,10 @@ pie.activeView = pie.view.extend('activeView', {
   _renderChild: function(options, cb) {
     var factory = options.factory,
     transitionClass = options.viewTransitionClass || pie.simpleViewTransition,
-    childName = options.childName,
+    childName = options.name,
     current = this.getChild(childName),
     instance = current,
-    target = options.target || options.targetEl,
+    target = options.sel,
     filter = pie.object.isString(options.filter) ? this[options.filter].bind(this) : options.filter,
     trans;
 
@@ -87,15 +88,15 @@ pie.activeView = pie.view.extend('activeView', {
   },
 
   _renderTemplateToEl: function() {
-    var templateName = this.templateName();
+    var templateName = pie.fn.valueFrom(this.templateName, this);
 
     if(templateName) {
       this.app.templates.renderAsync(templateName, this.renderData(), function(content){
         this.el.innerHTML = content;
-        this.emitter.fire('afterRender');
+        this.emitter.fire('render:after');
       }.bind(this));
     } else {
-      this.emitter.fire('afterRender');
+      this.emitter.fire('render:after');
     }
   },
 
@@ -108,9 +109,9 @@ pie.activeView = pie.view.extend('activeView', {
   },
 
   render: function() {
-    this.emitter.fire('beforeRender');
-    this.emitter.fireAround('aroundRender', function(){
-      // afterRender should be fired by the render implementation.
+    this.emitter.fire('render:before');
+    this.emitter.fireAround('render:around', function(){
+      // render:after should be fired by the render implementation.
       // There's the possibility that a template needs to be fetched from a remote source.
       this.emitter.fire('render');
     }.bind(this));

@@ -4,6 +4,7 @@ describe("View Binding Integration", function() {
     var v = window.lib.views.listView.create();
     this.view = v;
     this.model = this.view.model;
+    this.view.addToDom(pie.qs('#main'));
   });
 
   afterEach(function() {
@@ -22,7 +23,7 @@ describe("View Binding Integration", function() {
     el.value = 'barstool';
     expect(this.model.get('foo')).toEqual('bar');
     pie.dom.trigger(el, 'change');
-
+    
     expect(this.model.get('foo')).toEqual('barstool');
   });
 

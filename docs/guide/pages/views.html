@@ -3,14 +3,13 @@
 [% var possess = pie.string.change(project, 'capitalize', 'possessive'); %]
 
 <div class="copy">
+
   <h1>Views</h1>
-  <p>
-    [%= project %] views exist to interact with the DOM. A view has an <em>el</em> by which all DOM manipulation, creation, and observation is conducted.
-    Views are equipped with an <em>emitter</em> which is a simple pubsub interface. It's existence is vital to the usability of views in [%= project %]. Without it, you end up with random callbacks, assumptions about child implementations, and overall horrible architecture.
-  </p>
-  <p>
-    [%= project %] comes equipped with a few different types of views:
-  </p>
+
+  <p>[%= project %] views exist to make DOM interaction simple. A view has an <em>el</em> by which all DOM manipulation, creation, and observation is conducted. Views are equipped with an <em>emitter</em> which is a simple pubsub interface. It's existence is vital to the usability of views in [%= project %]. Without it, you end up with random callbacks, assumptions about child implementations, and overall horrible architecture.</p>
+
+  <p>[%= project %] comes equipped with a few different types of views:</p>
+
   <ul>
     <li>
       <code>pie.view</code>
@@ -24,15 +23,19 @@
       <code>pie.formView</code>
       <span>- a pie.activeView designed to standardize and enhance the behavior of forms.</span>
     </li>
+    <li>
+      <code>pie.listView</code>
+      <span>- a pie.activeView design to simply the management of lists.</span>
+    </li>
   </ul>
 
   <h3>pie.view</h3>
-  <p>
-    <code>pie.view</code> is the most rudimentary implementation of DOM management in [%= project %]. It's purpose is to provide a way to easily and efficiently query, observe, and update DOM.
-  </p>
+  
+  <p><code>pie.view</code> is the most rudimentary implementation of DOM management in [%= project %]. It's purpose is to provide a way to easily and efficiently query, observe, and update DOM.</p>
 
   [%= h.gist("view.js") %]
 
   <h3>pie.activeView</h3>
   <h3>pie.formView</h3>
+  <h3>pie.listView</h3>
 </div>

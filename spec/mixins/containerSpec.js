@@ -56,6 +56,15 @@ describe("pie.mixins.container", function() {
       expect(child.addedToParent).toHaveBeenCalled();
     });
 
+    it("should allow a child to be added at a specific index", function() {
+      var foo = {foo: true}, bar = {bar: true}, baz = {baz: true};
+      this.container.addChild('foo', foo);
+      this.container.addChild('bar', bar);
+      this.container.addChild('baz', baz, 1);
+      expect(this.container.children).toEqual([foo, baz, bar]);
+      expect(this.container.childNames).toEqual({foo: 0, baz: 1, bar: 2});
+    });
+
   });
 
   describe("#removeChild", function() {

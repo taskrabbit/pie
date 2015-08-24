@@ -1,98 +1,53 @@
 // # Pie Navigator
 // The navigator is in charge of observing browser navigation and updating it's data.
 // It's also the place to conduct push/replaceState history changes.
-// The navigator is simply a model, enabling observation, computed values, etc.
-pie.navigator = pie.model.extend('navigator', {
+pie.navigator = pie.base.extend('navigator', {
 
-  init: function(app) {
+  init: function(app, options) {
+    this._super();
+
     this.app = app;
-    this._super({});
+    this.options = options;
+
+    this.state = this.app.state;
+
+    this.app.emitter.once('start', this.start.bind(this));
   },
 
-  // ** pie.navigator.go **
-  //
-  // Go to `path`, appending `params`.
-  // If `replace` is true replaceState will be used in favor of pushState.
-  // If no changes are made, nothing will happen.
-  // ```
-  // navigator.go('/foo/bar', {page: 2});
-  // //=> pushState: '/foo/bar?page=2'
-  // ```
-  go: function(path, params, replace) {
-    var split = path.split('?'), query, url, state;
-    path = split[0];
-    query = split[1];
+  evaluateState: function() {
 
-    params = pie.object.deepMerge(query ? pie.string.deserialize(query) : {}, params);
+    if(this.state.test('__fullId', this.browserPath())) return;
 
-    if(this.test('path', path) && this.test('query', params)) {
-      return this;
-    }
-
-    url = path;
-
-    if(pie.object.hasAny(params)) {
-      url = pie.string.urlConcat(url, pie.object.serialize(params));
-    }
-
-    state = this.stateObject(path, params, replace);
-    window.history[replace ? 'replaceState' : 'pushState'](state, document.title, url);
-    window.historyObserver();
+    var route = this.state.get('__route');
+    if(this.app.routeHandler.canRouteBeHandled(route)) this.softGo();
+    else this.hardGo();
   },
 
-  // ** pie.navigator.setDataFromLocation **
-  //
-  // Look at `window.location` and transform it into stuff we care about.
-  // Set the data on this navigator object.
-  setDataFromLocation: function() {
-    var stringQuery = window.location.search.slice(1),
-    query = pie.string.deserialize(stringQuery);
+  softGo: function() {
+    var replace = !this.state.is('__history');
+    window.history[replace ? 'replaceState' : 'pushState']({}, document.title, this.state.get('__fullId'));
+  },
 
-    this.sets({
-      url: window.location.href,
-      path: window.location.pathname,
-      anchor: window.location.hash.slice(1),
-      fullPath: pie.array.compact([window.location.pathname, stringQuery], true).join('?'),
-      query: query
-    });
+  hardGo: function() {
+    window.location.href = this.state.get('__fullId');
+  },
+
+  browserPath: function() {
+    return window.location.pathname + window.location.search;
+  },
+
+  navigateApp: function() {
+    this.app.go(this.browserPath(), true);
   },
 
   // ** pie.navigator.start **
   //
-  // Setup the navigator and initialize the data.
+  // Setup the pushstate observations and get our app's state bootstrapped.
   start: function() {
-    /* we can only have one per browser. Multiple apps should observe pieHistoryChang on the body */
-    if(!window.historyObserver) {
-      window.historyObserver = function() {
-        pie.dom.trigger(document.body, 'pieHistoryChange');
-      };
-    }
-    /* observe popstate and invoke our single history observer */
-    pie.dom.on(window, 'popstate', function() {
-      window.historyObserver();
-    });
+    // on popstate we trigger a pieHistoryChange event so any other navigator-enabled apps
+    pie.dom.on(window, 'popstate', this.navigateApp.bind(this));
 
-    /* subscribe this navigator to the global history event */
-    pie.dom.on(document.body, 'pieHistoryChange.nav-' + pie.uid(this), this.setDataFromLocation.bind(this));
-
-    return this.setDataFromLocation();
-  },
-
-  stateObject: function(newPath, newQuery, replace) {
-    var state = {
-      navigator: {
-        path: newPath,
-        query: newQuery
-      }
-    };
-
-    if(replace) {
-      pie.object.deepMerge(state, window.history.state);
-    } else {
-      state.navigator.referringPath = this.get('path');
-      state.navigator.referringQuery = this.get('query');
-    }
-
-    return state;
+    this.state.observe(this.evaluateState.bind(this), '__fullId', '__route');
+    this.navigateApp();
   }
 });

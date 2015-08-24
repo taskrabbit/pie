@@ -115,10 +115,10 @@ describe("pie.emitter", function() {
     this.e.fire('pong');
   });
 
-  it("should not allow around* events for waitUntil", function() {
+  it("should not allow :around events for waitUntil", function() {
     expect(function(){
-      this.e.waitUntil('aroundRender', function(){});
-    }.bind(this)).toThrowError("aroundRender is not supported by waitUntil.");
+      this.e.waitUntil('render:around', function(){});
+    }.bind(this)).toThrowError("render:around is not supported by waitUntil.");
   });
 
   it("should allow a callback to be registered for all subsequent occurrences of an event via `on`", function() {
@@ -195,20 +195,20 @@ describe("pie.emitter", function() {
   });
 
   it("should allow an around event to be fired, and if any callbacks are onceOnly it should remove them", function() {
-    this.e.on('aroundPing', function(cb){ cb(); });
-    this.e.once('aroundPing', function(cb){ cb(); });
+    this.e.on('ping:around', function(cb){ cb(); });
+    this.e.once('ping:around', function(cb){ cb(); });
 
-    expect(this.e.get('eventCallbacks.aroundPing.length')).toEqual(2);
-    this.e.fireAround('aroundPing');
-    expect(this.e.get('eventCallbacks.aroundPing.length')).toEqual(1);
+    expect(this.e.get('eventCallbacks.ping:around.length')).toEqual(2);
+    this.e.fireAround('ping:around');
+    expect(this.e.get('eventCallbacks.ping:around.length')).toEqual(1);
   });
 
   it("should allow a sequence of events to be fired", function(){
     var called = {};
-    this.e.on('beforePing', function(){ called.beforePing = true; });
-    this.e.on('aroundPing', function(cb){ called.aroundPing = true; cb(); });
+    this.e.on('ping:before', function(){ called.beforePing = true; });
+    this.e.on('ping:around', function(cb){ called.aroundPing = true; cb(); });
     this.e.on('ping', function(){ called.ping = true; });
-    this.e.on('afterPing', function(){ called.afterPing = true; });
+    this.e.on('ping:after', function(){ called.afterPing = true; });
 
     this.e.fireSequence('ping');
 

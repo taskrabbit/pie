@@ -14,9 +14,9 @@ describe("pie.notifier", function(){
 
     var msg = this.model.get(0);
 
-    expect(msg.messages).toEqual(['test message']);
-    expect(msg.id).toBeTruthy();
-    expect(msg.type).toEqual('message');
+    expect(msg.get('messages')).toEqual(['test message']);
+    expect(msg.get('id')).toBeTruthy();
+    expect(msg.get('type')).toEqual('message');
   });
 
   it("clears the notifications automatically when a delay is provided", function() {
@@ -58,7 +58,7 @@ describe("pie.notifier", function(){
 
   it("should use the i18n value if it's an i18n key", function() {
     this.notifier.notify('.app.errors.401');
-    expect(this.model.get(0).messages[0]).toEqual(app.i18n.t('app.errors.401'));
+    expect(this.model.get(0).get('messages.0')).toEqual(app.i18n.t('app.errors.401'));
   });
 
 });

@@ -80,10 +80,11 @@ pie.model = pie.base.extend('model', {
 
     if(d && d.__pieRole === 'model') d = d.data;
 
-    this.data = pie.object.deepMerge({_version: 1}, d);
+    this.data = pie.object.deepMerge({__version: 1}, d);
     this.options = options || {};
     this.app = this.app || this.options.app || pie.appInstance;
     this.observations = {};
+    this.observedKeyCounts = {};
     this.changeRecords = [];
     this.deliveringRecords = 0;
 
@@ -128,8 +129,13 @@ pie.model = pie.base.extend('model', {
   //
   // Add a change record to this model. If a change record of the same name already exists,
   // update the existing value.
-  addChangeRecord: function(name, type, oldValue, value) {
-    var existing = pie.array.detect(this.changeRecords, function(r){ return r.name === name; });
+  addChangeRecord: function(name, type, oldValue, value, extras) {
+
+    this.isDirty = true;
+
+    if(!this.shouldAddChangeRecordForAttribute(name)) return;
+
+    var existing = !/\*$/.test(name) && pie.array.detect(this.changeRecords, function(r){ return r && r.name === name; });
 
     if(existing) {
       var remove = false;
@@ -150,16 +156,20 @@ pie.model = pie.base.extend('model', {
         this.changeRecords = pie.array.remove(this.changeRecords, existing);
       }
 
+      if(extras) pie.object.merge(existing, extras);
+
       return;
     }
 
     var change = {
       name: name,
       type: type,
-      value: value
+      value: value,
+      object: this
     };
 
     if(oldValue != null) change.oldValue = oldValue;
+    if(extras) pie.object.merge(change, extras);
 
     this.changeRecords.push(change);
   },
@@ -168,7 +178,7 @@ pie.model = pie.base.extend('model', {
   //
   // After updates have been made we deliver our change records to our observers
   deliverChangeRecords: function(options) {
-    if(!this.changeRecords.length) return this;
+    if(!this.isDirty) return this;
     if(this.deliveringRecords) return this;
 
     /* This is where the version tracking is incremented. */
@@ -176,12 +186,13 @@ pie.model = pie.base.extend('model', {
 
 
     var changeSet = this.changeRecords,
+    emptyChangeSet = this.observedKeyCounts['~'] ? pie.object.merge([], pie.mixins.changeSet) : undefined,
     observers = pie.object.values(this.observations),
     invoker = function(obj) {
-      if(changeSet.hasAny.apply(changeSet, obj.keys)) {
-        obj.fn.call(null, changeSet);
-      }
-    },
+      if(~obj.keys.indexOf('*')) obj.fn.call(null, changeSet);
+      else if(changeSet.hasAny.apply(changeSet, obj.keys)) obj.fn.call(null, changeSet);
+      else if(~obj.keys.indexOf('~')) obj.fn.call(null, emptyChangeSet);
+    }.bind(this),
     o, idx;
 
     /* We modify the `changeSet` array with the `pie.mixins.changeSet`. */
@@ -208,7 +219,9 @@ pie.model = pie.base.extend('model', {
 
     /* Now we can decrement our deliveringRecords flag and attempt to deliver any leftover records */
     this.deliveringRecords--;
-    this.deliverChangeRecords(options);
+    if(this.changeRecords.length) this.deliverChangeRecords(options);
+
+    this.isDirty = false;
 
     return this;
 
@@ -311,6 +324,18 @@ pie.model = pie.base.extend('model', {
     return !args.length;
   },
 
+  shouldAddChangeRecordForAttribute: function(key) {
+    if(!!this.observedKeyCounts['*']) return true;
+    if(!!this.observedKeyCounts[key]) return true;
+
+    if(~key.indexOf('.')) {
+      var paths = pie.string.pathSteps(key).slice(1);
+      if(pie.array.areAny(paths, function(p){ return !!this.observedKeyCounts[p + '.*']; }.bind(this))) return true;
+    }
+
+    return false;
+  },
+
   // ** pie.model.is **
   //
   // Boolean check the value at `path`.
@@ -356,9 +381,15 @@ pie.model = pie.base.extend('model', {
     var args = pie.array.change(arguments, 'from', 'flatten'),
     part = pie.array.partition(args, pie.object.isFunction),
     fns = part[0],
-    keys = part[1];
+    keys = part[1],
+    cnt;
 
-    if(!keys.length) keys = ['_version'];
+    if(!keys.length) keys = ['~'];
+
+    keys.forEach(function(k) {
+      cnt = this.observedKeyCounts[k];
+      this.observedKeyCounts[k] = (cnt || 0) + 1;
+    }.bind(this));
 
     fns.forEach(function(fn){
 
@@ -377,7 +408,7 @@ pie.model = pie.base.extend('model', {
 
   // ** pie.model.reset **
   //
-  // Reset a model to it's empty state, without affecting the `_version` attribute.
+  // Reset a model to it's empty state, without affecting the `__version` attribute.
   // Optionally, you can pass any options which are valid to `sets`.
   // ```
   // model.reset({skipObservers: true});
@@ -386,7 +417,7 @@ pie.model = pie.base.extend('model', {
     var keys = Object.keys(this.data), o = {};
 
     keys.forEach(function(k){
-      if(k === '_version') return;
+      if(k === '__version') return;
       o[k] = undefined;
     });
 
@@ -499,7 +530,7 @@ pie.model = pie.base.extend('model', {
   // model.setData({bar: 'foo'})
   // //=> change records will include a deleted foo, and an updated bar.
   // model.data
-  // //=> {_version: 3, bar: 'foo'}
+  // //=> {__version: 3, bar: 'foo'}
   // ```
   setData: function(obj, options) {
     var existing = Object.keys(pie.object.flatten(this.data)),
@@ -507,7 +538,7 @@ pie.model = pie.base.extend('model', {
     removed = pie.array.subtract(existing, given),
     rmOptions = pie.object.merge({}, options, {skipObservers: true});
 
-    removed = pie.array.remove(removed, '_version');
+    removed = pie.array.remove(removed, '__version');
 
     removed.forEach(function(rm){
       this.set(rm, undefined, rmOptions);
@@ -552,7 +583,7 @@ pie.model = pie.base.extend('model', {
 
   // ** pie.model.touch **
   //
-  // Bumps the _version by 1 and delivers change records to observers of _version
+  // Bumps the __version by 1 and delivers change records to observers of __version
   // ```
   // model.touch();
   // ```
@@ -563,10 +594,14 @@ pie.model = pie.base.extend('model', {
 
   // ** pie.model.trackVersion **
   //
-  // Increment the `_version` of this model.
+  // Increment the `__version` of this model.
   // Observers are skipped since this is invoked while change records are delivered.
   trackVersion: function() {
-    this.set('_version', this.get('_version') + 1, {skipObservers: true});
+    var oldVal = this.data.__version,
+    newVal = oldVal + 1;
+    this.data.__version = newVal;
+    this.addChangeRecord('__version', 'update', oldVal, newVal);
+    return this;
   },
 
   // ** pie.model.unobserve **
@@ -579,7 +614,13 @@ pie.model = pie.base.extend('model', {
     part = pie.array.partition(args, pie.object.isFunction),
     fns = part[0],
     keys = part[1],
-    observation;
+    observation,
+    cnt;
+
+    keys.forEach(function(k) {
+      cnt = this.observedKeyCounts[k];
+      if(cnt) this.observedKeyCounts[k] = cnt - 1;
+    }.bind(this));
 
     fns.forEach(function(fn){
       pie.uid(fn);
@@ -601,5 +642,5 @@ pie.model = pie.base.extend('model', {
     }.bind(this));
 
     return this;
-  }
+  },
 });

@@ -45,7 +45,7 @@ pie.view = pie.base.extend('view', {
     this.emitter = pie.emitter.create();
 
     if(this.options.uiTarget) {
-      this.eonce('afterSetup', this.addToDom.bind(this));
+      this.eonce('setup:after', this.addToDom.bind(this));
     }
 
     this._super();
@@ -59,28 +59,18 @@ pie.view = pie.base.extend('view', {
     this.emitter.fire('addedToParent');
   },
 
-  // **pie.view.appendToDom**
-  //
-  // **deprecated**
-  //
-  // A function which appends the view's el to the DOM within target (or this.options.uiTarget).
-  // An "attach" sequence is fired so views can control how they enter the DOM.
-  appendToDom: function(target) {
-    this.addToDom(target, 'appendChild');
-  },
-
-
   // **pie.view.addToDom**
   //
   // A function which adds the view's el to the DOM within target (or this.options.uiTarget).
   // An "attach" sequence is fired so views can control how they enter the DOM.
   // By default the element will be appended, if `prependInstead` is true the element will be
-  // prepended.
+  // prepended. If preprendInstead is an element, the child will be prepended before target.
   addToDom: function(target, prependInstead) {
     target = target || this.options.uiTarget;
     if(target !== this.el.parentNode) {
       this.emitter.fireSequence('attach', function(){
-        if(prependInstead) target.insertBefore(this.el, target.firstChild);
+        if(prependInstead === true && target.firstChild) target.insertBefore(this.el, target.firstChild);
+        else if(prependInstead && prependInstead !== true) target.insertBefore(this.el, prependInstead);
         else target.appendChild(this.el);
       }.bind(this));
     }
@@ -140,18 +130,6 @@ pie.view = pie.base.extend('view', {
   // event triggers are propagated efficiently.
   eventNamespace: function() {
     return 'view'+ pie.uid(this);
-  },
-
-
-  // **pie.view.navigationUpdated**
-  //
-  // When navigation changes but this view is still deemed relevant by the routeHandler, `navigationUpdated` will be invoked.
-  // A `navigationUpdated` event is emmitted, then all children are checked for a navigationUpdated function which, if found, is invoked.
-  navigationUpdated: function(changeSet) {
-    this.emitter.fire('navigationUpdated', changeSet);
-    this.children.forEach(function(c){
-      if(pie.object.has(c, 'navigationUpdated', true)) c.navigationUpdated(changeSet);
-    });
   },
 
 
@@ -296,7 +274,7 @@ pie.view = pie.base.extend('view', {
   // no longer relevant to the page. If you do not conduct a full setup process this function will
   // short circuit the process.
   cancelSetup: function() {
-    this.emitter.fire('afterSetup');
+    this.emitter.fire('setup:after');
     return this;
   },
 

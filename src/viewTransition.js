@@ -16,7 +16,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
 
     this.options = options;
 
-    this.emitter.on('beforeTransition', this.manageChildren.bind(this));
+    this.emitter.on('transition:before', this.manageChildren.bind(this));
     this.propagateTransitionEvents();
 
     this._super();
@@ -24,40 +24,40 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
 
   // fire a sequence which looks like
   // ```
-  // | beforeTransition
+  // | transition:before
   // | transition
-  // |--| beforeRemoveOldChild
+  // |--| removeOldChild:before
   // |  | removeOldChild
-  // |  | afterRemoveOldChild
-  // |  |--| beforeAddNewChild
+  // |  | removeOldChild:after
+  // |  |--| addNewChild:before
   // |     | addNewChild
-  // |     | afterAddNewChild
-  // | afterTransition
+  // |     | addNewChild:after
+  // | transition:after
   // ```
   transition: function(cb) {
     var em = this.emitter;
 
-    em.on('afterAddNewChild', function() {
-      em.fire('afterTransition');
+    em.on('addNewChild:after', function() {
+      em.fire('transition:after');
       if(cb) cb();
     });
 
-    em.on('afterRemoveOldChild', function() {
-      em.fire('beforeAddNewChild');
-      em.fireAround('aroundAddNewChlid', function() {
+    em.on('removeOldChild:after', function() {
+      em.fire('addNewChild:before');
+      em.fireAround('addNewChild:around', function() {
         em.fire('addNewChild');
       });
     });
 
     em.on('transition', function() {
-      em.fire('beforeRemoveOldChild');
-      em.fireAround('aroundRemoveOldChild', function() {
+      em.fire('removeOldChild:before');
+      em.fireAround('removeOldChild:around', function() {
         em.fire('removeOldChild');
       });
     });
 
-    em.fire('beforeTransition');
-    em.fireAround('aroundTransition', function() {
+    em.fire('transition:before');
+    em.fireAround('transition:around', function() {
       em.fire('transition');
     });
   },
@@ -69,7 +69,7 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     if(this.oldChild) this.parent.removeChild(this.oldChild);
     if(this.newChild) {
       this.parent.addChild(this.childName, this.newChild);
-      if(!this.newChild.emitter.hasEvent('beforeSetup')) this.newChild.setup();
+      if(!this.newChild.emitter.hasEvent('setup:before')) this.newChild.setup();
     }
   },
 
@@ -79,22 +79,22 @@ pie.abstractViewTransition = pie.base.extend('abstractViewTransition', {
     newEm = this.newChild && this.newChild.emitter;
 
     if(oldEm) {
-      em.on('beforeRemoveOldChild', function() {
-        oldEm.fire('beforeTransitionOut');
+      em.on('removeOldChild:before', function() {
+        oldEm.fire('transitionOut:before');
       });
 
-      em.on('afterRemoveOldChild', function() {
-        oldEm.fire('afterTransitionOut');
+      em.on('removeOldChild:after', function() {
+        oldEm.fire('transitionOut:after');
       });
     }
 
     if(newEm) {
-      em.on('beforeAddNewChild', function() {
-        newEm.fire('beforeTransitionIn');
+      em.on('addNewChild:before', function() {
+        newEm.fire('transitionIn:before');
       });
 
-      em.on('afterTransition', function() {
-        newEm.fire('afterTransitionIn');
+      em.on('transition:after', function() {
+        newEm.fire('transitionIn:after');
       });
     }
   }
@@ -120,7 +120,7 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
 
   addNewChild: function() {
     if(!this.newChild) {
-      this.emitter.fire('afterAddNewChild');
+      this.emitter.fire('addNewChild:after');
       return;
     }
 
@@ -132,14 +132,14 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
       setTimeout(this.attemptToAddChild.bind(this), this.options.minDelay);
     }
 
-    this.newChild.emitter.once('afterSetup', this.attemptToAddChild.bind(this), {immediate: true});
+    this.newChild.emitter.once('setup:after', this.attemptToAddChild.bind(this), {immediate: true});
   },
 
   attemptToAddChild: function() {
     var now = pie.date.now();
 
     /* ensure our child has been setup */
-    if(!this.newChild.emitter.hasEvent('afterSetup')) return;
+    if(!this.newChild.emitter.hasEvent('setup:after')) return;
 
     /* ensure the minimum delay has been reached */
     if(this.options.minDelay && now < (this.begin + this.options.minDelay)) return;
@@ -150,12 +150,12 @@ pie.simpleViewTransition = pie.abstractViewTransition.extend('simpleViewTransiti
     if(this.newChild.parent !== this.parent) return;
 
     this.newChild.addToDom(this.targetEl);
-    this.emitter.fire('afterAddNewChild');
+    this.emitter.fire('addNewChild:after');
   },
 
   removeOldChild: function() {
     if(this.oldChild) this.oldChild.teardown();
-    this.emitter.fire('afterRemoveOldChild');
+    this.emitter.fire('removeOldChild:after');
   }
 
 });
@@ -196,23 +196,23 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
 
     if(this.oldChild) {
       em.on('transitionOldChild',       this.cancelWrap('transitionOldChild'));
-      em.on('afterTransitionOldChild',  this.cancelWrap('teardownOldChild'));
+      em.on('transitionOldChild:after',  this.cancelWrap('teardownOldChild'));
     } else {
       em.on('transitionOldChild', function() {
-        em.fire('afterTransitionOldChild');
+        em.fire('transitionOldChild:after');
       });
     }
 
     if(this.newChild) {
       em.on('addNewChild',              this.cancelWrap('addNewChild'));
-      em.on('aroundTransitionNewChild', this.cancelWrap('ensureNewChildPrepared'));
+      em.on('transitionNewChild:around', this.cancelWrap('ensureNewChildPrepared'));
       em.on('transitionNewChild',       this.cancelWrap('refresh'));
       em.on('transitionNewChild',       this.cancelWrap('transitionNewChild'));
 
       this.newChild.emitter.once('removedFromParent', this.cancel.bind(this));
     } else {
       em.on('transitionNewChild', function() {
-        em.fire('afterTransitionNewChild');
+        em.fire('transitionNewChild:after');
       });
     }
   },
@@ -237,50 +237,50 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   // WHEN options.async !== true
   // fire a sequence which looks like
   // ```
-  // | beforeTransition
+  // | transition:before
   // | transition
-  // |  |--| beforeRemoveOldChild
-  // |     |--| beforeTransitionOldChild
+  // |  |--| removeOldChild:before
+  // |     |--| transitionOldChild:before
   // |        | transitionOldChild
-  // |        |--| afterTransitionOldChild
+  // |        |--| transitionOldChild:after
   // |           |--| removeOldChild
-  // |           |  |--| afterRemoveOldChild
+  // |           |  |--| removeOldChild:after
   // |           |
-  // |           |--| beforeAddNewChild
+  // |           |--| addNewChild:before
   // |              | addNewChild
-  // |              |--| afterAddNewChild
-  // |                 |--| beforeTransitionNewChild
+  // |              |--| addNewChild:after
+  // |                 |--| transitionNewChild:before
   // |                    | transitionNewChild
-  // |                    |--| afterTransitionNewChild
-  // |                       |--| afterTransition
+  // |                    |--| transitionNewChild:after
+  // |                       |--| transition:after
   // ```
   //
   // WHEN options.async === true
   // fire a sequence which looks like
   // ```
-  // | beforeTransition
+  // | transition:before
   // | transition
-  // |  |--| beforeRemoveOldChild
-  // |  |  |--| beforeTransitionOldChild
+  // |  |--| removeOldChild:before
+  // |  |  |--| transitionOldChild:before
   // |  |     | transitionOldChild
-  // |  |     |--| afterTransitionOldChild
+  // |  |     |--| transitionOldChild:after
   // |  |        |--| removeOldChild
-  // |  |           |--| afterRemoveOldChild
+  // |  |           |--| removeOldChild:after
   // |  |
-  // |  |--| beforeAddNewChild
+  // |  |--| addNewChild:before
   // |     | addNewChild
-  // |     |--| afterAddNewChild
-  // |        |--| beforeTransitionNewChild
+  // |     |--| addNewChild:after
+  // |        |--| transitionNewChild:before
   // |           | transitionNewChild
-  // |           |--| afterTransitionNewChild
-  // |              |--| afterTransition
+  // |           |--| transitionNewChild:after
+  // |              |--| transition:after
   // ```
 
   transition: function(cb) {
     var em = this.emitter;
 
-    em.on('afterTransitionNewChild', function() {
-      em.fire('afterTransition');
+    em.on('transitionNewChild:after', function() {
+      em.fire('transition:after');
       if(cb) cb();
     });
 
@@ -289,38 +289,38 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
         em.fireSequence('addNewChild');
       });
     } else {
-      em.on('afterRemoveOldChild', function() {
+      em.on('removeOldChild:after', function() {
         em.fireSequence('addNewChild');
       });
     }
 
-    em.on('afterAddNewChild', function() {
-      em.fire('beforeTransitionNewChild');
-      em.fireAround('aroundTransitionNewChild', function() {
+    em.on('addNewChild:after', function() {
+      em.fire('transitionNewChild:before');
+      em.fireAround('transitionNewChild:around', function() {
         em.fire('transitionNewChild');
       });
     });
 
-    em.on('afterTransitionOldChild', function() {
+    em.on('transitionOldChild:after', function() {
       em.fireSequence('removeOldChild');
     });
 
     em.on('transition', function() {
-      em.fire('beforeTransitionOldChild');
-      em.fireAround('aroundTransitionOldChild', function() {
+      em.fire('transitionOldChild:before');
+      em.fireAround('transitionOldChild:around', function() {
         em.fire('transitionOldChild');
       });
     });
 
-    em.fire('beforeTransition');
-    em.fireAround('aroundTransition', function() {
+    em.fire('transition:before');
+    em.fireAround('transition:around', function() {
       em.fire('transition');
     });
 
   },
 
   cancel: function() {
-    if(!this.emitter.hasEvent('afterTransitionNewChild')) {
+    if(!this.emitter.hasEvent('transitionNewChild:after')) {
 
       // the goal of a transition is to get the old child out and the new child in,
       // we make sure we've done that.
@@ -340,7 +340,7 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
 
   // teardown() the child if it hasn't already.
   teardownOldChild: function() {
-    if(!this.oldChild.emitter.hasEvent('beforeTeardown')) {
+    if(!this.oldChild.emitter.hasEvent('teardown:before')) {
       this.oldChild.teardown();
     }
   },
@@ -351,19 +351,19 @@ pie.inOutViewTransition = pie.abstractViewTransition.extend('inOutViewTransition
   },
 
   ensureNewChildPrepared: function(cb) {
-    this.newChild.emitter.once('afterRender', cb, {immediate: true});
+    this.newChild.emitter.once('render:after', cb, {immediate: true});
   },
 
   // make sure we're rendered, then begin the ui transition in.
   // when complete, invoke the callback.
   transitionNewChild: function() {
-    this.observeTransitionEnd(this.newChild.el, true, 'afterTransitionNewChild');
+    this.observeTransitionEnd(this.newChild.el, true, 'transitionNewChild:after');
   },
 
   // start the transition out. when complete, invoke the callback.
   transitionOldChild: function() {
-    if(!this.oldChild.el.parentNode) this.emitter.fire('afterTransitionOldChild');
-    else this.observeTransitionEnd(this.oldChild.el, false, 'afterTransitionOldChild');
+    if(!this.oldChild.el.parentNode) this.emitter.fire('transitionOldChild:after');
+    else this.observeTransitionEnd(this.oldChild.el, false, 'transitionOldChild:after');
   },
 
   // ensure the browser has redrawn and locations are up to date.

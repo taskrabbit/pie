@@ -66,19 +66,18 @@ describe("pie.model", function() {
     it('should set all existing values to undefined, removing them from data', function() {
       this.model.sets({foo: 'bar', baz: 'bash', qux: 'lux'});
       var k = Object.keys(this.model.data).sort();
-      expect(k).toEqual(['_version', 'baz', 'foo', 'qux']);
+      expect(k).toEqual(['__version', 'baz', 'foo', 'qux']);
 
       this.model.reset();
       k = Object.keys(this.model.data).sort();
-      expect(k).toEqual(['_version']);
+      expect(k).toEqual(['__version']);
     });
 
     it("should trigger an observer for the reset", function(done) {
       this.model.sets({foo: 'bar', baz: 'bash'});
 
       this.model.observe(function(changes){
-        expect(changes.length).toEqual(3);
-        expect(changes.hasAll('foo', 'baz', '_version')).toEqual(true);
+        expect(changes.length).toEqual(0);
         done();
       });
 
@@ -98,7 +97,8 @@ describe("pie.model", function() {
         expect(changes.get('foo')).toEqual({
           'type' : 'add',
           'name' : 'foo',
-          'value' : 'bar'
+          'value' : 'bar',
+          'object' : this.model
         });
 
 
@@ -134,7 +134,8 @@ describe("pie.model", function() {
           'type' : 'update',
           'name' : 'foo',
           'oldValue' : 'bar',
-          'value' : 'bar'
+          'value' : 'bar',
+          'object' : this.model
         });
 
         done();
@@ -169,6 +170,83 @@ describe("pie.model", function() {
       expect(observer.calls.count()).toEqual(1);
     });
 
+    it("should only create change records for keys that are under observation", function() {
+      var shouldSeeVersion = false,
+      testCount = 0;
+
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(1 + (shouldSeeVersion ? 1 : 0));
+        expect(changeSet.has('foo')).toEqual(true);
+        expect(changeSet.has('__version')).toEqual(shouldSeeVersion);
+        testCount += 1;
+      };
+
+      this.model.observe(observer, 'foo');
+      this.model.set('foo', 'bar');
+
+      shouldSeeVersion = true;
+
+      this.model.observe(observer, '__version');
+      this.model.set('foo', 'baz');
+
+      expect(testCount).toEqual(2);
+    });
+
+    it("should create change records for parents if the a parent path is being observed", function(done) {
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(1);
+        expect(changeSet.has('foo.bar')).toEqual(false);
+        done();
+      };
+      this.model.observe(observer, 'foo');
+      this.model.set('foo.bar', 'baz');
+    });
+
+    it("should not create change records for subpaths when they are not observed", function(done) {
+      var observer = function(changeSet) {
+        expect(changeSet.length).toEqual(1);
+        expect(changeSet.has('foo.bar.baz')).toEqual(false);
+        expect(changeSet.has('foo.bar')).toEqual(true);
+        done();
+      }
+
+      this.model.observe(observer, 'foo.bar');
+      this.model.set('foo.bar', {baz: 'qux'});
+    });
+
+    it("should send change records to ~ subscribers even if there are no changeRecords recorded", function(done) {
+      var observer = function(changeSet) {
+        expect(changeSet.length).toEqual(0);
+        done();
+      };
+
+      this.model.observe(observer);
+      this.model.set('foo', 'bar', {skipObservers: true});
+      expect(this.model.changeRecords.length).toEqual(0)
+      this.model.deliverChangeRecords();
+    });
+
+    it("should not send change records to anyone if no actual changes have been made", function() {
+      var observer = jasmine.createSpy();
+      this.model.set('foo', 'bar');
+      this.model.observe(observer);
+      this.model.set('foo', 'bar');
+      expect(this.model.changeRecords.length).toEqual(0)
+      expect(observer).not.toHaveBeenCalled();
+    });
+
+    it("should create change records for subpaths if the a parent path is being glob observed", function(done) {
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(2);
+        expect(changeSet.has('foo.bar.baz')).toEqual(true);
+        expect(changeSet.has('foo.bar')).toEqual(true);
+        expect(changeSet.has('foo')).toEqual(false);
+        done();
+      };
+      this.model.observe(observer, 'foo.*');
+      this.model.set('foo.bar', {baz: true});
+    });
+
 
     it("should send an array of changes, not triggering multiple times", function(done) {
       var observer = jasmine.createSpy('observer');
@@ -177,12 +255,13 @@ describe("pie.model", function() {
         var change = changes.get('foo');
 
         expect(changes.length).toEqual(2);
-        expect(changes.get('_version')).toBeTruthy();
+        expect(changes.get('__version')).toBeTruthy();
 
         expect(change).toEqual({
           type: 'add',
           name: 'foo',
-          value: 'baz'
+          value: 'baz',
+          object: this.model
         });
 
         expect(observer.calls.count()).toEqual(1);
@@ -191,7 +270,7 @@ describe("pie.model", function() {
 
       }.bind(this));
 
-      this.model.observe(observer, 'foo');
+      this.model.observe(observer, 'foo', '__version');
 
       this.model.set('foo', 'bar', {skipObservers: true});
       this.model.set('foo', 'baz');
@@ -213,7 +292,7 @@ describe("pie.model", function() {
         done();
       };
 
-      this.model.observe(observer);
+      this.model.observe(observer, '*');
 
       this.model.set('foo', 'bar', {skipObservers: true});
       this.model.set('too', 'bar');
@@ -291,14 +370,14 @@ describe("pie.model", function() {
       };
 
       this.model.set('foo', {bar: 'baz'});
-      this.model.observe(observe);
+      this.model.observe(observe, '*');
       this.model.set('foo', {too: 'far'});
     });
 
     it("should include changes to the computed properties for observers registered before the properties", function(done) {
       var observer = jasmine.createSpy('observer'), i = 0;
 
-      this.model.observe(observer, 'first_name');
+      this.model.observe(observer, 'first_name', 'full_name');
 
       this.model.compute('full_name', function(){
         return this.get('first_name') + (++i);
@@ -428,13 +507,15 @@ describe("pie.model", function() {
             type: 'update',
             name: 'full_name',
             oldValue: '',
-            value: 'Doug Wilson'
+            value: 'Doug Wilson',
+            object: this.foo
           });
 
           expect(first).toEqual({
             type: 'add',
             name: 'first_name',
-            value: 'Doug'
+            value: 'Doug',
+            object: this.foo
           });
 
         } else if(portion === 2) {
@@ -442,14 +523,16 @@ describe("pie.model", function() {
             type: 'update',
             name: 'full_name',
             oldValue: 'Doug Wilson',
-            value: 'William Wilson'
+            value: 'William Wilson',
+            object: this.foo
           });
         } else {
           expect(full).toEqual({
             type: 'update',
             name: 'full_name',
             oldValue: 'William Wilson',
-            value: 'William Tell'
+            value: 'William Tell',
+            object: this.foo
           });
 
           done();
@@ -475,25 +558,29 @@ describe("pie.model", function() {
 
   describe("versioning", function() {
 
-    it("should increment the _version whenever change records are delivered", function() {
-      var v = this.model.get('_version');
+    it("should increment the __version whenever change records are delivered", function() {
+      this.model.observe(jasmine.createSpy(), '__version');
+
+      var v = this.model.get('__version');
       expect(v).toEqual(1);
 
       this.model.set('foo', 'bar');
-      v = this.model.get('_version');
+      v = this.model.get('__version');
       expect(v).toEqual(2);
     });
 
     it("should not increment until change records are delivered", function() {
-      var v = this.model.get('_version');
+      this.model.observe(jasmine.createSpy(), '__version');
+
+      var v = this.model.get('__version');
       expect(v).toEqual(1);
 
       this.model.set('foo', 'bar', {skipObservers: true});
-      v = this.model.get('_version');
+      v = this.model.get('__version');
       expect(v).toEqual(1);
 
       this.model.set('foo', 'baz');
-      v = this.model.get('_version');
+      v = this.model.get('__version');
       expect(v).toEqual(2);
     });
 

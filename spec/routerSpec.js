@@ -22,8 +22,8 @@ describe("pie.router", function(){
   it('should allow routes to be added', function(){
     var r = this.router;
 
-    expect(r.children[0].options.common).toEqual('foo');
-    expect(pie.array.last(r.children).options.common).toEqual('foo');
+    expect(r.children[0].get('config.common')).toEqual('foo');
+    expect(pie.array.last(r.children).get('config.common')).toEqual('foo');
 
     expect(r.getChild('api.route').get('pathTemplate')).toEqual('/api/a.json');
     expect(r.getChild('aRoute').get('pathTemplate')).toEqual('/t/a');
@@ -49,63 +49,40 @@ describe("pie.router", function(){
 
     p = r.path('aRoute');
     expect(p).toEqual('/t/a');
-
-    p = r.path('aSpecificRoute', {id: 17, s: 1}, true);
-    expect(p).toEqual('/t/17/a');
   });
 
   it('should be able to properly determine routes', function(){
     var r = this.router, o;
 
-    o = r.parseUrl('/t/a');
-    expect(o.view).toEqual('a');
+    o = r.findRoute('/t/a');
+    expect(o.get('config.view')).toEqual('a');
 
-    o = r.parseUrl('t/a');
-    expect(o.view).toEqual('a');
+    o = r.findRoute('t/a');
+    expect(o).toEqual(undefined);
 
-    o = r.parseUrl('/t/a?q=1');
-    expect(o.view).toEqual('a');
-    expect(o.query.q).toEqual('1');
-    expect(o.data.q).toEqual('1');
-    expect(o.path).toEqual('/t/a');
-    expect(o.fullPath).toEqual('/t/a?q=1');
+    o = r.findRoute('/t/a?q=1');
+    expect(o).toEqual(undefined);
 
-    o = r.parseUrl('/t/30/a');
-    expect(o.view).toEqual('a');
-    expect(o.interpolations.id).toEqual('30');
+    o = r.findRoute('/t/30/a');
+    expect(o.get('config.view')).toEqual('a');
+    expect(o.interpolations('/t/30/a').id).toEqual('30');
 
-    o = r.parseUrl('/t/unique/b');
-    expect(o.view).toEqual('b');
-    expect(o.name).toEqual('bUniqueRoute');
+    o = r.findRoute('/t/unique/b');
+    expect(o.get('config.view')).toEqual('b');
+    expect(o.get('name')).toEqual('bUniqueRoute');
 
-    o = r.parseUrl('/t/things/b');
-    expect(o.view).toEqual('b');
-    expect(o.name).toEqual('bSpecificRoute');
-    expect(o.interpolations.id).toEqual('things');
-    expect(o.data.id).toEqual('things');
+    o = r.findRoute('/t/things/b');
+    expect(o.get('config.view')).toEqual('b');
+    expect(o.get('name')).toEqual('bSpecificRoute');
 
-    o = r.parseUrl('/t/things/b?q=1');
-    expect(o.data.id).toEqual('things');
-    expect(o.data.q).toEqual('1');
+    o = r.findRoute('/m/thing');
+    expect(o.get('config.view')).toEqual('m');
 
-    o = r.parseUrl('/t/30/b?q=1&foo=true', true);
-    expect(o.data.id).toEqual(30);
-    expect(o.data.q).toEqual(1);
-    expect(o.data.foo).toEqual(true);
+    o = r.findRoute('/m/thing/foo');
+    expect(o.get('config.view')).toEqual('m');
 
-    o = r.parseUrl('/m/thing');
-    expect(o.view).toEqual('m');
-    expect(o.data.path).toEqual('thing');
-
-    o = r.parseUrl('/m/thing/foo?bar=true', true);
-    expect(o.view).toEqual('m');
-    expect(o.data.path).toEqual('thing/foo');
-    expect(o.data.bar).toEqual(true);
-
-    o = r.parseUrl('/unrecognized/path');
-    expect(o.view).toEqual(undefined);
-    expect(o.path).toEqual('/unrecognized/path');
-    expect(o.fullPath).toEqual('/unrecognized/path');
+    o = r.findRoute('/unrecognized/path');
+    expect(o).toEqual(undefined);
   });
 
   it("should correctly sort the routes", function() {

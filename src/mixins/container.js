@@ -6,16 +6,17 @@ pie.mixins.container = {
     if(this._super) this._super.apply(this, arguments);
   },
 
-  addChild: function(name, child) {
-    var idx;
-
-    this.children.push(child);
-    idx = this.children.length - 1;
+  addChild: function(name, child, idx) {
+    var append = idx == null;
+    idx = append ? this.children.length : idx;
+    this.children.splice(idx, 0, child);
 
     this.childNames[name] = idx;
     child._indexWithinParent = idx;
     child._nameWithinParent = name;
     child.parent = this;
+
+    if(!append) this.sortChildren();
 
     if(pie.object.has(child, 'addedToParent', true)) child.addedToParent.call(child);
 
@@ -85,16 +86,13 @@ pie.mixins.container = {
       i = child._indexWithinParent;
       this.children.splice(i, 1);
 
-      for(;i < this.children.length;i++) {
-        this.children[i]._indexWithinParent = i;
-        this.childNames[this.children[i]._nameWithinParent] = i;
-      }
-
       // clean up
       delete this.childNames[child._nameWithinParent];
       delete child._indexWithinParent;
       delete child._nameWithinParent;
       delete child.parent;
+
+      this.sortChildren();
 
       if(pie.object.has(child, 'removedFromParent', true)) child.removedFromParent.call(child, this);
     }
@@ -113,7 +111,7 @@ pie.mixins.container = {
   },
 
   sortChildren: function(fn) {
-    this.children.sort(fn);
+    if(fn) this.children.sort(fn);
     this.children.forEach(function(c, i) {
       c._indexWithinParent = i;
       this.childNames[c._nameWithinParent] = i;
@@ -130,7 +128,7 @@ pie.mixins.container = {
     var str = "\n", nextIndent = indent + (indent ? 4 : 1);
     str += pad((indent ? '|- ' : '') + (this._nameWithinParent || this._indexWithinParent || this.__className) + ' (' + (this.__className || pie.uid(this)) + ')', indent);
 
-    this.children.forEach(function(child) {
+    this.children.slice(0, 10).forEach(function(child) {
       str += "\n" + pad('|', nextIndent);
       str += child.__tree(nextIndent);
     });

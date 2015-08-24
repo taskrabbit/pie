@@ -7,22 +7,15 @@ pie.notifier = pie.base.extend('notifier', {
   init: function(app, options) {
     this.options = options || {};
     this.app = app || this.options.app || pie.appInstance;
-    this.notifications = pie.list.create([]);
+    this.notifications = pie.list.create([], {cast: true});
 
     this._super();
   },
 
   // remove all alerts, potentially filtering by the type of alert.
   clear: function(type) {
-    if(type) {
-      this.notifications.forEach(function(n) {
-        this.remove(n.id);
-      }.bind(this));
-    } else {
-      while(this.notifications.length()) {
-        this.remove(this.notifications.get(0).id);
-      }
-    }
+    var filter = type ? function(m){ return m.test('type', type); } : undefined;
+    this.notifications.removeAll(filter);
   },
 
   // ** pie.notifier.notify **
@@ -39,17 +32,15 @@ pie.notifier = pie.base.extend('notifier', {
     messages = messages.map(function(m){ return this.app.i18n.attempt(m); }.bind(this));
 
     var msg = {
-      id: pie.unique(),
       messages: messages,
       type: type
     };
 
+    msg.id = pie.uid(msg);
     this.notifications.push(msg);
 
     if(autoRemove) {
-      setTimeout(function(){
-        this.remove(msg.id);
-      }.bind(this), autoRemove);
+      setTimeout(function(){ this.remove(msg.id); }.bind(this), autoRemove);
     }
 
   },
@@ -61,12 +52,7 @@ pie.notifier = pie.base.extend('notifier', {
   },
 
   remove: function(msgId) {
-    var msgIdx = pie.array.indexOf(this.notifications.get('items'), function(m) {
-      return m.id === msgId;
-    });
-
-    if(~msgIdx) {
-      this.notifications.remove(msgIdx);
-    }
+    var idx = pie.array.indexOf(this.notifications.get('items'), function(n){ return n.get('id') == msgId; });
+    if(~idx) this.notifications.remove(idx);
   }
 });

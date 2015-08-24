@@ -124,6 +124,10 @@ pie.string.endsWith = function(str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;
 };
 
+pie.string.startsWith = function(str, prefix) {
+  return str.indexOf(prefix) === 0;
+};
+
 // designed to be used with the "%{expression}" placeholders
 pie.string.expand = function(str, data, raiseOnMiss) {
   data = data || {};
@@ -143,6 +147,20 @@ pie.string.lowerize = function(str) {
   return str.charAt(0).toLowerCase() + str.slice(1);
 };
 
+pie.string.matches = function(str, regex) {
+  var flags = "g";
+  if(regex.ignoreCase) flags += "i";
+  if(regex.multiline) flags += "m";
+
+  regex = new RegExp(regex.source, flags);
+
+  var matches = [], match = regex.exec(str);
+  while (match != null) {
+    matches.push(match[1]);
+    match = regex.exec(str);
+  }
+  return matches;
+};
 
 pie.string.modularize = function(str) {
   return str.replace(/([^_])_([^_])/g, function(match, a, b){ return a + b.toUpperCase(); });

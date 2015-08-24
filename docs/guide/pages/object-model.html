@@ -3,8 +3,19 @@
 [% var possess = pie.string.change(project, 'capitalize', 'possessive'); %]
 
 <div class="copy">
+
   <h1>The Object Model</h1>
-  <p>If you've used Ember, React, Base2, Prototype, etc, [%= possess %] object model should feel familiar. "Classes" are simply ordered collections of mixins. There are no prototypes. You never use the <em>new</em> keyword.</p>
+
+  <p>If you've used Ember, Base2, Backbone, Prototype, etc, [%= possess %] object model should feel familiar. "Classes" are simply ordered collections of mixins. There are no prototypes. <em>You never use the new keyword.</em></p>
+
+  <p>This may seem weird to start, but there's a lot of benefit from doing it this way.</p>
+
+  <ol>
+    <li>Everything is a mixin. Every class definition you create can mix in to another class, override previous definitions, etc.</li>
+    <li>You aren't tied to inheritance chains.</li>
+    <li>Your instances understand what class / mixins they include, meaning they can spawn other instances without looking at their prototype.</li>
+    <li>You get _super functionality since you are able to observe the construction of objects.</li>
+  </ol>
 
   <h3>Inheritance</h3>
 
@@ -14,105 +25,23 @@
 
   <p>See, easy as... most libraries. Let's try something a little more interesting now:</p>
 
-  <code class="gist">
-  User = pie.model.extend('User', {
-    init: function(data, options) {
-      this._super(data, options);
+  [%= h.gist('classWithMixin.js') %]
 
-      this.validates({
-        'firstName' : {presence: true},
-        'lastName'  : {presence: true},
-        'email'     : {email: true}
-      });
+  <p>So what's happening here? First, we're creating a subclass of [%= ns %].model by using <em>[%= ns %].model.extend</em>. Assuming the class is an ancestor of [%= ns %].base, you're able to subclass via the <em>extend</em> function. So, if I wanted to inherit from the User class, I would simply use <em>User.extend(...)</em>. The first argument provided to extend() is an optional string representing the name of the class. By providing this unique string it makes it much easier to debug. If supplied, it will also be provided to both the class and instances of the class as the <em>__className</em> attribute. The next N arguments are the extensions to the class' schema.</p>
 
-      this.compute('fullName', 'firstName', 'lastName');
-    },
+  <p>As mentioned before, all alterations to a class are simply mixins. So the class "definition" itself is a basic object which is added to the collection of mixins represented by the class.</p>
 
-    fullName: function() {
-      return pie.array.compact([this.get('firstName'), this.get('lastName')], true]).join(' ');
-    }
+  <h3>Mixins and _super</h3>
 
-  }, pie.mixins.validatable);
-  </code>
+  <p>The mixins provided to a class either via <em>extend()</em> or <em>reopen()</em> are added to the existing schema. When a new instance is instantiated, redefined functions are wrapped and provided with a <em>this._super</em> reference. <em>this._super</em> is simply a reference to the previously defined function. In the example above, the <em>lib.mixins.validatable</em> mixin can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on.</p>
 
-  <p>Ignoring all the <em>[%= ns %].model</em> specifics, let's see what's happening here.</p>
-
-  <p>First, we're creating a subclass of [%= ns %].model by using <em>[%= ns %].model.extend</em>. Assuming the class is an ancestor of [%= ns %].base, you're able to subclass via the <em>extend</em> function. So, if I wanted to inherit from the User class, I would simply use <em>User.extend(...)</em>. The first argument provided to extend() is an optional string which is the name of the constructor. By providing this unique string it makes it much easier to debug in most browsers. If supplied, it will also be provided to both the class and instances of the class as the <em>__className</em> attribute. The next N arguments are the extensions to the class' schema.</p>
-
-  <h3>Extensions and _super</h3>
-
-  <p>The extensions provided to a class either via <em>extend()</em> or <em>reopen()</em> are added to the existing schema. When a new instance is instantiated, redefined functions are wrapped and provided with a <em>this._super</em> reference. <em>this._super</em> is simply a reference to the previously defined function. In the example above, the <em>lib.mixins.validatable</em> mixin can override the init function of the User class. In fact, the User's init function is overriding pie.model's and so on.</p>
-
-  <code class="gist">
-  var A = pie.base.extend({
-    init: function(){
-      console.log('A');
-      this._super();
-    }
-  });
-
-  var B = A.extend({
-    init: function() {
-      this._super();
-      console.log('B1');
-    }
-  }, {
-    init: function() {
-      console.log('B2');
-      this._super();
-    }
-  });
-
-  var C = B.extend({
-    init: function() {
-      console.log('C');
-      this._super();
-    }
-  });
-
-  new C();
-  //=>  "C"
-  //=>  "B2"
-  //=>  "A"
-  //=>  "B1"
-  </code>
+  [%= h.gist('_super.js') %]
 
   <h3>_super Gotchas</h3>
 
   <p>If you invoke another function belonging to your object which accepts a callback, you cannot assume this._super will be present within the callback. For example:</p>
 
-  <code class="gist">
-  // This WILL NOT work.
-  pie.activeView.extend('AjaxView', {
-
-    setup: function() {
-      this.loadModel(function() {
-        this._super();
-      }.bind(this));
-    },
-
-    loadModel: function(cb) {
-      app.ajax.get(...).success(cb);
-    },
-  });
-
-  // This WILL work
-  pie.activeView.extend('AjaxView', {
-
-    setup: function() {
-      // grab a local reference to _super.
-      var sup = this._super.bind(this);
-      this.loadModel(function() {
-        // use the local reference instead of this._super
-        sup();
-      });
-    },
-
-    loadModel: function(cb) {
-      app.ajax.get(...).success(cb);
-    },
-  });
-  </code>
+  [%= h.gist('_superGotcha.js') %]
 
   <h3>Reopening</h3>
 

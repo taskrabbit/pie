@@ -55,7 +55,7 @@ describe("pie performance", function() {
 
     it("it should perform better than EVERYONE", function(done) {
 
-      if(!app.navigator.get('query.bm')) {
+      if(window.location.search.indexOf('bm=1') < 0) {
         pending();
         return done();
       }
