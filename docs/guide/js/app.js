@@ -15,14 +15,14 @@ lib.views.layout = pie.activeView.extend('layout', {
     this.gist = pie.model.create();
 
     this.hasChild({
-      childName: 'nav',
-      target: '.js-nav',
+      name: 'nav',
+      sel: '.js-nav',
       factory: function(){ return lib.views.nav.create(); }
     });
 
     var pageManager = this.hasChild({
-      childName: 'page',
-      target: '.js-page',
+      name: 'page',
+      sel: '.js-page',
       factory: function(){ return lib.views.page.create(this.gist); }.bind(this)
     });
 
