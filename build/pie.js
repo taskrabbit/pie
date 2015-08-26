@@ -3651,6 +3651,8 @@ pie.app = pie.base.extend('app', {
     // If we're going nowhere, somewhere else, or to an anchor on the page, let the browser take over
     if(!href || /^(#|[a-z]+:\/\/)/.test(href)) return;
 
+    if(this.router && !this.router.hasRoot(href)) return;
+
     e.preventDefault();
     this.go(href, !!e.delegateTarget.getAttribute('data-replace-state'));
   },
@@ -8049,6 +8051,10 @@ pie.router = pie.model.extend('router', {
       c = c || a.get('pathTemplate').localeCompare(b.get('pathTemplate'));
       return c;
     });
+  },
+
+  hasRoot: function(path) {
+    return this.get('rootRegex').test(path);
   },
 
   stripRoot: function(path) {

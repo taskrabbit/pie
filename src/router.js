@@ -171,6 +171,10 @@ pie.router = pie.model.extend('router', {
     });
   },
 
+  hasRoot: function(path) {
+    return this.get('rootRegex').test(path);
+  },
+
   stripRoot: function(path) {
     var match = path.match(this.get('rootRegex'));
     if(match) path = '/' + (match[1] || '');

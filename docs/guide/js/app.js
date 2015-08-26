@@ -146,6 +146,7 @@ app.i18n.load({
     'home' : 'Pie.js',
     'root' : 'Getting Started',
     'annotated' : "Annotated Source",
+    'suite' : 'Test Suite',
     'getting-started' : 'Getting Started',
     'models' : 'Models',
     'object-model' : 'Object Model',

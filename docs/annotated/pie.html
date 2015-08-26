@@ -5737,6 +5737,8 @@ app.go(<span class="hljs-string">'/things/:id'</span>, {id: <span class="hljs-nu
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span>(!href || <span class="hljs-regexp">/^(#|[a-z]+:\/\/)/</span>.test(href)) <span class="hljs-keyword">return</span>;
 
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.router &amp;&amp; !<span class="hljs-keyword">this</span>.router.hasRoot(href)) <span class="hljs-keyword">return</span>;
+
     e.preventDefault();
     <span class="hljs-keyword">this</span>.go(href, !!e.delegateTarget.getAttribute(<span class="hljs-string">'data-replace-state'</span>));
   },</pre></div></div>
@@ -11876,6 +11878,10 @@ nameOrPath = ‘view-b’</p>
       c = c || a.get(<span class="hljs-string">'pathTemplate'</span>).localeCompare(b.get(<span class="hljs-string">'pathTemplate'</span>));
       <span class="hljs-keyword">return</span> c;
     });
+  },
+
+  hasRoot: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.get(<span class="hljs-string">'rootRegex'</span>).test(path);
   },
 
   stripRoot: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> </span>{
