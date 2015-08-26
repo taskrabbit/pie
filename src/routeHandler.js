@@ -67,7 +67,7 @@ pie.routeHandler = pie.base.extend('routeHandler', {
 
     // Provide some events that can be observed around the transition process.
     this.emitter.fire('viewChanged:before');
-    this.emitter.fireAround('viewChanged:around', function() {
+    this.emitter.fireAround('viewChanged:around', function routeHandlerTransition() {
 
       this.emitter.fire('viewChanged');
 
@@ -93,15 +93,15 @@ pie.routeHandler = pie.base.extend('routeHandler', {
       }, this.options.viewTransitionOptions));
 
       // Provide a couple common events out of the app.
-      transition.emitter.on('removeOldChild:after', function() {
+      transition.emitter.on('removeOldChild:after', function routeHandlerAfterRemoveOldChildCallback() {
         this.emitter.fire('oldViewRemoved', current);
       }.bind(this));
 
-      transition.emitter.on('transition:after', function() {
+      transition.emitter.on('transition:after', function routeHandlerAfterTransitionCallback() {
         this.emitter.fire('newViewLoaded', child);
       }.bind(this));
 
-      transition.transition(function(){
+      transition.transition(function routeHandlerAfterTransition(){
         // The instance is now our 'currentView'
         this.emitter.fire('viewChanged:after');
       }.bind(this));

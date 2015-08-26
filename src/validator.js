@@ -99,7 +99,7 @@ pie.validator = pie.base.extend('validator', {
   ccNumber: (function(){
     /* http://rosettacode.org/wiki/Luhn_test_of_credit_card_numbers#JavaScript */
     /* for checking credit card validity */
-    var luhnCheck = function(a) {
+    function luhnCheck(a) {
       var b,c,d,e;
       for(d = +a[b = a.length-1], e=0; b--;)
         c = +a[b], d += ++e % 2 ? 2 * c % 10 + (c > 4) : c;
@@ -107,7 +107,7 @@ pie.validator = pie.base.extend('validator', {
     };
 
     return function(value, options){
-      return this.withStandardChecks(value, options, function(){
+      return this.withStandardChecks(value, options, function ccNumberValidationCallback(){
 
         // don't get rid of letters because we don't want a mix of letters and numbers passing through
         var sanitized = String(value).replace(/[^a-zA-Z0-9]/g, '');
@@ -122,7 +122,7 @@ pie.validator = pie.base.extend('validator', {
   //
   // Ensures the provided value is a valid month (1-12).
   ccExpirationMonth: function(value, options) {
-    return this.withStandardChecks(value, options, function() {
+    return this.withStandardChecks(value, options, function ccExpirationMonthValidationCallback() {
       return this.integer(value, {gte: 1, lte: 12});
     }.bind(this));
   },
@@ -133,7 +133,7 @@ pie.validator = pie.base.extend('validator', {
   // Ensures the provided value is a valid credit card year.
   // It assumes the minimum is this year, and the maximum is 20 years from now.
   ccExpirationYear: function(value, options) {
-    return this.withStandardChecks(value, options, function() {
+    return this.withStandardChecks(value, options, function ccExpirationYearValidationCallback() {
       var now = new Date();
       return this.integer(value, {gte: now.getFullYear(), lte: now.getFullYear() + 20});
     }.bind(this));
@@ -145,7 +145,7 @@ pie.validator = pie.base.extend('validator', {
   // Ensures a well-formed cvv value.
   // It must be a number between 3 and 4 characters long.
   ccSecurity: function(value, options) {
-    return this.withStandardChecks(value, options, function() {
+    return this.withStandardChecks(value, options, function ccSecurityValidationCallback() {
       return this.number(value) &&
               this.length(value, {gte: 3, lte: 4});
     }.bind(this));
@@ -172,12 +172,12 @@ pie.validator = pie.base.extend('validator', {
   // ```
   chosen: (function(){
 
-    var valueCheck = function(value){
+    function valueCheck(value){
       return value != null && value !== '';
     };
 
-    return function(value, options){
-      return this.withStandardChecks(value, options, function(){
+    return function chosen(value, options){
+      return this.withStandardChecks(value, options, function chosenValidationCallback(){
         if(Array.isArray(value)) {
           return !!value.filter(valueCheck).length;
         }
@@ -203,7 +203,7 @@ pie.validator = pie.base.extend('validator', {
   // ```
   date: function(value, options) {
     options = options || {};
-    return this.withStandardChecks(value, options, function() {
+    return this.withStandardChecks(value, options, function dateValidationCallback() {
       var split = value.split('-'), y = split[0], m = split[1], d = split[2], iso, date;
 
       if(!y || !m || !d) return false;
@@ -216,7 +216,7 @@ pie.validator = pie.base.extend('validator', {
       if(date.getDate() !== parseInt(d, 10)) return false;
 
       if(!options.sanitized) {
-        Object.keys(options).forEach(function(k){
+        Object.keys(options).forEach(function dateValidatorSanitizer(k){
           iso = options[k];
           iso = this.app.i18n.l(iso, 'isoDate');
           options[k] = iso;
@@ -245,7 +245,7 @@ pie.validator = pie.base.extend('validator', {
   // ```
   email: function(value, options) {
     options = pie.object.merge({allowBlank: false}, options || {});
-    return this.withStandardChecks(value, options, function(){
+    return this.withStandardChecks(value, options, function emailValidationCallback() {
       return (/^.+@.+\..+$/).test(value);
     });
   },
@@ -263,7 +263,7 @@ pie.validator = pie.base.extend('validator', {
   // //=> false
   // ```
   fn: function(value, options) {
-    return this.withStandardChecks(value, options, function(){
+    return this.withStandardChecks(value, options, function fnValidationCallback(){
       return options.fn.call(null, value, options);
     });
   },
@@ -286,7 +286,7 @@ pie.validator = pie.base.extend('validator', {
   // ```
   format: function(value, options) {
     options = options || {};
-    return this.withStandardChecks(value, options, function() {
+    return this.withStandardChecks(value, options, function formatValidationCallback() {
       var fmt = options.format || options['with'];
       fmt = this.options.formats[fmt] || fmt;
       return !!fmt.test(String(value));
@@ -317,7 +317,7 @@ pie.validator = pie.base.extend('validator', {
   // ```
   inclusion: function(value, options) {
     options = options || {};
-    return this.withStandardChecks(value, options, function() {
+    return this.withStandardChecks(value, options, function inclusionValidationCallback() {
       var inVal = pie.fn.valueFrom(options['in']);
       if(Array.isArray(inVal)) return !inVal.length || !!~inVal.indexOf(value);
       return inVal == null || inVal === value;
@@ -342,7 +342,7 @@ pie.validator = pie.base.extend('validator', {
   // //=> false
   // ```
   integer: function(value, options){
-    return  this.withStandardChecks(value, options, function(){
+    return  this.withStandardChecks(value, options, function integerValidationCallback(){
       return  this.number(value, options) &&
               parseInt(value, 10) === parseFloat(value, 10);
     }.bind(this));
@@ -374,7 +374,7 @@ pie.validator = pie.base.extend('validator', {
       options.gt = 0;
     }
 
-    return this.withStandardChecks(value, options, function(){
+    return this.withStandardChecks(value, options, function lengthValidationCallback(){
       var length = Array.isArray(value) ? value.length : String(value).trim().length;
       return this.number(length, options);
     }.bind(this));
@@ -401,7 +401,7 @@ pie.validator = pie.base.extend('validator', {
   number: function(value, options){
     options = options || {};
 
-    return this.withStandardChecks(value, options, function(){
+    return this.withStandardChecks(value, options, function numberValidationCallback(){
 
       value = String(value).trim();
       /* not using parseFloat because it accepts multiple decimals */
@@ -435,7 +435,7 @@ pie.validator = pie.base.extend('validator', {
   phone: function(value, options) {
     options = pie.object.merge({allowBlank: false}, options || {});
 
-    return this.withStandardChecks(value, options, function(){
+    return this.withStandardChecks(value, options, function phoneValidationCallback(){
       var clean = String(value).replace(/[^\+\d]+/g, '');
       return this.length(clean, {gte: 10});
     }.bind(this));
@@ -478,7 +478,7 @@ pie.validator = pie.base.extend('validator', {
   // //=> true
   // ```
   uniqueness: function(value, options) {
-    return this.withStandardChecks(value, options, function() {
+    return this.withStandardChecks(value, options, function uniquenessValidationCallback() {
 
       if(!options.within) return true;
       var within = pie.fn.valueFrom(options.within), i = 0, cnt = 0;

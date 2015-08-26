@@ -68,7 +68,7 @@ pie.view = pie.base.extend('view', {
   addToDom: function(target, prependInstead) {
     target = target || this.options.uiTarget;
     if(target !== this.el.parentNode) {
-      this.emitter.fireSequence('attach', function(){
+      this.emitter.fireSequence('attach', function viewAttach(){
         if(prependInstead === true && target.firstChild) target.insertBefore(this.el, target.firstChild);
         else if(prependInstead && prependInstead !== true) target.insertBefore(this.el, prependInstead);
         else target.appendChild(this.el);
@@ -108,7 +108,6 @@ pie.view = pie.base.extend('view', {
     return this.emitter.off(uid);
   },
 
-
   // **pie.view.eonce**
   //
   // Register an event once with the emitter.
@@ -122,11 +121,31 @@ pie.view = pie.base.extend('view', {
     this.emitter.waitUntil.apply(this.emitter, args);
   },
 
+  eprepend: function() {
+    var args = this._normalizedEmitterArgs(arguments, 1);
+    this.emitter.prepend.apply(this.emitter, args);
+  },
+
+  eprependonce: function() {
+    var args = this._normalizedEmitterArgs(arguments, 1);
+    this.emitter.prependOnce.apply(this.emitter, args);
+  },
+
   _normalizedEmitterArgs: function(args, fnStartIdx) {
     return pie.array.from(args).map(function(arg, i) {
       if(pie.object.isString(arg) && i >= fnStartIdx) return this[arg].bind(this);
       return arg;
     }.bind(this));
+  },
+
+  isInApp: function() {
+    var node = this.parent;
+    while(node) {
+      if(pie.object.isApp(node)) return true;
+      node = node.parent;
+    }
+
+    return false;
   },
 
   // **pie.view.eventNamespace**
@@ -162,16 +181,16 @@ pie.view = pie.base.extend('view', {
 
     events = events.split(' ');
 
-    fns.forEach(function(fn) {
+    fns.forEach(function viewOnIterator(fn) {
       fn = pie.object.isString(fn) ? this[fn].bind(this) : fn;
 
-      f2 = function(e){
+      f2 = function viewEventNamespaceVerifier(e){
         if(e.namespace === ns) {
           return fn.apply(this, arguments);
         }
       };
 
-      events.forEach(function(ev) {
+      events.forEach(function viewOnSubscriber(ev) {
         ev += "." + ns;
         pie.dom.on(el, ev, f2, sel);
       }.bind(this));
@@ -250,7 +269,7 @@ pie.view = pie.base.extend('view', {
   // with the same el.
   removeFromDom: function() {
     if(this.el.parentNode) {
-      this.emitter.fireSequence('detach', function() {
+      this.emitter.fireSequence('detach', function viewDetach() {
         this.el.parentNode.removeChild(this.el);
       }.bind(this));
     }
@@ -291,7 +310,7 @@ pie.view = pie.base.extend('view', {
   // and all children have teardown invoked.
   teardown: function() {
 
-    this.emitter.fireSequence('teardown', function() {
+    this.emitter.fireSequence('teardown', function viewTeardown() {
 
       this.removeFromDom();
 
@@ -311,7 +330,7 @@ pie.view = pie.base.extend('view', {
   //
   // Invokes teardown on each child that responds to it.
   teardownChildren: function() {
-    this.children.forEach(function(child) {
+    this.children.forEach(function viewChildrenTeardown(child) {
       if(pie.object.has(child, 'teardown', true)) child.teardown();
     });
   },

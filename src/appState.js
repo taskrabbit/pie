@@ -22,7 +22,7 @@ pie.appState = pie.model.extend('appState', {
     var pq = this.app.pathHelper.pathAndQuery(id);
     var changes = [{}, pq.query];
 
-    this.thingsThatCareAboutStateChanges().forEach(function(thing) {
+    this.thingsThatCareAboutStateChanges().forEach(function stateWillChangeIterator(thing) {
       changes.push(thing.stateWillChange(pq.path, pq.query));
     });
 

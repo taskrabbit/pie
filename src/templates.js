@@ -41,7 +41,7 @@ pie.templates = pie.model.extend('templates', {
       cb(name);
       return;
     } else if(src) {
-      this.load(name, {url: src}, function(){
+      this.load(name, {url: src}, function ensureTemplateCallback(){
         this.ensureTemplate(name, cb);
       }.bind(this));
     } else {
@@ -85,11 +85,11 @@ pie.templates = pie.model.extend('templates', {
 
     var req = this.app.ajax.ajax(ajaxOptions);
 
-    req.dataSuccess(function(content) {
+    req.dataSuccess(function templateLoadCallback(content) {
       this.registerTemplate(name, content);
-    }.bind(this)).error(function(){
+    }.bind(this)).error(function tmeplateLoadError(){
       throw new Error("[PIE] Template fetch error: " + name);
-    }).complete(function() {
+    }).complete(function templateLoadComplete() {
       cb();
     });
 
@@ -137,7 +137,7 @@ pie.templates = pie.model.extend('templates', {
   // </script>
   // ```
   renderAsync: function(name, data, cb) {
-    this.ensureTemplate(name, function() {
+    this.ensureTemplate(name, function renderAsyncCallback() {
       var content = this.render(name, data);
       cb(content);
     }.bind(this));

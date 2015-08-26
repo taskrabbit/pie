@@ -71,8 +71,8 @@ pie.listView = pie.activeView.extend('listView', (function(){
 
       this.eon('render:after', 'bootstrapItems');
 
-      this.eon('renderItems:before', function(){ this.setListLoadingStyle(true); }.bind(this));
-      this.eon('renderItems:after', function(){ this.setListLoadingStyle(false); }.bind(this));
+      this.eon('renderItems:before', function beforeRenderItems(){ this.setListLoadingStyle(true); }.bind(this));
+      this.eon('renderItems:after', function afterRenderItems(){ this.setListLoadingStyle(false); }.bind(this));
 
       this._super.apply(this, arguments);
     },
@@ -86,12 +86,12 @@ pie.listView = pie.activeView.extend('listView', (function(){
     },
 
     bootstrapItems: function(containerEl) {
-      this.emitter.fireSequence('renderItems', function() {
+      this.emitter.fireSequence('renderItems', function listViewBootstrapItems() {
         var uid, child, containerEl;
 
         containerEl = containerEl || this.listContainer();
 
-        this.list.forEach(function(item, i) {
+        this.list.forEach(function listViewBootstrapItem(item, i) {
           child = this.findChildByItem(item) || this.buildItemChild(item, i, containerEl);
           child.removeFromDom();
           child.addToDom(containerEl);
@@ -137,7 +137,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
     },
 
     manageListUpdates: function(changeSet) {
-      this.emitter.fireSequence('renderItems', function() {
+      this.emitter.fireSequence('renderItems', function listViewManageListUpdates() {
 
         var containerEl = this.listContainer();
 

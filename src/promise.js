@@ -12,7 +12,7 @@ pie.promise = pie.base.extend({
     this.ctxt     = undefined;
 
     if(resolver) {
-      setTimeout(function(){
+      setTimeout(function promiseResolverWrapper(){
         try {
           resolver(this.resolve.bind(this), this.reject.bind(this));
         } catch(ex) {
@@ -127,8 +127,8 @@ pie.promise.all = function(iteratable) {
   total = promises.length;
 
   if(total) {
-    promises.forEach(function(p, i) {
-      p.then(function(val) {
+    promises.forEach(function allPromiseIterator(p, i) {
+      p.then(function allPromiseCallback(val) {
         values[i] = val;
         cnt++;
         if(cnt === total) instance.resolve(values);

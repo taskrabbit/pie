@@ -29,7 +29,7 @@ pie.notifier = pie.base.extend('notifier', {
     autoRemove = this.getAutoRemoveTimeout(autoRemove);
 
     messages = pie.array.from(messages);
-    messages = messages.map(function(m){ return this.app.i18n.attempt(m); }.bind(this));
+    messages = messages.map(function notifyI18nAttempter(m){ return this.app.i18n.attempt(m); }.bind(this));
 
     var msg = {
       messages: messages,
@@ -40,7 +40,7 @@ pie.notifier = pie.base.extend('notifier', {
     this.notifications.push(msg);
 
     if(autoRemove) {
-      setTimeout(function(){ this.remove(msg.id); }.bind(this), autoRemove);
+      setTimeout(function autoRemoveCallback(){ this.remove(msg.id); }.bind(this), autoRemove);
     }
 
   },

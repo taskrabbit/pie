@@ -20,14 +20,14 @@ pie.fn.async = function(fns, cb, counterObserver) {
 
   var completeCount = fns.length,
   completed = 0,
-  counter = function() {
+  counter = function fnAsyncCounter() {
     if(counterObserver) counterObserver.apply(null, arguments);
     if(++completed === completeCount) {
       if(cb) cb();
     }
   };
 
-  fns.forEach(function(fn) { fn(counter); });
+  fns.forEach(function fnAsyncIterator(fn) { fn(counter); });
 };
 
 // **pie.fn.debounce**
@@ -154,7 +154,7 @@ pie.fn._easeInterval = function(each, o, complete) {
   dy,
   y,
   pid,
-  runner = function(){
+  runner = function easeIntervalRunner(){
     dy = fn(t);
     y = o.from + (dy * delta);
     each(y, t);
@@ -188,7 +188,7 @@ pie.fn._easeAnimation = function(each, o, complete) {
   delta = (o.to - o.from),
   dy,
   y,
-  runner = function(bigT){
+  runner = function easeAnimationRunner(bigT){
 
     if(!startT) {
       startT = bigT;

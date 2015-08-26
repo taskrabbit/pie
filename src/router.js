@@ -88,7 +88,7 @@ pie.router = pie.model.extend('router', {
 
     var path, config, route, existing;
 
-    pie.object.forEach(routes, function(k,r) {
+    pie.object.forEach(routes, function routerMapper(k,r) {
 
       if(pie.object.isObject(r)) {
         path = k;
@@ -163,7 +163,7 @@ pie.router = pie.model.extend('router', {
   sortRoutes: function() {
     var c;
 
-    this.sortChildren(function(a,b) {
+    this.sortChildren(function routerChildSorter(a,b) {
       c = b.get('weight') - a.get('weight');
       c = c || b.get('pathTemplate').length - a.get('pathTemplate').length;
       c = c || a.get('pathTemplate').localeCompare(b.get('pathTemplate'));

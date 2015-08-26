@@ -5,6 +5,8 @@
 // It observes browser and link navigation and changes the page's context automatically.
 pie.app = pie.base.extend('app', {
 
+  __pieRole: 'app',
+
   init: function(options) {
 
     /* `pie.base.create` handles the setting of an app, */
@@ -67,7 +69,7 @@ pie.app = pie.base.extend('app', {
 
     // The model that represents the current state of the app.
     this.state = pie.appState.create();
-    
+
     // `app.config` is a model used to manage configuration objects.
     this.config = classOption('config', pie.config);
 

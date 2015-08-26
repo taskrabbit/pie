@@ -216,7 +216,7 @@ pie.emitter = pie.model.extend('emitter', {
     this._reportTrigger(event, args);
 
     if(callbacks) {
-      callbacks.forEach(function(cb, i) {
+      callbacks.forEach(function emitterFireCallback(cb, i) {
         /* invoke the function for the callback */
         cb.fn.apply(null, args);
         /* if the function is `onceOnly`, clear it out */
@@ -247,7 +247,7 @@ pie.emitter = pie.model.extend('emitter', {
         around = event + ':around';
 
     this.fire(before);
-    this.fireAround(around, function() {
+    this.fireAround(around, function emitterFireAroundCallback() {
       if(fn) fn();
       this.fire(event);
       this.fire(after);

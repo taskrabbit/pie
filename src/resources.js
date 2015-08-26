@@ -126,7 +126,7 @@ pie.resources = pie.model.extend('resources', {
       /* Because of this, we don't need to invoke the onload */
       if(!options.callbackName) {
         var done = false;
-        script.onload = script.onreadystatechange = function(){
+        script.onload = script.onreadystatechange = function loadScriptCallback(){
           if(!done && (!this.readyState || this.readyState==='loaded' || this.readyState==='complete')) {
             done = true;
             resolve();
@@ -172,7 +172,7 @@ pie.resources = pie.model.extend('resources', {
 
     /* we generate a series of functions to be invoked by pie.fn.async */
     /* each function's responsibility is to invoke the provided callback when the resource is loaded */
-    promises = sources.map(function(options){
+    promises = sources.map(function resourceLoadPromiseGenerator(options){
 
       /* we could be dealing with an alias, so make sure to grab the real source */
       options = this.get('srcMap.' + options.src) || options;

@@ -188,7 +188,7 @@ pie.model = pie.base.extend('model', {
     var changeSet = this.changeRecords,
     emptyChangeSet = this.observedKeyCounts['~'] ? pie.object.merge([], pie.mixins.changeSet) : undefined,
     observers = pie.object.values(this.observations),
-    invoker = function(obj) {
+    invoker = function changeRecordDelivery(obj) {
       if(~obj.keys.indexOf('*')) obj.fn.call(null, changeSet);
       else if(changeSet.hasAny.apply(changeSet, obj.keys)) obj.fn.call(null, changeSet);
       else if(~obj.keys.indexOf('~')) obj.fn.call(null, emptyChangeSet);
@@ -272,7 +272,7 @@ pie.model = pie.base.extend('model', {
     var args = pie.array.change(arguments, 'from', 'flatten', 'compact'),
     o = {};
 
-    args.forEach(function(arg){
+    args.forEach(function getsIterator(arg){
       if(this.has(arg)) {
         pie.object.setPath(o, arg, this.get(arg));
       }
@@ -330,7 +330,7 @@ pie.model = pie.base.extend('model', {
 
     if(~key.indexOf('.')) {
       var paths = pie.string.pathSteps(key).slice(1);
-      if(pie.array.areAny(paths, function(p){ return !!this.observedKeyCounts[p + '.*']; }.bind(this))) return true;
+      if(pie.array.areAny(paths, function changeRecordApplicabilityChecker(p){ return !!this.observedKeyCounts[p + '.*']; }.bind(this))) return true;
     }
 
     return false;
@@ -386,12 +386,12 @@ pie.model = pie.base.extend('model', {
 
     if(!keys.length) keys = ['~'];
 
-    keys.forEach(function(k) {
+    keys.forEach(function observedKeyCountIncrementer(k) {
       cnt = this.observedKeyCounts[k];
       this.observedKeyCounts[k] = (cnt || 0) + 1;
     }.bind(this));
 
-    fns.forEach(function(fn){
+    fns.forEach(function observerStorer(fn){
 
       /* Setting the uid is needed because we'll want to manage unobservation effectively. */
       pie.uid(fn);
@@ -416,7 +416,7 @@ pie.model = pie.base.extend('model', {
   reset: function(options) {
     var keys = Object.keys(this.data), o = {};
 
-    keys.forEach(function(k){
+    keys.forEach(function resetIterator(k){
       if(k === '__version') return;
       o[k] = undefined;
     });
@@ -540,7 +540,7 @@ pie.model = pie.base.extend('model', {
 
     removed = pie.array.remove(removed, '__version');
 
-    removed.forEach(function(rm){
+    removed.forEach(function setDataRemover(rm){
       this.set(rm, undefined, rmOptions);
     }.bind(this));
 
@@ -556,7 +556,7 @@ pie.model = pie.base.extend('model', {
   // ```
   sets: function(obj, options) {
     var innerOpts = pie.object.merge({}, options, {skipObservers: true});
-    pie.object.forEach(obj, function(k,v) {
+    pie.object.forEach(obj, function setsIterator(k,v) {
       this.set(k, v, innerOpts);
     }.bind(this));
 
@@ -579,6 +579,13 @@ pie.model = pie.base.extend('model', {
     else if(owned == null) return false;
     else if (pie.object.isRegExp(value)) return value.test(String(owned));
     else return false;
+  },
+
+  tests: function(obj) {
+    for(var k in obj) {
+      if(!this.test(k, obj[k])) return false;
+    }
+    return true;
   },
 
   // ** pie.model.touch **
@@ -617,12 +624,12 @@ pie.model = pie.base.extend('model', {
     observation,
     cnt;
 
-    keys.forEach(function(k) {
+    keys.forEach(function observedKeyCountDecrementer(k) {
       cnt = this.observedKeyCounts[k];
       if(cnt) this.observedKeyCounts[k] = cnt - 1;
     }.bind(this));
 
-    fns.forEach(function(fn){
+    fns.forEach(function observerRemoverer(fn){
       pie.uid(fn);
 
       observation = this.observations[pie.uid(fn)];

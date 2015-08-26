@@ -153,7 +153,7 @@ pie.formView = pie.activeView.extend('formView', pie.mixins.bindings, {
   // By default, the data is prepared for submission via `prepareSubmissionData`
   // and sent to `performSubmit`.
   onValid: function() {
-    this.prepareSubmissionData().then(function(data) {
+    this.prepareSubmissionData().then(function onValidDataCallback(data) {
 
       this.performSubmit(data).then(
         this._onSuccess.bind(this),

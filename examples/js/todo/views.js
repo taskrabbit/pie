@@ -32,11 +32,11 @@ lib.views.layout = pie.activeView.extend('layout', {
   // Setup is called by our parent which, in this case, is the routeHandler.
   setup: function() {
 
-    // setupChild is a shortcut for dealing with children in the standard lifecycle
+    // hasChild is a shortcut for dealing with children in the standard lifecycle
     // of a view. It will handle creating a child initially, attaching it to the dom,
     // and even moving it after rerender. It's the job of the factory to return the
     // existing child if it exists.
-    this.setupChild({
+    this.hasChild({
       name: 'input',
       sel: '.js-input-container',
       factory: function(){
@@ -44,7 +44,7 @@ lib.views.layout = pie.activeView.extend('layout', {
       }.bind(this),
     });
 
-    this.setupChild({
+    this.hasChild({
       name: 'tasks',
       sel: '.js-list-container',
       factory: function(){

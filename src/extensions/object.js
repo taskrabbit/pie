@@ -203,6 +203,10 @@ pie.object.isPromise = function(obj) {
   return obj && obj.__pieRole === 'promise';
 };
 
+pie.object.isApp = function(obj) {
+  return obj && obj.__pieRole === 'app';
+};
+
 (function() {
   var regex = /^is(.+)/;
 

@@ -115,7 +115,7 @@ pie.list = pie.model.extend('list', {
   },
 
   sort: function(f, options) {
-    return this._trackMutations(options, function(){
+    return this._trackMutations(options, function listSort(){
 
       var items = this.get('items');
       items.sort(f);
@@ -155,7 +155,7 @@ pie.list = pie.model.extend('list', {
   // Insert `value` at the index specified by `key`.
   // Returns the list.
   insert: function(key, value, options) {
-    return this._trackMutations(options, function(){
+    return this._trackMutations(options, function listInsert(){
 
       value = this._cast(value);
 
@@ -184,7 +184,7 @@ pie.list = pie.model.extend('list', {
 
     if(!l) return;
 
-    this._trackMutations(options, function() {
+    this._trackMutations(options, function listPop() {
 
       value = this.data.items.pop();
       this.addChangeRecord('items*', 'item:delete', value, undefined, {index: this.data.items.length});
@@ -201,7 +201,7 @@ pie.list = pie.model.extend('list', {
   // Add an item to the end of the list.
   // Returns the list.
   push: function(value, options) {
-    return this._trackMutations(options, function(){
+    return this._trackMutations(options, function listPush(){
 
       value = this._cast(value);
 
@@ -219,7 +219,7 @@ pie.list = pie.model.extend('list', {
 
     var value;
 
-    this._trackMutations(options, function(){
+    this._trackMutations(options, function listRemove(){
       var idx = this._normalizedIndex(key);
 
       value = this.data.items[idx];
@@ -264,7 +264,7 @@ pie.list = pie.model.extend('list', {
 
     var innerOptions = pie.object.merge({}, options, {skipTrackMutations: true, skipObservers: true});
 
-    return this._trackMutations(options, function(){
+    return this._trackMutations(options, function listSet(){
 
       this.remove(key, innerOptions);
 
@@ -283,7 +283,7 @@ pie.list = pie.model.extend('list', {
       skipObservers: true
     });
 
-    return this._trackMutations(options, function(){
+    return this._trackMutations(options, function listSetItems(){
 
       while(this.length()) {
         this.pop(innerOptions);

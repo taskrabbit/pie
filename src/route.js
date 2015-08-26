@@ -148,7 +148,7 @@ pie.route = pie.model.extend('route', {
   path: function(query) {
     var usedKeys = [], path = this.get('pathTemplate');
 
-    path = path.replace(/([:\*])([a-zA-Z0-9_]+)/g, function(match, indicator, key){
+    path = path.replace(/([:\*])([a-zA-Z0-9_]+)/g, function routePathGenerator(match, indicator, key){
       usedKeys.push(key);
 
       if(indicator === '*') return query && pie.object.has(query, key) ? query[key] : '';
