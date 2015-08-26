@@ -247,6 +247,43 @@ describe("pie.model", function() {
       this.model.set('foo.bar', {baz: true});
     });
 
+    it("should create change records for subpaths if the a parent path is being glob observed and the parent is set", function(done) {
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(2);
+        expect(changeSet.has('foo.bar.baz')).toEqual(true);
+        expect(changeSet.has('foo.bar')).toEqual(true);
+        expect(changeSet.has('foo')).toEqual(false);
+        done();
+      };
+      this.model.observe(observer, 'foo.*');
+      this.model.set('foo', {bar: {baz: true}});
+    });
+
+    it("should create change records for subpaths if the a parent path is being glob observed and the parent is set to a different object", function(done) {
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(2);
+        expect(changeSet.has('foo.bar.baz')).toEqual(true);
+        expect(changeSet.has('foo.bar')).toEqual(true);
+        expect(changeSet.has('foo')).toEqual(false);
+        done();
+      };
+      this.model.set('foo', {bar: {baz: 0}});
+      this.model.observe(observer, 'foo.*');
+      this.model.set('foo', {bar: {baz: 1}});
+    });
+
+    it("should create change records for only the parent path if the subpaths are not observed", function(done) {
+      var observer = function(changeSet){
+        expect(changeSet.length).toEqual(1);
+        expect(changeSet.has('foo.bar.baz')).toEqual(false);
+        expect(changeSet.has('foo.bar')).toEqual(false);
+        expect(changeSet.has('foo')).toEqual(true);
+        done();
+      };
+      this.model.observe(observer, 'foo');
+      this.model.set('foo', {bar: {baz: true}});
+    });
+
 
     it("should send an array of changes, not triggering multiple times", function(done) {
       var observer = jasmine.createSpy('observer');
