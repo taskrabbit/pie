@@ -32,7 +32,7 @@ lib.views.layout = pie.activeView.extend('layout', {
     this.observe(this.app.state, 'hideNav', 'page');
     this.observe(this.app.state, pageManager, 'page');
 
-    this.eon('aroundSetup', 'fetchGist');
+    this.eon('setup:around', 'fetchGist');
 
     this._super();
   },
@@ -62,13 +62,13 @@ lib.views.nav = pie.activeView.extend('nav', {
 
   setup: function() {
     this.observe(this.app.state, 'highlightCurrentPage', 'page');
-    this.eon('afterRender', 'highlightCurrentPage');
+    this.eon('render:after', 'highlightCurrentPage');
 
     this._super();
   },
 
   highlightCurrentPage: function() {
-    var page = this.app.state.get('page');
+    var page = this.app.state.get('page') || 'getting-started';
 
     pie.dom.all(this.qsa('li'), 'classList.remove', 'is-active');
     var el = page && this.qs('li[data-page="' + page + '"]');
@@ -87,7 +87,7 @@ lib.views.page = pie.activeView.extend('page', {
   },
 
   setup: function() {
-    this.eon('afterRender', 'processGists');
+    this.eon('render:after', 'processGists');
 
     this._super();
   },
