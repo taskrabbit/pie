@@ -110,6 +110,52 @@ describe("pie.mixins.container", function() {
 
   });
 
+
+  describe('#getChild', function() {
+
+    beforeEach(function() {
+      this.container.init();
+    });
+
+    it("should allow a retrieval by name", function() {
+      var foo = {foo: true};
+      var bar = {bar: true};
+      this.container.addChild('foo', foo);
+      this.container.addChild('bar', bar);
+      expect(this.container.getChild('foo').foo).toEqual(true);
+      expect(this.container.getChild('bar').bar).toEqual(true);
+    });
+
+    it("should allow a retrieval by index", function() {
+      var foo = {foo: true};
+      var bar = {bar: true};
+      this.container.addChild('foo', foo);
+      this.container.addChild('bar', bar);
+      expect(this.container.getChild(0).foo).toEqual(true);
+      expect(this.container.getChild(1).bar).toEqual(true);
+      expect(this.container.getChild(2)).toEqual(undefined);
+    });
+
+    it("should allow a child to be named something an array responds to", function() {
+      var child = {theChild: true};
+      expect(this.container.getChild('sort')).toEqual(undefined);
+      this.container.addChild('sort', child);
+      expect(this.container.getChild('sort')).toEqual(child);
+    });
+
+    it("should allow a retrieving grandchildren", function() {
+      var child = pie.object.merge({theChild: true}, pie.mixins.container);
+      child.init();
+      var grandchild = {theGrandchild: true};
+
+      this.container.addChild('foo', child);
+      child.addChild('bar', grandchild);
+
+      expect(this.container.getChild('foo.bar')).toEqual(grandchild);
+    });
+
+  });
+
   describe('#bubble', function() {
 
     beforeEach(function() {

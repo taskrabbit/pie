@@ -40,7 +40,7 @@ pie.mixins.container = {
     if(recurse === undefined) recurse = true;
 
     // It's a path.
-    if(recurse && String(idx).match(/\./)) {
+    if(recurse && String(idx).indexOf('.') > 0) {
       var steps = idx.split('.'),
       child = this, step;
       while(step = steps.shift()) {
@@ -53,7 +53,7 @@ pie.mixins.container = {
       return child;
     }
 
-    return ~idx && this.children[idx] || undefined;
+    return ~idx && pie.object.isNumber(idx) && this.children[idx] || undefined;
   },
 
   bubble: function() {
