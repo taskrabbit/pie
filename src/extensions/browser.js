@@ -27,7 +27,7 @@ pie.browser.agent = function() {
   }
 
   match = /(ipad|ipod|iphone)/.exec( ua );
-  
+
   if (match && match[1]) {
     b.iDevice = match[1];
     b[b.iDevice] = true;
@@ -83,7 +83,7 @@ pie.browser.orientation = function() {
 };
 
 pie.browser.setCookie = function(key, value, options) {
-  options = pie.object.merge({}, options);
+  options = pie.object.merge({path: '/'}, options);
 
   /* jslint eqnull:true */
   if(value == null) options.expires = -1;
