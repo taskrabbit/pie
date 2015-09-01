@@ -4970,8 +4970,10 @@ pie.activeView = pie.view.extend('activeView', {
   setup: function() {
 
     if(this.options.autoRender && this.model) {
-      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '__version';
-      this.observe(this.model, 'render', field);
+      var args = pie.object.isBoolean(this.options.autoRender) ? ['~'] : pie.array.from(this.options.autoRender);
+      args.unshift('render');
+      args.unshift(this.model);
+      this.observe.apply(this, args);
     }
 
     if(this.options.renderOnSetup || this.options.renderOnSetup === undefined) {
@@ -5347,8 +5349,8 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       self._parseResponse(xhr);
 
       if(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
-        self._onDataSuccess(self.response);
         self._onSetModel(self.response);
+        self._onDataSuccess(self.response);
         self._onSuccess(self.response, xhr);
       } else {
         self._onError(xhr);
@@ -6452,7 +6454,6 @@ pie.i18n = pie.model.extend('i18n', (function(){
 
     _formattedShortDayName: function(d) {
       if(this._isToday(d)) return this.t('app.time.today');
-      if(this._isTomorrow(d)) return this.t('app.time.tomorrow');
       return this._shortDayName(d.getDay());
     },
 
@@ -9817,7 +9818,7 @@ pie.binding.integrations.fn = {
     return binding.options.options.fn(el, value, binding);
   }
 }
-  pie.VERSION = "0.1.20150826.1";
+  pie.VERSION = "0.1.20150831.1";
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define(function () {

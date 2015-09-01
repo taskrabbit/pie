@@ -153,7 +153,6 @@ pie.i18n = pie.model.extend('i18n', (function(){
 
     _formattedShortDayName: function(d) {
       if(this._isToday(d)) return this.t('app.time.today');
-      if(this._isTomorrow(d)) return this.t('app.time.tomorrow');
       return this._shortDayName(d.getDay());
     },
 

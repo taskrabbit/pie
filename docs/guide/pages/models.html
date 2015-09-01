@@ -10,7 +10,7 @@
 
   <h3>Model Basics</h3>
   <p>
-    Until ES2015's Object.observe standard is in place, model activity is managed through getters and setters. Each model contains a <em>data</em> object which the getters and setters manipulate. You can bootstrap a model with data by providing it to the constructor
+    Model activity is managed through getters and setters, resembling the native Object.observe functionality. Each model contains a <em>data</em> object which the getters and setters manipulate. You can bootstrap a model with data by providing it to the constructor
   </p>
 
   [%= h.gist("modelAccessors.js") %]
@@ -32,6 +32,43 @@
   <p>Attributes, paths, and subpaths of a model can be observed. Observers are invoked after a <em>set</em>, <em>sets</em>, or <em>merge</em> operation is conducted. When invoked, observers receive an array of change records. The array is enhanced with extra functionality as defined by the <em>changeSet</em> mixin.</p>
 
   [%= h.gist("modelObserver.js") %]
+
+  <h5>Special Observations</h5>
+  <p>Observations come in a couple different forms which, if used correctly, really helps performance.</p>
+  <ul>
+    <li>
+      <p>
+        <strong>Empty observation:&nbsp;</strong>
+        <code>model.observe(fn)</code>
+        <br />
+        <span>By omitting the 2nd+ argument(s) you're opting into an observer which doesn't care about change records. Change records will note be compiled for this observer.</span>
+      </p>
+    </li>
+    <li>
+      <p>
+        <strong>Full path observation:&nbsp;</strong>
+        <code>model.observe(fn, 'foo.bar')</code>
+        <br />
+        <span>By providing a specific path that matches a non-POJO value, you are telling the model to compile change records for only the path you've provided.</span>
+      </p>
+    </li>
+    <li>
+      <p>
+        <strong>Subpath observation:&nbsp;</strong>
+        <code>model.observe(fn, 'foo')</code>
+        <br />
+        <span>By providing a specific path that matches a POJO value, you are saying that you care about changes within the object, but don't care about the specifics alterations.</span>
+      </p>
+    </li>
+    <li>
+      <p>
+        <strong>Glob observations:&nbsp;</strong>
+        <code>model.observe(fn, 'foo.*')</code>
+        <br />
+        <span>By providing a glob, you're opting into receiving a change record for each alteration within an object. The number of callback invocations will be identical to the "Subpath observation" but the ChangeSet will be potentially much larger.</span>
+      </p>
+    </li>
+  </ul>
 
   <h5>ChangeSets</h5>
 

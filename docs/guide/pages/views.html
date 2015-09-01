@@ -6,36 +6,53 @@
 
   <h1>Views</h1>
 
-  <p>[%= project %] views exist to make DOM interaction simple. A view has an <em>el</em> by which all DOM manipulation, creation, and observation is conducted. Views are equipped with an <em>emitter</em> which is a simple pubsub interface. It's existence is vital to the usability of views in [%= project %]. Without it, you end up with random callbacks, assumptions about child implementations, and overall horrible architecture.</p>
+  <p><strong>If you're coming from Ember, React, or just native web component work &dash; think of views as components. I regret naming them views.</strong></p>
+  <p>[%= project %] views exist to simplify DOM interaction, construction, and manipulation. A view has an <em>el</em> by which all DOM manipulation, creation, and observation is conducted. Views are equipped with an <em>emitter</em> which is a simple pubsub interface. It's existence is vital to the usability of views in [%= project %]. Without it, you end up with random callbacks, assumptions about child implementations, and overall horrible architecture.</p>
 
   <p>[%= project %] comes equipped with a few different types of views:</p>
 
   <ul>
     <li>
-      <code>pie.view</code>
+      <code>[%= ns %].view</code>
       <span>- a simple DOM wrapper enabling management of events, observation of models, etc.</span>
     </li>
     <li>
-      <code>pie.activeView</code>
-      <span>- a pie.view with templating functionality. More on templating later.</span>
+      <code>[%= ns %].activeView</code>
+      <span>- a [%= ns %].view with templating functionality. More on templating later.</span>
     </li>
     <li>
-      <code>pie.formView</code>
-      <span>- a pie.activeView designed to standardize and enhance the behavior of forms.</span>
+      <code>[%= ns %].formView</code>
+      <span>- a [%= ns %].activeView designed to standardize and enhance the behavior of forms.</span>
     </li>
     <li>
-      <code>pie.listView</code>
-      <span>- a pie.activeView design to simply the management of lists.</span>
+      <code>[%= ns %].listView</code>
+      <span>- a [%= ns %].activeView design to simply the management of lists.</span>
     </li>
   </ul>
 
-  <h3>pie.view</h3>
-  
-  <p><code>pie.view</code> is the most rudimentary implementation of DOM management in [%= project %]. It's purpose is to provide a way to easily and efficiently query, observe, and update DOM.</p>
+  <h3>[%= ns %].view</h3>
+
+  <p><code>[%= ns %].view</code> is the most rudimentary implementation of DOM management in [%= project %]. It's purpose is to provide a way to easily and efficiently query, observe, and update DOM.</p>
 
   [%= h.gist("view.js") %]
 
-  <h3>pie.activeView</h3>
-  <h3>pie.formView</h3>
-  <h3>pie.listView</h3>
+  <h3>[%= ns %].activeView</h3>
+  <p><code>[%= ns %].activeView</code> is a layer on top of <code>[%= ns %].view</code> which provides templating, model management, dom reference management, and child view management.</p>
+
+  <h4>Templating</h4>
+  <p>activeViews accept an option named <code>template</code> which is the name of a template managed by the parent app's template manager (app.templates). See the <a href="[%= h.path('templates') %]">templates</a> page for more information on template management. The template option is used to construct the innerHTML of the view's el. If you need to decide on a template at runtime, you can override the <code>templateName</code> function to dynamically choose a template key.</p>
+  [%= h.gist('activeViewTemplates.js') %]
+
+  <h4>Model Management</h4>
+  <p>By default, activeViews don't create or utilize models. If, however, you assign an instance's "model" attribute you'll get a couple of things for free.</p>
+
+  <ul>
+    <li>Default <code>renderData()</code> implementation. activeView templates are provided with a "data" hash. When <code>this.model</code> is set, the model's data is provided.</li>
+    <li>The <code>autoRender</code> option. By providing <code>{autoRender: true}</code> to the view options, your view will re-render whenever <code>this.model</code> changes. If autoRender is a string or array of strings representing attributes, the rerender will only occur when one of the provided attributes change.</li>
+  </ul>
+
+  [%= h.gist('activeViewModel.js') %]
+
+  <h3>[%= ns %].formView</h3>
+  <h3>[%= ns %].listView</h3>
 </div>

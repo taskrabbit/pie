@@ -197,8 +197,8 @@ pie.ajaxRequest = pie.model.extend('ajaxRequest', {
       self._parseResponse(xhr);
 
       if(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
-        self._onDataSuccess(self.response);
         self._onSetModel(self.response);
+        self._onDataSuccess(self.response);
         self._onSuccess(self.response, xhr);
       } else {
         self._onError(xhr);

@@ -452,7 +452,7 @@ describe("pie.i18n", function() {
         expect(response).toEqual('Tomorrow');
 
         response = this.i18n.l(d, '%-a');
-        expect(response).toEqual('Tomorrow');
+        expect(response).not.toEqual('Tomorrow');
       });
 
     });

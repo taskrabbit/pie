@@ -7564,8 +7564,10 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
   setup: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.autoRender &amp;&amp; <span class="hljs-keyword">this</span>.model) {
-      <span class="hljs-keyword">var</span> field = pie.object.isString(<span class="hljs-keyword">this</span>.options.autoRender) ? <span class="hljs-keyword">this</span>.options.autoRender : <span class="hljs-string">'__version'</span>;
-      <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.model, <span class="hljs-string">'render'</span>, field);
+      <span class="hljs-keyword">var</span> args = pie.object.isBoolean(<span class="hljs-keyword">this</span>.options.autoRender) ? [<span class="hljs-string">'~'</span>] : pie.array.from(<span class="hljs-keyword">this</span>.options.autoRender);
+      args.unshift(<span class="hljs-string">'render'</span>);
+      args.unshift(<span class="hljs-keyword">this</span>.model);
+      <span class="hljs-keyword">this</span>.observe.apply(<span class="hljs-keyword">this</span>, args);
     }
 
     <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.options.renderOnSetup || <span class="hljs-keyword">this</span>.options.renderOnSetup === <span class="hljs-literal">undefined</span>) {
@@ -8041,8 +8043,8 @@ pie.ajaxRequest = pie.model.extend(<span class="hljs-string">'ajaxRequest'</span
       self._parseResponse(xhr);
 
       <span class="hljs-keyword">if</span>(xhr.status &gt;= <span class="hljs-number">200</span> &amp;&amp; xhr.status &lt; <span class="hljs-number">300</span> || xhr.status === <span class="hljs-number">304</span>) {
-        self._onDataSuccess(self.response);
         self._onSetModel(self.response);
+        self._onDataSuccess(self.response);
         self._onSuccess(self.response, xhr);
       } <span class="hljs-keyword">else</span> {
         self._onError(xhr);
@@ -9672,7 +9674,6 @@ i18n.l(date, <span class="hljs-string">'isoTime'</span>);
 
     _formattedShortDayName: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(d)</span> </span>{
       <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._isToday(d)) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.today'</span>);
-      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>._isTomorrow(d)) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.t(<span class="hljs-string">'app.time.tomorrow'</span>);
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._shortDayName(d.getDay());
     },
 
@@ -14693,7 +14694,7 @@ pie.binding.integrations.fn = {
     <span class="hljs-keyword">return</span> binding.options.options.fn(el, value, binding);
   }
 }
-  pie.VERSION = <span class="hljs-string">"0.1.20150826.1"</span>;
+  pie.VERSION = <span class="hljs-string">"0.1.20150831.1"</span>;
   <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> define === <span class="hljs-string">'function'</span> &amp;&amp; define.amd) {</pre></div></div>
             
         </li>

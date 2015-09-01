@@ -10,8 +10,10 @@ pie.activeView = pie.view.extend('activeView', {
   setup: function() {
 
     if(this.options.autoRender && this.model) {
-      var field = pie.object.isString(this.options.autoRender) ? this.options.autoRender : '__version';
-      this.observe(this.model, 'render', field);
+      var args = pie.object.isBoolean(this.options.autoRender) ? ['~'] : pie.array.from(this.options.autoRender);
+      args.unshift('render');
+      args.unshift(this.model);
+      this.observe.apply(this, args);
     }
 
     if(this.options.renderOnSetup || this.options.renderOnSetup === undefined) {
