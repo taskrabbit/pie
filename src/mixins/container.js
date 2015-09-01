@@ -56,6 +56,15 @@ pie.mixins.container = {
     return ~idx && pie.object.isNumber(idx) && this.children[idx] || undefined;
   },
 
+  isInApp: function() {
+    if(pie.object.isApp(this)) return true;
+    else if(this.parent) {
+      return this.parent.isInApp()
+    } else {
+      return false;
+    }
+  },
+
   bubble: function() {
     var args = pie.array.from(arguments),
     fname = args.shift(),

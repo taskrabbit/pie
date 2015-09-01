@@ -4455,6 +4455,15 @@ pie.mixins.container = {
     <span class="hljs-keyword">return</span> ~idx &amp;&amp; pie.object.isNumber(idx) &amp;&amp; <span class="hljs-keyword">this</span>.children[idx] || <span class="hljs-literal">undefined</span>;
   },
 
+  isInApp: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">if</span>(pie.object.isApp(<span class="hljs-keyword">this</span>)) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-keyword">this</span>.parent) {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.parent.isInApp()
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+    }
+  },
+
   bubble: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
     <span class="hljs-keyword">var</span> args = pie.array.from(<span class="hljs-built_in">arguments</span>),
     fname = args.shift(),
@@ -7216,16 +7225,6 @@ prepended. If preprendInstead is an element, the child will be prepended before 
       <span class="hljs-keyword">if</span>(pie.object.isString(arg) &amp;&amp; i &gt;= fnStartIdx) <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>[arg].bind(<span class="hljs-keyword">this</span>);
       <span class="hljs-keyword">return</span> arg;
     }.bind(<span class="hljs-keyword">this</span>));
-  },
-
-  isInApp: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    <span class="hljs-keyword">var</span> node = <span class="hljs-keyword">this</span>.parent;
-    <span class="hljs-keyword">while</span>(node) {
-      <span class="hljs-keyword">if</span>(pie.object.isApp(node)) <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
-      node = node.parent;
-    }
-
-    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
   },</pre></div></div>
             
         </li>

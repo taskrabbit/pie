@@ -2917,6 +2917,15 @@ pie.mixins.container = {
     return ~idx && pie.object.isNumber(idx) && this.children[idx] || undefined;
   },
 
+  isInApp: function() {
+    if(pie.object.isApp(this)) return true;
+    else if(this.parent) {
+      return this.parent.isInApp()
+    } else {
+      return false;
+    }
+  },
+
   bubble: function() {
     var args = pie.array.from(arguments),
     fname = args.shift(),
@@ -4734,16 +4743,6 @@ pie.view = pie.base.extend('view', {
       if(pie.object.isString(arg) && i >= fnStartIdx) return this[arg].bind(this);
       return arg;
     }.bind(this));
-  },
-
-  isInApp: function() {
-    var node = this.parent;
-    while(node) {
-      if(pie.object.isApp(node)) return true;
-      node = node.parent;
-    }
-
-    return false;
   },
 
   // **pie.view.eventNamespace**

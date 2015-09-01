@@ -138,16 +138,6 @@ pie.view = pie.base.extend('view', {
     }.bind(this));
   },
 
-  isInApp: function() {
-    var node = this.parent;
-    while(node) {
-      if(pie.object.isApp(node)) return true;
-      node = node.parent;
-    }
-
-    return false;
-  },
-
   // **pie.view.eventNamespace**
   //
   // The namespace used for this view's events. All views have a separate namespace to ensure
