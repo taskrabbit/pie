@@ -2760,6 +2760,11 @@ pie.fn.valueFrom(<span class="hljs-function"><span class="hljs-keyword">function
   <span class="hljs-keyword">if</span>(pie.object.isFunction(f)) <span class="hljs-keyword">return</span> f.apply(binding, args) ;
   <span class="hljs-keyword">return</span> f;
 };
+
+pie.fn.from = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(fn, obj)</span> </span>{
+  <span class="hljs-keyword">if</span>(pie.object.isString(fn) &amp;&amp; obj) <span class="hljs-keyword">return</span> obj[fn].bind(obj);
+  <span class="hljs-keyword">return</span> fn;
+};
 pie.math.precision = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(number, places)</span> </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-built_in">Math</span>.round(number * <span class="hljs-built_in">Math</span>.pow(<span class="hljs-number">10</span>, places)) / <span class="hljs-built_in">Math</span>.pow(<span class="hljs-number">10</span>, places);
 };
@@ -7599,14 +7604,14 @@ pie.activeView = pie.view.extend(<span class="hljs-string">'activeView'</span>, 
 
     <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">this</span>.isInApp()) <span class="hljs-keyword">return</span>;
 
-    <span class="hljs-keyword">var</span> factory = options.factory,
+    <span class="hljs-keyword">var</span> factory = pie.fn.from(options.factory, <span class="hljs-keyword">this</span>),
     transitionClass = options.viewTransitionClass || pie.simpleViewTransition,
     childName = options.name,
     current = <span class="hljs-keyword">this</span>.getChild(childName),
     instance = current,
     target = options.sel,
-    filter = pie.object.isString(options.filter) ? <span class="hljs-keyword">this</span>[options.filter].bind(<span class="hljs-keyword">this</span>) : options.filter,
-    blocker = pie.object.isString(options.blocker) ? <span class="hljs-keyword">this</span>[options.blocker].bind(<span class="hljs-keyword">this</span>) : options.blocker,
+    filter = pie.fn.from(options.filter, <span class="hljs-keyword">this</span>),
+    blocker = pie.fn.from(options.blocker, <span class="hljs-keyword">this</span>),
     info = {
       childName: childName,
       current: <span class="hljs-keyword">this</span>.getChild(childName),
@@ -10646,10 +10651,8 @@ Returns the removed item.</p>
 </code></pre><p>Available options:</p>
 <ul>
 <li>listOptions<ul>
-<li><strong>containerSel -</strong> the selector within this view’s template to append items to. Defaults to “ul, ol, .js-items-container”. If no match is found the view’s <code>el</code> is used.</li>
+<li><strong>sel -</strong> the selector within this view’s template to append items to. Defaults to “ul, ol, .js-items-container”. If no match is found the view’s <code>el</code> is used.</li>
 <li><strong>loadingClass -</strong> the loading class to be added to the list container while items are being removed, setup, and added. Defaults to “is-loading”.</li>
-<li><strong>modelAttribute -</strong> the attribute to extract list data from. Defaults to <code>items</code> to work with pie.list.</li>
-<li><strong>minLoadingTime -</strong> if a loading class is added, the minimum time it should be shown. Defaults to 0.</li>
 </ul>
 </li>
 <li>itemOptions<ul>
@@ -10683,9 +10686,7 @@ Returns the removed item.</p>
 
       <span class="hljs-keyword">this</span>.options = pie.object.deepMerge({
         listOptions: {
-          loadingClass: <span class="hljs-string">'is-loading'</span>,
-          modelAttribute: <span class="hljs-string">'items'</span>,
-          minLoadingTime: <span class="hljs-literal">null</span>
+          loadingClass: <span class="hljs-string">'is-loading'</span>
         },
         itemOptions: {
           factory: viewFactory
@@ -10770,7 +10771,7 @@ Returns the removed item.</p>
       containerEl = containerEl || <span class="hljs-keyword">this</span>.listContainer();
 
       <span class="hljs-keyword">var</span> opts = pie.object.dup(<span class="hljs-keyword">this</span>.options.itemOptions),
-      factory = opts.factory,
+      factory = pie.fn.from(opts.factory, <span class="hljs-keyword">this</span>),
       child;
 
       <span class="hljs-keyword">delete</span> opts.factory;
@@ -10860,7 +10861,7 @@ Returns the removed item.</p>
 
     addEmptyItem: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
       <span class="hljs-keyword">var</span> opts = pie.object.dup(<span class="hljs-keyword">this</span>.options.emptyOptions),
-      factory = opts.factory;
+      factory = pie.fn.from(opts.factory, <span class="hljs-keyword">this</span>);
 
       <span class="hljs-keyword">delete</span> opts.factory;
 

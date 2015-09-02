@@ -46,14 +46,14 @@ pie.activeView = pie.view.extend('activeView', {
 
     if(!this.isInApp()) return;
 
-    var factory = options.factory,
+    var factory = pie.fn.from(options.factory, this),
     transitionClass = options.viewTransitionClass || pie.simpleViewTransition,
     childName = options.name,
     current = this.getChild(childName),
     instance = current,
     target = options.sel,
-    filter = pie.object.isString(options.filter) ? this[options.filter].bind(this) : options.filter,
-    blocker = pie.object.isString(options.blocker) ? this[options.blocker].bind(this) : options.blocker,
+    filter = pie.fn.from(options.filter, this),
+    blocker = pie.fn.from(options.blocker, this),
     info = {
       childName: childName,
       current: this.getChild(childName),

@@ -12,10 +12,8 @@
 //
 // Available options:
 // * listOptions
-//   * **containerSel -** the selector within this view's template to append items to. Defaults to "ul, ol, .js-items-container". If no match is found the view's `el` is used.
+//   * **sel -** the selector within this view's template to append items to. Defaults to "ul, ol, .js-items-container". If no match is found the view's `el` is used.
 //   * **loadingClass -** the loading class to be added to the list container while items are being removed, setup, and added. Defaults to "is-loading".
-//   * **modelAttribute -** the attribute to extract list data from. Defaults to `items` to work with pie.list.
-//   * **minLoadingTime -** if a loading class is added, the minimum time it should be shown. Defaults to 0.
 // * itemOptions
 //   * **factory -** a function used to generate the item view(s). If none is supplied, an activeView will be constructed with the item data & the parent's renderData as the renderData.
 //   * **template -** assuming a substitute factory is not provided, this is the template (name) to apply to the default activeView.
@@ -40,9 +38,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
 
       this.options = pie.object.deepMerge({
         listOptions: {
-          loadingClass: 'is-loading',
-          modelAttribute: 'items',
-          minLoadingTime: null
+          loadingClass: 'is-loading'
         },
         itemOptions: {
           factory: viewFactory
@@ -115,7 +111,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
       containerEl = containerEl || this.listContainer();
 
       var opts = pie.object.dup(this.options.itemOptions),
-      factory = opts.factory,
+      factory = pie.fn.from(opts.factory, this),
       child;
 
       delete opts.factory;
@@ -179,7 +175,7 @@ pie.listView = pie.activeView.extend('listView', (function(){
 
     addEmptyItem: function() {
       var opts = pie.object.dup(this.options.emptyOptions),
-      factory = opts.factory;
+      factory = pie.fn.from(opts.factory, this);
 
       delete opts.factory;
 

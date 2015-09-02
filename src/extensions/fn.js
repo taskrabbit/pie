@@ -296,3 +296,8 @@ pie.fn.valueFrom = function(f, binding, args) {
   if(pie.object.isFunction(f)) return f.apply(binding, args) ;
   return f;
 };
+
+pie.fn.from = function(fn, obj) {
+  if(pie.object.isString(fn) && obj) return obj[fn].bind(obj);
+  return fn;
+};
